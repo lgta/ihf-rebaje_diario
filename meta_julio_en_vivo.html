@@ -1,0 +1,589 @@
+<title>Meta de Recupero — Julio 2026 en vivo</title>
+<style>
+  :root {
+    --paper: #eef1f2;
+    --surface: #fcfcfb;
+    --surface-2: #ffffff;
+    --ink: #16212b;
+    --ink-soft: #4b5a66;
+    --ink-mute: #7c8a93;
+    --line: #d7dcdd;
+    --line-strong: #b9c2c4;
+    --accent: #a85a1c;
+    --accent-soft: #e8dccc;
+    --accent-ink: #7c4315;
+    --warn: #b3401f;
+    --warn-soft: #f3ddd3;
+    --good: #276b3f;
+    --good-soft: #dde9e0;
+
+    --s1: #2a78d6; --s1d: #3987e5;
+    --s2: #1baf7a; --s2d: #199e70;
+
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --font-body: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  :root[data-theme="dark"] {
+    --paper: #10161c; --surface: #1a1a19; --surface-2: #1f2730;
+    --ink: #e8ecee; --ink-soft: #9fb0ba; --ink-mute: #6d7a82;
+    --line: #2c333a; --line-strong: #3a434b;
+    --accent: #e0924a; --accent-soft: #3a2c1c; --accent-ink: #f0b077;
+    --warn: #e08064; --warn-soft: #3a2420;
+    --good: #6cb587; --good-soft: #1e2c22;
+    --s1: #3987e5; --s2: #199e70;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10161c; --surface: #1a1a19; --surface-2: #1f2730;
+      --ink: #e8ecee; --ink-soft: #9fb0ba; --ink-mute: #6d7a82;
+      --line: #2c333a; --line-strong: #3a434b;
+      --accent: #e0924a; --accent-soft: #3a2c1c; --accent-ink: #f0b077;
+      --warn: #e08064; --warn-soft: #3a2420;
+      --good: #6cb587; --good-soft: #1e2c22;
+      --s1: #3987e5; --s2: #199e70;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    margin: 0;
+    padding: 0 0 6rem;
+  }
+  ::selection { background: var(--accent-soft); color: var(--accent-ink); }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 1.75rem; }
+
+  .cover {
+    background: linear-gradient(180deg, var(--surface-2) 0%, var(--paper) 100%);
+    border-bottom: 1px solid var(--line);
+    padding: 3.5rem 0 2.5rem;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--accent); }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0.7rem 0 0.6rem;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .dek { font-size: 1.05rem; color: var(--ink-soft); max-width: 62ch; margin: 0 0 1.6rem; }
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 1.4rem;
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-mute);
+    border-top: 1px solid var(--line); padding-top: 0.9rem;
+  }
+  .meta-row b { color: var(--ink-soft); font-weight: 600; }
+
+  .hero-stat {
+    margin-top: 1.8rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 1.3rem 1.5rem;
+  }
+  .hero-stat .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); }
+  .hero-stat .value {
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 650; color: var(--accent-ink);
+    margin: 0.2rem 0 0.3rem; letter-spacing: -0.01em;
+  }
+  .hero-stat .sub { font-size: 0.85rem; color: var(--ink-soft); }
+
+  .scorecard {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line);
+    margin-top: 1.2rem; border-radius: 3px; overflow: hidden;
+  }
+  .stat { background: var(--surface); padding: 1rem 1.1rem; }
+  .stat .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-mute); margin-bottom: 0.45rem; }
+  .stat .value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.3rem; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+  .stat .sub { font-size: 0.72rem; color: var(--ink-mute); margin-top: 0.2rem; }
+
+  nav.toc {
+    max-width: 920px; margin: 1.6rem auto 0; padding: 0 1.75rem;
+    display: flex; flex-wrap: wrap; gap: 0 1.3rem;
+    font-family: var(--font-mono); font-size: 0.76rem;
+  }
+  nav.toc a { color: var(--ink-mute); text-decoration: none; padding: 0.3rem 0; border-bottom: 1px solid transparent; }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent-ink); border-color: var(--accent); }
+
+  section { padding: 3rem 0 0; }
+  section:last-of-type { padding-bottom: 1rem; }
+  .section-head { display: flex; align-items: baseline; gap: 0.85rem; margin-bottom: 1.1rem; }
+  .section-num {
+    font-family: var(--font-mono); font-size: 0.82rem; color: var(--accent-ink);
+    background: var(--accent-soft); border-radius: 3px; padding: 0.15rem 0.5rem; flex-shrink: 0;
+  }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
+  h3 { font-family: var(--font-body); font-weight: 650; font-size: 1rem; color: var(--ink); margin: 1.8rem 0 0.7rem; }
+  p { max-width: 70ch; color: var(--ink-soft); }
+  p.lede { font-size: 1.02rem; color: var(--ink); max-width: 68ch; }
+  strong { color: var(--ink); font-weight: 650; }
+  code {
+    font-family: var(--font-mono); font-size: 0.85em; background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 3px; padding: 0.05em 0.35em; color: var(--ink);
+  }
+
+  .formula {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.1rem 1.3rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink);
+    overflow-x: auto; margin: 1.2rem 0; line-height: 1.7;
+  }
+  .formula .cm { color: var(--ink-mute); }
+  .formula .fx { color: var(--accent-ink); }
+
+  .callout {
+    border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface);
+    border-radius: 0 4px 4px 0; padding: 1rem 1.2rem; margin: 1.4rem 0;
+  }
+  .callout.good { border-left-color: var(--good); }
+  .callout .k {
+    font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--accent-ink); margin-bottom: 0.4rem; display: block;
+  }
+  .callout.good .k { color: var(--good); }
+  .callout p { margin: 0; color: var(--ink-soft); max-width: 66ch; }
+  .callout p + p { margin-top: 0.6rem; }
+
+  .tblwrap { overflow-x: auto; margin: 1.2rem 0 1.6rem; border: 1px solid var(--line); border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; min-width: 420px; }
+  thead th {
+    text-align: left; font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--ink-mute); background: var(--surface-2);
+    padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child, thead th:first-child { color: var(--ink); font-weight: 500; white-space: normal; }
+  tbody tr:hover td { background: var(--surface-2); }
+  td.num, th.num { text-align: right; }
+  td.hi { color: var(--ink); font-weight: 650; }
+  tbody tr.totalrow td { border-top: 2px solid var(--line-strong); font-weight: 650; color: var(--ink); }
+
+  .steps { list-style: none; margin: 1.2rem 0; padding: 0; max-width: 68ch; counter-reset: step; }
+  .steps > li {
+    display: flex; gap: 0.9rem; padding: 1rem 0; border-bottom: 1px solid var(--line);
+  }
+  .steps > li:last-child { border-bottom: none; }
+  .steps .n {
+    counter-increment: step; font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-ink);
+    background: var(--accent-soft); border-radius: 50%; width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 0.1rem;
+  }
+  .steps .n::before { content: counter(step); }
+  .steps strong { display: block; color: var(--ink); font-size: 0.96rem; margin-bottom: 0.2rem; }
+  .steps p { margin: 0; color: var(--ink-soft); font-size: 0.88rem; }
+
+  .regime-split {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 1.2rem 0 1.6rem;
+  }
+  .regime-split .col { background: var(--surface); padding: 1.1rem 1.2rem; }
+  .regime-split .col h4 {
+    margin: 0 0 0.4rem; font-family: var(--font-mono); font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute);
+  }
+  .regime-split .col p { font-size: 0.86rem; margin: 0; }
+  @media (max-width: 640px) { .regime-split { grid-template-columns: 1fr; } .scorecard { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1.3rem 1.3rem 0.9rem; margin: 1.3rem 0 1.6rem;
+  }
+  .chart-title { font-size: 0.85rem; font-weight: 650; color: var(--ink); margin-bottom: 0.1rem; }
+  .chart-sub { font-size: 0.76rem; color: var(--ink-mute); margin-bottom: 0.6rem; }
+  .chart-svg-wrap { position: relative; overflow-x: auto; }
+  svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+  .gridline { stroke: var(--line); stroke-width: 1; }
+  .axisline { stroke: var(--line-strong); stroke-width: 1; }
+  .axislabel { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-mute); }
+  .seriesline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .seriesline.dashed { stroke-dasharray: 5 4; }
+  .endlabel { font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; }
+  .todaymark { stroke: var(--ink-mute); stroke-width: 1; stroke-dasharray: 2 2; }
+  .todaylabel { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-mute); }
+  .crosshair { stroke: var(--ink-mute); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; pointer-events: none; }
+  .hoverdot { r: 3.2; opacity: 0; pointer-events: none; }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--surface-2);
+    border: 1px solid var(--line-strong); border-radius: 4px; padding: 0.5rem 0.65rem;
+    font-family: var(--font-mono); font-size: 0.72rem; box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    opacity: 0; transition: opacity 0.08s; white-space: nowrap; z-index: 5;
+  }
+  .tooltip .tt-day { color: var(--ink-mute); margin-bottom: 0.3rem; }
+  .tooltip .tt-row { display: flex; align-items: center; gap: 0.4rem; justify-content: space-between; gap: 1rem; }
+  .tooltip .tt-sw { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .tooltip .tt-val { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.9rem 1.3rem; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+  .legend .item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.76rem; color: var(--ink-soft); }
+  .legend .sw { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .legend .sw.dashed { background: none; border: 2px dashed; width: 12px; height: 0; }
+
+  footer {
+    max-width: 920px; margin: 3rem auto 0; padding: 1.5rem 1.75rem 0;
+    border-top: 1px solid var(--line); font-size: 0.78rem; color: var(--ink-mute);
+  }
+  hr.rule { border: none; border-top: 1px solid var(--line); margin: 2.4rem 0; }
+</style>
+
+<div class="cover">
+  <div class="wrap">
+    <div class="eyebrow">Cobranza · Seguimiento en vivo</div>
+    <h1>La meta de julio, paso a paso</h1>
+    <p class="dek">Cómo se calcula, hoy mismo, cuánto falta por recuperar en lo que resta del mes — desde el saldo asignado al cierre de junio hasta la proyección diaria completa.</p>
+    <div class="meta-row">
+      <span><b>Corte</b> 9 de julio de 2026</span>
+      <span><b>Mes objetivo</b> julio 2026 (día 9 de 31)</span>
+      <span><b>Base</b> cierre real de junio</span>
+    </div>
+
+    <div class="hero-stat">
+      <div class="label">Lo que resta por recuperar (día 10 al 31)</div>
+      <div class="value">S/ 1,248,799</div>
+      <div class="sub">Meta total del mes (S/ 1,776,174) menos lo ya recuperado real a hoy (S/ 527,375)</div>
+    </div>
+
+    <div class="scorecard">
+      <div class="stat">
+        <div class="label">Stock asignado (1 jul)</div>
+        <div class="value">S/ 2,943,958</div>
+        <div class="sub">créditos en mora 1–30 al cierre de junio</div>
+      </div>
+      <div class="stat">
+        <div class="label">Recuperado real a hoy</div>
+        <div class="value">S/ 527,375</div>
+        <div class="sub">+6.3% por encima de la meta proyectada al día 9</div>
+      </div>
+      <div class="stat">
+        <div class="label">Meta total del mes</div>
+        <div class="value">S/ 1,776,174</div>
+        <div class="sub">stock S/427k + nuevos S/1.35M</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="toc">
+  <a href="#paso1">1. Base stock</a>
+  <a href="#paso2">2. Vencimiento de nuevos</a>
+  <a href="#paso3">3. Dimensionamiento</a>
+  <a href="#paso4">4. Proyección</a>
+  <a href="#resultado">Resultado</a>
+</nav>
+
+<div class="wrap">
+
+  <section id="intro">
+    <div class="section-head"><span class="section-num">00</span><h2>La pregunta</h2></div>
+    <p class="lede">Estamos a mitad de mes. Ya sabemos lo que se recuperó realmente desde el día 1 hasta hoy. Lo que falta responder es: <strong>¿cuánto debería recuperarse todavía, entre hoy y el cierre de julio?</strong> Para eso hace falta reconstruir la meta completa del mes con cuatro piezas, en orden.</p>
+  </section>
+
+  <section id="paso1">
+    <div class="section-head"><span class="section-num">01</span><h2>Cálculo de la base stock</h2></div>
+    <p class="lede">El punto de partida es fijo — no depende de ninguna proyección. Es el saldo capital real que tenían, <strong>al cierre del 30 de junio</strong>, todos los créditos con mora entre 1 y 30 días.</p>
+    <p>Mismo criterio que se usó para calibrar las curvas: última foto del mes anterior, créditos con mora 1–30 y saldo positivo, segmentados por tramo × avance — porque esas dos etiquetas son las que determinan qué curva de recupero le corresponde a cada crédito.</p>
+
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Tramo de mora</th><th class="num">Saldo asignado</th></tr></thead>
+        <tbody>
+          <tr><td>1–8 días</td><td class="num">S/ 1,296,254</td></tr>
+          <tr><td>9–15 días</td><td class="num">S/ 766,679</td></tr>
+          <tr><td>16–30 días</td><td class="num">S/ 881,025</td></tr>
+          <tr class="totalrow"><td>Total stock</td><td class="num">S/ 2,943,958</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--ink-mute);">Este número no se mueve durante el mes. Lo único que cambia día a día es cuánto de ese saldo ya se rebajó.</p>
+  </section>
+
+  <section id="paso2">
+    <div class="section-head"><span class="section-num">02</span><h2>Proyección según vencimiento de los nuevos</h2></div>
+    <p class="lede">A diferencia del stock, no sabemos hoy quién va a caer en mora — pero sí sabemos <strong>cuándo vence la cuota</strong> de cada crédito que hoy está al día. Cada día de vencimiento genera una cohorte candidata.</p>
+
+    <div class="regime-split">
+      <div class="col">
+        <h4>Días 1–9 (ya pasaron)</h4>
+        <p>Saldo <strong>exacto</strong> al momento de cada vencimiento, tomado directamente de la foto diaria de esa fecha.</p>
+      </div>
+      <div class="col">
+        <h4>Días 10–31 (todavía no ocurren)</h4>
+        <p>No existe una foto futura — se usa el <strong>saldo vigente hoy</strong> como el mejor proxy disponible del saldo que tendrán al vencer.</p>
+      </div>
+    </div>
+    <p>En ambos regímenes se excluyen los créditos que ya son parte del stock, para no contar el mismo saldo dos veces.</p>
+  </section>
+
+  <section id="paso3">
+    <div class="section-head"><span class="section-num">03</span><h2>Dimensionamiento del saldo</h2></div>
+    <p class="lede">Este es el paso que convierte "cuántos créditos vencen" en "cuánto de ese saldo realmente se vuelve mora nueva".</p>
+
+    <div class="formula">
+<span class="cm">saldo_en_riesgo(día D, avance)</span> = Σ saldo capital de créditos con cuota venciendo el día D<br>
+<span class="cm">entra_en_mora(D, avance)</span> = saldo_en_riesgo(D, avance) × <span class="fx">P(no paga a tiempo)</span>
+    </div>
+
+    <div class="callout good">
+      <span class="k">De dónde sale P(no paga a tiempo)</span>
+      <p><strong>13.38%</strong> — calibrado específicamente fuera de muestra (10 meses de historia, sin incluir el mes de validación), midiendo directamente cuántos créditos transicionan a mora a nivel crédito. No es la cifra que sale de la curva de pago por cuota — usar esa habría inflado la proyección de nuevos a más del doble.</p>
+    </div>
+  </section>
+
+  <section id="paso4">
+    <div class="section-head"><span class="section-num">04</span><h2>El proceso de proyección</h2></div>
+    <p class="lede">Con las tres piezas anteriores, cada día <code>d</code> del mes se arma sumando dos motores independientes:</p>
+
+    <div class="formula">
+<span class="cm">Meta_acumulada(d)</span> = <span class="fx">Stock_acumulado(d)</span> + <span class="fx">Nuevos_acumulado(d)</span><br><br>
+<span class="cm">Stock_acumulado(d)</span>  = Σ(tramo,avance) saldo_stock(tramo,avance) × curva_stock(tramo,avance,d)<br>
+<span class="cm">Nuevos_acumulado(d)</span> = Σ(D≤d) entra_en_mora(D,avance) × curva_nuevos(avance, d−D)
+    </div>
+
+    <p>Para "nuevos", cada cohorte que nació el día <code>D</code> aporta el valor de su curva en <code>d−D</code> días de maduración. La cohorte del día 1 ya lleva 8 días madurando hoy (día 9); la del día 8 recién lleva uno.</p>
+  </section>
+
+  <section id="resultado">
+    <div class="section-head"><span class="section-num">05</span><h2>El resultado, día a día</h2></div>
+
+    <div class="chart-card">
+      <div class="chart-title">Julio 2026: meta proyectada vs. recuperado real</div>
+      <div class="chart-sub">Soles acumulados por día — línea sólida hasta hoy (real), punteada la proyección completa</div>
+      <div class="chart-svg-wrap" id="chart-julio-wrap">
+        <svg class="chart" id="chart-julio" viewBox="0 0 860 340" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tooltip" id="tooltip-julio"></div>
+      </div>
+      <div class="legend" id="legend-julio"></div>
+    </div>
+
+    <h3>Al corte de hoy (día 9)</h3>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th></th><th class="num">Stock</th><th class="num">Nuevos</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          <tr><td>Proyectado al día 9</td><td class="num">—</td><td class="num">—</td><td class="num">S/ 496,201</td></tr>
+          <tr><td>Real al día 9</td><td class="num">S/ 193,167</td><td class="num">S/ 334,208</td><td class="num hi">S/ 527,375</td></tr>
+          <tr class="totalrow"><td>Meta al cierre (día 31)</td><td class="num">S/ 426,651</td><td class="num">S/ 1,349,523</td><td class="num">S/ 1,776,174</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout good">
+      <span class="k">Lectura</span>
+      <p>El recupero real va <strong>6.3% por encima</strong> de lo que la meta proyectaba para el mismo día — señal sana. Restando lo ya recuperado (S/527,375) de la meta total del mes (S/1,776,174), queda pendiente <strong>S/1,248,799</strong> entre hoy y el cierre de julio.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+  <footer>
+    Corte al 9 de julio de 2026. Curvas calibradas con 14 meses de historia (mar-2025 a jun-2026); tasa de entrada a mora calibrada fuera de muestra. Complementa la metodología completa y el backtest de junio publicados por separado.
+  </footer>
+</div>
+
+<script>
+(function() {
+  var PROY = [54819,119315,176141,226882,282017,319778,382791,438832,496201,550204,598273,642697,677254,723387,768757,831812,889218,943058,995094,1036527,1095914,1149935,1205722,1248480,1311440,1387582,1446152,1523736,1584019,1644635,1776174];
+  var REAL = [57282,146950,232582,282068,311267,401962,455400,525271,527375];
+  var HOY_IDX = 8; // dia 9, indice 8
+
+  function isDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+  function fmtSoles(v) {
+    if (Math.abs(v) >= 1000000) return "S/ " + (v/1000000).toFixed(2) + "M";
+    return "S/ " + Math.round(v).toLocaleString("es-PE");
+  }
+
+  function render() {
+    var svg = document.getElementById("chart-julio");
+    var legendEl = document.getElementById("legend-julio");
+    var tooltip = document.getElementById("tooltip-julio");
+    var W = 860, H = 340;
+    var padL = 46, padR = 74, padT = 16, padB = 34;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = PROY.length;
+    var dark = isDark();
+    var colorProy = dark ? "#3987e5" : "#2a78d6";
+    var colorReal = dark ? "#e0924a" : "#a85a1c";
+    var yMax = 2000000;
+
+    function xPos(i) { return padL + (i / (n - 1)) * plotW; }
+    function yPos(v) { return padT + plotH - (v / yMax) * plotH; }
+
+    var svgns = "http://www.w3.org/2000/svg";
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    var ySteps = 5;
+    for (var g = 0; g <= ySteps; g++) {
+      var v = (yMax / ySteps) * g;
+      var y = yPos(v);
+      var line = document.createElementNS(svgns, "line");
+      line.setAttribute("x1", padL); line.setAttribute("x2", W - padR);
+      line.setAttribute("y1", y); line.setAttribute("y2", y);
+      line.setAttribute("class", "gridline");
+      svg.appendChild(line);
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", padL - 8); lbl.setAttribute("y", y + 3);
+      lbl.setAttribute("text-anchor", "end");
+      lbl.setAttribute("class", "axislabel");
+      lbl.textContent = fmtSoles(v);
+      svg.appendChild(lbl);
+    }
+
+    var xTicks = [0, 4, 9, 14, 19, 24, 29];
+    xTicks.forEach(function(i) {
+      var x = xPos(i);
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", x); lbl.setAttribute("y", H - padB + 16);
+      lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("class", "axislabel");
+      lbl.textContent = "día " + (i + 1);
+      svg.appendChild(lbl);
+    });
+
+    var axis = document.createElementNS(svgns, "line");
+    axis.setAttribute("x1", padL); axis.setAttribute("x2", W - padR);
+    axis.setAttribute("y1", H - padB); axis.setAttribute("y2", H - padB);
+    axis.setAttribute("class", "axisline");
+    svg.appendChild(axis);
+
+    // linea de "hoy"
+    var xHoy = xPos(HOY_IDX);
+    var todayLine = document.createElementNS(svgns, "line");
+    todayLine.setAttribute("x1", xHoy); todayLine.setAttribute("x2", xHoy);
+    todayLine.setAttribute("y1", padT); todayLine.setAttribute("y2", H - padB);
+    todayLine.setAttribute("class", "todaymark");
+    svg.appendChild(todayLine);
+    var todayLbl = document.createElementNS(svgns, "text");
+    todayLbl.setAttribute("x", xHoy); todayLbl.setAttribute("y", padT - 4);
+    todayLbl.setAttribute("text-anchor", "middle");
+    todayLbl.setAttribute("class", "todaylabel");
+    todayLbl.textContent = "hoy";
+    svg.appendChild(todayLbl);
+
+    // proyectado: linea punteada completa
+    var dProy = PROY.map(function(v, i) { return (i === 0 ? "M" : "L") + xPos(i).toFixed(1) + "," + yPos(v).toFixed(1); }).join(" ");
+    var pathProy = document.createElementNS(svgns, "path");
+    pathProy.setAttribute("d", dProy);
+    pathProy.setAttribute("class", "seriesline dashed");
+    pathProy.setAttribute("stroke", colorProy);
+    svg.appendChild(pathProy);
+    var lblProy = document.createElementNS(svgns, "text");
+    lblProy.setAttribute("x", xPos(n-1) + 8); lblProy.setAttribute("y", yPos(PROY[n-1]) + 3.5);
+    lblProy.setAttribute("class", "endlabel"); lblProy.setAttribute("fill", colorProy);
+    lblProy.textContent = fmtSoles(PROY[n-1]);
+    svg.appendChild(lblProy);
+
+    // real: linea solida hasta hoy
+    var dReal = REAL.map(function(v, i) { return (i === 0 ? "M" : "L") + xPos(i).toFixed(1) + "," + yPos(v).toFixed(1); }).join(" ");
+    var pathReal = document.createElementNS(svgns, "path");
+    pathReal.setAttribute("d", dReal);
+    pathReal.setAttribute("class", "seriesline");
+    pathReal.setAttribute("stroke", colorReal);
+    svg.appendChild(pathReal);
+    var lastReal = REAL[REAL.length-1];
+    var lblReal = document.createElementNS(svgns, "text");
+    lblReal.setAttribute("x", xPos(REAL.length-1) + 8); lblReal.setAttribute("y", yPos(lastReal) - 6);
+    lblReal.setAttribute("class", "endlabel"); lblReal.setAttribute("fill", colorReal);
+    lblReal.textContent = fmtSoles(lastReal);
+    svg.appendChild(lblReal);
+    var dotReal = document.createElementNS(svgns, "circle");
+    dotReal.setAttribute("cx", xPos(REAL.length-1)); dotReal.setAttribute("cy", yPos(lastReal));
+    dotReal.setAttribute("r", 3.5); dotReal.setAttribute("fill", colorReal);
+    svg.appendChild(dotReal);
+
+    // hover
+    var crosshair = document.createElementNS(svgns, "line");
+    crosshair.setAttribute("y1", padT); crosshair.setAttribute("y2", H - padB);
+    crosshair.setAttribute("class", "crosshair");
+    svg.appendChild(crosshair);
+    var dotProyH = document.createElementNS(svgns, "circle");
+    dotProyH.setAttribute("class", "hoverdot"); dotProyH.setAttribute("fill", colorProy);
+    svg.appendChild(dotProyH);
+    var dotRealH = document.createElementNS(svgns, "circle");
+    dotRealH.setAttribute("class", "hoverdot"); dotRealH.setAttribute("fill", colorReal);
+    svg.appendChild(dotRealH);
+
+    var hitRect = document.createElementNS(svgns, "rect");
+    hitRect.setAttribute("x", padL); hitRect.setAttribute("y", padT);
+    hitRect.setAttribute("width", plotW); hitRect.setAttribute("height", plotH);
+    hitRect.setAttribute("fill", "transparent");
+    svg.appendChild(hitRect);
+
+    hitRect.addEventListener("mousemove", function(evt) {
+      var rect = svg.getBoundingClientRect();
+      var scaleX = W / rect.width;
+      var mx = (evt.clientX - rect.left) * scaleX;
+      var i = Math.round(((mx - padL) / plotW) * (n - 1));
+      i = Math.max(0, Math.min(n - 1, i));
+      var x = xPos(i);
+      crosshair.setAttribute("x1", x); crosshair.setAttribute("x2", x);
+      crosshair.style.opacity = 1;
+      var html = '<div class="tt-day">día ' + (i+1) + '</div>';
+      dotProyH.setAttribute("cx", x); dotProyH.setAttribute("cy", yPos(PROY[i])); dotProyH.style.opacity = 1;
+      html += '<div class="tt-row"><span style="display:flex;align-items:center;gap:0.4rem;"><span class="tt-sw" style="background:' + colorProy + '"></span>Proyectado</span><span class="tt-val">' + fmtSoles(PROY[i]) + '</span></div>';
+      if (i < REAL.length) {
+        dotRealH.setAttribute("cx", x); dotRealH.setAttribute("cy", yPos(REAL[i])); dotRealH.style.opacity = 1;
+        html += '<div class="tt-row"><span style="display:flex;align-items:center;gap:0.4rem;"><span class="tt-sw" style="background:' + colorReal + '"></span>Real</span><span class="tt-val">' + fmtSoles(REAL[i]) + '</span></div>';
+      } else {
+        dotRealH.style.opacity = 0;
+      }
+      tooltip.innerHTML = html;
+      tooltip.style.opacity = 1;
+      var wrapRect = svg.parentElement.getBoundingClientRect();
+      var px = (evt.clientX - wrapRect.left) + 14;
+      var py = (evt.clientY - wrapRect.top) - 10;
+      if (px + 190 > wrapRect.width) px = (evt.clientX - wrapRect.left) - 200;
+      tooltip.style.left = px + "px";
+      tooltip.style.top = py + "px";
+    });
+    hitRect.addEventListener("mouseleave", function() {
+      crosshair.style.opacity = 0;
+      dotProyH.style.opacity = 0; dotRealH.style.opacity = 0;
+      tooltip.style.opacity = 0;
+    });
+
+    legendEl.innerHTML = "";
+    var items = [
+      { label: "Proyectado (meta)", color: colorProy, dashed: true },
+      { label: "Real (a la fecha)", color: colorReal, dashed: false }
+    ];
+    items.forEach(function(it) {
+      var item = document.createElement("div");
+      item.className = "item";
+      var swClass = it.dashed ? "sw dashed" : "sw";
+      var swStyle = it.dashed ? "border-color:" + it.color : "background:" + it.color;
+      item.innerHTML = '<span class="' + swClass + '" style="' + swStyle + '"></span>' + it.label;
+      legendEl.appendChild(item);
+    });
+  }
+
+  render();
+  var mo = new MutationObserver(function(muts) {
+    muts.forEach(function(m) { if (m.attributeName === "data-theme") render(); });
+  });
+  mo.observe(document.documentElement, { attributes: true });
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  }
+})();
+</script>

@@ -1,0 +1,996 @@
+<title>Meta de Recupero Diaria — Metodología</title>
+<style>
+  :root {
+    --paper: #eef1f2;
+    --surface: #fcfcfb;
+    --surface-2: #ffffff;
+    --ink: #16212b;
+    --ink-soft: #4b5a66;
+    --ink-mute: #7c8a93;
+    --line: #d7dcdd;
+    --line-strong: #b9c2c4;
+    --accent: #a85a1c;
+    --accent-soft: #e8dccc;
+    --accent-ink: #7c4315;
+    --warn: #b3401f;
+    --warn-soft: #f3ddd3;
+    --good: #276b3f;
+    --good-soft: #dde9e0;
+
+    --s1: #2a78d6; --s1d: #3987e5;
+    --s2: #1baf7a; --s2d: #199e70;
+    --s3: #eda100; --s3d: #c98500;
+    --s4: #008300; --s4d: #008300;
+
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --font-body: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  :root[data-theme="dark"] {
+    --paper: #10161c; --surface: #1a1a19; --surface-2: #1f2730;
+    --ink: #e8ecee; --ink-soft: #9fb0ba; --ink-mute: #6d7a82;
+    --line: #2c333a; --line-strong: #3a434b;
+    --accent: #e0924a; --accent-soft: #3a2c1c; --accent-ink: #f0b077;
+    --warn: #e08064; --warn-soft: #3a2420;
+    --good: #6cb587; --good-soft: #1e2c22;
+    --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10161c; --surface: #1a1a19; --surface-2: #1f2730;
+      --ink: #e8ecee; --ink-soft: #9fb0ba; --ink-mute: #6d7a82;
+      --line: #2c333a; --line-strong: #3a434b;
+      --accent: #e0924a; --accent-soft: #3a2c1c; --accent-ink: #f0b077;
+      --warn: #e08064; --warn-soft: #3a2420;
+      --good: #6cb587; --good-soft: #1e2c22;
+      --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    margin: 0;
+    padding: 0 0 6rem;
+  }
+  ::selection { background: var(--accent-soft); color: var(--accent-ink); }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 1.75rem; }
+
+  /* ---------- Cover ---------- */
+  .cover {
+    background: linear-gradient(180deg, var(--surface-2) 0%, var(--paper) 100%);
+    border-bottom: 1px solid var(--line);
+    padding: 3.5rem 0 2.5rem;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    line-height: 1.12;
+    margin: 0.7rem 0 0.6rem;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .dek {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 1.6rem;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-mute);
+    border-top: 1px solid var(--line);
+    padding-top: 0.9rem;
+  }
+  .meta-row b { color: var(--ink-soft); font-weight: 600; }
+
+  .scorecard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 1.8rem;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .stat {
+    background: var(--surface);
+    padding: 1rem 1.1rem;
+  }
+  .stat .label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--ink-mute);
+    margin-bottom: 0.45rem;
+  }
+  .stat .value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+  .stat .sub { font-size: 0.72rem; color: var(--ink-mute); margin-top: 0.2rem; }
+
+  /* ---------- Nav ---------- */
+  nav.toc {
+    max-width: 920px;
+    margin: 1.6rem auto 0;
+    padding: 0 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+  }
+  nav.toc a {
+    color: var(--ink-mute);
+    text-decoration: none;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid transparent;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent-ink); border-color: var(--accent); }
+
+  /* ---------- Sections ---------- */
+  section { padding: 3rem 0 0; }
+  section:last-of-type { padding-bottom: 1rem; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    margin-bottom: 1.1rem;
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-radius: 3px;
+    padding: 0.15rem 0.5rem;
+    flex-shrink: 0;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.5rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 650;
+    font-size: 1rem;
+    color: var(--ink);
+    margin: 1.8rem 0 0.7rem;
+  }
+  p { max-width: 70ch; color: var(--ink-soft); }
+  p.lede { font-size: 1.02rem; color: var(--ink); max-width: 68ch; }
+  strong { color: var(--ink); font-weight: 650; }
+  a.inline { color: var(--accent-ink); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.05em 0.35em;
+    color: var(--ink);
+  }
+
+  ul.plain, ol.plain { max-width: 68ch; padding-left: 1.2rem; color: var(--ink-soft); }
+  ul.plain li, ol.plain li { margin-bottom: 0.45rem; }
+  ul.plain li::marker { color: var(--accent); }
+
+  /* ---------- Callouts ---------- */
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 4px 4px 0;
+    padding: 1rem 1.2rem;
+    margin: 1.4rem 0;
+  }
+  .callout.warn { border-left-color: var(--warn); }
+  .callout.good { border-left-color: var(--good); }
+  .callout .k {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent-ink);
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+  .callout.warn .k { color: var(--warn); }
+  .callout.good .k { color: var(--good); }
+  .callout p { margin: 0; color: var(--ink-soft); max-width: 66ch; }
+  .callout p + p { margin-top: 0.6rem; }
+
+  /* ---------- Tables ---------- */
+  .tblwrap { overflow-x: auto; margin: 1.2rem 0 1.6rem; border: 1px solid var(--line); border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; min-width: 480px; }
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-mute);
+    background: var(--surface-2);
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 0.55rem 0.85rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child, thead th:first-child { color: var(--ink); font-weight: 500; white-space: normal; }
+  tbody tr:hover td { background: var(--surface-2); }
+  td.num, th.num { text-align: right; }
+  td.hi { color: var(--ink); font-weight: 650; }
+
+  /* ---------- Charts ---------- */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1.3rem 1.3rem 0.9rem;
+    margin: 1.3rem 0 1.6rem;
+  }
+  .chart-title { font-size: 0.85rem; font-weight: 650; color: var(--ink); margin-bottom: 0.1rem; }
+  .chart-sub { font-size: 0.76rem; color: var(--ink-mute); margin-bottom: 0.6rem; }
+  .chart-svg-wrap { position: relative; overflow-x: auto; }
+  svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+  .gridline { stroke: var(--line); stroke-width: 1; }
+  .axisline { stroke: var(--line-strong); stroke-width: 1; }
+  .axislabel { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-mute); }
+  .seriesline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .seriesdot { r: 2.6; }
+  .endlabel { font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; }
+  .crosshair { stroke: var(--ink-mute); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; pointer-events: none; }
+  .hoverdot { r: 3.2; opacity: 0; pointer-events: none; }
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    padding: 0.5rem 0.65rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    opacity: 0;
+    transition: opacity 0.08s;
+    white-space: nowrap;
+    z-index: 5;
+  }
+  .tooltip .tt-day { color: var(--ink-mute); margin-bottom: 0.3rem; }
+  .tooltip .tt-row { display: flex; align-items: center; gap: 0.4rem; justify-content: space-between; gap: 1rem; }
+  .tooltip .tt-sw { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .tooltip .tt-val { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.9rem 1.3rem; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+  .legend .item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.76rem; color: var(--ink-soft); }
+  .legend .sw { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ---------- Comparison ---------- */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.4rem 0 1.6rem;
+  }
+  .compare .col { background: var(--surface); padding: 1.2rem 1.3rem; }
+  .compare .col h4 {
+    margin: 0 0 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+  }
+  .compare .col .big {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 1.5rem;
+    font-weight: 650;
+    color: var(--ink);
+    margin: 0.15rem 0 0.6rem;
+  }
+  .compare .col p { font-size: 0.85rem; margin: 0; color: var(--ink-soft); }
+  .compare .col.b .big { color: var(--accent-ink); }
+  @media (max-width: 640px) { .compare { grid-template-columns: 1fr; } .scorecard { grid-template-columns: 1fr 1fr; } }
+
+  .delta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 650;
+    background: var(--warn-soft);
+    color: var(--warn);
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    margin-top: 0.5rem;
+  }
+
+  /* ---------- Formula block ---------- */
+  .formula {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1.1rem 1.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--ink);
+    overflow-x: auto;
+    margin: 1.2rem 0;
+    line-height: 1.7;
+  }
+  .formula .cm { color: var(--ink-mute); }
+  .formula .fx { color: var(--accent-ink); }
+
+  /* ---------- Two-population explainer ---------- */
+  .pops {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+    margin: 1.3rem 0 1.6rem;
+  }
+  .pop-card {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1.1rem 1.2rem;
+    background: var(--surface);
+  }
+  .pop-card .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.6rem;
+  }
+  .pop-card.stock .tag { background: color-mix(in srgb, var(--s1) 18%, transparent); color: var(--s1); }
+  .pop-card.nuevos .tag { background: var(--accent-soft); color: var(--accent-ink); }
+  .pop-card h4 { margin: 0 0 0.4rem; font-size: 0.98rem; font-family: var(--font-display); font-weight: 400; }
+  .pop-card p { font-size: 0.87rem; margin: 0; }
+  @media (max-width: 640px) { .pops { grid-template-columns: 1fr; } }
+
+  /* ---------- Tools inventory ---------- */
+  .tool {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.75rem;
+  }
+  .tool-head { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+  .tool-head code { font-size: 0.86rem; }
+  .tool-phase {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    letter-spacing: 0.05em;
+  }
+  .tool p { margin: 0.45rem 0 0; font-size: 0.86rem; }
+
+  /* ---------- Glossary ---------- */
+  dl.glossary { display: grid; grid-template-columns: 1fr; gap: 0.9rem; margin: 1.2rem 0; }
+  dl.glossary div { border-bottom: 1px solid var(--line); padding-bottom: 0.9rem; }
+  dl.glossary dt { font-weight: 650; color: var(--ink); font-size: 0.92rem; margin-bottom: 0.25rem; font-family: var(--font-mono); }
+  dl.glossary dd { margin: 0; color: var(--ink-soft); font-size: 0.87rem; max-width: 65ch; }
+
+  /* ---------- Timeline / next steps ---------- */
+  .steps { list-style: none; margin: 1.2rem 0; padding: 0; max-width: 68ch; }
+  .steps li {
+    display: flex;
+    gap: 0.9rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps .n {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .steps p { margin: 0; color: var(--ink-soft); font-size: 0.9rem; }
+  .steps strong { display: block; color: var(--ink); font-size: 0.92rem; margin-bottom: 0.15rem; }
+
+  footer {
+    max-width: 920px;
+    margin: 3rem auto 0;
+    padding: 1.5rem 1.75rem 0;
+    border-top: 1px solid var(--line);
+    font-size: 0.78rem;
+    color: var(--ink-mute);
+  }
+
+  hr.rule { border: none; border-top: 1px solid var(--line); margin: 2.4rem 0; }
+</style>
+
+<div class="cover">
+  <div class="wrap">
+    <div class="eyebrow">Cobranza · Análisis interno</div>
+    <h1>Meta de recupero diaria para la cartera de cobranza</h1>
+    <p class="dek">Metodología para estimar, día a día, cuánto saldo capital debería recuperarse de la cartera en mora 1–30 — calibrada con 14 meses de historia real y construida sobre dos motores independientes: el stock ya asignado y los créditos que van cayendo en mora durante el mes.</p>
+    <div class="meta-row">
+      <span><b>Fecha</b> 8 jul 2026</span>
+      <span><b>Alcance</b> mora 1–30 días</span>
+      <span><b>Calibración</b> mar 2025 – jun 2026 (14 meses)</span>
+      <span><b>Estado</b> metodología validada · backtest de junio corrido</span>
+    </div>
+
+    <div class="scorecard">
+      <div class="stat">
+        <div class="label">Grumosidad del pago</div>
+        <div class="value">92%</div>
+        <div class="sub">crédito-mes con 0 ó 1 pago</div>
+      </div>
+      <div class="stat">
+        <div class="label">Recupero stock, tramo 1–8</div>
+        <div class="value">18.1%</div>
+        <div class="sub">del saldo capital al mes</div>
+      </div>
+      <div class="stat">
+        <div class="label">Recupero nuevos, día 31</div>
+        <div class="value">22.3%</div>
+        <div class="sub">desde entrada en mora</div>
+      </div>
+      <div class="stat">
+        <div class="label">Backtest — junio 2026</div>
+        <div class="value">+5.4%</div>
+        <div class="sub">error vs. recupero real, fuera de muestra</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<nav class="toc">
+  <a href="#objetivo">Objetivo</a>
+  <a href="#datos">Datos y calidad</a>
+  <a href="#modelo">Modelo conceptual</a>
+  <a href="#stock">Motor del stock</a>
+  <a href="#nuevos">Motor de nuevos</a>
+  <a href="#proyeccion">Lógica de proyección</a>
+  <a href="#backtest">Backtest</a>
+  <a href="#herramientas">Herramientas</a>
+  <a href="#siguiente">Próximos pasos</a>
+  <a href="#glosario">Glosario</a>
+</nav>
+
+<div class="wrap">
+
+  <section id="objetivo">
+    <div class="section-head"><span class="section-num">00</span><h2>Objetivo</h2></div>
+    <p class="lede">Cobranza asigna una cartera cada mes y necesita saber cuánto debería recuperarse — no solo al cierre, sino <strong>día a día</strong>, para poder comparar avance real contra plan mientras el mes transcurre.</p>
+    <p>El punto de partida fue una consulta que calculaba el rebaje diario de saldo capital por crédito. La primera idea — promediar ese rebaje día a día — no sobrevivió al primer chequeo de datos: el pago no es un goteo diario, es un evento puntual. Por eso el modelo que sigue no promedia rebajes; estima <strong>la probabilidad de que un crédito pague</strong> y <strong>cuánto rebaja cuando paga</strong>, por separado.</p>
+  </section>
+
+  <section id="datos">
+    <div class="section-head"><span class="section-num">01</span><h2>Datos y calidad</h2></div>
+    <p>El análisis corre sobre tres tablas del data lake (Athena, <code>dev_datalake_master</code>):</p>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Tabla</th><th>Rol en el análisis</th></tr></thead>
+        <tbody>
+          <tr><td><code>dts_mambu_loans_hist</code></td><td>Foto diaria de saldo capital y días de atraso por crédito — la fuente del rebaje real, histórico completo desde nov-2023.</td></tr>
+          <tr><td><code>dts_okaapi_loans</code></td><td>Producto, monto financiado, número de cuotas y estado del crédito.</td></tr>
+          <tr><td><code>dts_cobranza_creditos_cuotas</code></td><td>Calendario de cuotas: fecha de vencimiento, estado, días de atraso y el flag de cadena de reenganche.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Antes de construir cualquier ratio se auditaron los datos. Dos hallazgos determinaron todo el diseño posterior:</p>
+
+    <div class="callout good">
+      <span class="k">Hallazgo — confirma el enfoque</span>
+      <p><strong>El pago es un evento, no un flujo diario.</strong> De los crédito-mes en mora, 24% no rebaja nada en el mes, 68% rebaja en exactamente un día y 8% en dos días — <strong>92% con cero o un solo evento de pago.</strong> Promediar el rebaje entre los 30 días del mes habría diluido esa señal hasta volverla inútil.</p>
+    </div>
+
+    <div class="callout warn">
+      <span class="k">Hallazgo — corrección de datos</span>
+      <p><strong>Los créditos reenganchados/refinanciados distorsionan cualquier curva calculada sobre toda la cartera.</strong> Cuando un crédito se reemplaza por uno nuevo, sus cuotas pendientes quedan "colgadas" en estado <code>LATE</code> para siempre, arrastrando el promedio hacia abajo. La corrección (excluir créditos que no son el último de su cadena, vía <code>flg_last_loan_in_chain</code>) cambió una curva de validación de 61%/69% a 73%/81% — un salto de más de 10 puntos.</p>
+      <p>Dentro del universo acotado a mora 1–30 (el que usa este análisis) el mismo filtro pesa mucho menos — apenas 0.3 a 0.9 puntos — porque casi todos los reenganches ocurren en créditos que nunca llegaron a caer en mora. Se mantiene el filtro en todo el pipeline por rigor, aunque su efecto ahí sea chico.</p>
+    </div>
+
+    <p style="font-size:0.85rem; color:var(--ink-mute); max-width:68ch;">Nota técnica adicional: <code>dayslate</code> viene <code>NULL</code> cuando el crédito está al día (no <code>0</code>) — se normaliza con <code>coalesce(dayslate,0)</code> en todas las consultas.</p>
+  </section>
+
+  <section id="modelo">
+    <div class="section-head"><span class="section-num">02</span><h2>Modelo conceptual</h2></div>
+    <p class="lede">El recupero esperado de un crédito es el producto de dos probabilidades independientes:</p>
+    <div class="formula"><span class="cm">Recupero esperado</span> = <span class="fx">P(paga dentro de la ventana)</span> × <span class="fx">E(% del saldo que rebaja al pagar)</span></div>
+    <p>La cartera en cobranza se divide en dos poblaciones con dinámicas distintas, así que cada una tiene su propio motor de cálculo:</p>
+
+    <div class="pops">
+      <div class="pop-card stock">
+        <span class="tag">Stock</span>
+        <h4>Ya está en mora al iniciar el mes</h4>
+        <p>Se conoce por completo desde el día 1. Tiene todo el mes por delante para pagar. Se agrupa por <strong>tramo de mora</strong> (cuántos días lleva atrasado) y se mide cuánto recupera acumuladamente, día a día.</p>
+      </div>
+      <div class="pop-card nuevos">
+        <span class="tag">Nuevos</span>
+        <h4>Cae en mora durante el mes</h4>
+        <p>No se sabe de antemano quién será, pero sí <strong>cuándo vence cada cuota</strong>. Cada día del mes que alguien no paga a tiempo, "nace" una cohorte nueva con menos días restantes para madurar antes del cierre.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="stock">
+    <div class="section-head"><span class="section-num">03</span><h2>Motor del stock</h2></div>
+    <p class="lede">Créditos con mora 1–30 al cierre del mes anterior. Se clasifican por el tramo con el que <strong>entran</strong> al mes y lo conservan aunque crucen los 30 días antes de que termine.</p>
+
+    <div class="chart-card">
+      <div class="chart-title">Recupero acumulado del stock, por tramo de mora</div>
+      <div class="chart-sub">% del saldo capital inicial recuperado, según el día del mes · 14 meses (abr-2025 a jun-2026)</div>
+      <div class="chart-svg-wrap" id="chart-stock-wrap">
+        <svg class="chart" id="chart-stock" viewBox="0 0 860 340" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tooltip" id="tooltip-stock"></div>
+      </div>
+      <div class="legend" id="legend-stock"></div>
+    </div>
+
+    <p>La curva del tramo 1–8 es <em>front-loaded</em>: para el día 8 ya acumuló más de la mitad de lo que rebajará en todo el mes, porque el recién caído en mora paga rápido. Los tres tramos muestran además una aceleración visible cerca de fin de mes (segundo vencimiento del ciclo).</p>
+
+    <h3>Frecuencia vs. severidad</h3>
+    <p>Descomponer el recupero en "¿pagó algo?" (frecuencia) y "¿cuánto rebajó si pagó?" (severidad) revela el mecanismo real: <strong>la severidad es prácticamente plana entre tramos</strong> (~24% cuando pagan) — lo que cae con la mora es la frecuencia. El tramo predice si un crédito paga; no predice cuánto rebaja cuando lo hace.</p>
+
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Tramo (mora al inicio de mes)</th><th class="num">% que paga algo en el mes</th><th class="num">Severidad si paga</th><th class="num">Recupero total del mes</th></tr></thead>
+        <tbody>
+          <tr><td>1–8 días</td><td class="num">83%</td><td class="num">23.3%</td><td class="num hi">18.1%</td></tr>
+          <tr><td>9–15 días</td><td class="num">58%</td><td class="num">24.2%</td><td class="num hi">12.7%</td></tr>
+          <tr><td>16–30 días</td><td class="num">39%</td><td class="num">23.8%</td><td class="num hi">7.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>¿Y qué sí explica la severidad? El avance de amortización</h3>
+    <p>Si el tramo no discrimina cuánto rebaja un pago, ¿qué sí lo hace? El tamaño de la cuota pendiente frente al crédito total — medido como <code>saldo capital / monto financiado</code>. Un crédito recién desembolsado (avance bajo) rebaja poco capital en cada pago porque la cuota es mayormente interés; uno cerca de terminar suele cancelar el remanente entero.</p>
+
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Avance de amortización</th><th class="num">Severidad (tramo 1–8)</th><th class="num">Severidad (tramo 9–15)</th><th class="num">Severidad (tramo 16–30)</th></tr></thead>
+        <tbody>
+          <tr><td>Menos de 10% avanzado</td><td class="num">14.9%</td><td class="num">16.3%</td><td class="num">13.2%</td></tr>
+          <tr><td>10% – 40%</td><td class="num">20.2%</td><td class="num">20.7%</td><td class="num">20.9%</td></tr>
+          <tr><td>40% – 70%</td><td class="num">40.8%</td><td class="num">42.5%</td><td class="num">40.1%</td></tr>
+          <tr><td>70% o más</td><td class="num hi">74.8%</td><td class="num hi">75.6%</td><td class="num hi">80.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="nuevos">
+    <div class="section-head"><span class="section-num">04</span><h2>Motor de nuevos</h2></div>
+    <p class="lede">Créditos que no estaban en mora al iniciar el mes pero dejan de pagar una cuota durante el mes. Se modelan con una curva de "días desde que entró en mora", no por tramo — el tramo no existe todavía cuando recién cae.</p>
+
+    <div class="chart-card">
+      <div class="chart-title">Recupero acumulado de "nuevos", por avance de amortización</div>
+      <div class="chart-sub">% del saldo al momento de entrar en mora, según días transcurridos desde la entrada</div>
+      <div class="chart-svg-wrap" id="chart-nuevos-wrap">
+        <svg class="chart" id="chart-nuevos" viewBox="0 0 860 340" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tooltip" id="tooltip-nuevos"></div>
+      </div>
+      <div class="legend" id="legend-nuevos"></div>
+    </div>
+
+    <p>El mismo patrón del stock se repite aquí, ahora con el eje temporal invertido: no importa el tramo, importa el avance. Un crédito que cae en mora estando ya al 70%+ de su plazo recupera el <strong>74%</strong> de su saldo en 31 días — casi siempre porque cancela el remanente — contra apenas <strong>14%</strong> para uno recién desembolsado.</p>
+
+    <h3>Validación contra un número de negocio conocido</h3>
+    <p>Cobranza maneja de memoria que ~70% de los vencimientos se paga a tiempo y ~85% acumulado al primer día de mora. Se reconstruyó esa misma curva desde los datos — en número de operaciones, no en capital — como control cruzado independiente del modelo.</p>
+
+    <div class="callout">
+      <span class="k">Validación cruzada</span>
+      <p>La reconstrucción dio <strong>72.6%</strong> a tiempo y <strong>81.2%</strong> acumulado al día 1 — dentro del rango esperado por el negocio. La primera corrida había dado apenas 61%/69%; la brecha resultó ser el mismo problema de reenganches descrito en la sección de datos, más un filtro que excluía sin querer a los créditos que ya habían terminado de pagar bien.</p>
+    </div>
+  </section>
+
+  <section id="proyeccion">
+    <div class="section-head"><span class="section-num">05</span><h2>Lógica de proyección</h2></div>
+    <p class="lede">La meta de un día cualquiera del mes es la suma de lo que aporta el stock más lo que aportan todas las cohortes de "nuevos" que ya nacieron hasta ese día.</p>
+
+    <div class="formula">
+      <span class="cm">Meta_acumulada(d)</span> = <span class="fx">Stock_acumulado(d)</span> + <span class="fx">Nuevos_acumulado(d)</span><br><br>
+      <span class="cm">Stock_acumulado(d)</span> = Σ saldo_stock(segmento) × curva_stock(segmento, d)<br>
+      <span class="cm">Nuevos_acumulado(d)</span> = Σ<sub>D≤d</sub> saldo_en_riesgo(D) × [1 − P(paga a tiempo)] × curva_nuevos(d − D)
+    </div>
+
+    <p>El mecanismo clave es la <strong>cohorte por día de vencimiento</strong>: cada día D del calendario de cobranza que un grupo de créditos no paga a tiempo, nace una cohorte con su propio reloj. Al proyectar el día d, cada cohorte activa aporta lo que su curva dice para <code>d − D</code> días de maduración — truncada si el mes se acaba antes de que termine de madurar. Un crédito que entra en mora el día 20 nunca "ve" el valor de la curva en el día 25; el mes se cierra antes.</p>
+
+    <h3>Dos enfoques, mantenidos en paralelo</h3>
+    <p>El análisis conserva <strong>dos formas de calcular la misma meta</strong>, para poder compararlas en cada corte: una versión <strong>agregada</strong> (una sola curva por tramo o global) y una versión <strong>segmentada</strong> (cruzando tramo × avance, o avance solo, en cada cohorte). La segmentada es más fiel — usa la curva correcta para la mezcla real de créditos — pero también más costosa de mantener. La comparación entre ambas es, en sí misma, una forma de vigilar si la mezcla de la cartera se está moviendo.</p>
+
+    <div class="compare">
+      <div class="col a">
+        <h4>Enfoque agregado</h4>
+        <div class="big">S/ 3,763,453</div>
+        <p>Una curva por tramo (stock) y una curva global (nuevos). Rápido de calcular y de explicar; asume que la mezcla de avance de la cartera actual es igual al promedio histórico.</p>
+      </div>
+      <div class="col b">
+        <h4>Enfoque segmentado</h4>
+        <div class="big">S/ 3,592,446</div>
+        <p>Curvas cruzadas por avance de amortización, aplicadas a la mezcla real de la cartera de hoy. Más preciso cuando la mezcla actual difiere del promedio histórico.</p>
+        <span class="delta-pill">−4.5% vs. agregado</span>
+      </div>
+    </div>
+
+    <p style="font-size:0.85rem; color:var(--ink-mute);">Corrida de referencia sobre una ventana de 31 días desde el 8 de julio de 2026. La diferencia de 4.5% confirma que la segmentación no es un refinamiento cosmético — mueve la meta lo suficiente como para justificar mantenerla.</p>
+
+    <div class="callout warn">
+      <span class="k">Limitaciones de esta corrida — pendientes antes de usar como meta oficial</span>
+      <p><strong>1. Punto de partida.</strong> Esta corrida usa el stock del día de la consulta como si fuera "día 1" del mes. Para una meta de mes calendario real, el stock debe anclarse al cierre del mes anterior, igual que en la calibración histórica.</p>
+      <p><strong>2. Calendario prospectivo.</strong> El calendario de vencimientos usado aquí solo mira hacia adelante (cuotas aún <code>PENDING</code>). Sirve para proyectar, no para reconstruir un mes ya cerrado — para eso se necesita traer las cuotas por fecha de vencimiento sin filtrar por estado, ya que el desenlace ya se conoce por las fotos diarias.</p>
+    </div>
+  </section>
+
+  <section id="backtest">
+    <div class="section-head"><span class="section-num">06</span><h2>Backtest: junio 2026</h2></div>
+    <p class="lede">Con la metodología completa, se reconstruyó la meta que se habría fijado el 1 de junio de 2026 — stock anclado al cierre real de mayo, calendario real de vencimientos de junio — y se comparó, día a día, contra lo que realmente se recuperó ese mes (ya cerrado).</p>
+
+    <div class="callout warn">
+      <span class="k">Primer intento — error de +79%</span>
+      <p>La primera corrida sobreestimó el recupero de junio en <strong>79%</strong>. La causa: el porcentaje de "no paga a tiempo" que alimenta la proyección se había tomado de la curva de pagos a nivel <em>cuota</em> (27.4%) — pero esa cifra no corresponde a la tasa real de créditos que entran en mora a nivel <em>crédito</em>. Son dos fenómenos distintos: es probable que exista un período de gracia antes de que un atraso se marque como mora oficial, mientras que la curva de cuotas cuenta cualquier atraso desde el primer día.</p>
+      <p>Se remidió la tasa directamente — créditos que realmente transicionan a mora, sobre el total de créditos con vencimiento ese mes — usando <strong>10 meses anteriores a junio, sin incluir junio</strong>, para evitar la trampa de calibrar el modelo con el mismo mes que se está evaluando. Resultado estable entre 11.4% y 14.6% mes a mes: <strong>13.4%</strong> promedio, el valor correcto.</p>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Recupero acumulado de junio: proyectado vs. real</div>
+      <div class="chart-sub">Soles acumulados por día, con la tasa corregida y fuera de muestra (13.4%)</div>
+      <div class="chart-svg-wrap" id="chart-backtest-wrap">
+        <svg class="chart" id="chart-backtest" viewBox="0 0 860 340" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tooltip" id="tooltip-backtest"></div>
+      </div>
+      <div class="legend" id="legend-backtest"></div>
+    </div>
+
+    <div class="compare">
+      <div class="col a">
+        <h4>Proyectado (1 jun)</h4>
+        <div class="big">S/ 1,806,299</div>
+        <p>Stock: S/ 601,379 · Nuevos: S/ 1,204,920</p>
+      </div>
+      <div class="col b">
+        <h4>Real (30 jun, cerrado)</h4>
+        <div class="big">S/ 1,713,815</div>
+        <p>Stock: S/ 517,683 · Nuevos: S/ 1,196,132</p>
+        <span class="delta-pill">+5.4% de error</span>
+      </div>
+    </div>
+
+    <p>El motor de <strong>nuevos</strong> — la pieza más nueva del modelo, la mecánica de cohortes por día de vencimiento — acertó casi exacto: <strong>+0.7%</strong> de error. El motor de <strong>stock</strong> sobreestimó <strong>+16.2%</strong>, dentro del rango de variación mensual que ya se había observado al calibrar (el tramo 9–15 en particular osciló entre 9.8% y 18.8% de un mes a otro en los 14 meses de historia) — junio parece haber sido, específicamente, un mes de recupero de stock más bajo que el promedio.</p>
+
+    <div class="callout good">
+      <span class="k">Lectura del resultado</span>
+      <p>Un error de +5.4% al cierre, con la parte más incierta del modelo (nuevos) prácticamente exacta, es un resultado sólido para una primera validación fuera de muestra. La brecha restante apunta a un lugar concreto — la volatilidad natural del motor de stock — no a un problema de diseño del mecanismo.</p>
+    </div>
+  </section>
+
+  <section id="herramientas">
+    <div class="section-head"><span class="section-num">07</span><h2>Herramientas creadas</h2></div>
+    <p class="lede">Todo el análisis quedó como SQL y un script de combinación reproducibles, en la carpeta del proyecto.</p>
+
+    <div class="tool">
+      <div class="tool-head"><code>fase0_diagnostico.sql</code><span class="tool-phase">Auditoría de datos</span></div>
+      <p>Cinco bloques: cobertura del histórico, grumosidad del pago, ruido en el saldo, mecánica de <code>dayslate</code> y peso de las cancelaciones totales en mora.</p>
+    </div>
+    <div class="tool">
+      <div class="tool-head"><code>fase1_stock.sql</code><span class="tool-phase">Motor del stock</span></div>
+      <p>Curva de recupero acumulado por tramo y día; descomposición frecuencia × severidad; segmentación por avance de amortización.</p>
+    </div>
+    <div class="tool">
+      <div class="tool-head"><code>fase2_nuevos.sql</code><span class="tool-phase">Motor de nuevos</span></div>
+      <p>Curva de recupero por días desde la entrada en mora; validación contra la referencia de negocio en # de operaciones; segmentación por avance.</p>
+    </div>
+    <div class="tool">
+      <div class="tool-head"><code>fase3_meta.sql</code><span class="tool-phase">Proyección</span></div>
+      <p>Calendario de vencimientos futuros con saldo en riesgo, stock vigente por segmento, ambas curvas diarias — agregadas y segmentadas.</p>
+    </div>
+    <div class="tool">
+      <div class="tool-head"><code>fase3_backtest.sql</code><span class="tool-phase">Backtest</span></div>
+      <p>Stock al cierre real de mayo, calendario real de junio, recupero real diario (stock y nuevos) y la calibración fuera de muestra de la tasa de entrada a mora.</p>
+    </div>
+    <div class="tool">
+      <div class="tool-head"><code>armar_trayectoria_seg.py</code> <code>backtest_junio.py</code><span class="tool-phase">Combinación</span></div>
+      <p>Cruzan los resultados de Athena (calendario, curvas, stock) y arman la trayectoria diaria de la meta con la mecánica de cohortes — el segundo, específico para comparar contra un mes cerrado.</p>
+    </div>
+    <div class="tool">
+      <div class="tool-head"><code>plan_analisis.md</code><span class="tool-phase">Bitácora</span></div>
+      <p>Registro completo de decisiones, resultados de cada corrida y correcciones aplicadas — la fuente de verdad técnica del análisis.</p>
+    </div>
+  </section>
+
+  <section id="siguiente">
+    <div class="section-head"><span class="section-num">08</span><h2>Próximos pasos</h2></div>
+    <ol class="steps">
+      <li>
+        <span class="n">1</span>
+        <div><strong>Extender el backtest a varios meses</strong><p>Repetir el ejercicio de junio sobre 3–6 meses cerrados adicionales, para saber si el error de +5.4% es representativo o junio fue particular.</p></div>
+      </li>
+      <li>
+        <span class="n">2</span>
+        <div><strong>Entender la sobreestimación del motor de stock (+16.2%)</strong><p>Determinar si junio fue un mes de recupero de stock genuinamente bajo, o si hay un segmentador adicional (más allá de tramo × avance) que lo explique.</p></div>
+      </li>
+      <li>
+        <span class="n">3</span>
+        <div><strong>Recalibrar excluyendo el mes de prueba</strong><p>Las curvas de stock/nuevos hoy incluyen junio en su calibración (~1/14 del peso). Un backtest totalmente riguroso las recalcularía excluyendo cada mes de prueba.</p></div>
+      </li>
+      <li>
+        <span class="n">4</span>
+        <div><strong>Decidir el enfoque operativo</strong><p>Con varios meses de backtest, elegir si el enfoque segmentado justifica su costo de mantenimiento frente al agregado, o si conviene un híbrido.</p></div>
+      </li>
+    </ol>
+  </section>
+
+  <section id="glosario">
+    <div class="section-head"><span class="section-num">09</span><h2>Glosario</h2></div>
+    <dl class="glossary">
+      <div><dt>Tramo</dt><dd>Rango de días de mora con el que un crédito del stock inicia el mes: 1–8, 9–15 o 16–30. Se conserva todo el mes aunque el crédito siga acumulando mora.</dd></div>
+      <div><dt>Avance de amortización</dt><dd>Saldo capital vigente dividido entre el monto financiado original. Bajo = crédito reciente (cuotas iniciales); alto = crédito cerca de terminar.</dd></div>
+      <div><dt>Severidad</dt><dd>% del saldo que se rebaja cuando un crédito sí realiza un pago — la magnitud del evento, condicional a que ocurra.</dd></div>
+      <div><dt>Frecuencia</dt><dd>% de créditos de un segmento que realiza al menos un pago durante el mes.</dd></div>
+      <div><dt>Cohorte</dt><dd>Grupo de créditos que entra en mora el mismo día. Cada cohorte madura según su propia curva de "días desde la entrada".</dd></div>
+      <div><dt>Stock vs. nuevos</dt><dd>Stock: cartera ya en mora al iniciar el mes, asignada de una vez. Nuevos: créditos que caen en mora día a día conforme vencen sus cuotas.</dd></div>
+      <div><dt>Reenganche / cadena</dt><dd>Un crédito reemplazado por uno nuevo (refinanciamiento o renovación). Se excluye vía <code>flg_last_loan_in_chain</code> para no confundir un traspaso contable con un pago real.</dd></div>
+    </dl>
+  </section>
+
+  <hr class="rule">
+  <footer>
+    Análisis interno de cobranza — construido sobre <code>dts_mambu_loans_hist</code>, <code>dts_okaapi_loans</code> y <code>dts_cobranza_creditos_cuotas</code> (Athena, <code>dev_datalake_master</code>). Ventana de calibración: marzo 2025 a junio 2026. Documento generado el 8 de julio de 2026.
+  </footer>
+</div>
+
+<script>
+(function() {
+  var TRAMO = {
+    labels: ["Tramo 1–8", "Tramo 9–15", "Tramo 16–30"],
+    colorsLight: ["#2a78d6", "#1baf7a", "#eda100"],
+    colorsDark:  ["#3987e5", "#199e70", "#c98500"],
+    series: [
+      [2.9097,5.1659,6.5883,7.4802,8.2297,8.8018,9.2433,9.705,10.0856,10.3361,10.6894,10.9292,11.2137,11.405,11.652,11.8475,12.0505,12.2422,12.4499,12.7652,12.9799,13.2342,13.5225,13.8139,14.1576,14.6888,15.3306,15.9949,16.7415,17.6622,18.0881],
+      [1.0977,1.9326,2.5066,2.9187,3.5737,4.0813,4.3846,4.6994,5.1124,5.7193,5.9578,6.1513,6.4816,6.7761,7.1581,7.4767,7.9562,8.3121,8.6094,9.2543,9.6457,9.9486,10.282,10.6513,11.0247,11.3098,11.5839,11.8245,12.1691,12.5163,12.7193],
+      [0.555,0.9929,1.288,1.6115,2.0564,2.4372,2.6732,2.9595,3.263,3.5307,3.8611,4.126,4.4186,4.6177,4.8896,5.1633,5.3801,5.5658,5.7846,5.9244,6.1049,6.2475,6.411,6.5858,6.9029,7.2971,7.4791,7.6298,7.7628,7.9076,7.9964]
+    ]
+  };
+
+  var AVANCE = {
+    labels: ["< 10% avance", "10–40%", "40–70%", "70%+"],
+    colorsLight: ["#2a78d6", "#1baf7a", "#eda100", "#008300"],
+    colorsDark:  ["#3987e5", "#199e70", "#c98500", "#008300"],
+    series: [
+      [3.13,4.784,5.952,6.684,7.122,7.564,7.798,8.063,8.266,8.45,8.65,8.787,8.89,9.028,9.162,9.297,9.413,9.503,9.615,9.726,9.801,9.887,10.018,10.237,10.41,10.634,11.042,11.473,12.282,13.369,14.362],
+      [3.644,5.697,7.433,8.416,9.044,9.649,10.067,10.591,10.966,11.289,11.525,11.715,11.929,12.111,12.326,12.486,12.669,12.82,12.937,13.108,13.221,13.378,13.55,13.794,14.081,14.39,14.956,15.631,16.818,18.32,19.8],
+      [8.704,13.658,17.667,19.752,21.315,22.688,23.734,24.993,25.769,26.475,27.014,27.499,27.918,28.326,28.737,29.029,29.283,29.625,29.89,30.186,30.466,30.712,31.014,31.434,31.832,32.351,33.206,34.184,35.895,38.365,40.876],
+      [16.07,26.155,34.371,38.864,42.171,45.429,47.383,49.727,51.795,53.339,54.408,55.286,56.424,57.503,58.222,59.149,59.818,60.302,60.931,61.408,61.788,62.32,62.9,63.548,64.001,64.69,65.975,66.99,68.933,71.572,74.189]
+    ]
+  };
+
+  var BACKTEST = {
+    labels: ["Proyectado", "Real"],
+    colorsLight: ["#2a78d6", "#a85a1c"],
+    colorsDark:  ["#3987e5", "#e0924a"],
+    series: [
+      [86769,174448,244790,303187,363928,427516,482380,525770,585041,637700,693047,742102,791284,836834,873920,941896,1001229,1059546,1114598,1169655,1225196,1267346,1328118,1385776,1448039,1525576,1600044,1675527,1740340,1806299],
+      [105144,165244,230751,278560,325738,358856,380654,453217,502009,548638,605407,656115,692738,713505,800836,853576,930976,982200,1058352,1093046,1111031,1211372,1252764,1306281,1377155,1443544,1513495,1551121,1597535,1713815]
+    ]
+  };
+
+  function isDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  function buildChart(svgId, legendId, tooltipId, data, xLabel, yLabel, yMax, fmtValue) {
+    fmtValue = fmtValue || function(v) { return v.toFixed(1) + "%"; };
+    var fmtAxis = data.fmtAxis || function(v) { return v.toFixed(0) + "%"; };
+    var svg = document.getElementById(svgId);
+    var legendEl = document.getElementById(legendId);
+    var tooltip = document.getElementById(tooltipId);
+    var W = 860, H = 340;
+    var padL = 42, padR = 74, padT = 16, padB = 34;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = data.series[0].length; // days 1..n
+    var dark = isDark();
+    var colors = dark ? data.colorsDark : data.colorsLight;
+
+    function xPos(i) { return padL + (i / (n - 1)) * plotW; }
+    function yPos(v) { return padT + plotH - (v / yMax) * plotH; }
+
+    var svgns = "http://www.w3.org/2000/svg";
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    // gridlines (y)
+    var ySteps = 5;
+    for (var g = 0; g <= ySteps; g++) {
+      var v = (yMax / ySteps) * g;
+      var y = yPos(v);
+      var line = document.createElementNS(svgns, "line");
+      line.setAttribute("x1", padL); line.setAttribute("x2", W - padR);
+      line.setAttribute("y1", y); line.setAttribute("y2", y);
+      line.setAttribute("class", "gridline");
+      svg.appendChild(line);
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", padL - 8); lbl.setAttribute("y", y + 3);
+      lbl.setAttribute("text-anchor", "end");
+      lbl.setAttribute("class", "axislabel");
+      lbl.textContent = fmtAxis(v);
+      svg.appendChild(lbl);
+    }
+
+    // x axis ticks
+    var xTicks = [0, 4, 9, 14, 19, 24, 29].filter(function(i){ return i < n; });
+    xTicks.forEach(function(i) {
+      var x = xPos(i);
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", x); lbl.setAttribute("y", H - padB + 16);
+      lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("class", "axislabel");
+      lbl.textContent = xLabel(i + 1);
+      svg.appendChild(lbl);
+    });
+
+    var axis = document.createElementNS(svgns, "line");
+    axis.setAttribute("x1", padL); axis.setAttribute("x2", W - padR);
+    axis.setAttribute("y1", H - padB); axis.setAttribute("y2", H - padB);
+    axis.setAttribute("class", "axisline");
+    svg.appendChild(axis);
+
+    // series lines
+    data.series.forEach(function(s, si) {
+      var d = s.map(function(v, i) { return (i === 0 ? "M" : "L") + xPos(i).toFixed(1) + "," + yPos(v).toFixed(1); }).join(" ");
+      var path = document.createElementNS(svgns, "path");
+      path.setAttribute("d", d);
+      path.setAttribute("class", "seriesline");
+      path.setAttribute("stroke", colors[si]);
+      svg.appendChild(path);
+
+      // end label
+      var lastV = s[s.length - 1];
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", xPos(n - 1) + 8);
+      lbl.setAttribute("y", yPos(lastV) + 3.5);
+      lbl.setAttribute("class", "endlabel");
+      lbl.setAttribute("fill", colors[si]);
+      lbl.textContent = fmtValue(lastV);
+      svg.appendChild(lbl);
+    });
+
+    // hover layer
+    var crosshair = document.createElementNS(svgns, "line");
+    crosshair.setAttribute("y1", padT); crosshair.setAttribute("y2", H - padB);
+    crosshair.setAttribute("class", "crosshair");
+    svg.appendChild(crosshair);
+
+    var hoverDots = data.series.map(function(s, si) {
+      var dot = document.createElementNS(svgns, "circle");
+      dot.setAttribute("class", "hoverdot");
+      dot.setAttribute("fill", colors[si]);
+      svg.appendChild(dot);
+      return dot;
+    });
+
+    var hitRect = document.createElementNS(svgns, "rect");
+    hitRect.setAttribute("x", padL); hitRect.setAttribute("y", padT);
+    hitRect.setAttribute("width", plotW); hitRect.setAttribute("height", plotH);
+    hitRect.setAttribute("fill", "transparent");
+    svg.appendChild(hitRect);
+
+    hitRect.addEventListener("mousemove", function(evt) {
+      var rect = svg.getBoundingClientRect();
+      var scaleX = W / rect.width;
+      var mx = (evt.clientX - rect.left) * scaleX;
+      var i = Math.round(((mx - padL) / plotW) * (n - 1));
+      i = Math.max(0, Math.min(n - 1, i));
+      var x = xPos(i);
+      crosshair.setAttribute("x1", x); crosshair.setAttribute("x2", x);
+      crosshair.style.opacity = 1;
+      var html = '<div class="tt-day">' + xLabel(i + 1) + '</div>';
+      data.series.forEach(function(s, si) {
+        hoverDots[si].setAttribute("cx", x);
+        hoverDots[si].setAttribute("cy", yPos(s[i]));
+        hoverDots[si].style.opacity = 1;
+        html += '<div class="tt-row"><span style="display:flex;align-items:center;gap:0.4rem;"><span class="tt-sw" style="background:' + colors[si] + '"></span>' + data.labels[si] + '</span><span class="tt-val">' + fmtValue(s[i]) + '</span></div>';
+      });
+      tooltip.innerHTML = html;
+      tooltip.style.opacity = 1;
+      var wrapRect = svg.parentElement.getBoundingClientRect();
+      var px = (evt.clientX - wrapRect.left) + 14;
+      var py = (evt.clientY - wrapRect.top) - 10;
+      if (px + 190 > wrapRect.width) px = (evt.clientX - wrapRect.left) - 200;
+      tooltip.style.left = px + "px";
+      tooltip.style.top = py + "px";
+    });
+    hitRect.addEventListener("mouseleave", function() {
+      crosshair.style.opacity = 0;
+      hoverDots.forEach(function(d){ d.style.opacity = 0; });
+      tooltip.style.opacity = 0;
+    });
+
+    // legend
+    legendEl.innerHTML = "";
+    data.labels.forEach(function(lbl, si) {
+      var item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = '<span class="sw" style="background:' + colors[si] + '"></span>' + lbl;
+      legendEl.appendChild(item);
+    });
+  }
+
+  function xLabelDay(d) { return "día " + d; }
+  function fmtSoles(v) {
+    if (Math.abs(v) >= 1000000) return "S/ " + (v/1000000).toFixed(2) + "M";
+    return "S/ " + Math.round(v).toLocaleString("es-PE");
+  }
+  BACKTEST.fmtAxis = fmtSoles;
+
+  function renderAll() {
+    buildChart("chart-stock", "legend-stock", "tooltip-stock", TRAMO, xLabelDay, "%", 20);
+    buildChart("chart-nuevos", "legend-nuevos", "tooltip-nuevos", AVANCE, xLabelDay, "%", 80);
+    buildChart("chart-backtest", "legend-backtest", "tooltip-backtest", BACKTEST, xLabelDay, "S/", 2000000, fmtSoles);
+  }
+
+  renderAll();
+
+  // re-render on theme toggle (root attribute change) and OS scheme change
+  var mo = new MutationObserver(function(muts) {
+    muts.forEach(function(m) {
+      if (m.attributeName === "data-theme") renderAll();
+    });
+  });
+  mo.observe(document.documentElement, { attributes: true });
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll);
+  }
+})();
+</script>

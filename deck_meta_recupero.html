@@ -1,0 +1,576 @@
+<title>De la asignación a la meta — Recupero de cobranza</title>
+<style>
+  :root {
+    --paper: #eef1f2; --surface: #fcfcfb; --surface-2: #ffffff;
+    --ink: #16212b; --ink-soft: #4b5a66; --ink-mute: #7c8a93;
+    --line: #d7dcdd; --line-strong: #b9c2c4;
+    --accent: #a85a1c; --accent-soft: #e8dccc; --accent-ink: #7c4315;
+    --warn: #b3401f; --warn-soft: #f3ddd3;
+    --good: #276b3f; --good-soft: #dde9e0;
+    --s1: #2a78d6; --s2: #1baf7a; --s3: #eda100; --s4: #008300;
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+    --font-body: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+  :root[data-theme="dark"] {
+    --paper: #10161c; --surface: #1a1a19; --surface-2: #1f2730;
+    --ink: #e8ecee; --ink-soft: #9fb0ba; --ink-mute: #6d7a82;
+    --line: #2c333a; --line-strong: #3a434b;
+    --accent: #e0924a; --accent-soft: #3a2c1c; --accent-ink: #f0b077;
+    --warn: #e08064; --warn-soft: #3a2420; --good: #6cb587; --good-soft: #1e2c22;
+    --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #10161c; --surface: #1a1a19; --surface-2: #1f2730;
+      --ink: #e8ecee; --ink-soft: #9fb0ba; --ink-mute: #6d7a82;
+      --line: #2c333a; --line-strong: #3a434b;
+      --accent: #e0924a; --accent-soft: #3a2c1c; --accent-ink: #f0b077;
+      --warn: #e08064; --warn-soft: #3a2420; --good: #6cb587; --good-soft: #1e2c22;
+      --s1: #3987e5; --s2: #199e70; --s3: #c98500; --s4: #008300;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper); color: var(--ink); font-family: var(--font-body);
+    line-height: 1.5; margin: 0;
+    scroll-snap-type: y proximity;
+  }
+  ::selection { background: var(--accent-soft); color: var(--accent-ink); }
+  code {
+    font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-2);
+    border: 1px solid var(--line); border-radius: 3px; padding: 0.05em 0.35em; color: var(--ink);
+  }
+  strong { color: var(--ink); font-weight: 650; }
+
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5rem 1.75rem 4rem;
+    scroll-snap-align: start;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .slide-inner { max-width: 880px; margin: 0 auto; width: 100%; }
+  .slide-num {
+    position: absolute; bottom: 1.6rem; right: 1.9rem;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-mute);
+  }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent-ink); display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.8rem;
+  }
+  .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--accent); }
+  h1 {
+    font-family: var(--font-display); font-weight: 400; font-size: clamp(2rem, 5vw, 3.1rem);
+    line-height: 1.1; margin: 0 0 0.9rem; text-wrap: balance; letter-spacing: -0.01em;
+  }
+  h2 {
+    font-family: var(--font-display); font-weight: 400; font-size: clamp(1.6rem, 3.6vw, 2.2rem);
+    line-height: 1.16; margin: 0 0 1rem; text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .dek { font-size: 1.08rem; color: var(--ink-soft); max-width: 62ch; margin: 0 0 1.2rem; }
+  p { color: var(--ink-soft); max-width: 68ch; font-size: 1rem; }
+  p.lede { font-size: 1.04rem; color: var(--ink); }
+
+  /* ---------- cover ---------- */
+  .cover { background: linear-gradient(180deg, var(--surface-2) 0%, var(--paper) 100%); }
+  .cover .hero-num {
+    font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: clamp(2.4rem, 7vw, 4rem); font-weight: 650; color: var(--accent-ink);
+    margin: 1.6rem 0 0.3rem;
+  }
+  .cover .hero-sub { font-size: 0.95rem; color: var(--ink-mute); }
+  .cover .meta-row {
+    display: flex; flex-wrap: wrap; gap: 1.4rem; font-family: var(--font-mono);
+    font-size: 0.78rem; color: var(--ink-mute); border-top: 1px solid var(--line);
+    padding-top: 0.9rem; margin-top: 2rem;
+  }
+  .cover .meta-row b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- two-path diagram ---------- */
+  .paths { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin: 1.8rem 0; }
+  .path-card {
+    border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+    padding: 1.5rem 1.5rem; position: relative; overflow: hidden;
+  }
+  .path-card.antiguos { border-top: 3px solid var(--s1); }
+  .path-card.nuevos { border-top: 3px solid var(--accent); }
+  .path-card .tag {
+    display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.07em; padding: 0.2rem 0.55rem; border-radius: 3px; margin-bottom: 0.8rem;
+  }
+  .path-card.antiguos .tag { background: color-mix(in srgb, var(--s1) 16%, transparent); color: var(--s1); }
+  .path-card.nuevos .tag { background: var(--accent-soft); color: var(--accent-ink); }
+  .path-card h3 { font-family: var(--font-display); font-weight: 400; font-size: 1.3rem; margin: 0 0 0.6rem; }
+  .path-card p { font-size: 0.92rem; margin: 0; }
+  @media (max-width: 720px) { .paths { grid-template-columns: 1fr; } }
+
+  /* ---------- stat rows ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 1.6rem 0; }
+  .stats.cols2 { grid-template-columns: 1fr 1fr; }
+  .stats.cols4 { grid-template-columns: repeat(4, 1fr); }
+  .stat { background: var(--surface); padding: 1.1rem 1.2rem; }
+  .stat .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); margin-bottom: 0.4rem; }
+  .stat .value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.5rem; font-weight: 650; color: var(--ink); }
+  .stat .sub { font-size: 0.76rem; color: var(--ink-mute); margin-top: 0.25rem; }
+  .stat.hi .value { color: var(--accent-ink); }
+  @media (max-width: 720px) { .stats, .stats.cols4 { grid-template-columns: 1fr 1fr; } }
+
+  /* ---------- formula ---------- */
+  .formula {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 1.3rem 1.5rem; font-family: var(--font-mono); font-size: 0.92rem; color: var(--ink);
+    overflow-x: auto; margin: 1.4rem 0; line-height: 1.8;
+  }
+  .formula .cm { color: var(--ink-mute); }
+  .formula .fx { color: var(--accent-ink); }
+
+  /* ---------- tramo/avance bars ---------- */
+  .barlist { margin: 1.6rem 0; display: flex; flex-direction: column; gap: 0.8rem; }
+  .barrow { display: grid; grid-template-columns: 130px 1fr 70px; align-items: center; gap: 0.9rem; }
+  .barrow .lbl { font-size: 0.86rem; color: var(--ink); font-weight: 550; }
+  .barrow .track { height: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+  .barrow .fill { height: 100%; border-radius: 5px 0 0 5px; }
+  .barrow .val { font-family: var(--font-mono); font-size: 0.85rem; text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+  /* ---------- chart ---------- */
+  .chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 1.3rem 1.3rem 0.9rem; margin: 1.4rem 0; }
+  .chart-title { font-size: 0.88rem; font-weight: 650; color: var(--ink); margin-bottom: 0.1rem; }
+  .chart-sub { font-size: 0.78rem; color: var(--ink-mute); margin-bottom: 0.6rem; }
+  svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+  .gridline { stroke: var(--line); stroke-width: 1; }
+  .axisline { stroke: var(--line-strong); stroke-width: 1; }
+  .axislabel { font-family: var(--font-mono); font-size: 9.5px; fill: var(--ink-mute); }
+  .seriesline { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .endlabel { font-family: var(--font-mono); font-size: 10px; font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.9rem 1.2rem; margin-top: 0.7rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }
+  .legend .item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.74rem; color: var(--ink-soft); }
+  .legend .sw { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ---------- cohort schematic ---------- */
+  .cohort-schematic { margin: 1.6rem 0; }
+  .cohort-row { display: grid; grid-template-columns: 90px 1fr; align-items: center; gap: 0.8rem; margin-bottom: 0.55rem; }
+  .cohort-row .day-lbl { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-mute); text-align: right; }
+  .cohort-row .track { position: relative; height: 16px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 3px; }
+  .cohort-row .bar { position: absolute; top: 0; bottom: 0; background: var(--accent); opacity: 0.75; border-radius: 3px; }
+  .cohort-axis { display: grid; grid-template-columns: 90px 1fr; gap: 0.8rem; margin-top: 0.3rem; }
+  .cohort-axis .axis-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-mute); }
+
+  /* ---------- callout ---------- */
+  .callout {
+    border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface);
+    border-radius: 0 6px 6px 0; padding: 1.1rem 1.3rem; margin: 1.4rem 0;
+  }
+  .callout.good { border-left-color: var(--good); }
+  .callout .k { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-ink); margin-bottom: 0.4rem; display: block; }
+  .callout.good .k { color: var(--good); }
+  .callout p { margin: 0; max-width: 66ch; }
+
+  /* ---------- table ---------- */
+  .tblwrap { overflow-x: auto; margin: 1.3rem 0; border: 1px solid var(--line); border-radius: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; min-width: 460px; }
+  thead th { text-align: left; font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-mute); background: var(--surface-2); padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--line); color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child, thead th:first-child { color: var(--ink); font-weight: 500; white-space: normal; }
+  td.num, th.num { text-align: right; }
+  td.hi { color: var(--ink); font-weight: 650; }
+  tr.totalrow td { border-top: 2px solid var(--line-strong); font-weight: 650; color: var(--ink); }
+
+  /* ---------- progress dots nav ---------- */
+  .dots { position: fixed; right: 1.4rem; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.5rem; z-index: 10; }
+  .dots a { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); display: block; transition: background 0.15s, transform 0.15s; }
+  .dots a:hover, .dots a.active { background: var(--accent); transform: scale(1.3); }
+  @media (max-width: 720px) { .dots { display: none; } }
+
+  footer.closing { text-align: left; }
+  footer.closing .fine { font-size: 0.78rem; color: var(--ink-mute); margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1.2rem; }
+</style>
+
+<div class="dots" id="dots"></div>
+
+<!-- ============================================================= -->
+<!-- SLIDE 0 — COVER -->
+<!-- ============================================================= -->
+<section class="slide cover" id="s0">
+  <div class="slide-inner">
+    <div class="eyebrow">Cobranza · De la asignación a la meta</div>
+    <h1>Cómo se arma el número de recupero del mes</h1>
+    <p class="dek">Desde que un crédito se asigna a cobranza — sea antiguo o recién caído en mora — hasta la meta diaria completa. Un recorrido con datos reales de julio 2026.</p>
+    <div class="hero-num">S/ 1,776,174</div>
+    <div class="hero-sub">meta total proyectada para julio 2026</div>
+    <div class="meta-row">
+      <span><b>Alcance</b> mora 1–30 días</span>
+      <span><b>Calibración</b> 14 meses de historia</span>
+      <span><b>Validado</b> backtest de junio: ±5.4%</span>
+    </div>
+  </div>
+  <div class="slide-num">1 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 1 — EL OBJETIVO -->
+<!-- ============================================================= -->
+<section class="slide" id="s1">
+  <div class="slide-inner">
+    <div class="eyebrow">00 — El objetivo</div>
+    <h2>Una meta diaria, no solo un número de cierre</h2>
+    <p class="lede">Cobranza asigna una cartera cada mes. La pregunta no es solo "¿cuánto se recupera al final?" sino <strong>"¿cuánto debería llevar recuperado a mitad de mes?"</strong> — para poder comparar avance real contra plan mientras el mes todavía transcurre.</p>
+    <p>El primer instinto — repartir la meta del mes entre 30 días por igual — no sobrevive al primer chequeo de datos: el pago no es un goteo diario, es un evento puntual. <strong>92% de los créditos en mora paga cero o una sola vez en el mes.</strong> Por eso el modelo que sigue no promedia — sigue el rastro de cada crédito desde el momento exacto en que se asigna.</p>
+  </div>
+  <div class="slide-num">2 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 2 — DOS ORIGENES -->
+<!-- ============================================================= -->
+<section class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="eyebrow">01 — El punto de partida</div>
+    <h2>Toda la cartera de cobranza nace de una de dos formas</h2>
+    <p class="lede">Un crédito llega a la mesa de cobranza por uno de dos caminos — y cada uno necesita su propio motor de cálculo.</p>
+    <div class="paths">
+      <div class="path-card antiguos">
+        <span class="tag">Antiguos · Stock</span>
+        <h3>Ya estaba en mora</h3>
+        <p>Se conoce por completo desde el día 1 del mes — cuánto debe, cuántos días lleva atrasado. Tiene todo el mes por delante para pagar.</p>
+      </div>
+      <div class="path-card nuevos">
+        <span class="tag">Nuevos · Flujo</span>
+        <h3>Cae en mora durante el mes</h3>
+        <p>No se sabe de antemano quién será — pero sí se sabe <strong>cuándo vence cada cuota</strong>. Cada día que alguien no paga a tiempo, nace un grupo nuevo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">3 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 3 — ANTIGUOS: LA BASE STOCK -->
+<!-- ============================================================= -->
+<section class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="eyebrow">02 — Antiguos</div>
+    <h2>La base stock: una foto fija al cierre del mes anterior</h2>
+    <p class="lede">Todos los créditos con mora entre 1 y 30 días, medidos al cierre del mes anterior, se clasifican por tramo — y <strong>conservan ese tramo todo el mes</strong>, aunque su mora siga creciendo.</p>
+
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Tramo de mora</th><th class="num">Saldo asignado (jul-2026)</th></tr></thead>
+        <tbody>
+          <tr><td>1–8 días</td><td class="num">S/ 1,296,254</td></tr>
+          <tr><td>9–15 días</td><td class="num">S/ 766,679</td></tr>
+          <tr><td>16–30 días</td><td class="num">S/ 881,025</td></tr>
+          <tr class="totalrow"><td>Total stock</td><td class="num">S/ 2,943,958</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:0.85rem;color:var(--ink-mute);">Este número no se mueve durante el mes — solo cambia cuánto de ese saldo ya se rebajó.</p>
+  </div>
+  <div class="slide-num">4 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 4 — NUEVOS: EL CALENDARIO -->
+<!-- ============================================================= -->
+<section class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="eyebrow">03 — Nuevos</div>
+    <h2>El calendario de vencimientos genera una cohorte por día</h2>
+    <p class="lede">Cada día del mes, un grupo de créditos que hoy está al día tiene una cuota venciendo. De ese grupo, una fracción no paga a tiempo y entra en mora al día siguiente.</p>
+
+    <div class="formula">
+<span class="cm">entra_en_mora(día D)</span> = saldo_en_riesgo(día D) × <span class="fx">P(no paga a tiempo) = 13.38%</span>
+    </div>
+
+    <p>Esa tasa <strong>no</strong> sale de la curva de pago por cuota (que da 27.4% y produce un error de +79% si se usa mal) — se midió directamente, a nivel crédito, en 10 meses de historia sin incluir el mes de validación.</p>
+
+    <div class="cohort-schematic">
+      <div class="cohort-row"><span class="day-lbl">vence día 1</span><div class="track"><div class="bar" style="left:0%;width:97%;"></div></div></div>
+      <div class="cohort-row"><span class="day-lbl">vence día 10</span><div class="track"><div class="bar" style="left:29%;width:68%;"></div></div></div>
+      <div class="cohort-row"><span class="day-lbl">vence día 20</span><div class="track"><div class="bar" style="left:61%;width:36%;"></div></div></div>
+      <div class="cohort-row"><span class="day-lbl">vence día 30</span><div class="track"><div class="bar" style="left:94%;width:3%;"></div></div></div>
+      <div class="cohort-axis"><span></span><div class="axis-labels"><span>día 1</span><span>día 15</span><span>día 31 (cierre)</span></div></div>
+    </div>
+    <p style="font-size:0.85rem;color:var(--ink-mute);">Cada barra es una cohorte madurando hasta el cierre del mes — la del día 1 tiene 31 días para recuperar; la del día 30, prácticamente ninguno.</p>
+  </div>
+  <div class="slide-num">5 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 5 — EL SEGMENTO: AVANCE -->
+<!-- ============================================================= -->
+<section class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="eyebrow">04 — La segmentación que sí importa</div>
+    <h2>El tramo dice si paga. El avance dice cuánto rebaja.</h2>
+    <p class="lede">Descomponiendo el recupero en frecuencia × severidad aparece algo inesperado: la severidad es <strong>casi plana entre tramos</strong> (~24%). Lo que sí la explica es el avance de amortización — qué tan cerca está el crédito de terminar su plazo.</p>
+
+    <div class="barlist">
+      <div class="barrow"><span class="lbl">Avance &lt; 10%</span><div class="track"><div class="fill" style="width:15%;background:var(--s1);"></div></div><span class="val">14.9%</span></div>
+      <div class="barrow"><span class="lbl">Avance 10–40%</span><div class="track"><div class="fill" style="width:20%;background:var(--s2);"></div></div><span class="val">20.2%</span></div>
+      <div class="barrow"><span class="lbl">Avance 40–70%</span><div class="track"><div class="fill" style="width:41%;background:var(--s3);"></div></div><span class="val">40.8%</span></div>
+      <div class="barrow"><span class="lbl">Avance 70%+</span><div class="track"><div class="fill" style="width:75%;background:var(--s4);"></div></div><span class="val">74.8%</span></div>
+    </div>
+    <p style="font-size:0.85rem;color:var(--ink-mute);">Severidad del tramo 1–8, por banda de avance. Un crédito cerca de terminar casi siempre cancela el remanente cuando paga; uno recién desembolsado solo cubre su cuota, mayormente interés.</p>
+  </div>
+  <div class="slide-num">6 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 6 — LAS CURVAS -->
+<!-- ============================================================= -->
+<section class="slide" id="s6">
+  <div class="slide-inner">
+    <div class="eyebrow">05 — Las curvas calibradas</div>
+    <h2>Antiguos y nuevos, cada uno con su propio reloj</h2>
+    <p class="lede">Antiguos maduran por día del mes; nuevos maduran por días desde que entraron en mora. Ambas curvas se calibraron con 14 meses de historia real.</p>
+
+    <div class="chart-card">
+      <div class="chart-title">Antiguos — recupero acumulado por tramo</div>
+      <div class="chart-sub">% del saldo capital, según el día del mes</div>
+      <svg class="chart" id="chart-stock" viewBox="0 0 780 260" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend" id="legend-stock"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Nuevos — recupero acumulado por avance</div>
+      <div class="chart-sub">% del saldo al momento de entrar en mora, según días transcurridos</div>
+      <svg class="chart" id="chart-nuevos" viewBox="0 0 780 260" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend" id="legend-nuevos"></div>
+    </div>
+  </div>
+  <div class="slide-num">7 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 7 — EL MECANISMO -->
+<!-- ============================================================= -->
+<section class="slide" id="s7">
+  <div class="slide-inner">
+    <div class="eyebrow">06 — El mecanismo de proyección</div>
+    <h2>Todo se suma, día por día</h2>
+    <p class="lede">La meta acumulada de cualquier día del mes es la suma de lo que aporta el stock más lo que aportan todas las cohortes de nuevos que ya nacieron hasta ese día.</p>
+
+    <div class="formula">
+<span class="cm">Meta_acumulada(d)</span> = <span class="fx">Stock_acumulado(d)</span> + <span class="fx">Nuevos_acumulado(d)</span><br><br>
+<span class="cm">Stock_acumulado(d)</span> &nbsp;= Σ<sub>(tramo,avance)</sub> saldo_stock × curva_stock(tramo, avance, d)<br>
+<span class="cm">Nuevos_acumulado(d)</span> = Σ<sub>D≤d</sub> entra_en_mora(D) × curva_nuevos(avance, d − D)
+    </div>
+
+    <div class="callout">
+      <span class="k">Dos enfoques, en paralelo</span>
+      <p>Se mantiene una versión <strong>agregada</strong> (una curva por tramo) y una <strong>segmentada</strong> (cruzada por avance) para poder compararlas. La segmentada es más fiel a la mezcla real de la cartera — en la corrida de referencia, la diferencia entre ambas fue de <strong>4.5%</strong>.</p>
+    </div>
+  </div>
+  <div class="slide-num">8 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 8 — APLICADO A JULIO -->
+<!-- ============================================================= -->
+<section class="slide" id="s8">
+  <div class="slide-inner">
+    <div class="eyebrow">07 — Aplicado a julio 2026</div>
+    <h2>La meta del mes, con números reales</h2>
+    <p class="lede">Stock al cierre de junio + calendario real de vencimientos de julio, con las curvas ya calibradas.</p>
+
+    <div class="stats cols2">
+      <div class="stat"><div class="label">Aporte del stock</div><div class="value">S/ 426,651</div><div class="sub">24% de la meta</div></div>
+      <div class="stat hi"><div class="label">Aporte de nuevos</div><div class="value">S/ 1,349,523</div><div class="sub">76% de la meta</div></div>
+    </div>
+    <div class="stats" style="grid-template-columns:1fr;">
+      <div class="stat hi"><div class="label">Meta total de julio</div><div class="value" style="font-size:2.1rem;">S/ 1,776,174</div></div>
+    </div>
+
+    <p>Los "nuevos" dominan la meta en soles — no porque sean más probables de pagar, sino porque el universo de créditos que <em>podría</em> caer en mora (toda la cartera vigente con cuotas por vencer) es mucho más grande que el stock ya identificado.</p>
+  </div>
+  <div class="slide-num">9 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 9 — VALIDACION -->
+<!-- ============================================================= -->
+<section class="slide" id="s9">
+  <div class="slide-inner">
+    <div class="eyebrow">08 — ¿Funciona?</div>
+    <h2>Validado contra un mes real y cerrado</h2>
+    <p class="lede">Se reconstruyó la meta que se habría fijado el 1 de junio, y se comparó contra lo que realmente se recuperó ese mes.</p>
+
+    <div class="stats cols4">
+      <div class="stat"><div class="label">Proyectado</div><div class="value">S/1.81M</div></div>
+      <div class="stat"><div class="label">Real</div><div class="value">S/1.71M</div></div>
+      <div class="stat hi"><div class="label">Error total</div><div class="value">+5.4%</div></div>
+      <div class="stat hi"><div class="label">Error en nuevos</div><div class="value">+0.7%</div></div>
+    </div>
+
+    <div class="callout good">
+      <span class="k">Seguimiento en vivo — julio, corte día 9</span>
+      <p>El recupero real (S/527,375) va <strong>6.3% por encima</strong> de lo que la meta proyectaba para el mismo día — señal sana. Dos formas independientes de calcular "lo que resta" (acumulado real + resto proyectado, vs. reiniciar el reloj a hoy) convergen dentro de 1.0% una de la otra.</p>
+    </div>
+  </div>
+  <div class="slide-num">10 / 11</div>
+</section>
+
+<!-- ============================================================= -->
+<!-- SLIDE 10 — CIERRE -->
+<!-- ============================================================= -->
+<section class="slide" id="s10">
+  <div class="slide-inner">
+    <div class="eyebrow">Cierre</div>
+    <h2>De la asignación a la meta, en una frase</h2>
+    <p class="lede">Cada crédito —sea antiguo o recién caído— se sigue individualmente desde el momento exacto en que entra a la cartera de cobranza, con la curva que le corresponde según su tramo o su avance de amortización. Sumando esas trayectorias, día por día, se arma la meta completa del mes.</p>
+
+    <div class="formula" style="margin-top:2rem;">
+<span class="cm">Antiguos</span> → base fija al cierre de mes → curva por tramo × avance<br>
+<span class="cm">Nuevos</span> &nbsp;→ calendario de vencimientos → cohorte por día × avance<br>
+<span class="cm">Suma diaria</span> → <span class="fx">meta acumulada del mes</span>
+    </div>
+
+    <footer class="closing">
+      <div class="fine">Metodología calibrada con 14 meses de historia (mar-2025 a jun-2026), validada con backtest sobre junio 2026 (+5.4% de error) y en seguimiento activo sobre julio 2026.</div>
+    </footer>
+  </div>
+  <div class="slide-num">11 / 11</div>
+</section>
+
+<script>
+(function() {
+  var TRAMO = {
+    labels: ["Tramo 1–8", "Tramo 9–15", "Tramo 16–30"],
+    colorsLight: ["#2a78d6", "#1baf7a", "#eda100"],
+    colorsDark:  ["#3987e5", "#199e70", "#c98500"],
+    series: [
+      [2.9097,5.1659,6.5883,7.4802,8.2297,8.8018,9.2433,9.705,10.0856,10.3361,10.6894,10.9292,11.2137,11.405,11.652,11.8475,12.0505,12.2422,12.4499,12.7652,12.9799,13.2342,13.5225,13.8139,14.1576,14.6888,15.3306,15.9949,16.7415,17.6622,18.0881],
+      [1.0977,1.9326,2.5066,2.9187,3.5737,4.0813,4.3846,4.6994,5.1124,5.7193,5.9578,6.1513,6.4816,6.7761,7.1581,7.4767,7.9562,8.3121,8.6094,9.2543,9.6457,9.9486,10.282,10.6513,11.0247,11.3098,11.5839,11.8245,12.1691,12.5163,12.7193],
+      [0.555,0.9929,1.288,1.6115,2.0564,2.4372,2.6732,2.9595,3.263,3.5307,3.8611,4.126,4.4186,4.6177,4.8896,5.1633,5.3801,5.5658,5.7846,5.9244,6.1049,6.2475,6.411,6.5858,6.9029,7.2971,7.4791,7.6298,7.7628,7.9076,7.9964]
+    ]
+  };
+  var AVANCE = {
+    labels: ["< 10% avance", "10–40%", "40–70%", "70%+"],
+    colorsLight: ["#2a78d6", "#1baf7a", "#eda100", "#008300"],
+    colorsDark:  ["#3987e5", "#199e70", "#c98500", "#008300"],
+    series: [
+      [3.13,4.784,5.952,6.684,7.122,7.564,7.798,8.063,8.266,8.45,8.65,8.787,8.89,9.028,9.162,9.297,9.413,9.503,9.615,9.726,9.801,9.887,10.018,10.237,10.41,10.634,11.042,11.473,12.282,13.369,14.362],
+      [3.644,5.697,7.433,8.416,9.044,9.649,10.067,10.591,10.966,11.289,11.525,11.715,11.929,12.111,12.326,12.486,12.669,12.82,12.937,13.108,13.221,13.378,13.55,13.794,14.081,14.39,14.956,15.631,16.818,18.32,19.8],
+      [8.704,13.658,17.667,19.752,21.315,22.688,23.734,24.993,25.769,26.475,27.014,27.499,27.918,28.326,28.737,29.029,29.283,29.625,29.89,30.186,30.466,30.712,31.014,31.434,31.832,32.351,33.206,34.184,35.895,38.365,40.876],
+      [16.07,26.155,34.371,38.864,42.171,45.429,47.383,49.727,51.795,53.339,54.408,55.286,56.424,57.503,58.222,59.149,59.818,60.302,60.931,61.408,61.788,62.32,62.9,63.548,64.001,64.69,65.975,66.99,68.933,71.572,74.189]
+    ]
+  };
+
+  function isDark() {
+    var t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  function buildChart(svgId, legendId, data, yMax) {
+    var svg = document.getElementById(svgId);
+    var legendEl = document.getElementById(legendId);
+    if (!svg) return;
+    var W = 780, H = 260;
+    var padL = 38, padR = 66, padT = 12, padB = 28;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = data.series[0].length;
+    var dark = isDark();
+    var colors = dark ? data.colorsDark : data.colorsLight;
+
+    function xPos(i) { return padL + (i / (n - 1)) * plotW; }
+    function yPos(v) { return padT + plotH - (v / yMax) * plotH; }
+
+    var svgns = "http://www.w3.org/2000/svg";
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    var ySteps = 4;
+    for (var g = 0; g <= ySteps; g++) {
+      var v = (yMax / ySteps) * g;
+      var y = yPos(v);
+      var line = document.createElementNS(svgns, "line");
+      line.setAttribute("x1", padL); line.setAttribute("x2", W - padR);
+      line.setAttribute("y1", y); line.setAttribute("y2", y);
+      line.setAttribute("class", "gridline");
+      svg.appendChild(line);
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", padL - 8); lbl.setAttribute("y", y + 3);
+      lbl.setAttribute("text-anchor", "end"); lbl.setAttribute("class", "axislabel");
+      lbl.textContent = v.toFixed(0) + "%";
+      svg.appendChild(lbl);
+    }
+    [0, 9, 19, 29].forEach(function(i) {
+      if (i >= n) return;
+      var x = xPos(i);
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", x); lbl.setAttribute("y", H - padB + 15);
+      lbl.setAttribute("text-anchor", "middle"); lbl.setAttribute("class", "axislabel");
+      lbl.textContent = "día " + (i + 1);
+      svg.appendChild(lbl);
+    });
+    var axis = document.createElementNS(svgns, "line");
+    axis.setAttribute("x1", padL); axis.setAttribute("x2", W - padR);
+    axis.setAttribute("y1", H - padB); axis.setAttribute("y2", H - padB);
+    axis.setAttribute("class", "axisline");
+    svg.appendChild(axis);
+
+    data.series.forEach(function(s, si) {
+      var d = s.map(function(v, i) { return (i === 0 ? "M" : "L") + xPos(i).toFixed(1) + "," + yPos(v).toFixed(1); }).join(" ");
+      var path = document.createElementNS(svgns, "path");
+      path.setAttribute("d", d); path.setAttribute("class", "seriesline"); path.setAttribute("stroke", colors[si]);
+      svg.appendChild(path);
+      var lastV = s[s.length - 1];
+      var lbl = document.createElementNS(svgns, "text");
+      lbl.setAttribute("x", xPos(n - 1) + 7); lbl.setAttribute("y", yPos(lastV) + 3.5);
+      lbl.setAttribute("class", "endlabel"); lbl.setAttribute("fill", colors[si]);
+      lbl.textContent = lastV.toFixed(1) + "%";
+      svg.appendChild(lbl);
+    });
+
+    legendEl.innerHTML = "";
+    data.labels.forEach(function(lbl, si) {
+      var item = document.createElement("div");
+      item.className = "item";
+      item.innerHTML = '<span class="sw" style="background:' + colors[si] + '"></span>' + lbl;
+      legendEl.appendChild(item);
+    });
+  }
+
+  function renderCharts() {
+    buildChart("chart-stock", "legend-stock", TRAMO, 20);
+    buildChart("chart-nuevos", "legend-nuevos", AVANCE, 80);
+  }
+  renderCharts();
+
+  // dots nav
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var dotsEl = document.getElementById("dots");
+  slides.forEach(function(s) {
+    var a = document.createElement("a");
+    a.href = "#" + s.id;
+    dotsEl.appendChild(a);
+  });
+  var dotLinks = Array.prototype.slice.call(dotsEl.children);
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      var idx = slides.indexOf(e.target);
+      if (e.isIntersecting) {
+        dotLinks.forEach(function(d){ d.classList.remove("active"); });
+        if (dotLinks[idx]) dotLinks[idx].classList.add("active");
+      }
+    });
+  }, { threshold: 0.5 });
+  slides.forEach(function(s) { io.observe(s); });
+
+  var mo = new MutationObserver(function(muts) {
+    muts.forEach(function(m) { if (m.attributeName === "data-theme") renderCharts(); });
+  });
+  mo.observe(document.documentElement, { attributes: true });
+  if (window.matchMedia) {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderCharts);
+  }
+})();
+</script>
