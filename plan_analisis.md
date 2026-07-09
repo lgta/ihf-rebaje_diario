@@ -278,6 +278,26 @@ del rango de trabajo (30 días) entre el momento de asignación real y el corte 
 necesita un tratamiento especial (mirar su clasificación original), no puede resolverse
 solo con la foto del día. Si se vuelve a usar el Enfoque B, aplicar siempre este parche.
 
+### Corrección aplicada (2026-07-09)
+Se corrigió `meta_desde_hoy.sql`/`.py` con dos cambios:
+1. **Bloque Q0 nuevo:** identifica a los "aged-out survivors" (créditos del stock
+   original de julio — cierre de junio, mora 1-30 — que ya cruzaron 30 días para hoy)
+   vía JOIN contra la foto de asignación, los clasifica por su tramo/avance
+   **originales** (no los de hoy — todos caen en "16-30", ya que solo créditos ya cerca
+   de 30 pueden cruzar en 9 días) y aplica la lógica acumulada: `saldo_30-jun × [curva
+   día 31 − curva día 9]`. Aporte: **S/22,510**.
+2. **Q2 corregido:** la exclusión del calendario de "nuevos" ahora usa TODO el stock de
+   asignación (no solo el que sigue 1-30 hoy), evitando un segundo bug menor — 3
+   créditos / S/6,843 de saldo que se contaban dos veces (como stock aged-out y también
+   como "en riesgo" en el calendario de nuevos).
+
+**Resultado final corregido:** S/22,510 (aged-out) + S/462,014 (stock re-baseline) +
+S/782,322 (nuevos, calendario ya corregido) = **S/1,266,846** — solo **+1.4%** sobre el
+Enfoque A oficial (S/1,248,799). Mucho más consistente que el +2.8% estimado de forma
+aproximada antes de aplicar el fix completo a Q2. Insumos actualizados en
+`datos_meta_desde_hoy/` (agregado `aged_out_hoy.csv`; `calendario_hoy_adelante.csv`
+regenerado con la exclusión corregida).
+
 ## Preguntas abiertas
 1. **Cruce de 30 días:** un crédito del stock asignado con 25 días de mora cruza los 30 a
    mitad de mes. **Supuesto vigente:** sigue contando en la cartera asignada (y su rebaje

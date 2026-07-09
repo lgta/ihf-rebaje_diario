@@ -5,13 +5,30 @@ del mes desde ahi. Ver meta_desde_hoy.sql para las queries de origen.
 
 Contraste con meta_julio.py (ancla a cierre de junio, cohortes por
 fecha de entrada real): mas simple pero trata a los creditos que ya
-llevaban dias en mora como si fueran "dia 1" frescos hoy. Ambos
-enfoques convergieron a +1.0% de diferencia el 2026-07-09 -- util como
-cruce de validacion, no reemplaza el enfoque acumulado.
+llevaban dias en mora como si fueran "dia 1" frescos hoy -- salvo el
+caso "aged-out" corregido abajo, que SI necesita la logica acumulada.
+
+BUG CORREGIDO 2026-07-09 (ver plan_analisis.md "Meta en vivo de
+julio"): la version anterior filtraba el stock con "mora between 1
+and 30" usando la mora de HOY, lo que excluia silenciosamente a los
+creditos del stock original de julio que ya habian cruzado 30 dias de
+mora -- 244 creditos, S/501,307 (todos originalmente tramo 16-30).
+Esta version los reincorpora como un componente aparte (PASO 0),
+usando su clasificacion y saldo ORIGINALES (30-jun) con la logica
+acumulada (curva dia31 - curva dia9), porque su punto de referencia
+real es la asignacion, no hoy. El resultado final (S/1,283,679) queda
+MAS lejos del enfoque acumulado oficial (S/1,248,799, +2.8% en vez de
++1.0%) que antes de corregir el bug -- la cercania original de +1.0%
+era en parte casualidad, compensada por la sobreestimacion de tratar
+a los supervivientes de julio-1 como "dia 1 fresco". Se mantiene el
+enfoque acumulado (meta_julio.py) como fuente oficial; este script es
+solo un cruce de validacion secundario.
 
 Insumos en datos_meta_desde_hoy/:
   stock_hoy_09jul.csv        : stock de HOY, por tramo x avance (Q1)
-  calendario_hoy_adelante.csv: vencimientos desde manana, por avance (Q2)
+  aged_out_hoy.csv           : supervivientes >30 dias del stock original (Q0)
+  calendario_hoy_adelante.csv: vencimientos desde manana, por avance (Q2, ya
+                                excluye Q0 y Q1 para no duplicar saldo)
   curva_stock_seg.csv / curva_nuevos_seg.csv : curvas calibradas (14 meses)
 """
 import csv
@@ -23,6 +40,11 @@ stock_hoy = {}
 with open(f"{DIR}/stock_hoy_09jul.csv") as f:
     for row in csv.DictReader(f):
         stock_hoy[(row["tramo"], row["avance_band"])] = float(row["saldo_total"])
+
+aged_out = {}
+with open(f"{DIR}/aged_out_hoy.csv") as f:
+    for row in csv.DictReader(f):
+        aged_out[(row["tramo_original"], row["avance_band"])] = float(row["saldo_asignacion_total"])
 
 curva_stock = {}
 with open(f"{DIR}/curva_stock_seg.csv") as f:
@@ -52,9 +74,31 @@ AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 
 HOY = date(2026, 7, 9)
+ASIGNACION = date(2026, 6, 30)
 FIN_MES = date(2026, 7, 31)
-N_DIAS_RESTANTES = (FIN_MES - HOY).days  # 22
+N_DIAS_RESTANTES = (FIN_MES - HOY).days          # 22
+DIA_HOY_DESDE_ASIGNACION = (HOY - ASIGNACION).days  # 9
+DIA_FIN_DESDE_ASIGNACION = (FIN_MES - ASIGNACION).days  # 31
 
+print("=" * 78)
+print("PASO 0 - CREDITOS AGED-OUT (stock original de julio, cruzaron 30 dias)")
+print("=" * 78)
+print(f"{'tramo orig.':<10} {'avance':<18} {'saldo 30-jun':>12} {'curva d31':>9} {'curva d9':>9} {'resto':>7} {'aporte':>12}")
+total_aged_out = 0.0
+for t in TRAMOS:
+    for a in AVANCES:
+        saldo = aged_out.get((t, a), 0.0)
+        if saldo == 0:
+            continue
+        pct31 = lookup(curva_stock.get((t, a), {}), DIA_FIN_DESDE_ASIGNACION)
+        pct9 = lookup(curva_stock.get((t, a), {}), DIA_HOY_DESDE_ASIGNACION)
+        resto_pct = pct31 - pct9
+        aporte = saldo * resto_pct / 100.0
+        total_aged_out += aporte
+        print(f"{t:<10} {a:<18} {saldo:>12,.0f} {pct31:>8.2f}% {pct9:>8.2f}% {resto_pct:>6.2f}% {aporte:>12,.0f}")
+print(f"{'TOTAL AGED-OUT':<29} {sum(aged_out.values()):>12,.0f} {'':>9} {'':>9} {'':>7} {total_aged_out:>12,.0f}")
+
+print()
 print("=" * 78)
 print("PASO 1 - STOCK RE-BASELINEADO A HOY (9-jul), detalle por segmento")
 print("=" * 78)
@@ -96,15 +140,18 @@ for a in AVANCES:
 print(f"{'TOTAL NUEVOS':<18} {sum(r['saldo_riesgo'] for r in nuevos_por_banda.values()):>16,.0f} "
       f"{sum(r['entra_mora'] for r in nuevos_por_banda.values()):>14,.0f} {total_nuevos:>14,.0f}")
 
+meta_total = total_aged_out + total_stock + total_nuevos
+
 print()
 print("=" * 78)
 print(f"META DESDE HOY ({HOY.isoformat()}) HASTA CIERRE DE JULIO ({N_DIAS_RESTANTES} dias)")
 print("=" * 78)
-print(f"  Stock (re-baseline):  S/ {total_stock:,.0f}")
-print(f"  Nuevos (10-31 jul):   S/ {total_nuevos:,.0f}")
-print(f"  META TOTAL:           S/ {total_stock + total_nuevos:,.0f}")
+print(f"  Aged-out (stock original >30 dias hoy): S/ {total_aged_out:,.0f}")
+print(f"  Stock (re-baseline, sigue 1-30 hoy):    S/ {total_stock:,.0f}")
+print(f"  Nuevos (10-31 jul):                     S/ {total_nuevos:,.0f}")
+print(f"  META TOTAL (corregida):                 S/ {meta_total:,.0f}")
 
 print()
-print("Comparacion con el enfoque anterior (acumulado real + resto proyectado")
-print("del stock anclado a 1-jul): S/ 1,248,799")
-print(f"Diferencia: {100*((total_stock+total_nuevos)-1248799)/1248799:+.1f}%")
+print("Comparacion con el enfoque acumulado oficial (meta_julio.py):")
+print("  Resto del mes segun acumulado: S/ 1,248,799")
+print(f"  Diferencia: {100*(meta_total-1248799)/1248799:+.1f}%")

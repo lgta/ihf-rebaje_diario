@@ -70,15 +70,14 @@ deck_meta_recupero.html    Deck de presentación (copia del artifact)
   (stock +16.2%, nuevos +0.7% — casi exacto).
 - **Meta de julio 2026:** S/1,776,174 (stock S/426,651 + nuevos S/1,349,523). Al corte
   del día 9: recuperado real S/527,375 (+6.3% sobre lo proyectado); resta S/1,248,799.
+- **Cruce de validación "reinicio del reloj"** (`meta_desde_hoy.*`, no oficial):
+  S/1,266,846 — solo +1.4% sobre el enfoque acumulado. Requirió un parche para no
+  excluir silenciosamente a los créditos del stock original que cruzan 30 días de mora
+  entre la asignación y el corte (bug encontrado y corregido el 2026-07-09).
 
 ## Pendientes
 
 - Extender el backtest a 3–6 meses más (junio es un solo punto de dato).
-- Corregir el enfoque "reinicio del reloj" (`meta_desde_hoy.*`) para no excluir
-  silenciosamente a los créditos del stock original que cruzan 30 días de mora entre la
-  asignación y el corte — ver detalle en `plan_analisis.md`, sección "Meta en vivo de
-  julio". El enfoque acumulado (`meta_julio.*`) no tiene este problema y es la fuente
-  oficial.
 - Recalibrar las curvas excluyendo cada mes de prueba (hoy incluyen los 14 meses
   completos, con peso marginal ~1/14 del mes evaluado).
 - Usar `installmentlastpaiddate` (dts_cobranza_creditos_cuotas) para cuantificar el
