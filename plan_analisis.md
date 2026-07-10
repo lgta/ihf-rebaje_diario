@@ -1,5 +1,12 @@
 # Plan de análisis — Meta de recupero de cartera en cobranza (tramo 1–30)
 
+> **Este archivo es el historial cronológico crudo** (hasta 2026-07-09). Para lo que está
+> vigente HOY, ir a [`ESTADO.md`](ESTADO.md). Para bugs, ideas, decisiones, glosario y
+> fuentes de datos ya extraídos de acá en forma consultable, ver los archivos listados en
+> `ESTADO.md`. El trabajo del 2026-07-10 en adelante (investigación de dayslate, motor
+> cuota-consistente, artifacts nuevos) vive en esos archivos nuevos, no se siguió
+> agregando acá — este archivo queda congelado como referencia histórica.
+
 ## Objetivo
 Definir la meta mensual de recupero **en saldo capital** de la cartera asignada a cobranza,
 con curva diaria esperada para seguimiento intra-mes.

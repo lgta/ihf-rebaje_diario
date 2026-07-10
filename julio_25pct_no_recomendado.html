@@ -1,0 +1,392 @@
+<title>Por qué NO se usa 25% — prueba y backtest</title>
+<style>
+  :root{
+    --bg:#EEF1EE; --surface:#FCFCFB; --surface-2:#F2F4F1; --border:#DBE1DD;
+    --ink:#17211F; --ink-2:#48534F; --ink-3:#717B77;
+    --accent:#0E9C82; --bad:#C4383D; --bad-soft:#FBEAEA; --bad-ink:#7A1F22;
+    --shadow: 0 1px 2px rgba(20,30,27,0.06), 0 6px 20px rgba(20,30,27,0.05);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#100D0C; --surface:#1A1211; --surface-2:#211816; --border:#33231F;
+      --ink:#EFE7E5; --ink-2:#C2B3B0; --ink-3:#8F8280;
+      --accent:#1FA88C; --bad:#E05C5C; --bad-soft:#2B1414; --bad-ink:#FFC2C2;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#100D0C; --surface:#1A1211; --surface-2:#211816; --border:#33231F;
+    --ink:#EFE7E5; --ink-2:#C2B3B0; --ink-3:#8F8280;
+    --accent:#1FA88C; --bad:#E05C5C; --bad-soft:#2B1414; --bad-ink:#FFC2C2;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#EEF1EE; --surface:#FCFCFB; --surface-2:#F2F4F1; --border:#DBE1DD;
+    --ink:#17211F; --ink-2:#48534F; --ink-3:#717B77;
+    --accent:#0E9C82; --bad:#C4383D; --bad-soft:#FBEAEA; --bad-ink:#7A1F22;
+    --shadow: 0 1px 2px rgba(20,30,27,0.06), 0 6px 20px rgba(20,30,27,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; font-size:15.5px; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:960px; margin:0 auto; padding:48px 28px 100px; }
+  h1,h2,h3{ font-family:Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua",serif; font-weight:600; text-wrap:balance; letter-spacing:-0.01em; }
+
+  .banner{
+    background:var(--bad-soft); border:1px solid var(--bad); border-radius:var(--radius);
+    padding:18px 22px; display:flex; gap:14px; align-items:flex-start; margin-bottom:32px;
+  }
+  .banner .ic{ font-size:22px; line-height:1; flex:none; }
+  .banner b{ color:var(--bad-ink); display:block; font-size:15px; margin-bottom:4px; }
+  .banner p{ margin:0; color:var(--ink-2); font-size:13.8px; }
+
+  header.doc-head{ margin-bottom:36px; }
+  header .eyebrow{ text-transform:uppercase; letter-spacing:0.12em; font-size:11.5px; font-weight:700; color:var(--bad); margin-bottom:10px; }
+  header h1{ font-size:30px; margin:0 0 8px; }
+  header .sub{ color:var(--ink-2); font-size:15.5px; max-width:640px; }
+
+  section{ margin:48px 0; }
+  .section-label{ text-transform:uppercase; letter-spacing:0.1em; font-size:11.5px; font-weight:700; color:var(--ink-3); margin-bottom:6px; }
+  section > h2{ font-size:22px; margin:0 0 6px; }
+  section > .lede{ color:var(--ink-2); max-width:680px; margin:0 0 22px; font-size:14.5px; }
+
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:20px; }
+  .card h3{ font-size:16px; margin:0 0 4px; }
+  .card .cap{ font-size:13px; color:var(--ink-3); margin:0 0 16px; }
+
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; }
+  .tile{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow); }
+  .tile .tl{ font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-3); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
+  .tile .tv{ font-family:Georgia,serif; font-size:23px; font-variant-numeric:tabular-nums; }
+  .tile .ts{ font-size:12px; color:var(--ink-2); margin-top:4px; }
+  .tile.good{ border-color:var(--accent); } .tile.good .tv{ color:var(--accent); }
+  .tile.bad{ border-color:var(--bad); } .tile.bad .tv{ color:var(--bad); }
+  .pill{ display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px; }
+  .pill.good{ background:color-mix(in srgb, var(--accent) 16%, transparent); color:var(--accent); }
+  .pill.bad{ background:color-mix(in srgb, var(--bad) 16%, transparent); color:var(--bad); }
+
+  .table-scroll{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); }
+  table{ border-collapse:collapse; width:100%; font-size:13.6px; min-width:480px; }
+  thead th{ text-align:right; font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-3); padding:10px 14px; background:var(--surface-2); border-bottom:1px solid var(--border); }
+  thead th:first-child{ text-align:left; }
+  tbody td{ padding:8px 14px; text-align:right; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums; color:var(--ink-2); }
+  tbody td:first-child{ text-align:left; color:var(--ink); }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr.hl-bad td{ background:var(--bad-soft); }
+  tbody tr.hl-good td{ background:color-mix(in srgb, var(--accent) 8%, transparent); }
+
+  .chart-box{ position:relative; }
+  .chart-svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .grid-line{ stroke:var(--border); stroke-width:1; }
+  .axis-label{ font-size:10.5px; fill:var(--ink-3); font-family:-apple-system,sans-serif; }
+  .end-label{ font-size:11px; font-weight:700; font-family:-apple-system,sans-serif; }
+  .hoy-line{ stroke:var(--ink-3); stroke-width:1; stroke-dasharray:3,3; }
+  .hoy-label{ font-size:10px; fill:var(--ink-3); font-family:-apple-system,sans-serif; font-weight:700; }
+  .crosshair{ stroke:var(--ink-3); stroke-width:1; pointer-events:none; }
+  .hover-dot{ pointer-events:none; stroke:var(--surface); stroke-width:1.5; }
+  .capture{ cursor:crosshair; }
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; font-size:12px; color:var(--ink-2); }
+  .legend-item{ display:inline-flex; align-items:center; gap:6px; }
+  .legend-item i{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .chart-tooltip{ position:absolute; top:8px; left:0; opacity:0; pointer-events:none; transition:opacity .08s; background:var(--ink); color:var(--bg); border-radius:8px; padding:9px 12px; font-size:12px; min-width:150px; z-index:5; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
+  .tt-head{ font-weight:700; margin-bottom:4px; opacity:0.85; }
+  .tt-row{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .tt-row i{ width:8px; height:8px; border-radius:2px; display:inline-block; flex:none; }
+  .tt-row b{ margin-left:auto; font-variant-numeric:tabular-nums; }
+
+  .example{ background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; font-size:13.6px; color:var(--ink-2); }
+  .example b{ color:var(--ink); }
+
+  footer{ margin-top:60px; padding-top:22px; border-top:1px solid var(--border); color:var(--ink-3); font-size:12.5px; }
+  footer p{ max-width:720px; }
+</style>
+
+<div class="wrap">
+
+  <div class="banner">
+    <div class="ic">⚠️</div>
+    <div>
+      <b>Este documento NO propone un método alternativo válido.</b>
+      <p>Se publica como evidencia de por qué la tasa de <b>13.38%</b> (no 25%, ni su complemento) es la que usa el modelo
+        oficial de meta de recupero. El escenario del 25% que se muestra abajo sobreestimó el backtest de junio en
+        +66.5% y, aplicado a julio, sobreestima la meta en +66.0%. Referencia: <code>guia_tecnica_recupero.md</code> §5.</p>
+    </div>
+  </div>
+
+  <header class="doc-head">
+    <div class="eyebrow">Nota técnica · comparación</div>
+    <h1>¿Por qué no usamos 25% como tasa de entrada a mora?</h1>
+    <p class="sub">25% es el complemento directo de "% de cuotas que se paga a tiempo". Es una estadística real y
+      correcta — pero no describe la misma población que la curva de recupero usada en el modelo, y por eso al
+      aplicarla se sobreestima la meta de forma severa. Aquí está la prueba, paso a paso.</p>
+  </header>
+
+  <section id="experimento">
+    <div class="section-label">1. El experimento</div>
+    <h2>Qué se probó</h2>
+    <p class="lede">Se tomó la definición más simple posible — "% que NO paga a tiempo" = 100% − "% que paga a
+      tiempo" (medido a nivel cuota, sin deduplicar episodios) ≈ 25% — y se usó como reemplazo directo de 13.38% en
+      la fórmula de proyección de nuevos, manteniendo la misma curva de recupero (<code>curva_nuevos</code>) sin
+      cambios.</p>
+    <div class="example">
+      <b>Ejemplo real que motivó la pregunta:</b> crédito con cuota vencida el 01-abr-2026, pagado el 02-abr
+      (1 día tarde). Saldo cae de S/291.90 a S/150.22 <b>el mismo día que se resuelve</b> — recupero prácticamente
+      inmediato. La curva de recupero actual, en cambio, asigna a un crédito recién entrado en mora solo 3-16% de
+      recupero en su primer día (según avance). Contar este crédito como "entra en mora" y aplicarle esa curva lenta
+      es la fuente del desajuste.
+    </div>
+  </section>
+
+  <section id="backtest">
+    <div class="section-label">2. La evidencia</div>
+    <h2>Backtest sobre junio 2026 (mes real y cerrado)</h2>
+    <p class="lede">Mismo stock, mismo calendario de vencimientos, misma curva de recupero — el único cambio es la
+      tasa de entrada a mora.</p>
+    <div class="card">
+      <div class="chart-box"><svg class="chart-svg" id="chart-backtest"></svg></div>
+      <div class="legend" id="backtest-legend"></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Escenario</th><th>Nuevos proyectado</th><th>Error vs. real</th><th>Total proyectado</th><th>Error total</th></tr></thead>
+        <tbody>
+          <tr class="hl-good"><td>13.38% (oficial, dayslate) <span class="pill good">✓ validado</span></td><td>S/ 1,204,920</td><td>+0.7%</td><td>S/ 1,806,299</td><td>+5.4%</td></tr>
+          <tr class="hl-bad"><td>25% plano <span class="pill bad">✗ no recomendado</span></td><td>S/ 2,251,908</td><td>+88.3%</td><td>S/ 2,853,287</td><td>+66.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap" style="margin-top:10px">Real de junio: S/1,713,815 (stock S/517,683 + nuevos S/1,196,132).</p>
+  </section>
+
+  <section id="julio">
+    <div class="section-label">3. Qué pasaría si se usara en julio</div>
+    <h2>Meta de julio bajo ambos escenarios</h2>
+    <p class="lede">Mismo stock inicial (S/2,943,958 al 30-jun) y mismo calendario de vencimientos de julio — solo
+      cambia la tasa aplicada a "nuevos".</p>
+    <div class="tiles" style="margin-bottom:20px">
+      <div class="tile good">
+        <div class="tl"><span class="pill good">oficial</span> Meta julio (13.38%)</div>
+        <div class="tv">S/ 1,776,174</div>
+        <div class="ts">stock S/426,651 + nuevos S/1,349,523</div>
+      </div>
+      <div class="tile bad">
+        <div class="tl"><span class="pill bad">no recomendado</span> Meta julio (25% plano)</div>
+        <div class="tv">S/ 2,948,812</div>
+        <div class="ts">stock S/426,651 + nuevos S/2,522,161</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Trayectoria proyectada — día a día</h3>
+      <p class="cap">El 25% plano diverge desde el primer día con vencimientos y termina 66% por encima del oficial.</p>
+      <div class="chart-box"><svg class="chart-svg" id="chart-julio"></svg></div>
+      <div class="legend" id="julio-legend"></div>
+    </div>
+  </section>
+
+  <section id="razon">
+    <div class="section-label">4. La razón técnica</div>
+    <h2>Por qué falla — en una frase</h2>
+    <p class="lede">La tasa y la curva tienen que describir la <b>misma población</b>. <code>curva_nuevos</code> se
+      calibró usando como "entrada en mora" la transición de <code>dayslate</code> 0→1 — que por construcción excluye
+      a los créditos que pagan 1 día tarde y se resuelven antes de la siguiente foto diaria (ver hallazgo del
+      "punto ciego de 1 día"). El 25% <b>sí</b> incluye a esos créditos. Aplicar una tasa más amplia con una curva
+      calibrada sobre una población más angosta hace que el modelo trate a créditos que en la realidad ya se
+      resolvieron casi de inmediato como si fueran a recuperar lentamente durante 30 días — inflando la proyección.</p>
+    <p class="lede" style="margin-top:-8px">
+      También se probó la alternativa "consistente" (tasa y curva reconstruidas juntas usando vencimiento de cuota,
+      deduplicando episodios): dio 8.62% — y <b>subestimó</b> junio en -35.7%, el error opuesto. Ninguna de las dos
+      alternativas supera al modelo oficial en el backtest.
+    </p>
+  </section>
+
+  <footer>
+    <p><b>Conclusión:</b> la meta oficial de julio sigue siendo <b>S/1,776,174</b>, calculada con 13.38%
+      (<code>meta_julio.py</code>). Este documento existe únicamente como registro de por qué esa tasa —y no 25%— es
+      la correcta, para que quede trazable si la pregunta vuelve a surgir.</p>
+  </footer>
+
+</div>
+
+<script>
+const DATA = {"oficial": [{"proy_total": 54819}, {"proy_total": 119315}, {"proy_total": 176141}, {"proy_total": 226882}, {"proy_total": 282017}, {"proy_total": 319778}, {"proy_total": 382791}, {"proy_total": 438832}, {"proy_total": 496201}, {"proy_total": 550204}, {"proy_total": 598273}, {"proy_total": 642697}, {"proy_total": 677254}, {"proy_total": 723387}, {"proy_total": 768757}, {"proy_total": 831812}, {"proy_total": 889218}, {"proy_total": 943058}, {"proy_total": 995094}, {"proy_total": 1036527}, {"proy_total": 1095914}, {"proy_total": 1149935}, {"proy_total": 1205722}, {"proy_total": 1248480}, {"proy_total": 1311440}, {"proy_total": 1387582}, {"proy_total": 1446152}, {"proy_total": 1523736}, {"proy_total": 1584019}, {"proy_total": 1644635}, {"proy_total": 1776174}], "plano25": [{"proy_total": 54819}, {"proy_total": 138498}, {"proy_total": 220988}, {"proy_total": 299501}, {"proy_total": 385140}, {"proy_total": 441979}, {"proy_total": 550277}, {"proy_total": 644685}, {"proy_total": 741869}, {"proy_total": 833529}, {"proy_total": 914701}, {"proy_total": 991295}, {"proy_total": 1047613}, {"proy_total": 1127678}, {"proy_total": 1204576}, {"proy_total": 1315674}, {"proy_total": 1415640}, {"proy_total": 1509963}, {"proy_total": 1600596}, {"proy_total": 1668859}, {"proy_total": 1773127}, {"proy_total": 1867429}, {"proy_total": 1964757}, {"proy_total": 2037271}, {"proy_total": 2145257}, {"proy_total": 2278037}, {"proy_total": 2376739}, {"proy_total": 2511008}, {"proy_total": 2611403}, {"proy_total": 2710281}, {"proy_total": 2948812}]};
+
+(function(){
+  const NS = "http://www.w3.org/2000/svg";
+  function resolveVar(v){
+    if (typeof v === 'string' && v.startsWith('var(')){
+      return getComputedStyle(document.documentElement).getPropertyValue(v.slice(4,-1)).trim();
+    }
+    return v;
+  }
+  function el(tag, attrs){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  function fmtInt(v){ return Math.round(v).toLocaleString('es-PE'); }
+  function fmtS(v){ return 'S/ ' + fmtInt(v); }
+  function fmtSCompact(v){
+    if (Math.abs(v) >= 1000000) return (v/1000000).toFixed(1)+'M';
+    if (Math.abs(v) >= 1000) return Math.round(v/1000)+'k';
+    return Math.round(v);
+  }
+  const JUL_DATES = Array.from({length:31}, (_,i) => (i+1)+' jul');
+
+  function makeTooltip(container){
+    const tip = document.createElement('div');
+    tip.className = 'chart-tooltip';
+    container.style.position = container.style.position || 'relative';
+    container.appendChild(tip);
+    return tip;
+  }
+
+  function lineChart(svgEl, container, opts){
+    const width = opts.width || 900, height = opts.height || 300;
+    const margin = opts.margin || {top:14,right:70,bottom:26,left:50};
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+    const n = opts.n;
+    let yMax = 0;
+    opts.series.forEach(s => s.data.forEach(v => { if (v!=null && v>yMax) yMax=v; }));
+    yMax = (opts.yMaxOverride || yMax*1.12) || 1;
+    const x = i => margin.left + innerW * (i/(n-1));
+    const y = v => margin.top + innerH * (1 - v/yMax);
+    svgEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svgEl.innerHTML = '';
+    for (let g=0; g<=4; g++){
+      const v = yMax*g/4, yy = y(v);
+      svgEl.appendChild(el('line', {x1:margin.left, x2:width-margin.right, y1:yy.toFixed(1), y2:yy.toFixed(1), class:'grid-line'}));
+      const t = el('text', {x:margin.left-8, y:(yy+4).toFixed(1), class:'axis-label', 'text-anchor':'end'});
+      t.textContent = opts.yFmt ? opts.yFmt(v) : Math.round(v);
+      svgEl.appendChild(t);
+    }
+    for (let i=0;i<n;i++){
+      if (opts.xTickEvery && i % opts.xTickEvery !== 0 && i !== n-1) continue;
+      if (!opts.xTickEvery) continue;
+      const t = el('text', {x:x(i).toFixed(1), y:(height-margin.bottom+17).toFixed(1), class:'axis-label', 'text-anchor':'middle'});
+      t.textContent = opts.xLabel ? opts.xLabel(i) : (i+1);
+      svgEl.appendChild(t);
+    }
+    opts.series.forEach(s => {
+      let d = '', started = false;
+      s.data.forEach((v,i) => {
+        if (v==null) { started=false; return; }
+        d += (started? 'L':'M') + ` ${x(i).toFixed(1)} ${y(v).toFixed(1)} `;
+        started = true;
+      });
+      svgEl.appendChild(el('path', {d, fill:'none', stroke:resolveVar(s.color), 'stroke-width':2.2, 'stroke-linecap':'round', 'stroke-linejoin':'round'}));
+      let lastI = -1; s.data.forEach((v,i)=>{ if(v!=null) lastI=i; });
+      if (lastI>=0){
+        const t = el('text', {x:(x(lastI)+6).toFixed(1), y:(y(s.data[lastI])+4).toFixed(1), class:'end-label'});
+        t.setAttribute('fill', resolveVar(s.color));
+        t.textContent = s.labelFmt ? s.labelFmt(s.data[lastI]) : Math.round(s.data[lastI]);
+        svgEl.appendChild(t);
+      }
+    });
+    const crosshair = el('line', {x1:0,x2:0,y1:margin.top,y2:height-margin.bottom, class:'crosshair', opacity:0});
+    svgEl.appendChild(crosshair);
+    const dots = opts.series.map(s => { const c = el('circle', {r:3.5, opacity:0}); c.setAttribute('fill', resolveVar(s.color)); return c; });
+    dots.forEach(d=>svgEl.appendChild(d));
+    const capture = el('rect', {x:margin.left,y:margin.top,width:innerW,height:innerH, fill:'transparent', class:'capture'});
+    svgEl.appendChild(capture);
+    const tip = makeTooltip(container);
+    capture.addEventListener('pointermove', (e)=>{
+      const rect = svgEl.getBoundingClientRect();
+      const scaleX = width/rect.width;
+      const mx = (e.clientX-rect.left)*scaleX;
+      let i = Math.round((mx-margin.left)/innerW*(n-1));
+      i = Math.max(0, Math.min(n-1, i));
+      crosshair.setAttribute('x1', x(i).toFixed(1)); crosshair.setAttribute('x2', x(i).toFixed(1)); crosshair.setAttribute('opacity',1);
+      let html = `<div class="tt-head">${opts.xLabel ? opts.xLabel(i) : 'día '+(i+1)}</div>`;
+      opts.series.forEach((s,si)=>{
+        const v = s.data[i];
+        dots[si].setAttribute('opacity', v!=null?1:0);
+        if (v!=null){ dots[si].setAttribute('cx',x(i).toFixed(1)); dots[si].setAttribute('cy',y(v).toFixed(1)); }
+        if (v!=null) html += `<div class="tt-row"><i style="background:${resolveVar(s.color)}"></i>${s.name} <b>${s.labelFmt?s.labelFmt(v):Math.round(v)}</b></div>`;
+      });
+      tip.innerHTML = html; tip.style.opacity = 1;
+      const cw = container.clientWidth;
+      let left = (x(i)/width)*cw + 14;
+      if (left > cw-190) left = (x(i)/width)*cw - 190;
+      tip.style.left = Math.max(4,left)+'px'; tip.style.top = '6px';
+    });
+    capture.addEventListener('pointerleave', ()=>{ crosshair.setAttribute('opacity',0); dots.forEach(d=>d.setAttribute('opacity',0)); tip.style.opacity=0; });
+  }
+
+  function barChart(svgEl, container, opts){
+    const width = opts.width || 640, height = opts.height || 260;
+    const margin = {top:20,right:20,bottom:34,left:70};
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+    const bars = opts.bars;
+    const yMax = Math.max(...bars.map(b=>b.value)) * 1.15;
+    const slot = innerW/bars.length;
+    const barW = slot*0.5;
+    const y = v => margin.top + innerH*(1-v/yMax);
+    svgEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svgEl.innerHTML = '';
+    for (let g=0; g<=4; g++){
+      const v = yMax*g/4, yy = y(v);
+      svgEl.appendChild(el('line', {x1:margin.left, x2:width-margin.right, y1:yy.toFixed(1), y2:yy.toFixed(1), class:'grid-line'}));
+      const t = el('text', {x:margin.left-8, y:(yy+4).toFixed(1), class:'axis-label', 'text-anchor':'end'});
+      t.textContent = 'S/'+fmtSCompact(v);
+      svgEl.appendChild(t);
+    }
+    bars.forEach((b,i)=>{
+      const bx = margin.left + slot*i + (slot-barW)/2;
+      const bh = innerH*(b.value/yMax);
+      const r = el('rect', {x:bx.toFixed(1), y:(y(b.value)).toFixed(1), width:barW.toFixed(1), height:bh.toFixed(1), rx:3});
+      r.setAttribute('fill', resolveVar(b.color));
+      svgEl.appendChild(r);
+      const lbl = el('text', {x:(bx+barW/2).toFixed(1), y:(y(b.value)-8).toFixed(1), class:'end-label', 'text-anchor':'middle'});
+      lbl.setAttribute('fill', resolveVar(b.color));
+      lbl.textContent = fmtS(b.value);
+      svgEl.appendChild(lbl);
+      const xl = el('text', {x:(bx+barW/2).toFixed(1), y:(height-margin.bottom+18).toFixed(1), class:'axis-label', 'text-anchor':'middle'});
+      xl.textContent = b.label;
+      svgEl.appendChild(xl);
+    });
+  }
+
+  // Backtest bar chart
+  (function(){
+    const svg = document.getElementById('chart-backtest');
+    const box = svg.closest('.chart-box');
+    barChart(svg, box, {
+      bars: [
+        {label:'Real (junio)', value:1713815, color:'var(--ink-3)'},
+        {label:'Oficial 13.38%', value:1806299, color:'var(--accent)'},
+        {label:'25% plano', value:2853287, color:'var(--bad)'},
+      ]
+    });
+    const legend = document.getElementById('backtest-legend');
+    [['Real observado','var(--ink-3)'],['Oficial (13.38%) — validado','var(--accent)'],['25% plano — no recomendado','var(--bad)']].forEach(([name,color])=>{
+      const it = document.createElement('span'); it.className='legend-item';
+      it.innerHTML = `<i style="background:${resolveVar(color)}"></i>${name}`;
+      legend.appendChild(it);
+    });
+  })();
+
+  // Julio trajectory chart
+  (function(){
+    const svg = document.getElementById('chart-julio');
+    const box = svg.closest('.chart-box');
+    const oficial = DATA.oficial.map(f=>f.proy_total);
+    const plano25 = DATA.plano25.map(f=>f.proy_total);
+    lineChart(svg, box, {
+      series: [
+        { name:'oficial (13.38%)', color:'var(--accent)', data: oficial, labelFmt: v=>fmtS(v) },
+        { name:'25% plano', color:'var(--bad)', data: plano25, labelFmt: v=>fmtS(v) }
+      ],
+      n:31, width:900, height:300, xLabel:i=>JUL_DATES[i], xTickEvery:4, yFmt: v=>'S/ '+fmtSCompact(v)
+    });
+    const legend = document.getElementById('julio-legend');
+    [['oficial (13.38%)','var(--accent)'],['25% plano (no recomendado)','var(--bad)']].forEach(([name,color])=>{
+      const it = document.createElement('span'); it.className='legend-item';
+      it.innerHTML = `<i style="background:${resolveVar(color)}"></i>${name}`;
+      legend.appendChild(it);
+    });
+  })();
+})();
+</script>

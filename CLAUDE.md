@@ -1,0 +1,59 @@
+# Instrucciones del proyecto
+
+Meta de recupero diaria de cartera de cobranza (mora 1-30 días), en saldo capital, para
+OKA (fintech peruana). **Antes de tocar cualquier análisis nuevo, lee `ESTADO.md`** — es
+el punto de entrada, dice qué está vigente y qué pendiente hay. Luego `BUGS.md` (para no
+repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descartado).
+
+## Reglas de datos — siempre
+
+- `dts_mambu_loans_hist.dayslate` es `NULL` cuando el crédito está al día. Usar siempre
+  `coalesce(dayslate,0)`, nunca comparar contra `dayslate` directo.
+- Dos filtros de `status` distintos según el caso — **no usar el mismo en ambos**:
+  - Histórico/calibración: `status IN ('ACTIVE','COMPLETED')`.
+  - Calendario prospectivo (qué va a vencer): `status = 'ACTIVE'` solamente.
+  - Backtest de mes cerrado: `status IN ('ACTIVE','COMPLETED')`, sin filtrar `installmentstate`.
+- Excluir siempre reenganches/refinanciamientos: `dts_okaapi_loans` no tiene el flag
+  correcto — derivarlo desde `dts_cobranza_creditos_cuotas.flg_last_loan_in_chain`
+  (`max(...)` agrupado por `id_ihfintech_loan`) y filtrar `coalesce(last_in_chain,1)=1`.
+- Nunca usar `principalamountpaid`/`principalamountdue` (`dts_cobranza_creditos_cuotas`)
+  para capital — están rotos (sobre-atribuyen pagos, superan 400% acumulado). Para capital,
+  usar deltas de `balances_principalbalance` en `dts_mambu_loans_hist`.
+- Ver `FUENTES_DATOS.md` para el detalle completo de las 3 tablas y `GLOSARIO.md` para los
+  términos (tramo, avance, entrada en mora, etc.).
+
+## Gotcha de Presto/Athena
+
+`WHERE columna IN (...)` en la MISMA query que `SUM(...) OVER (ORDER BY columna)` aplica
+el `WHERE` ANTES de la window function — el acumulado arranca mal. Siempre calcular el
+acumulado completo en una CTE y filtrar en una consulta externa. Ya mordió 2+ veces en este
+proyecto (ver bug 4 en `BUGS.md`).
+
+## Principio de modelado — no negociable
+
+**Una tasa/probabilidad y la curva que se le aplica deben calibrarse sobre la misma
+definición exacta de "entrada"/cohorte.** No sustituir solo una constante por una medida de
+otra población, aunque parezca "más correcta" en teoría. Si alguien propone cambiar una
+constante del modelo (ej. `P(no paga a tiempo)`), la forma correcta de resolverlo es
+**correr el backtest existente con el cambio, no debatir en abstracto**. Ver
+`DECISIONES.md` y bug 10 en `BUGS.md` para el caso real donde esto importó (swap a 25%
+sobreestimó +66%, la reconstrucción "consistente" subestimó -35.7% — ninguna ganó).
+
+## Ejecutar SQL contra Athena
+
+DB `dev_datalake_master`, workgroup `primary`, output
+`s3://aws-athena-query-results-882281946095-us-east-2/tmp-claude-rebaje/`. Helper:
+`scripts/run_athena.sh <archivo.sql>` (hace polling y baja el CSV resultante).
+
+## Git
+
+El usuario controla explícitamente cuándo se hace commit y push — no commitear ni pushear
+sin que lo pida. Si un push a un remoto agregado en la sesión queda bloqueado por el
+clasificador de seguridad de auto-mode, no intentar workarounds (curl+token, etc.) — dar al
+usuario el comando exacto para que lo corra desde su terminal.
+
+## Artifacts (HTML/MD publicados)
+
+Cuando se publique un artifact nuevo, copiar también el archivo fuente a este repo (mismo
+nombre) — es la convención ya establecida (ver los `.html` en la raíz). Actualizar la tabla
+de artifacts en `ESTADO.md` y `README.md`.
