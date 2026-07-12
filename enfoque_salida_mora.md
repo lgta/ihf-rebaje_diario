@@ -38,6 +38,44 @@ Propuesto por el usuario el 2026-07-10, con la pista de revisar si existe una co
 Queries completas: `enfoque_salida_mora.sql` (Q1 clasificación agregada, Q2 desglose por
 código de motivo, Q3 referencia de valores de motivo_apertura).
 
+## SQL explicado
+
+**El truco "gaps and islands" (agrupar días consecutivos en mora):** con las fotos
+diarias ordenadas (`fotos`), se crea `mora_flag` con `en_mora = case when mora>0 then 1
+else 0 end`. Después, la parte no obvia:
+
+```sql
+rn - row_number() over (partition by id_loan, en_mora order by fechaproceso) as grp
+```
+
+`rn` es la posición de la fila en la serie completa del crédito (1, 2, 3, 4...). El
+segundo `row_number()` cuenta solo dentro de las filas con el MISMO `en_mora` (por
+ejemplo, solo entre los días en mora). Mientras los días en mora sean consecutivos, ambos
+contadores avanzan al mismo ritmo y su resta (`grp`) da el mismo número — pero apenas hay
+una interrupción (el crédito cura y vuelve a entrar en mora después), `rn` sigue subiendo
+con TODOS los días de por medio mientras el segundo contador solo cuenta los días en mora,
+así que la resta salta a un valor distinto. Cada valor distinto de `grp` es un episodio
+distinto — de ahí el nombre "islas" (los episodios) separadas por "huecos" (los días al
+día). Agrupando por `(id_loan, grp)` con `en_mora=1` se obtiene un episodio por fila:
+`fecha_inicio`, `fecha_fin`, `rn_inicio`, `rn_fin`.
+
+**Encontrar el saldo de entrada y de salida:** `saldo_entrada` es la foto en `rn_inicio`
+(el primer día del episodio). `saldo_salida` es la foto en `rn_fin + 1` — la fila
+INMEDIATAMENTE siguiente a la última en mora, vía un `left join` sobre `rn`. Como las
+fotos diarias no tienen huecos (validado en `fase0_diagnostico.sql`), `rn_fin + 1` es
+siempre literalmente "el día siguiente" — no hace falta calcular fechas. Si no existe esa
+fila (el crédito sigue en mora al final de la ventana de datos), `saldo_salida` sale
+`NULL` → se clasifica como "sin salida observada" (censurado).
+
+**Clasificación:** `saldo_entrada - saldo_salida` comparado contra el umbral de 1% del
+saldo de entrada — no un umbral fijo en soles, porque episodios de créditos grandes y
+chicos necesitan un criterio proporcional.
+
+**Cruce con motivo_apertura (Q1/Q2):** simple `left join`/`join` contra un `select
+distinct id_ihfintech_loan, "_motivo_apertura__motivo_apertura"` de
+`dts_cobranza_creditos_cuotas` filtrando `is not null` — el campo es constante por
+crédito (aunque vive a nivel cuota), por eso el `distinct` alcanza para des-duplicar.
+
 ## Resultados (2025-03 a 2026-05)
 
 | Clasificación | Episodios | Créditos | Saldo de entrada | % con `motivo_apertura` |

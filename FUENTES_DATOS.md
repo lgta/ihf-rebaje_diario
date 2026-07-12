@@ -4,6 +4,9 @@ Las 3 tablas que se usan en prácticamente todo el análisis. DB `dev_datalake_m
 Athena workgroup `primary`, output `s3://aws-athena-query-results-882281946095-us-east-2/tmp-claude-rebaje/`.
 Cuenta AWS 882281946095, us-east-2.
 
+> Para el linaje de cada columna (de qué sistema viene — Mambu, OkaAPI, o calculado
+> internamente) ver [`LINAJE.md`](LINAJE.md).
+
 ## `dts_mambu_loans_hist`
 **Grano:** una fila por crédito por día (`fechaproceso`, string `YYYYMMDD`). Histórico
 completo desde nov-2023, sin huecos, ~58M filas desde 2025-03. La cartera crece rápido

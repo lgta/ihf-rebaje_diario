@@ -51,6 +51,34 @@ esta curva, hay que recalibrar la tasa junto con ella, no una sin la otra.
 Queries: `enfoque_capital_asegurado.sql` (Q1 stock, Q2 nuevos). Script de proyección:
 `meta_julio_capital_asegurado.py`. Datos cacheados: `datos_capital_asegurado/`.
 
+## SQL explicado
+
+Ambas queries parten de las mismas CTEs base que `fase1_stock.sql`/`fase2_nuevos.sql`
+(`loan_chain`, `fotos`, exclusión de reenganches) — lo único que cambia es qué se
+acumula al final.
+
+**Q1 — stock.** Después de armar `stock` (igual que el enfoque oficial: última foto del
+mes anterior, `mora between 1 and 30`), se cruza contra las fotos del mes con un flag
+binario por día: `case when saldo_ant > saldo then 1 else 0 end as pago_flag` (no importa
+CUÁNTO bajó, solo si bajó). Luego `primer_pago` toma, por crédito, el `min(dia)` entre los
+días con `pago_flag=1` — el día en que ese crédito "se activa" por primera vez en el mes.
+`activado_por_dia` suma el `saldo_inicial` COMPLETO (no el rebaje) de los créditos cuyo
+primer pago cayó en cada día. La curva final es un acumulado (`sum(...) over (partition by
+tramo, avance_band order by dia)`) de esos saldos, dividido entre el saldo total del
+segmento — el mismo patrón de curva acumulada que las demás, pero acumulando "saldo de
+créditos ya activados" en vez de "soles rebajados".
+
+**Q2 — nuevos.** Misma lógica de detección de entradas que `fase2_nuevos.sql`
+(`mora_ant=0 and mora=1`), y el mismo truco de `primer_pago`/`activado_por_dia`, pero
+anclado a `dia_desde_entrada` (no al día calendario) y usando `saldo_entrada` (el saldo al
+momento de entrar en mora) como base para acumular.
+
+**La diferencia clave con las curvas de recupero** (`curva_stock`/`curva_nuevos`): ahí se
+acumula `sum(rebaje)` — soles efectivamente pagados. Acá se acumula `sum(saldo_inicial)`
+de los créditos activados — el saldo COMPLETO, una sola vez, el día que ese crédito paga
+por primera vez. Es la diferencia entre "cuánto se cobró" y "cuánto capital ya mostró
+señales de vida".
+
 ## Resultados (calibración 14 meses, mar-2025 a jun-2026)
 
 ### Stock — % de saldo asegurado al día 31, por tramo × avance

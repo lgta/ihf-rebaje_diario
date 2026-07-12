@@ -57,6 +57,7 @@ archivos de referencia de abajo para consultas puntuales.
 | [`DECISIONES.md`](DECISIONES.md) | Por qué se eligió cada pieza de la metodología |
 | [`GLOSARIO.md`](GLOSARIO.md) | Definición corta de cada término |
 | [`FUENTES_DATOS.md`](FUENTES_DATOS.md) | Las 3 tablas de Athena, su grano y sus quirks |
+| [`LINAJE.md`](LINAJE.md) | De qué sistema viene cada columna (Mambu, OkaAPI, o calculada internamente) |
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Tabla mes a mes de proyectado vs. real |
 | [`CLAUDE.md`](CLAUDE.md) | Instrucciones para cualquier sesión de Claude Code en este repo |
 | [`enfoque_acumulado.md`](enfoque_acumulado.md) | Enfoque oficial (validado): resumen corto, apunta a `guia_tecnica_recupero.md` |

@@ -74,6 +74,35 @@ formalmente en el repo como `meta_desde_hoy_preciso.py`** (se ofreció guardarlo
 usuario no confirmó). Si se retoma este enfoque, reconstruir desde esta descripción o
 pedir el detalle en una sesión nueva.
 
+## SQL explicado
+
+Todo vive en `meta_desde_hoy.sql`, 3 queries (Q0, Q1, Q2):
+
+**Q0 — aged-out survivors.** Dos fotos: `fotos_asignacion` (cierre de junio,
+`fechaproceso='20260630'`) y `fotos_hoy` (corte, `fechaproceso='20260709'`). Se arma
+`stock_asignacion` filtrando `mora between 1 and 30` en la foto de asignación — el stock
+"real" de julio. Luego se hace `JOIN` de ese stock contra `fotos_hoy` y se filtra
+`f.mora_hoy > 30` — son los créditos que YA CRUZARON 30 días desde la asignación. Se
+clasifican por su `tramo`/`avance` de la foto de ASIGNACIÓN (no la de hoy), porque son la
+cola del enfoque acumulado, no créditos "frescos".
+
+**Q1 — stock re-baseline.** Una sola foto (`fechaproceso='20260709'`), filtrada a
+`mora between 1 and 30` — el stock "tal como se ve hoy", tramo/avance recalculados con la
+mora de HOY (por diseño; por eso los aged-out de Q0 quedan fuera de acá, ya cruzaron 30).
+
+**Q2 — calendario desde mañana.** Igual que el calendario del enfoque acumulado
+(`dts_cobranza_creditos_cuotas` con `status='ACTIVE'`, `installmentstate='PENDING'`), pero
+con `fechavencimiento >= mañana` (no desde el 1 del mes) y excluyendo — vía
+`excluir_ids` — a TODO crédito que ya sea stock, tanto el de asignación (cubre a los
+aged-out de Q0) como el de hoy (Q1), para no contar el mismo saldo dos veces. Esta unión
+de dos fuentes de exclusión fue precisamente el segundo bug (ver arriba): la versión
+original solo excluía por `stock_hoy_ids`, dejando pasar 3 créditos que ya estaban
+cubiertos por Q0.
+
+**Combinación (`meta_desde_hoy.py`):** `Q1 × curva_stock(tramo,avance,días_restantes) +
+Q0 × [curva_stock(tramo_original,avance,día31) − curva_stock(...,día9)] + Q2 × 13.38% ×
+curva_nuevos(avance,días_para_madurar)`.
+
 ## Archivos
 
 - `meta_desde_hoy.py` + `meta_desde_hoy.sql` (ya con el fix Q0/Q2 aplicado) +

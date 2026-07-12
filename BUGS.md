@@ -93,3 +93,13 @@ cuota): tasa 8.62%, pero el backtest **subestima** -35.7% — falla en la direcc
 Ninguna alternativa supera al modelo oficial. Ver `motor_cuota_vencimiento.sql`,
 `backtest_motor_cuota.py`, y el artifact
 [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8).
+
+**SQL del motor "cuota-consistente" (`motor_cuota_vencimiento.sql`):** detecta "entrada"
+por vencimiento de cuota, no por `dayslate`, deduplicando episodios con
+`lag(a_tiempo) over (partition by id_loan order by fechavencimiento) as a_tiempo_prev` —
+solo cuenta como entrada si la cuota actual NO está a tiempo Y la cuota INMEDIATA anterior
+del mismo crédito SÍ lo estaba (análogo al `mora_ant=0 and mora=1` de `dayslate`, pero
+sobre la secuencia de cuotas en vez de la foto diaria). La tasa (8.62%) y la curva de
+recupero propia se calibran sobre esta misma definición — por eso el experimento es un
+buen ejemplo de "hacerlo bien" (tasa y curva consistentes) que aun así no supera al
+modelo oficial en el backtest.

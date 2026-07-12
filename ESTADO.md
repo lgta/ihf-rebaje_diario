@@ -75,6 +75,7 @@ de cada commit).
 - `DECISIONES.md` — por qué se eligió cada pieza de la metodología.
 - `GLOSARIO.md` — definición corta de cada término (tramo, avance, dayslate, etc.).
 - `FUENTES_DATOS.md` — las 3 tablas de Athena que se usan siempre, su grano y sus quirks.
+- `LINAJE.md` — de qué sistema viene cada columna (Mambu, OkaAPI, o calculada internamente).
 - `SEGUIMIENTO.md` — tabla mes a mes de proyectado vs. real (empieza con junio 2026).
 - `plan_analisis.md` — bitácora cronológica completa (el historial crudo).
 - `guia_tecnica_recupero.md` — guía técnica externa con SQL replicable.

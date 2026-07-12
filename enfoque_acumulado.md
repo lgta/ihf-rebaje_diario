@@ -30,6 +30,36 @@ Ver `ESTADO.md` para la cifra actualizada del mes en curso. Julio 2026 (corte 9-
 meta total S/1,776,174 (stock S/426,651 + nuevos S/1,349,523); real a la fecha S/527,375;
 resta S/1,248,799.
 
+## SQL explicado
+
+El detalle completo con SQL copiable está en `guia_tecnica_recupero.md` §3. Resumen de
+las 4 piezas:
+
+**1. Stock (`fase1_stock.sql`)** — toma la ÚLTIMA foto de cada crédito dentro del mes
+anterior (`row_number() over (partition by id_loan, periodo order by fechaproceso desc)`,
+se queda con `rn=1`), filtra `mora between 1 and 30`, y clasifica tramo/avance con esa
+misma foto. Luego, para cada día del mes siguiente, cruza ese stock contra las fotos
+diarias y suma el rebaje (`saldo_ayer - saldo_hoy`, solo si es positivo) acumulado por
+`tramo` — eso da la curva `% recuperado acumulado por tramo × día`.
+
+**2. Nuevos (`fase2_nuevos.sql`)** — detecta "entradas" con la transición
+`mora_ant = 0 and mora = 1` (usando `lag(mora) over (partition by id_loan order by
+fechaproceso)`), calcula el avance en ese momento, y sigue el rebaje día a día durante
+31 días desde la entrada — da la curva `% recuperado acumulado por avance × días desde
+entrada`.
+
+**3. Calendario (`fase3_meta.sql` / `meta_julio.py`)** — trae, para cada
+`fechavencimiento` del mes, el saldo capital de los créditos con cuota venciendo ese día
+(`dts_cobranza_creditos_cuotas` join `dts_okaapi_loans`), segmentado por avance. Ese es
+el "saldo en riesgo" — se multiplica por `13.38%` (la tasa de entrada, calibrada en
+`fase3_backtest.sql` bloque 3H) para obtener el saldo que efectivamente entra en mora ese
+día, y luego se le aplica la curva de nuevos según los días que le quedan hasta el cierre.
+
+**4. Combinación (`meta_julio.py`)** — para cada día `d` del mes: `stock(d) =
+Σ saldo_stock(tramo,avance) × curva_stock(tramo,avance,d)`; `nuevos(d) = Σ(D≤d)
+saldo_riesgo(D,avance) × 13.38% × curva_nuevos(avance, d−D)`; la meta es `stock(d) +
+nuevos(d)`.
+
 ## Archivos
 
 - `meta_julio.py` + `datos_meta_julio/` — script de proyección del mes en curso.
