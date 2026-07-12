@@ -1,8 +1,10 @@
 # Enfoque beta: salida de mora (cura real vs. reestructuración)
 
-> **Estado: exploratorio.** Se validó el patrón con datos reales (2026-07-10) pero no
-> llegó a curva + proyección + artifact, a diferencia de `enfoque_capital_asegurado.md`
-> (Enfoque alfa). Falta decidir el siguiente paso — ver "Pendientes" al final.
+> **Estado: exploratorio.** Se validó el patrón con datos reales (2026-07-10) y se publicó
+> como hallazgo — [🔓 Salida de mora — hallazgos](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98)
+> (`salida_mora.html`) — pero todavía no hay curva día a día ni proyección, a diferencia
+> de `enfoque_capital_asegurado.md` (Enfoque alfa). Falta decidir el siguiente paso —
+> ver "Pendientes" al final.
 
 ## El concepto
 
@@ -41,7 +43,7 @@ código de motivo, Q3 referencia de valores de motivo_apertura).
 | Clasificación | Episodios | Créditos | Saldo de entrada | % con `motivo_apertura` |
 |---|---:|---:|---:|---:|
 | Cura real (baja >1%) | 70,314 | 34,223 | S/104,705,444 | 0.9% |
-| Cura parcial (baja ≤1%) | 121 | 118 | S/667,674 | 2.3% |
+| Cura parcial (baja ≤1%) | 121 | 118 | S/667,674 | 6.8% |
 | **Cura sin pago (no baja)** | **513** | **364** | **S/1,204,077** | **67.9%** |
 | Sin salida observada | 7,300 | 7,300 | S/15,479,914 | 2.8% |
 

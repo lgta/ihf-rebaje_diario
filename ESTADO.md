@@ -5,7 +5,7 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-07-10.
+Última actualización: 2026-07-12.
 
 ## La meta vigente
 
@@ -29,47 +29,44 @@ de abajo.
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
 | [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | 🧪 experimental, sin backtest | Enfoque alfa — % del capital asignado con actividad de pago, no soles recuperados. Ver `enfoque_capital_asegurado.md` |
+| [🔓 Salida de mora — hallazgos](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) | 🔬 exploratorio, sin curva/proyección | Enfoque beta — cura real vs. reestructuración al salir de mora. Ver `enfoque_salida_mora.md` |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
 no republicar sin actualizarlos primero.
 
-## Qué está validado vs. qué es experimental
+## Índice de enfoques
 
-- ✅ **Validado por backtest** (junio 2026 real, +5.4% de error): el modelo oficial completo
-  — stock por tramo×avance, nuevos por calendario×13.38%×avance.
-- ⚠️ **Descartado por backtest, mantener como referencia:** tasa plana 25-28% (sobreestima
-  +66% a +81%); motor "cuota-consistente" con tasa 8.62% + curva propia (subestima -35.7%).
-  Ver `BUGS.md` y `motor_cuota_vencimiento.sql`.
-- 🕓 **Deprioritizado, no oficial:** enfoque "reinicio del reloj" (`meta_desde_hoy.*`). El
-  usuario aclaró (2026-07-10) que la meta oficial es siempre la del mes completo
-  (`meta_julio.py`). No invertir tiempo ahí salvo pedido explícito.
-- 🧪 **Experimental, construido pero sin backtest:** "capital asegurado" (enfoque alfa,
-  `enfoque_capital_asegurado.md`) — % del capital asignado que muestra actividad de pago,
-  no soles recuperados. Proyección de julio: S/8,919,611. No reportar hacia el negocio
-  como KPI oficial hasta correrle un backtest (ver pendientes en su propio archivo).
-- 🔬 **Exploratorio, patrón validado pero sin curva/proyección:** "salida de mora" (enfoque
-  beta, `enfoque_salida_mora.md`) — distingue curas reales de curas sin pago (candidatas a
-  reestructuración). Hallazgo: 364 créditos (S/1.2M) salen de mora sin bajar su saldo, y
-  esos créditos tienen 75x más probabilidad de tener `motivo_apertura` registrado que una
-  cura real (67.9% vs 0.9%) — confirma la hipótesis. Pendiente decidir siguiente paso.
+> Todos los enfoques construidos hasta ahora, en un solo lugar — pensado para que una
+> sesión futura pueda armar un markdown integral sin tener que releer todo el historial.
+> Cada uno tiene su propio archivo `enfoque_*.md` con el detalle completo.
+
+| Enfoque | Archivo | Qué mide | Estado |
+|---|---|---|---|
+| **Acumulado** (oficial) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4% |
+| Reinicio del reloj | `enfoque_reinicio_reloj.md` | Lo mismo, pero re-anclado a "hoy" | 🕓 Deprioritizado, no oficial |
+| Alfa — Capital asegurado | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | 🧪 Experimental, sin backtest |
+| Beta — Salida de mora | `enfoque_salida_mora.md` | Cura real vs. reestructuración al salir de mora | 🔬 Exploratorio, sin curva/proyección |
+| Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
+
+Detalle de los dos últimos:
+- ⚠️ **Descartado por backtest:** tasa plana 25-28% (sobreestima +66% a +81%); motor
+  "cuota-consistente" con tasa 8.62% + curva propia (subestima -35.7%). Ver `BUGS.md` y
+  `motor_cuota_vencimiento.sql`. No son un "enfoque" completo (solo tocan la constante
+  `P(no paga a tiempo)` del enfoque acumulado), por eso no tienen `enfoque_*.md` propio.
 
 ## Pendiente de copiar al repo desde scratchpad
 
-Nada por ahora — los archivos generados en la sesión del 2026-07-10 (motor cuota-consistente,
-los dos artifacts nuevos) ya se copiaron: `meta_recupero_detalle.html`,
-`julio_25pct_no_recomendado.html`, `motor_cuota_vencimiento.sql`, `investigacion_dayslate.sql`,
-`backtest_motor_cuota.py`, `meta_julio_25pct.py`, `datos_motor_cuota/`, `scripts/run_athena.sh`.
+Nada por ahora — todo lo generado hasta el 2026-07-12 (ambos artifacts nuevos, sus queries,
+scripts y datos, más `salida_mora.html`) ya está copiado al repo.
 
 **Cuando termines una sesión con hallazgos nuevos, revisa esta sección antes de cerrar** —
 si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perderlo.
 
 ## Pendiente de git
 
-Todo el trabajo hasta el commit `6dc0296` (fix del bug aged-out) está pusheado y verificado.
-**Todo lo de esta sesión (2026-07-10) — los 8 markdown nuevos, los archivos recién copiados,
-las correcciones a `plan_analisis.md`/`README.md` — no está commiteado.** El usuario controla
-el push (ver `CLAUDE.md`).
+Al día — commiteado y pusheado al 2026-07-12 (ver historial de git para el detalle exacto
+de cada commit).
 
 ## Índice de los demás documentos
 
@@ -81,3 +78,5 @@ el push (ver `CLAUDE.md`).
 - `SEGUIMIENTO.md` — tabla mes a mes de proyectado vs. real (empieza con junio 2026).
 - `plan_analisis.md` — bitácora cronológica completa (el historial crudo).
 - `guia_tecnica_recupero.md` — guía técnica externa con SQL replicable.
+- `enfoque_acumulado.md`, `enfoque_reinicio_reloj.md`, `enfoque_capital_asegurado.md`,
+  `enfoque_salida_mora.md` — un archivo por enfoque, ver "Índice de enfoques" arriba.
