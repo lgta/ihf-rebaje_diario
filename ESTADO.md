@@ -30,6 +30,7 @@ de abajo.
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
 | [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | 🧪 experimental, sin backtest | Enfoque alfa — % del capital asignado con actividad de pago, no soles recuperados. Ver `enfoque_capital_asegurado.md` |
 | [🔓 Salida de mora — hallazgos](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) | 🔬 exploratorio, sin curva/proyección | Enfoque beta — cura real vs. reestructuración al salir de mora. Ver `enfoque_salida_mora.md` |
+| [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) | ✓ vigente | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques (acumulado, reinicio, capital asegurado, salida de mora). Ver `guia_4_enfoques.html` |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
@@ -57,16 +58,16 @@ Detalle de los dos últimos:
 
 ## Pendiente de copiar al repo desde scratchpad
 
-Nada por ahora — todo lo generado hasta el 2026-07-12 (ambos artifacts nuevos, sus queries,
-scripts y datos, más `salida_mora.html`) ya está copiado al repo.
+Nada por ahora — todo lo generado hasta el 2026-07-12 (incluido `guia_4_enfoques.html` y
+`ejemplos_4_enfoques.sql`) ya está copiado al repo.
 
 **Cuando termines una sesión con hallazgos nuevos, revisa esta sección antes de cerrar** —
 si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perderlo.
 
 ## Pendiente de git
 
-Al día — commiteado y pusheado al 2026-07-12 (ver historial de git para el detalle exacto
-de cada commit).
+`guia_4_enfoques.html` y `ejemplos_4_enfoques.sql` son nuevos y todavía no se han
+commiteado (generados el 2026-07-12, después del último commit).
 
 ## Índice de los demás documentos
 

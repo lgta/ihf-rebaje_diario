@@ -1,0 +1,606 @@
+<title>Los 4 enfoques de recupero — concepto, SQL y un crédito real</title>
+<style>
+  :root {
+    --paper: #F4F5F0;
+    --paper-card: #FBFBF8;
+    --ink: #1C2321;
+    --ink-secondary: #52584F;
+    --ink-muted: #83887E;
+    --line: #DBDDD2;
+    --line-strong: #C7CABC;
+    --teal: #0A8F6E;
+    --teal-soft: #E4F2ED;
+    --amber: #B5651D;
+    --amber-soft: #F6EBDD;
+    --slate: #2E5A9E;
+    --slate-soft: #E7EDF7;
+    --gray-soft: #E7E8E1;
+    --code-bg: #EDEEE6;
+    --shadow: rgba(28,35,33,0.10);
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A;
+      --paper-card: #1B211F;
+      --ink: #E7E9E2;
+      --ink-secondary: #B7BCB1;
+      --ink-muted: #7D8479;
+      --line: #2A322D;
+      --line-strong: #3A443C;
+      --teal: #17A67F;
+      --teal-soft: #16302A;
+      --amber: #C7752A;
+      --amber-soft: #34281B;
+      --slate: #5B8FD9;
+      --slate-soft: #1C2A3F;
+      --gray-soft: #262C29;
+      --code-bg: #1F2523;
+      --shadow: rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #14181A; --paper-card: #1B211F; --ink: #E7E9E2; --ink-secondary: #B7BCB1;
+    --ink-muted: #7D8479; --line: #2A322D; --line-strong: #3A443C; --teal: #17A67F;
+    --teal-soft: #16302A; --amber: #C7752A; --amber-soft: #34281B; --slate: #5B8FD9;
+    --slate-soft: #1C2A3F; --gray-soft: #262C29; --code-bg: #1F2523; --shadow: rgba(0,0,0,0.35);
+  }
+  :root[data-theme="light"] {
+    --paper: #F4F5F0; --paper-card: #FBFBF8; --ink: #1C2321; --ink-secondary: #52584F;
+    --ink-muted: #83887E; --line: #DBDDD2; --line-strong: #C7CABC; --teal: #0A8F6E;
+    --teal-soft: #E4F2ED; --amber: #B5651D; --amber-soft: #F6EBDD; --slate: #2E5A9E;
+    --slate-soft: #E7EDF7; --gray-soft: #E7E8E1; --code-bg: #EDEEE6; --shadow: rgba(28,35,33,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  a { color: var(--slate); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, .toc-link:focus-visible {
+    outline: 2px solid var(--slate); outline-offset: 3px; border-radius: 2px;
+  }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+  .prose { max-width: 66ch; }
+
+  /* ---------- Masthead ---------- */
+  header.masthead { padding: 56px 0 32px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-muted); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.15; margin: 0 0 14px; text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .masthead p.lede { font-size: 17px; color: var(--ink-secondary); max-width: 62ch; margin: 0 0 22px; }
+  .masthead-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-muted); }
+  .masthead-meta span b { color: var(--ink-secondary); font-weight: 500; }
+
+  /* ---------- TOC ---------- */
+  nav.toc { padding: 28px 0 36px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 760px) { .toc-grid { grid-template-columns: repeat(2, 1fr); } }
+  .toc-link {
+    display: block; padding: 14px 16px; border: 1px solid var(--line); border-radius: 3px;
+    background: var(--paper-card); color: var(--ink); text-decoration: none;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .toc-link:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+  .toc-link .toc-name { font-weight: 600; font-size: 14.5px; display: block; margin-bottom: 4px; }
+  .toc-link .toc-what { font-size: 12.5px; color: var(--ink-muted); display: block; }
+
+  /* ---------- Sections ---------- */
+  section.intro { padding: 8px 0 40px; }
+  section.enfoque { padding: 52px 0; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  .enfoque-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 27px; margin: 0; text-wrap: balance; }
+  .enfoque-sub { font-size: 14px; color: var(--ink-muted); margin: 4px 0 26px; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono);
+    font-size: 11.5px; letter-spacing: .03em; padding: 4px 10px; border-radius: 100px;
+    white-space: nowrap; font-weight: 500;
+  }
+  .pill-oficial   { background: var(--teal-soft);  color: var(--teal); }
+  .pill-deprior   { background: var(--gray-soft);  color: var(--ink-secondary); }
+  .pill-experim   { background: var(--slate-soft); color: var(--slate); }
+  .pill-explor    { background: var(--amber-soft); color: var(--amber); }
+
+  h3.block-label {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-muted); margin: 34px 0 12px; font-weight: 500;
+  }
+  h3.block-label:first-of-type { margin-top: 0; }
+
+  p { margin: 0 0 14px; }
+  .prose p:last-child { margin-bottom: 0; }
+
+  /* ---------- Code ---------- */
+  .code-panel {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 4px;
+    overflow-x: auto; margin: 0 0 14px;
+  }
+  .code-panel pre {
+    margin: 0; padding: 16px 18px; font-family: var(--font-mono); font-size: 12.8px; line-height: 1.65;
+    white-space: pre; color: var(--ink);
+  }
+  .k { color: var(--slate); font-weight: 600; }
+  .cm { color: var(--ink-muted); font-style: italic; }
+  .code-caption { font-size: 13px; color: var(--ink-secondary); margin: 0 0 20px; }
+  .code-caption code, p code, td code { font-family: var(--font-mono); font-size: 0.92em; background: var(--gray-soft); padding: 1px 5px; border-radius: 3px; }
+
+  /* ---------- Stat strip ---------- */
+  .stat-strip {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden;
+    margin: 0 0 22px;
+  }
+  .stat-tile { background: var(--paper-card); padding: 12px 14px; }
+  .stat-tile .stat-label { display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 5px; }
+  .stat-tile .stat-value { display: block; font-family: var(--font-mono); font-size: 16px; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+  .stat-tile .stat-value.accent-teal { color: var(--teal); }
+  .stat-tile .stat-value.accent-amber { color: var(--amber); }
+
+  /* ---------- Chart ---------- */
+  .chart-card { background: var(--paper-card); border: 1px solid var(--line); border-radius: 4px; padding: 18px 18px 10px; margin: 0 0 10px; }
+  .chart-card svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart-title { font-size: 13px; color: var(--ink-secondary); margin: 0 0 12px; font-weight: 600; }
+  .chart-axis-label { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-muted); }
+  .chart-gridline { stroke: var(--line-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+  .chart-baseline { stroke: var(--line-strong); stroke-width: 1; }
+  .chart-legend { display: flex; gap: 18px; margin: 10px 2px 4px; flex-wrap: wrap; }
+  .chart-legend .leg-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-secondary); }
+  .chart-legend .leg-swatch { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+  figcaption.chart-note { font-size: 12.5px; color: var(--ink-muted); margin: 8px 2px 0; }
+
+  /* ---------- Tables ---------- */
+  .table-wrap { overflow-x: auto; margin: 0 0 20px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-family: var(--font-mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-muted); font-weight: 500; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  tr:last-child td { border-bottom: none; }
+  td.tag-teal { color: var(--teal); font-weight: 600; }
+  td.tag-amber { color: var(--amber); font-weight: 600; }
+
+  .callout {
+    border-left: 3px solid var(--slate); background: var(--slate-soft); border-radius: 0 4px 4px 0;
+    padding: 14px 18px; margin: 6px 0 22px; font-size: 14.5px; color: var(--ink);
+  }
+  .callout b { color: var(--slate); }
+  .callout.warn { border-left-color: var(--amber); background: var(--amber-soft); }
+  .callout.warn b { color: var(--amber); }
+
+  /* ---------- Comparativa ---------- */
+  section.comparativa { padding: 52px 0; border-top: 1px solid var(--line); }
+
+  footer.page-footer { padding: 40px 0 70px; border-top: 1px solid var(--line); margin-top: 8px; }
+  footer.page-footer p { font-size: 12.5px; color: var(--ink-muted); font-family: var(--font-mono); line-height: 1.7; }
+  footer.page-footer a { color: var(--ink-secondary); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">OKA · cobranza · metodología de recupero</p>
+    <h1>Los 4 enfoques de recupero, con un crédito real cada uno</h1>
+    <p class="lede">
+      Todos miden algo distinto sobre la misma cartera de mora 1-30 días: soles recuperados,
+      la misma pregunta re-anclada a hoy, capital que muestra señales de vida, o si una salida
+      de mora fue un cobro real o un reseteo administrativo. Este documento junta los 4 en un
+      solo lugar — concepto, el SQL que lo calcula, y un crédito real de Athena mostrando cómo
+      se ve aplicado.
+    </p>
+    <div class="masthead-meta">
+      <span>Fuente: <b>dev_datalake_master</b>, Athena</span>
+      <span>Corte de datos: <b>12-jul-2026</b></span>
+      <span>Base: <b>ESTADO.md</b>, <b>LINAJE.md</b>, <b>enfoque_*.md</b></span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Índice de enfoques">
+    <div class="toc-grid">
+      <a class="toc-link" href="#acumulado">
+        <span class="toc-name">① Acumulado</span>
+        <span class="toc-what">Soles recuperados — oficial</span>
+      </a>
+      <a class="toc-link" href="#reinicio">
+        <span class="toc-name">② Reinicio del reloj</span>
+        <span class="toc-what">Lo mismo, re-anclado a hoy</span>
+      </a>
+      <a class="toc-link" href="#capital">
+        <span class="toc-name">③ Capital asegurado</span>
+        <span class="toc-what">% de saldo con ≥1 pago</span>
+      </a>
+      <a class="toc-link" href="#salida">
+        <span class="toc-name">④ Salida de mora</span>
+        <span class="toc-what">Cura real vs. reestructuración</span>
+      </a>
+    </div>
+  </nav>
+
+  <section class="intro">
+    <div class="prose">
+      <p>
+        Los cuatro enfoques parten de las mismas dos tablas base (<code>dts_mambu_loans_hist</code>
+        para las fotos diarias de saldo y mora, <code>dts_okaapi_loans</code> para el monto
+        financiado) y de los mismos filtros de calidad — <code>status in ('ACTIVE','COMPLETED')</code>,
+        exclusión de reenganches vía <code>flg_last_loan_in_chain</code>, <code>coalesce(dayslate,0)</code>
+        para la mora. Lo que cambia entre uno y otro es <b>qué se acumula</b> sobre esas fotos: soles
+        de rebaje, saldo activado, o saldo de entrada vs. salida de un episodio de mora.
+      </p>
+      <p>
+        Convención de color en los gráficos de abajo: <span style="color:var(--teal); font-weight:600;">verde-azulado</span>
+        marca actividad de pago genuina; <span style="color:var(--amber); font-weight:600;">ámbar</span> marca
+        mora que se profundiza o se resuelve sin pago real. Se mantiene igual en los cuatro enfoques.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= 1. ACUMULADO ================= -->
+  <section class="enfoque" id="acumulado">
+    <div class="enfoque-head">
+      <h2>① Enfoque acumulado</h2>
+      <span class="pill pill-oficial">✅ oficial · backtest +5.4%</span>
+    </div>
+    <p class="enfoque-sub">Soles recuperados, mes completo, anclado al cierre del mes anterior — la meta que se reporta.</p>
+
+    <h3 class="block-label">Concepto</h3>
+    <div class="prose">
+      <p>
+        El stock (créditos con mora 1-30 al cierre del mes anterior) se clasifica en tramo y saldo
+        <b>una sola vez</b>, al momento de asignación — nunca se vuelve a re-filtrar por la mora del
+        día corriente. Un crédito asignado sigue contando en el denominador del mes aunque cruce 30
+        días de mora a mitad de camino. El modelo es evento × magnitud:
+        <code>Recupero esperado = P(paga) × E(% del saldo que rebaja al pagar)</code>, aplicado
+        tanto al stock como a los "nuevos" (créditos que caen en mora durante el mes).
+      </p>
+    </div>
+
+    <h3 class="block-label">SQL explicado</h3>
+    <div class="code-panel"><pre><span class="k">with</span> stock <span class="k">as</span> (
+  <span class="k">select</span> id_loan, saldo <span class="k">as</span> saldo_inicial,
+    <span class="k">case when</span> mora <span class="k">between</span> 1 <span class="k">and</span> 8  <span class="k">then</span> 'a. 1-8'
+         <span class="k">when</span> mora <span class="k">between</span> 9 <span class="k">and</span> 15 <span class="k">then</span> 'b. 9-15'
+         <span class="k">else</span>                            'c. 16-30' <span class="k">end as</span> tramo
+  <span class="k">from</span> cierre_mes
+  <span class="k">where</span> rn = 1 <span class="k">and</span> mora <span class="k">between</span> 1 <span class="k">and</span> 30 <span class="k">and</span> saldo &gt; 0
+)
+<span class="cm">-- el tramo queda fijo todo el mes: nunca se re-filtra con la mora del día</span>
+, rebajes <span class="k">as</span> (
+  <span class="k">select</span> s.tramo, s.id_loan, f.dia,
+    <span class="k">case when</span> f.saldo_ant &gt; f.saldo <span class="k">then</span> f.saldo_ant - f.saldo <span class="k">else</span> 0 <span class="k">end as</span> rebaje
+  <span class="k">from</span> stock s <span class="k">join</span> fotos f <span class="k">on</span> f.id_loan = s.id_loan <span class="k">and</span> f.periodo = s.periodo_meta
+)</pre></div>
+    <p class="code-caption">
+      <code>rebaje</code> es <code>saldo_ayer − saldo_hoy</code>, nunca negativo (una capitalización
+      de intereses no resta). El acumulado de esto por <code>tramo</code> y día, dividido entre el
+      saldo inicial del tramo, es la curva <code>% recuperado acumulado</code> que alimenta la meta.
+      Fuente completa: <code>fase1_stock.sql</code>, <code>fase2_nuevos.sql</code>.
+    </p>
+
+    <h3 class="block-label">Ejemplo real — crédito e79d748e…</h3>
+    <div class="stat-strip">
+      <div class="stat-tile"><span class="stat-label">Saldo asignado</span><span class="stat-value">S/14,584</span></div>
+      <div class="stat-tile"><span class="stat-label">Mora al asignar</span><span class="stat-value">1 día (tramo 1-8)</span></div>
+      <div class="stat-tile"><span class="stat-label">Avance</span><span class="stat-value">8.3%</span></div>
+      <div class="stat-tile"><span class="stat-label">Rebaje del mes</span><span class="stat-value accent-teal">S/265</span></div>
+      <div class="stat-tile"><span class="stat-label">% recuperado</span><span class="stat-value accent-teal">1.82%</span></div>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Saldo capital día a día — junio 2026 (stock asignado al cierre de mayo)</p>
+      <svg viewBox="0 0 720 190" role="img" aria-label="Saldo del crédito se mantiene en S/14,584 hasta el día 17, cuando cae a S/14,319 y se mantiene ahí el resto del mes.">
+        <line class="chart-gridline" x1="48" y1="49.7" x2="700" y2="49.7"></line>
+        <line class="chart-gridline" x1="48" y1="131.3" x2="700" y2="131.3"></line>
+        <line class="chart-baseline" x1="48" y1="168" x2="700" y2="168"></line>
+        <path d="M 48.0 49.7 L 70.5 49.7 L 70.5 49.7 L 93.0 49.7 L 93.0 49.7 L 115.4 49.7 L 115.4 49.7 L 137.9 49.7 L 137.9 49.7 L 160.4 49.7 L 160.4 49.7 L 182.9 49.7 L 182.9 49.7 L 205.4 49.7 L 205.4 49.7 L 227.9 49.7 L 227.9 49.7 L 250.3 49.7 L 250.3 49.7 L 272.8 49.7 L 272.8 49.7 L 295.3 49.7 L 295.3 49.7 L 317.8 49.7 L 317.8 49.7 L 340.3 49.7 L 340.3 49.7 L 362.8 49.7 L 362.8 49.7 L 385.2 49.7 L 385.2 49.7 L 407.7 49.7 L 407.7 131.3 L 430.2 131.3 L 430.2 131.3 L 452.7 131.3 L 452.7 131.3 L 475.2 131.3 L 475.2 131.3 L 497.7 131.3 L 497.7 131.3 L 520.1 131.3 L 520.1 131.3 L 542.6 131.3 L 542.6 131.3 L 565.1 131.3 L 565.1 131.3 L 587.6 131.3 L 587.6 131.3 L 610.1 131.3 L 610.1 131.3 L 632.6 131.3 L 632.6 131.3 L 655.0 131.3 L 655.0 131.3 L 677.5 131.3 L 677.5 131.3 L 700.0 131.3 L 700.0 131.3"
+          fill="none" stroke="var(--teal)" stroke-width="2"></path>
+        <circle cx="407.7" cy="131.3" r="4.5" fill="var(--teal)"><title>17-jun: paga S/265, saldo baja a S/14,319</title></circle>
+        <text x="414" y="122" class="chart-axis-label" style="fill:var(--teal)" font-weight="600">día 17 · rebaja S/265</text>
+        <text x="52" y="44" class="chart-axis-label">S/14,584 asignado</text>
+        <text x="52" y="146" class="chart-axis-label">S/14,319 tras el pago</text>
+        <text x="48" y="182" class="chart-axis-label">día 1</text>
+        <text x="240" y="182" class="chart-axis-label">día 10</text>
+        <text x="465" y="182" class="chart-axis-label">día 20</text>
+        <text x="688" y="182" class="chart-axis-label" text-anchor="end">día 30</text>
+      </svg>
+    </div>
+    <p class="chart-note">
+      El crédito no paga nada durante 16 días — el rebaje es S/0 esos días — y el día 17 hace un
+      pago que rebaja S/265 (1.82% de su saldo asignado) y de hecho lo saca de mora por completo.
+      Aunque hubiera cruzado 30 días de mora antes de pagar, el enfoque acumulado lo sigue contando
+      con su tramo original (1-8) todo junio, porque la clasificación se hizo una sola vez al asignar.
+    </p>
+  </section>
+
+  <!-- ================= 2. REINICIO DEL RELOJ ================= -->
+  <section class="enfoque" id="reinicio">
+    <div class="enfoque-head">
+      <h2>② Enfoque reinicio del reloj</h2>
+      <span class="pill pill-deprior">🕓 deprioritizado</span>
+    </div>
+    <p class="enfoque-sub">La misma pregunta, pero re-anclada a "hoy" en vez de al cierre del mes anterior.</p>
+
+    <h3 class="block-label">Concepto</h3>
+    <div class="prose">
+      <p>
+        En vez de anclar el stock al cierre del mes anterior, toma la foto de <b>HOY</b> como nueva
+        línea base y proyecta lo que queda del mes — "si reasignara todo hoy". Sirvió como cruce de
+        validación independiente del enfoque acumulado, pero el usuario confirmó que la meta que
+        interesa siempre es la del mes completo anclada al cierre, así que quedó deprioritizado.
+        Se documenta completo porque expuso un bug real que vale la pena conocer.
+      </p>
+    </div>
+
+    <h3 class="block-label">SQL explicado — el bug de "aged-out survivors"</h3>
+    <div class="code-panel"><pre><span class="cm">-- stock_asignacion: el stock REAL de julio (cierre de junio, mora 1-30)</span>
+, stock_asignacion <span class="k">as</span> (
+  <span class="k">select</span> id_loan, mora, saldo <span class="k">from</span> fotos_asignacion
+  <span class="k">where</span> mora <span class="k">between</span> 1 <span class="k">and</span> 30 <span class="k">and</span> saldo &gt; 0
+)
+<span class="cm">-- aged-out survivors: seguían en el stock original, pero HOY ya cruzaron 30 días</span>
+<span class="k">select</span> tramo_original, avance_band, <span class="k">sum</span>(s.saldo) <span class="k">as</span> saldo_asignacion_total
+<span class="k">from</span> stock_asignacion s
+<span class="k">join</span> fotos_hoy f <span class="k">on</span> f.id_loan = s.id_loan
+<span class="k">where</span> f.mora_hoy &gt; 30   <span class="cm">-- el filtro ingenuo "mora between 1 and 30" de HOY los pierde</span>
+<span class="k">group by</span> 1,2</pre></div>
+    <p class="code-caption">
+      El bug original filtraba el stock re-baselineado con <code>mora between 1 and 30</code> usando
+      la mora de <b>hoy</b>, no la de asignación — excluía en silencio a los créditos que sí eran
+      parte del stock de julio pero ya habían cruzado 30 días de mora para el corte. El fix (bloque
+      <code>Q0</code> arriba) los identifica por <code>JOIN</code> contra la foto de asignación y los
+      reincorpora con su clasificación original. Fuente: <code>meta_desde_hoy.sql</code>.
+    </p>
+
+    <h3 class="block-label">Ejemplo real — crédito 1c783c2d…</h3>
+    <div class="stat-strip">
+      <div class="stat-tile"><span class="stat-label">Saldo (fijo)</span><span class="stat-value">S/8,712</span></div>
+      <div class="stat-tile"><span class="stat-label">Tramo original (30-jun)</span><span class="stat-value">16-30 (mora 25)</span></div>
+      <div class="stat-tile"><span class="stat-label">Avance</span><span class="stat-value">18.7%</span></div>
+      <div class="stat-tile"><span class="stat-label">Mora al 12-jul</span><span class="stat-value accent-amber">37 días</span></div>
+      <div class="stat-tile"><span class="stat-label">Bajo Q1 ingenuo</span><span class="stat-value accent-amber">excluido</span></div>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Mora día a día — 30-jun (asignación) a 12-jul (corte), sin pagar nada</p>
+      <svg viewBox="0 0 720 190" role="img" aria-label="La mora sube de 25 a 37 días sin pausa, cruzando el límite de 30 días el 6 de julio.">
+        <line class="chart-gridline" x1="48" y1="102" x2="700" y2="102"></line>
+        <line class="chart-baseline" x1="48" y1="168" x2="700" y2="168"></line>
+        <path d="M 48.0 157.0 L 102.3 157.0 L 102.3 146.0 L 156.7 146.0 L 156.7 135.0 L 211.0 135.0 L 211.0 124.0 L 265.3 124.0 L 265.3 113.0 L 319.7 113.0 L 319.7 102.0 L 374.0 102.0 L 374.0 91.0 L 428.3 91.0 L 428.3 80.0 L 482.7 80.0 L 482.7 69.0 L 537.0 69.0 L 537.0 58.0 L 591.3 58.0 L 591.3 47.0 L 645.7 47.0 L 645.7 36.0 L 700.0 36.0 L 700.0 25.0"
+          fill="none" stroke="var(--amber)" stroke-width="2"></path>
+        <circle cx="48" cy="157" r="4.5" fill="var(--amber)"><title>30-jun: mora 25, tramo 16-30 al asignar</title></circle>
+        <circle cx="374" cy="91" r="4.5" fill="var(--amber)"><title>6-jul: mora 31, cruza el límite de 30 días</title></circle>
+        <text x="378" y="83" class="chart-axis-label" style="fill:var(--amber)" font-weight="600">6-jul · cruza 30 días</text>
+        <text x="52" y="97" class="chart-axis-label">30 días (límite del tramo)</text>
+        <text x="48" y="182" class="chart-axis-label">30-jun (día 0)</text>
+        <text x="340" y="182" class="chart-axis-label">6-jul</text>
+        <text x="688" y="182" class="chart-axis-label" text-anchor="end">12-jul</text>
+      </svg>
+    </div>
+    <p class="chart-note">
+      El saldo nunca se mueve de S/8,712 en toda la ventana — este crédito no pagó nada. Bajo el
+      filtro ingenuo "mora 1-30 de hoy" del reinicio del reloj, desaparece del stock el 6-jul sin
+      dejar rastro. Bajo el enfoque acumulado (①), sigue contando con su tramo 16-30 original hasta
+      fin de mes — es exactamente el comportamiento que el fix <code>Q0</code> restaura.
+    </p>
+  </section>
+
+  <!-- ================= 3. CAPITAL ASEGURADO ================= -->
+  <section class="enfoque" id="capital">
+    <div class="enfoque-head">
+      <h2>③ Enfoque alfa — capital asegurado</h2>
+      <span class="pill pill-experim">🧪 experimental · sin backtest</span>
+    </div>
+    <p class="enfoque-sub">No mide soles recuperados — mide cuánto del capital asignado muestra actividad de pago.</p>
+
+    <h3 class="block-label">Concepto</h3>
+    <div class="prose">
+      <p>
+        Un crédito "activa" su saldo <b>completo</b> con solo mostrar 1 día de pago, sin importar
+        cuánto pagó ese día. Uno que no paga nada no aporta nada, sin importar cuán grande sea su
+        saldo. Es una lente de actividad temprana / contacto efectivo, complementaria a la meta de
+        recupero, no un reemplazo.
+      </p>
+    </div>
+
+    <h3 class="block-label">SQL explicado</h3>
+    <div class="code-panel"><pre><span class="cm">-- pago_flag: 1 si el saldo bajó ese día, sin importar cuánto</span>
+, rebajes <span class="k">as</span> (
+  <span class="k">select</span> s.tramo, s.avance_band, s.id_loan, s.saldo_inicial, f.dia,
+    <span class="k">case when</span> f.saldo_ant &gt; f.saldo <span class="k">then</span> 1 <span class="k">else</span> 0 <span class="k">end as</span> pago_flag
+  <span class="k">from</span> stock s <span class="k">join</span> fotos f <span class="k">on</span> f.id_loan = s.id_loan <span class="k">and</span> f.periodo = s.periodo_meta
+)
+<span class="cm">-- primer_pago: el primer día que ese pago_flag fue 1</span>
+, primer_pago <span class="k">as</span> (
+  <span class="k">select</span> tramo, avance_band, id_loan, saldo_inicial, <span class="k">min</span>(dia) <span class="k">as</span> dia_primer_pago
+  <span class="k">from</span> rebajes <span class="k">where</span> pago_flag = 1 <span class="k">group by</span> 1,2,3,4
+)
+<span class="cm">-- activado_por_dia: suma el SALDO INICIAL COMPLETO (no el rebaje), el día que se activa</span>
+, activado_por_dia <span class="k">as</span> (
+  <span class="k">select</span> tramo, avance_band, dia_primer_pago <span class="k">as</span> dia, <span class="k">sum</span>(saldo_inicial) <span class="k">as</span> saldo_activado_dia
+  <span class="k">from</span> primer_pago <span class="k">group by</span> 1,2,3
+)</pre></div>
+    <p class="code-caption">
+      La diferencia con la curva de recupero es exactamente esta última CTE: ahí se acumula
+      <code>sum(rebaje)</code> (soles efectivamente pagados); acá se acumula
+      <code>sum(saldo_inicial)</code> de los créditos activados — el saldo completo, una sola vez,
+      el día que ese crédito muestra el primer pago. Fuente: <code>enfoque_capital_asegurado.sql</code>.
+    </p>
+
+    <h3 class="block-label">Ejemplo real — mismo mecanismo, dos créditos de tamaño similar</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Crédito</th><th class="num">Saldo</th><th class="num">Rebaje del mes</th><th>Bajo ① Acumulado</th><th>Bajo ③ Capital asegurado</th></tr></thead>
+        <tbody>
+          <tr><td class="tag-teal">A · e79d748e…</td><td class="num">S/14,584</td><td class="num">S/265 (1.82%)</td><td>aporta S/265</td><td class="tag-teal">aporta S/14,584 completos</td></tr>
+          <tr><td class="tag-amber">B · e1b288ad…</td><td class="num">S/15,651</td><td class="num">S/0 (0%)</td><td>aporta S/0</td><td class="tag-amber">aporta S/0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Saldo capital día a día — junio 2026, créditos A y B</p>
+      <svg viewBox="0 0 720 190" role="img" aria-label="El crédito A se mantiene plano y cae ligeramente el día 17 al pagar; el crédito B se mantiene completamente plano todo el mes, sin pagar nunca.">
+        <line class="chart-gridline" x1="48" y1="123.0" x2="700" y2="123.0"></line>
+        <line class="chart-gridline" x1="48" y1="143.4" x2="700" y2="143.4"></line>
+        <line class="chart-gridline" x1="48" y1="40.9" x2="700" y2="40.9"></line>
+        <line class="chart-baseline" x1="48" y1="168" x2="700" y2="168"></line>
+        <path d="M 48.0 123.0 L 70.5 123.0 L 70.5 123.0 L 93.0 123.0 L 93.0 123.0 L 115.4 123.0 L 115.4 123.0 L 137.9 123.0 L 137.9 123.0 L 160.4 123.0 L 160.4 123.0 L 182.9 123.0 L 182.9 123.0 L 205.4 123.0 L 205.4 123.0 L 227.9 123.0 L 227.9 123.0 L 250.3 123.0 L 250.3 123.0 L 272.8 123.0 L 272.8 123.0 L 295.3 123.0 L 295.3 123.0 L 317.8 123.0 L 317.8 123.0 L 340.3 123.0 L 340.3 123.0 L 362.8 123.0 L 362.8 123.0 L 385.2 123.0 L 385.2 123.0 L 407.7 123.0 L 407.7 143.4 L 430.2 143.4 L 430.2 143.4 L 452.7 143.4 L 452.7 143.4 L 475.2 143.4 L 475.2 143.4 L 497.7 143.4 L 497.7 143.4 L 520.1 143.4 L 520.1 143.4 L 542.6 143.4 L 542.6 143.4 L 565.1 143.4 L 565.1 143.4 L 587.6 143.4 L 587.6 143.4 L 610.1 143.4 L 610.1 143.4 L 632.6 143.4 L 632.6 143.4 L 655.0 143.4 L 655.0 143.4 L 677.5 143.4 L 677.5 143.4 L 700.0 143.4 L 700.0 143.4"
+          fill="none" stroke="var(--teal)" stroke-width="2"></path>
+        <path d="M 48.0 40.9 L 70.5 40.9 L 70.5 40.9 L 93.0 40.9 L 93.0 40.9 L 115.4 40.9 L 115.4 40.9 L 137.9 40.9 L 137.9 40.9 L 160.4 40.9 L 160.4 40.9 L 182.9 40.9 L 182.9 40.9 L 205.4 40.9 L 205.4 40.9 L 227.9 40.9 L 227.9 40.9 L 250.3 40.9 L 250.3 40.9 L 272.8 40.9 L 272.8 40.9 L 295.3 40.9 L 295.3 40.9 L 317.8 40.9 L 317.8 40.9 L 340.3 40.9 L 340.3 40.9 L 362.8 40.9 L 362.8 40.9 L 385.2 40.9 L 385.2 40.9 L 407.7 40.9 L 407.7 40.9 L 430.2 40.9 L 430.2 40.9 L 452.7 40.9 L 452.7 40.9 L 475.2 40.9 L 475.2 40.9 L 497.7 40.9 L 497.7 40.9 L 520.1 40.9 L 520.1 40.9 L 542.6 40.9 L 542.6 40.9 L 565.1 40.9 L 565.1 40.9 L 587.6 40.9 L 587.6 40.9 L 610.1 40.9 L 610.1 40.9 L 632.6 40.9 L 632.6 40.9 L 655.0 40.9 L 655.0 40.9 L 677.5 40.9 L 677.5 40.9 L 700.0 40.9 L 700.0 40.9"
+          fill="none" stroke="var(--amber)" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"></path>
+        <circle cx="407.7" cy="143.4" r="4.5" fill="var(--teal)"><title>A activa el día 17: aporta S/14,584 completos</title></circle>
+        <text x="414" y="135" class="chart-axis-label" style="fill:var(--teal)" font-weight="600">A activa día 17 → S/14,584</text>
+        <text x="600" y="34" class="chart-axis-label" style="fill:var(--amber)" font-weight="600">B nunca paga → S/0</text>
+        <text x="48" y="182" class="chart-axis-label">día 1</text>
+        <text x="465" y="182" class="chart-axis-label">día 20</text>
+        <text x="688" y="182" class="chart-axis-label" text-anchor="end">día 30</text>
+      </svg>
+      <div class="chart-legend">
+        <span class="leg-item"><span class="leg-swatch" style="background:var(--teal);"></span>A · S/14,584, activa el 17-jun</span>
+        <span class="leg-item"><span class="leg-swatch" style="background:var(--amber); background-image:linear-gradient(90deg,var(--amber) 40%,transparent 0); background-size:8px 3px;"></span>B · S/15,651, nunca activa</span>
+      </div>
+    </div>
+    <p class="chart-note">
+      Este es el mismo crédito A del enfoque acumulado. Bajo esa lente aportó S/265 (1.82% de su
+      saldo). Bajo capital asegurado, el mismo pago el mismo día activa el saldo <b>completo</b>:
+      S/14,584. El crédito B, que nunca paga, aporta S/0 bajo cualquiera de los dos enfoques — la
+      diferencia entre las dos lentes solo aparece cuando sí hay algo de actividad.
+    </p>
+  </section>
+
+  <!-- ================= 4. SALIDA DE MORA ================= -->
+  <section class="enfoque" id="salida">
+    <div class="enfoque-head">
+      <h2>④ Enfoque beta — salida de mora</h2>
+      <span class="pill pill-explor">🔬 exploratorio</span>
+    </div>
+    <p class="enfoque-sub">Cura real (el saldo baja) vs. cura sin pago (candidato a reestructuración).</p>
+
+    <h3 class="block-label">Concepto</h3>
+    <div class="prose">
+      <p>
+        No basta con que <code>dayslate</code> vuelva a 0 para contar como una salida real de mora
+        — el saldo capital también tiene que haber bajado durante el episodio. Los casos donde el
+        crédito sale de mora <b>sin que el saldo baje</b> (y a veces sube) son candidatos a
+        reestructuración: una facilidad de pago que resetea el estado sin que haya cobro real de
+        por medio.
+      </p>
+    </div>
+
+    <h3 class="block-label">SQL explicado — el truco "gaps and islands"</h3>
+    <div class="code-panel"><pre><span class="cm">-- row_number() particionado por en_mora cuenta solo días con el MISMO estado.
+-- Mientras los días en mora sean consecutivos, avanza igual que rn (la
+-- posición global) y su resta (grp) no cambia. En cuanto hay un día sin
+-- mora de por medio, la resta salta -- cada salto es un episodio nuevo.</span>
+, episodios_marca <span class="k">as</span> (
+  <span class="k">select</span> *, rn - <span class="k">row_number() over</span> (<span class="k">partition by</span> id_loan, en_mora <span class="k">order by</span> fechaproceso) <span class="k">as</span> grp
+  <span class="k">from</span> mora_flag
+)
+, episodios <span class="k">as</span> (
+  <span class="k">select</span> id_loan, grp, <span class="k">min</span>(fechaproceso) <span class="k">as</span> fecha_inicio, <span class="k">min</span>(rn) <span class="k">as</span> rn_inicio,
+    <span class="k">max</span>(fechaproceso) <span class="k">as</span> fecha_fin, <span class="k">max</span>(rn) <span class="k">as</span> rn_fin
+  <span class="k">from</span> episodios_marca <span class="k">where</span> en_mora = 1 <span class="k">group by</span> 1,2
+)
+<span class="cm">-- saldo_salida = la foto en rn_fin+1 (el día siguiente; las fotos no tienen huecos)</span>
+, con_saldos <span class="k">as</span> (
+  <span class="k">select</span> e.*, f_in.saldo <span class="k">as</span> saldo_entrada, f_out.saldo <span class="k">as</span> saldo_salida
+  <span class="k">from</span> episodios e
+  <span class="k">join</span> fotos f_in <span class="k">on</span> f_in.id_loan = e.id_loan <span class="k">and</span> f_in.rn = e.rn_inicio
+  <span class="k">left join</span> fotos f_out <span class="k">on</span> f_out.id_loan = e.id_loan <span class="k">and</span> f_out.rn = e.rn_fin + 1
+)</pre></div>
+    <p class="code-caption">
+      Clasificación final: <code>saldo_entrada − saldo_salida</code> comparado contra 1% del saldo
+      de entrada (umbral proporcional, no fijo en soles) — baja &gt;1% es <b>cura real</b>, no baja
+      (o sube) es <b>cura sin pago</b>. Fuente: <code>enfoque_salida_mora.sql</code>.
+    </p>
+
+    <h3 class="block-label">Ejemplo real — dos episodios de tamaño similar</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Episodio</th><th>Entrada → salida</th><th class="num">Días en mora</th><th class="num">Saldo entrada</th><th class="num">Saldo salida</th><th class="num">Δ saldo</th></tr></thead>
+        <tbody>
+          <tr><td class="tag-teal">Cura real · 28c55f9c…</td><td>01-mar → 21-mar-2025</td><td class="num">20</td><td class="num">S/11,062</td><td class="num">S/10,771</td><td class="num tag-teal">−2.6%</td></tr>
+          <tr><td class="tag-amber">Cura sin pago · 24f15e0d…</td><td>07-jun → 30-jun-2025</td><td class="num">23</td><td class="num">S/12,779</td><td class="num">S/13,824</td><td class="num tag-amber">+8.2%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <p class="chart-title">Saldo indexado a 100 el día de entrada en mora (día 0 = entrada)</p>
+      <svg viewBox="0 0 720 190" role="img" aria-label="El episodio de cura real cae levemente por debajo de 100 al salir; el episodio de cura sin pago sube por encima de 100 al salir, señal de reestructuración.">
+        <line class="chart-gridline" x1="48" y1="124" x2="700" y2="124"></line>
+        <line class="chart-baseline" x1="48" y1="168" x2="700" y2="168"></line>
+        <path d="M 48.0 124.0 L 70.5 124.0 L 70.5 124.0 L 93.0 124.0 L 93.0 124.0 L 115.4 124.0 L 115.4 124.0 L 137.9 124.0 L 137.9 124.0 L 160.4 124.0 L 160.4 124.0 L 182.9 124.0 L 182.9 124.0 L 205.4 124.0 L 205.4 124.0 L 227.9 124.0 L 227.9 124.0 L 250.3 124.0 L 250.3 124.0 L 272.8 124.0 L 272.8 124.0 L 295.3 124.0 L 295.3 124.0 L 317.8 124.0 L 317.8 124.0 L 340.3 124.0 L 340.3 124.0 L 362.8 124.0 L 362.8 124.0 L 385.2 124.0 L 385.2 124.0 L 407.7 124.0 L 407.7 124.0 L 430.2 124.0 L 430.2 124.0 L 452.7 124.0 L 452.7 124.0 L 475.2 124.0 L 475.2 124.0 L 497.7 124.0 L 497.7 124.0 L 520.1 124.0 L 520.1 124.0 L 542.6 124.0 L 542.6 124.0 L 565.1 124.0 L 565.1 124.0 L 587.6 124.0 L 587.6 152.9 L 610.1 152.9 L 610.1 152.9 L 632.6 152.9 L 632.6 152.9"
+          fill="none" stroke="var(--teal)" stroke-width="2"></path>
+        <path d="M 48.0 124.0 L 70.5 124.0 L 70.5 124.0 L 93.0 124.0 L 93.0 124.0 L 115.4 124.0 L 115.4 124.0 L 137.9 124.0 L 137.9 124.0 L 160.4 124.0 L 160.4 124.0 L 182.9 124.0 L 182.9 124.0 L 205.4 124.0 L 205.4 124.0 L 227.9 124.0 L 227.9 124.0 L 250.3 124.0 L 250.3 124.0 L 272.8 124.0 L 272.8 124.0 L 295.3 124.0 L 295.3 124.0 L 317.8 124.0 L 317.8 124.0 L 340.3 124.0 L 340.3 124.0 L 362.8 124.0 L 362.8 124.0 L 385.2 124.0 L 385.2 124.0 L 407.7 124.0 L 407.7 124.0 L 430.2 124.0 L 430.2 124.0 L 452.7 124.0 L 452.7 124.0 L 475.2 124.0 L 475.2 124.0 L 497.7 124.0 L 497.7 124.0 L 520.1 124.0 L 520.1 124.0 L 542.6 124.0 L 542.6 124.0 L 565.1 124.0 L 565.1 124.0 L 587.6 124.0 L 587.6 124.0 L 610.1 124.0 L 610.1 124.0 L 632.6 124.0 L 632.6 124.0 L 655.0 124.0 L 655.0 34.0 L 677.5 34.0 L 677.5 34.0 L 700.0 34.0 L 700.0 34.0"
+          fill="none" stroke="var(--amber)" stroke-width="2"></path>
+        <circle cx="115.4" cy="124" r="4" fill="var(--ink-muted)"><title>Día 0: entrada en mora, ambos indexados a 100</title></circle>
+        <circle cx="587.6" cy="152.9" r="4.5" fill="var(--teal)"><title>Cura real: sale en 97.4% del saldo de entrada</title></circle>
+        <circle cx="655.0" cy="34.0" r="4.5" fill="var(--amber)"><title>Cura sin pago: sale en 108.2% del saldo de entrada</title></circle>
+        <text x="593" y="163" class="chart-axis-label" style="fill:var(--teal)" font-weight="600">cura real → 97.4%</text>
+        <text x="561" y="28" class="chart-axis-label" style="fill:var(--amber)" font-weight="600" text-anchor="end">cura sin pago → 108.2%</text>
+        <text x="52" y="119" class="chart-axis-label">100 (saldo de entrada)</text>
+        <text x="115" y="182" class="chart-axis-label" text-anchor="middle">entrada</text>
+        <text x="330" y="182" class="chart-axis-label" text-anchor="middle">+10 días</text>
+        <text x="565" y="182" class="chart-axis-label" text-anchor="middle">+20 días</text>
+      </svg>
+      <div class="chart-legend">
+        <span class="leg-item"><span class="leg-swatch" style="background:var(--teal);"></span>Cura real (28c55f9c…) · motivo_apertura 2</span>
+        <span class="leg-item"><span class="leg-swatch" style="background:var(--amber);"></span>Cura sin pago (24f15e0d…) · motivo_apertura 1</span>
+      </div>
+    </div>
+    <p class="chart-note">
+      Ambos episodios pasan un número parecido de días en mora (20 y 23) y arrancan con saldos
+      parecidos (~S/11-13K). El primero sale con el saldo levemente abajo — un pago real. El
+      segundo sale con el saldo <b>más alto</b> que al entrar (+8.2%) — el sistema dejó de marcar
+      mora sin que hubiera cobro, consistente con una capitalización de intereses/moras dentro de
+      una reestructuración. Los dos tienen <code>motivo_apertura</code> poblado, la señal cruzada
+      que confirma el patrón.
+    </p>
+  </section>
+
+  <!-- ================= COMPARATIVA ================= -->
+  <section class="comparativa">
+    <h3 class="block-label">Los 4, uno al lado del otro</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Enfoque</th><th>Qué mide</th><th>Ancla temporal</th><th>Estado</th><th>Archivo fuente</th></tr></thead>
+        <tbody>
+          <tr><td class="tag-teal">① Acumulado</td><td>Soles recuperados</td><td>Cierre del mes anterior</td><td>✅ Oficial</td><td><code>fase1_stock.sql</code></td></tr>
+          <tr><td>② Reinicio del reloj</td><td>Soles recuperados</td><td>Hoy (re-baseline)</td><td>🕓 Deprioritizado</td><td><code>meta_desde_hoy.sql</code></td></tr>
+          <tr><td>③ Capital asegurado</td><td>% saldo con ≥1 pago</td><td>Cierre del mes anterior</td><td>🧪 Experimental</td><td><code>enfoque_capital_asegurado.sql</code></td></tr>
+          <tr><td class="tag-amber">④ Salida de mora</td><td>Cura real vs. reestructuración</td><td>Episodio de mora individual</td><td>🔬 Exploratorio</td><td><code>enfoque_salida_mora.sql</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <b>Principio de modelado que atraviesa los 4:</b> una tasa o probabilidad y la curva que se le
+      aplica deben calibrarse sobre la misma definición exacta de "entrada"/cohorte. Por eso capital
+      asegurado (③) puede reutilizar la tasa <code>P(no paga a tiempo)=13.38%</code> del enfoque
+      oficial — su curva de nuevos se calibró sobre la misma transición <code>dayslate 0→1</code>.
+      Si alguna vez cambia esa definición, la tasa se recalibra junto con la curva, no una sin la otra.
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    <p>
+      Fuente de todos los ejemplos: query directa contra <b>dev_datalake_master</b> (Athena),
+      12-jul-2026 — ver <b>ejemplos_4_enfoques.sql</b> en el repo para las queries exactas.<br>
+      Documentos base: <b>ESTADO.md</b> · <b>LINAJE.md</b> · <b>enfoque_acumulado.md</b> ·
+      <b>enfoque_reinicio_reloj.md</b> · <b>enfoque_capital_asegurado.md</b> ·
+      <b>enfoque_salida_mora.md</b>.
+    </p>
+  </footer>
+
+</div>

@@ -23,6 +23,7 @@ de datos, decisiones).
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) — `julio_25pct_no_recomendado.html` | Referencia | Registro de por qué la tasa oficial es 13.38%, no el complemento simple de "paga a tiempo" |
 | [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) — `capital_asegurado.html` | 🧪 Experimental | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. Ver `enfoque_capital_asegurado.md` |
 | [🔓 Salida de mora](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) — `salida_mora.html` | 🔬 Exploratorio | Enfoque beta: cura real vs. reestructuración al salir de mora. Ver `enfoque_salida_mora.md` |
+| [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) — `guia_4_enfoques.html` | Técnico | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) — `meta_julio_en_vivo.html` | Operativo, ⚠ desactualizado | Caso de uso real: cálculo de la meta del mes en curso |
 | [Deck completo](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) — `deck_meta_recupero.html` | Presentación, ⚠ desactualizado | De la asignación (antiguos/nuevos) a la meta, en 11 slides |
 
@@ -103,6 +104,8 @@ meta_recupero_detalle.html   Detalle con curvas interactivas (copia del artifact
 julio_25pct_no_recomendado.html  Por qué NO usar 25% (copia del artifact)
 capital_asegurado.html       Enfoque alfa: capital asegurado (copia del artifact, experimental)
 salida_mora.html             Enfoque beta: hallazgos de salida de mora (copia del artifact, exploratorio)
+guia_4_enfoques.html         Los 4 enfoques explicados: concepto + SQL + crédito real (copia del artifact)
+ejemplos_4_enfoques.sql      Queries de los créditos reales usados en guia_4_enfoques.html
 enfoque_capital_asegurado.md Doc dedicado del enfoque alfa: concepto, metodología, resultados
 enfoque_salida_mora.md       Doc dedicado del enfoque beta: cura real vs. reestructuración
 ```
