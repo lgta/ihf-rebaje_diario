@@ -564,9 +564,12 @@
       Ambos episodios pasan un número parecido de días en mora (20 y 23) y arrancan con saldos
       parecidos (~S/11-13K). El primero sale con el saldo levemente abajo — un pago real. El
       segundo sale con el saldo <b>más alto</b> que al entrar (+8.2%) — el sistema dejó de marcar
-      mora sin que hubiera cobro, consistente con una capitalización de intereses/moras dentro de
-      una reestructuración. Los dos tienen <code>motivo_apertura</code> poblado, la señal cruzada
-      que confirma el patrón.
+      mora sin que hubiera cobro, consistente con una reprogramación. Diccionario confirmado por
+      negocio (2026-07-12): <code>motivo_apertura</code> 1 y 4 = reprogramación; 2 y 3 = adelanto
+      de cuotas o problemas con producto — calza exacto con los dos ejemplos de arriba (motivo 1
+      en la cura sin pago, motivo 2 en la cura real). Agrupado así y normalizado por población, la
+      señal es limpia: reprogramación aparece en 64.3% de los créditos "cura sin pago" contra solo
+      0.7% de los "cura real" — ~97x más frecuente.
     </p>
   </section>
 

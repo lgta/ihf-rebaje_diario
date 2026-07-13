@@ -34,7 +34,7 @@ etc. — nombres que no corresponden a ningún campo estándar de Mambu ni OkaAP
 | `flag_reenganche_mismo_dia/mes/reenganche` | `dts_okaapi_loans` | ETL interno (inferido) | Derivado | No correlaciona limpiamente con `motivo_apertura` (probado en la investigación del Enfoque beta) |
 | `installmentstate`, `fechavencimiento`, `dias_vencimiento_a_pago`, `principalamountpaid`, `principalamountdue` | `dts_cobranza_creditos_cuotas` | Mambu, vía cronograma (inferido) | Semi-derivado | `principalamountpaid`/`principalamountdue` están **rotos** para capital — ver `BUGS.md` bug 5. Usar deltas de `balances_principalbalance` en su lugar |
 | `flg_last_loan_in_chain` | `dts_cobranza_creditos_cuotas` | ETL interno (inferido) | Derivado | No existe campo equivalente directo en Mambu ni OkaAPI. Constante por crédito (verificado). Fuente adoptada para excluir reenganches — ver `FUENTES_DATOS.md` |
-| `"_motivo_apertura__motivo_apertura"` | `dts_cobranza_creditos_cuotas` | Mambu, custom field (inferido por el nombre) | Raw (custom field) | El nombre duplicado (`_grupo__campo`) es el patrón típico de un custom field anidado de la API de Mambu. Poblado en solo 0.4% de créditos — ver `enfoque_salida_mora.md` |
+| `"_motivo_apertura__motivo_apertura"` | `dts_cobranza_creditos_cuotas` | Mambu, custom field (inferido por el nombre) | Raw (custom field) | El nombre duplicado (`_grupo__campo`) es el patrón típico de un custom field anidado de la API de Mambu. Poblado en solo 0.4% de créditos. Valores confirmados por el usuario (negocio, 2026-07-12): 1 y 4 = reprogramación; 2 y 3 = adelanto de cuotas o problemas con producto — ver `enfoque_salida_mora.md` |
 | `segmento_modelo_cobranza`, `prediccion_riesgo_modelo_cobranza`, `segmento_modelo_mora`, `prediccion_riesgo_modelo_mora`, `flg_contacto_*`, `flg_gestion_*` | `dts_cobranza_creditos_cuotas` | ETL interno / modelos de riesgo de OKA | Derivado | No se usan en este proyecto — mencionados acá solo para dejar constancia de que existen y de dónde vienen (analítica interna, no un sistema transaccional) |
 
 ## Métricas calculadas por este proyecto (no son columnas de ninguna tabla)
@@ -50,6 +50,7 @@ etc. — nombres que no corresponden a ningún campo estándar de Mambu ni OkaAP
 ## Pendiente
 
 Todo lo marcado "(inferido)" arriba debería confirmarse con el equipo de datos/ingeniería
-de OKA en algún momento — especialmente `motivo_apertura` (qué significan los códigos
-1-4) y el origen exacto de `flg_last_loan_in_chain` (¿lo calcula un ETL, o viene de algún
-proceso de reenganche identificable en Mambu/OkaAPI que todavía no se mapeó?).
+de OKA en algún momento — especialmente el origen exacto de `flg_last_loan_in_chain`
+(¿lo calcula un ETL, o viene de algún proceso de reenganche identificable en Mambu/OkaAPI
+que todavía no se mapeó?). (`motivo_apertura` ya se confirmó con negocio el 2026-07-12,
+ver la tabla arriba.)

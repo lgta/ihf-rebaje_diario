@@ -13,6 +13,16 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 | Junio 2026 | S/1,806,299 | S/1,713,815 | **+5.4%** | +16.2% | +0.7% | Primer backtest. Curvas calibradas sobre 14 meses (incluyen junio, peso ~1/14 — no es estrictamente fuera de muestra, solo la tasa de entrada lo es). Ver `fase3_backtest.sql`, `backtest_junio.py`. |
 | Julio 2026 | S/1,776,174 | *(mes en curso, corte 9-jul: S/527,375)* | — | — | — | Meta oficial vigente, ver `ESTADO.md`. Cerrar esta fila cuando termine julio. |
 
+## Capital asegurado (enfoque alfa, complementario — no reemplaza el recupero)
+
+Métrica distinta, no comparable en soles contra la tabla de arriba (mide capital que
+"activó" pago, no soles recuperados — ver `enfoque_capital_asegurado.md`). Misma
+mecánica de seguimiento: proyectado vs. real por mes cerrado.
+
+| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Notas |
+|---|---:|---:|---:|---:|---:|---|
+| Junio 2026 | S/8,771,300 | S/9,202,188 | **-4.7%** | +5.6% | -8.4% | Primer backtest, 2026-07-13. Reutiliza población/calendario de `datos_backtest_junio/` y curvas de `datos_capital_asegurado/`. Ver `enfoque_capital_asegurado.md`, `backtest_capital_asegurado_junio.py`. |
+
 ## Qué mirar si el error crece
 
 1. ¿El error es de stock o de nuevos? (la tabla ya los separa — en junio casi todo el

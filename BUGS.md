@@ -103,3 +103,41 @@ sobre la secuencia de cuotas en vez de la foto diaria). La tasa (8.62%) y la cur
 recupero propia se calibran sobre esta misma definición — por eso el experimento es un
 buen ejemplo de "hacerlo bien" (tasa y curva consistentes) que aun así no supera al
 modelo oficial en el backtest.
+
+### 11. Filas duplicadas por (crédito, día) en `dts_mambu_loans_hist` rompen el patrón "gaps and islands" (no reproducible)
+**Síntoma:** al investigar reincidencia de "cura sin pago" (`enfoque_salida_mora.sql`
+Q4), la misma query devolvía conteos distintos en corridas sucesivas (420 vs. 415
+episodios elegibles) — algo nunca visto antes en este proyecto. **Causa:** 1,316
+combinaciones `(id_loan, fechaproceso)` de 46.7M (0.003%) tienen filas duplicadas (hasta
+10 en un mismo día), 691 de ellas con `saldo`/`dayslate` **conflictivos** entre sí (no son
+duplicados exactos). El `row_number() over (partition by id_loan order by fechaproceso)`
+usado en el patrón de islas (`enfoque_salida_mora.sql`, también documentado en
+`enfoque_capital_asegurado.md`) no tenía desempate — con `fechaproceso` empatado, Presto
+no garantiza un orden estable, así que `rn` (y por lo tanto `grp`, los límites de
+episodio, y crucialmente `rn_fin + 1` para ubicar `saldo_salida`) cambiaba entre
+corridas. Una foto duplicada en medio de una racha de mora podía fragmentar un episodio
+real en 2+ episodios falsos. **Fix:** dedup determinista por `(id_loan, fechaproceso)`
+antes de calcular `rn`, vía `row_number() over (partition by id_loan, fechaproceso order
+by lastmodifieddate desc, id desc)` (`id` es la clave nativa de Mambu, siempre única —
+garantiza desempate total; `fechaactualizaciontabla`, el timestamp de carga ETL, NO sirve
+porque es idéntico entre duplicados en 1,314 de 1,316 casos — vienen del mismo batch).
+**Impacto medido** (reclasificación completa de `enfoque_salida_mora.sql` Q1): episodios
+`cura_sin_pago` 513→376 (-27%, eran fragmentos falsos del MISMO crédito — créditos
+afectados 364→363, casi sin cambio); `dias_en_mora_prom` de motivo=1 dentro de
+`cura_sin_pago` subió de 34.5 a 48.8 días (el fragmento se veía más corto de lo real).
+`cura_real` casi no se movió (70,314→70,208 episodios, -0.15%) porque son episodios más
+largos, menos sensibles a una foto de más. **Las proporciones agrupadas por
+`motivo_apertura` (~97x reprogramación, ~15x adelanto/producto) no cambiaron de forma
+material** — el hallazgo cualitativo se mantiene, solo se corrigieron los conteos.
+**Un hallazgo inicial SÍ se revirtió:** la primera corrida (sin el fix) sugería que
+"cura sin pago" recae más RÁPIDO que "cura real" (mediana 20.3 vs. 28.1 días) — con el
+fix, es al revés: recae con más frecuencia (80.8% vs. 63.8%) pero en un plazo similar o
+algo más lento (mediana 31.0 vs. 28.1 días). **Implicación:** cualquier query nueva sobre
+`dts_mambu_loans_hist` que use `row_number() over (partition by id_loan order by
+fechaproceso)` debe agregar el dedup de arriba primero. `enfoque_salida_mora.sql` (Q1,
+Q2, Q4, Q5) ya lo tiene. **Pendiente:** el resto de queries de este proyecto
+(`fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`,
+`enfoque_capital_asegurado.sql`, etc.) usan el mismo patrón sin este desempate — no se
+re-corrieron porque el impacto ahí es sobre agregados de saldo/curvas (mucho menos
+sensibles a un desempate de un día que un contador de episodios discretos), pero si algún
+resultado de esos archivos se ve raro o no reproducible, este es el primer sospechoso.

@@ -1,6 +1,7 @@
 # Fuentes de datos
 
-Las 3 tablas que se usan en prácticamente todo el análisis. DB `dev_datalake_master`,
+Las 3 tablas que se usan en prácticamente todo el análisis, más una cuarta (nueva,
+2026-07-13) usada solo en `avance_cobranza_fase.md`. DB `dev_datalake_master`,
 Athena workgroup `primary`, output `s3://aws-athena-query-results-882281946095-us-east-2/tmp-claude-rebaje/`.
 Cuenta AWS 882281946095, us-east-2.
 
@@ -56,6 +57,27 @@ de vencimientos y para la validación en # de operaciones.
 
 Sin `flg_last_loan_in_chain=1`, la curva de # operaciones sale ~10 puntos más baja de lo
 real (cuotas de créditos reenganchados quedan `LATE` para siempre).
+
+## `dts_asignaciones_cobranza` (nueva, incorporada 2026-07-13)
+
+**Grano:** `(dni_ce, producto)` por `fecha_base` — la asignación REAL de cobranza día a
+día (a diferencia de las 3 tablas de arriba, esto viene directo del sistema de asignación
+del negocio, no es una población inferida vía `dayslate`). Usada en
+`avance_cobranza_fase.md`/`.sql`/`.py`.
+
+| Campo | Notas |
+|---|---|
+| `dni_ce` | documento del cliente — **no hay `id_ihfintech_loan` directo**, hay que cruzar contra `dts_cobranza_creditos_cuotas` (`dni`, `producto`, `status='ACTIVE'`, `flg_last_loan_in_chain=1`) — cruce limpio 1:1, matchea ~96.5% |
+| `fecha_base` | fecha de la foto de asignación. **Solo tiene datos desde 2026-07-02** (tabla nueva, sin histórico de meses previos ni del 1-jul) |
+| `fase_estrategia` | TEMPRANA / ESPECIALIZADA / RECOVERY — se fija al momento de asignar la campaña, NO se recalcula a diario (un crédito puede seguir en una fase aunque su mora real ya haya cambiado de tramo) |
+| `subsegmento_fase_estrategia` | sub-banda de mora dentro de la fase (ej. "VENCIDO 1 A 8"), definida por el negocio — no coincide exactamente con los tramos `a.1-8/b.9-15/c.16-30` que usa el resto del proyecto |
+| `dias_mora` / `max_dias_mora_dni` | mora del negocio — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar |
+| `monto_capital_pendiente` | saldo según esta tabla — **no usarlo para capital**, seguir el patrón del proyecto de tomar el saldo desde `dts_mambu_loans_hist` (mismo principio que descartó `principalamountpaid`/`principalamountdue`, bug 5 en `BUGS.md`) |
+| `grupo_control` | existe un grupo de control (no gestionado) — no explorado todavía, revisar antes de usar esta tabla para medir "efecto de la gestión" |
+
+**La asignación a Especializada/Recovery es a nivel CLIENTE, no crédito** — si un cliente
+tiene otro crédito en mora profunda, todos sus créditos (sanos o no) se asignan a la fase
+más severa por arrastre. Ver `avance_cobranza_fase.md` para el detalle completo.
 
 ## Patrón de CTEs base (aparece en casi todos los `.sql` del proyecto)
 

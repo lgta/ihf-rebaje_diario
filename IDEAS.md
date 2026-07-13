@@ -31,13 +31,32 @@ Dos secciones. Lee la segunda antes de proponer algo — puede que ya se haya pr
    no se van a mantener.
 8. **Reorganizar en carpetas** (`sql/`, `python/`, `docs/`) si el root sigue creciendo — hoy
    son ~20 archivos sueltos. Baja prioridad, no bloquea nada.
-9. **Backtest del enfoque "capital asegurado"** (`enfoque_capital_asegurado.md`) contra
-   junio 2026, mismo patrón que `fase3_backtest.sql`. Es experimental y no debe reportarse
-   como KPI oficial hasta esto.
-10. **Enfoque beta — salida de mora** (`enfoque_salida_mora.md`): decidir si construir la
-    curva completa + proyección (como Alfa), investigar reincidencia de los créditos
-    "cura sin pago" (¿vuelven a caer en mora?, ¿en cuánto tiempo?), o ambas. Conseguir
-    diccionario de datos real para `motivo_apertura` (preguntar a negocio/producto).
+9. ~~Backtest del enfoque "capital asegurado"~~ — **resuelto 2026-07-13**: -4.7% de error
+   contra junio 2026 (mismo patrón que `fase3_backtest.sql`, ver `enfoque_capital_asegurado.md`
+   sección "Backtest"). Promovido a métrica complementaria regular, sumado a
+   `SEGUIMIENTO.md`.
+10. ~~Enfoque beta — salida de mora: decidir siguiente paso~~ — **(b) reincidencia resuelto
+    2026-07-13**: 80.8% de los créditos "cura sin pago" vuelven a caer en mora (vs. 63.8%
+    de "cura real"), en un plazo similar (mediana ~31 días). Ver `enfoque_salida_mora.md`
+    sección "Reincidencia". **Recomienda seguir con (a)** — construir la curva completa +
+    proyección + artifact — todavía pendiente para una próxima sesión.
+    ~~Conseguir diccionario de datos real para `motivo_apertura`~~ — resuelto 2026-07-12
+    (confirmado por negocio: 1/4 = reprogramación, 2/3 = adelanto de cuotas/problemas con
+    producto; el desglose de `enfoque_salida_mora.md` ya se recalculó con esto y la señal
+    quedó mucho más limpia: reprogramación es ~98x más frecuente en "cura sin pago" que en
+    "cura real").
+11. **Investigar el bug 11 de `BUGS.md`** (filas duplicadas por crédito+día en
+    `dts_mambu_loans_hist`, 0.003% de las filas) en el resto de queries que usan
+    `row_number() over (partition by id_loan order by fechaproceso)` sin desempate
+    (`fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`,
+    `enfoque_capital_asegurado.sql`) — no se re-corrieron porque el impacto ahí es sobre
+    agregados de saldo/curvas (mucho menos sensible que un contador de episodios
+    discretos), pero conviene aplicar el mismo fix si algún resultado se ve raro.
+12. **Construir la curva completa de Enfoque beta** (opción a, ver `enfoque_salida_mora.md`
+    pendientes) — recomendado tras confirmar la reincidencia (punto 10).
+13. **Actualizar los 2 artifacts marcados "⚠ desactualizado" de los 4 enfoques**
+    (`capital_asegurado.html` y `salida_mora.html`, ver `ESTADO.md`) con los resultados del
+    2026-07-13 antes de compartirlos de nuevo.
 
 ## Ideas ya probadas y descartadas (no las repitas sin releer por qué fallaron)
 

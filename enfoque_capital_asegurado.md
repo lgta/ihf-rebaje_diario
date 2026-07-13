@@ -1,10 +1,12 @@
 # Enfoque alfa: capital asegurado
 
-> **Estado: experimental, sin backtest todavía.** No es la meta oficial (esa sigue siendo
-> `meta_julio.py`, ver `ESTADO.md`). Es una métrica complementaria, propuesta por el
-> usuario el 2026-07-10. Antes de usarla para reportar hacia el negocio, correrle el mismo
-> tratamiento que al modelo oficial: backtest contra un mes real cerrado (ver pendientes
-> al final de este archivo).
+> **Estado: backtest superado (-4.7% de error, junio 2026).** No es la meta oficial (esa
+> sigue siendo `meta_julio.py`, ver `ESTADO.md`). Es una métrica complementaria, propuesta
+> por el usuario el 2026-07-10. Ya se le corrió el mismo tratamiento que al modelo
+> oficial: backtest contra un mes real cerrado (ver sección "Backtest" más abajo). Un solo
+> mes no basta para confirmar el error típico (mismo caveat que el modelo oficial, ver
+> `IDEAS.md` punto 1) — pero el resultado da confianza para reportarlo como métrica
+> complementaria regular.
 
 ## El concepto
 
@@ -117,12 +119,36 @@ que "mostrar 1 pago" es un umbral mucho más bajo que "recuperar todo el saldo".
 Artifact publicado: [🔒 Capital asegurado — julio 2026](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a)
 (`capital_asegurado.html`) — curvas interactivas + trayectoria de julio.
 
+## Backtest (junio 2026)
+
+Ejecutado 2026-07-13, mismo mes que el backtest oficial de recupero (para comparar
+manzanas con manzanas). Mismo patrón que `fase3_backtest.sql`: stock al cierre de mayo,
+calendario real de junio sin filtro `installmentstate`, capital asegurado real vía
+`dts_mambu_loans_hist` (mismo criterio `pago_flag`/`primer_pago` que
+`enfoque_capital_asegurado.sql`). Reutiliza la población (stock/calendario) ya cacheada en
+`datos_backtest_junio/` y las curvas ya calibradas en `datos_capital_asegurado/` — lo único
+nuevo son los CSV de activación real (`bt_real_aseg_stock.csv`, `bt_real_aseg_nuevos.csv`).
+Script: `backtest_capital_asegurado_junio.py`.
+
+| | Proyectado | Real | Error |
+|---|---:|---:|---:|
+| Total | S/8,771,300 | S/9,202,188 | **-4.7%** |
+| Stock | S/2,573,309 | S/2,436,810 | +5.6% |
+| Nuevos | S/6,197,991 | S/6,765,378 | -8.4% |
+
+**El error total (-4.7%) es del mismo orden de magnitud que el backtest del modelo oficial
+de recupero (+5.4%)** — buena señal de que la curva de capital asegurado no está sesgada
+de forma grosera, aunque va en la dirección opuesta (oficial sobreestima, este subestima) y
+el desglose stock/nuevos también se invierte (acá el stock sobreestima y nuevos
+subestima, al revés que en recupero). No se tocó la tasa `P(no paga a tiempo)=13.38%` ni la
+curva por separado — el error no es lo bastante grande como para justificarlo, y el
+principio de modelado de `CLAUDE.md` aplica igual acá.
+
 ## Pendientes de este enfoque
 
-1. **Backtest contra un mes real cerrado** (junio 2026, mismo patrón que
-   `fase3_backtest.sql`) — todavía no se hizo. Sin esto, no se sabe si la proyección de
-   julio (S/8.9M) es razonable o está sesgada.
-2. Decidir si tiene sentido reportar esto hacia el negocio como KPI regular, o si es solo
-   una lente analítica interna.
-3. Si se adopta, sumarlo a `SEGUIMIENTO.md` como columna adicional (capital asegurado
-   proyectado vs. real), igual que se hace con el recupero.
+1. ~~Backtest contra un mes real cerrado~~ — hecho 2026-07-13, ver arriba. Al igual que el
+   modelo oficial, sigue siendo un solo mes de dato (`IDEAS.md` punto 1) — extenderlo a
+   3-6 meses más antes de tratar -4.7% como error típico.
+2. **Decisión: sí, pasa a reportarse como métrica complementaria regular** (no reemplaza
+   recupero, que sigue siendo la meta oficial). El backtest da confianza suficiente. Ya
+   sumado a `SEGUIMIENTO.md` como columna adicional.

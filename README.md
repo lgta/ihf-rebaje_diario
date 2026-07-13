@@ -21,8 +21,8 @@ de datos, decisiones).
 | [Guía técnica](https://claude.ai/code/artifact/9df13c20-7758-4174-8346-ed6563d25c5d) — `guia_tecnica_recupero.md` | Técnico | Mismo contenido + SQL copiable para Athena |
 | [Detalle con curvas interactivas](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) — `meta_recupero_detalle.html` | Equipo | El más completo: composición, calendario, curvas por avance, cohortes, trayectoria — todo interactivo |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) — `julio_25pct_no_recomendado.html` | Referencia | Registro de por qué la tasa oficial es 13.38%, no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) — `capital_asegurado.html` | 🧪 Experimental | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. Ver `enfoque_capital_asegurado.md` |
-| [🔓 Salida de mora](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) — `salida_mora.html` | 🔬 Exploratorio | Enfoque beta: cura real vs. reestructuración al salir de mora. Ver `enfoque_salida_mora.md` |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) — `capital_asegurado.html` | ⚠ Desactualizado | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. Ya validado con backtest (-4.7%) pero el artifact no lo refleja. Ver `enfoque_capital_asegurado.md` |
+| [🔓 Salida de mora](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) — `salida_mora.html` | ⚠ Desactualizado | Enfoque beta: cura real vs. reestructuración al salir de mora. El artifact tiene números de antes de un fix de datos (ver `BUGS.md` bug 11) y no incluye el hallazgo de reincidencia. Ver `enfoque_salida_mora.md` |
 | [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) — `guia_4_enfoques.html` | Técnico | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) — `meta_julio_en_vivo.html` | Operativo, ⚠ desactualizado | Caso de uso real: cálculo de la meta del mes en curso |
 | [Deck completo](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) — `deck_meta_recupero.html` | Presentación, ⚠ desactualizado | De la asignación (antiguos/nuevos) a la meta, en 11 slides |
@@ -57,14 +57,15 @@ archivos de referencia de abajo para consultas puntuales.
 | [`IDEAS.md`](IDEAS.md) | Pendientes activos + ideas ya probadas y descartadas |
 | [`DECISIONES.md`](DECISIONES.md) | Por qué se eligió cada pieza de la metodología |
 | [`GLOSARIO.md`](GLOSARIO.md) | Definición corta de cada término |
-| [`FUENTES_DATOS.md`](FUENTES_DATOS.md) | Las 3 tablas de Athena, su grano y sus quirks |
+| [`FUENTES_DATOS.md`](FUENTES_DATOS.md) | Las 4 tablas de Athena del proyecto, su grano y sus quirks |
 | [`LINAJE.md`](LINAJE.md) | De qué sistema viene cada columna (Mambu, OkaAPI, o calculada internamente) |
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Tabla mes a mes de proyectado vs. real |
 | [`CLAUDE.md`](CLAUDE.md) | Instrucciones para cualquier sesión de Claude Code en este repo |
 | [`enfoque_acumulado.md`](enfoque_acumulado.md) | Enfoque oficial (validado): resumen corto, apunta a `guia_tecnica_recupero.md` |
 | [`enfoque_reinicio_reloj.md`](enfoque_reinicio_reloj.md) | Enfoque B (deprioritizado): recalcular desde "hoy" en vez del cierre |
-| [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa (experimental): % de capital con actividad de pago |
+| [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa (validado, backtest -4.7%): % de capital con actividad de pago |
 | [`enfoque_salida_mora.md`](enfoque_salida_mora.md) | Enfoque beta (exploratorio): cura real vs. reestructuración al salir de mora |
+| [`avance_cobranza_fase.md`](avance_cobranza_fase.md) | Análisis puntual: avance de julio por fase de cobranza (Temprana/Especializada/Recovery), usando la asignación real del negocio |
 
 ## Estructura del repositorio
 
@@ -77,22 +78,28 @@ fase3_backtest.sql           Backtest sobre un mes real y cerrado (junio 2026)
 ejemplo_cohorte_julio.sql    Ejemplo replicable de una sola cohorte, paso a paso
 investigacion_dayslate.sql   Investigación del punto ciego de 1 día en dayslate
 motor_cuota_vencimiento.sql  Motor alternativo por vencimiento de cuota (descartado, ver BUGS.md)
-enfoque_capital_asegurado.sql  Enfoque alfa: curvas de capital asegurado (experimental)
-enfoque_salida_mora.sql      Enfoque beta: cura real vs. reestructuración (exploratorio)
+enfoque_capital_asegurado.sql  Enfoque alfa: curvas de capital asegurado (validado, backtest -4.7%)
+enfoque_capital_asegurado_backtest.sql  Backtest de junio del enfoque alfa
+enfoque_salida_mora.sql      Enfoque beta: cura real vs. reestructuración + reincidencia
+avance_cobranza_fase.sql     Análisis puntual: avance por fase de cobranza (Temprana/Especializada/Recovery)
 
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
 backtest_junio.py            Compara proyección vs. recupero real de junio (backtest)
+backtest_capital_asegurado_junio.py  Backtest de junio del enfoque alfa (capital asegurado)
 backtest_motor_cuota.py      Backtest del motor alternativo (descartado)
 meta_julio.py                Meta del mes en curso, anclada al cierre del mes anterior
 meta_julio_25pct.py          Meta de julio bajo el escenario 25% plano (no recomendado)
-meta_julio_capital_asegurado.py  Proyección de julio bajo el enfoque alfa (experimental)
+meta_julio_capital_asegurado.py  Proyección de julio bajo el enfoque alfa
 meta_desde_hoy.py            Meta recalculada desde hoy ("reinicio del reloj", deprioritizado)
+avance_cobranza_fase.py      Agregación + cruce con curvas del análisis por fase de cobranza
 
-datos_backtest_junio/        Insumos (CSV) del backtest de junio
+datos_backtest_junio/        Insumos (CSV) del backtest de junio (recupero + capital asegurado)
 datos_meta_julio/            Insumos (CSV) de la meta de julio (enfoque acumulado)
 datos_meta_desde_hoy/        Insumos (CSV) del enfoque "reinicio del reloj"
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
 datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado)
+datos_salida_mora/           Insumos (CSV) de la investigación de reincidencia (enfoque beta)
+datos_avance_fase/           Insumos (CSV) del análisis de avance por fase de cobranza
 scripts/run_athena.sh        Helper para correr un .sql contra Athena y bajar el CSV
 
 plan_analisis.md             Bitácora técnica completa — historial cronológico
