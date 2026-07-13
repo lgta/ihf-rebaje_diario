@@ -9,14 +9,38 @@
 
 ## La meta vigente
 
-**Julio 2026, corte 9-jul:** meta total **S/1,776,174** (stock S/426,651 + nuevos
-S/1,349,523). Real recuperado a la fecha: S/527,375 (29.7% de avance). Resta:
-**S/1,248,799** (días 10-31). Fuente: `meta_julio.py` + `datos_meta_julio/`.
+> **Desde 2026-07-13, la meta principal reportada es capital asegurado (Enfoque alfa)**,
+> a pedido explícito del usuario — no el recupero en soles. El recupero oficial se sigue
+> calculando y trackeando (sigue siendo válido, con su propio backtest +5.4%), pero ya no
+> es el número que lidera esta sección. Ver `enfoque_capital_asegurado.md`.
+
+**Julio 2026, corte 13-jul — Capital asegurado:** meta proyectada **S/8,919,611** (stock
+S/1,725,470 + nuevos S/7,194,140). Real asegurado a la fecha: **S/4,800,372** (53.8% de
+avance del total del mes) — **+32.1% por encima de lo proyectado para el mismo día**
+(proyección al día 13: S/3,634,008). Resta: S/4,119,238 (días 14-31). Fuente:
+`avance_capital_asegurado_julio.py` + `datos_avance_capital_asegurado_julio/`. Curvas
+calibradas y ya validadas con backtest de junio (-4.7% de error), ver
+`enfoque_capital_asegurado.md`.
+
+**Nota de cautela:** el +32.1% de adelanto es la lectura de un solo mes a mitad de
+camino (día 13 de 31) — el backtest de junio (mes completo, cerrado) dio -4.7%. Con datos
+tan parciales, un adelanto grande a día 13 puede diluirse o revertirse antes del cierre;
+no hay base todavía para saber si es señal real o solo el patrón normal de que julio
+arranca con más actividad de la típica. Seguir el avance semana a semana antes de sacar
+conclusiones.
 
 Metodología: modelo evento × magnitud, dos motores (stock anclado al cierre del mes
 anterior, nuevos vía calendario de vencimientos × P(no paga a tiempo)=13.38% × curva de
-maduración). Detalle completo en `guia_tecnica_recupero.md` y en el artifact interactivo
-de abajo.
+maduración) — igual mecanismo que el recupero oficial, solo que la curva mide "% de saldo
+con ≥1 pago" (capital asegurado) en vez de "% recuperado". Detalle completo en
+`enfoque_capital_asegurado.md`.
+
+### Recupero oficial (soles cobrados, se sigue trackeando en paralelo)
+
+**Julio 2026, corte 9-jul:** meta total **S/1,776,174** (stock S/426,651 + nuevos
+S/1,349,523). Real recuperado a la fecha: S/527,375 (29.7% de avance). Resta:
+**S/1,248,799** (días 10-31). Fuente: `meta_julio.py` + `datos_meta_julio/`. Detalle
+completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
 
 ## Artifacts publicados
 
@@ -28,7 +52,7 @@ de abajo.
 | [Deck (11 slides)](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) | ⚠ desactualizado | Mismo motivo |
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado | Enfoque alfa — no refleja el backtest de junio (-4.7%, ver `enfoque_capital_asegurado.md`), que ya pasó y promovió la métrica a KPI complementario en `SEGUIMIENTO.md` |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado | Enfoque alfa, **ahora la meta principal de julio** (ver "La meta vigente" arriba) — el artifact no refleja el backtest de junio (-4.7%) ni el tracking en vivo. Ver `enfoque_capital_asegurado.md` |
 | [🔓 Salida de mora — hallazgos](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) | ⚠ desactualizado | Enfoque beta — tiene los números de ANTES del fix de dedup (bug 11, `BUGS.md`: 513/364 → 376/363) y no incluye el hallazgo de reincidencia (80.8% recae). Ver `enfoque_salida_mora.md` |
 | [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) | ✓ vigente | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques (acumulado, reinicio, capital asegurado, salida de mora). Ver `guia_4_enfoques.html` |
 
@@ -44,9 +68,9 @@ no republicar sin actualizarlos primero.
 
 | Enfoque | Archivo | Qué mide | Estado |
 |---|---|---|---|
-| **Acumulado** (oficial) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4% |
+| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.7% (jun-2026), tracking en vivo de julio |
+| Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4% |
 | Reinicio del reloj | `enfoque_reinicio_reloj.md` | Lo mismo, pero re-anclado a "hoy" | 🕓 Deprioritizado, no oficial |
-| Alfa — Capital asegurado | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.7% (jun-2026), promovido a KPI complementario en `SEGUIMIENTO.md` |
 | Beta — Salida de mora | `enfoque_salida_mora.md` | Cura real vs. reestructuración al salir de mora; reincidencia | 🔬 Exploratorio — reincidencia confirmada (80.8% recae), falta curva/proyección (opción a) |
 | Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
 

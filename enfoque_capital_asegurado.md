@@ -1,12 +1,12 @@
 # Enfoque alfa: capital asegurado
 
-> **Estado: backtest superado (-4.7% de error, junio 2026).** No es la meta oficial (esa
-> sigue siendo `meta_julio.py`, ver `ESTADO.md`). Es una métrica complementaria, propuesta
-> por el usuario el 2026-07-10. Ya se le corrió el mismo tratamiento que al modelo
-> oficial: backtest contra un mes real cerrado (ver sección "Backtest" más abajo). Un solo
-> mes no basta para confirmar el error típico (mismo caveat que el modelo oficial, ver
-> `IDEAS.md` punto 1) — pero el resultado da confianza para reportarlo como métrica
-> complementaria regular.
+> **Estado: meta principal de julio 2026 (desde 2026-07-13, a pedido explícito del
+> usuario).** Backtest superado contra junio 2026 (-4.7% de error). El recupero oficial
+> (`meta_julio.py`) se sigue calculando y trackeando en paralelo, pero ya no es el número
+> que lidera `ESTADO.md`. Propuesta original por el usuario el 2026-07-10. Un solo mes de
+> backtest no basta para confirmar el error típico (mismo caveat que el modelo de
+> recupero, ver `IDEAS.md` punto 1) — vale lo mismo ahora que es la métrica principal:
+> seguir extendiendo el backtest a más meses antes de tratar -4.7% como error típico.
 
 ## El concepto
 
@@ -144,11 +144,35 @@ subestima, al revés que en recupero). No se tocó la tasa `P(no paga a tiempo)=
 curva por separado — el error no es lo bastante grande como para justificarlo, y el
 principio de modelado de `CLAUDE.md` aplica igual acá.
 
+## Tracking en vivo — julio 2026 (meta principal)
+
+Igual mecanismo que `meta_julio.py` para el recupero oficial (stock anclado al cierre
+real de junio + calendario de julio × P(no paga)=13.38%), pero con las curvas de capital
+asegurado. Script: `avance_capital_asegurado_julio.py`. Datos reales generados con el
+mismo patrón que el backtest de junio (`jul_aseg_real_stock.csv`/`jul_aseg_real_nuevos.csv`
+en `datos_avance_capital_asegurado_julio/`, adaptando fechas a julio).
+
+| | Proyectado (mes completo) | Real al 13-jul | Proyectado al mismo día (13) |
+|---|---:|---:|---:|
+| Total | S/8,919,611 | S/4,800,372 | S/3,634,008 |
+| Stock | S/1,725,470 | S/1,303,515 | — |
+| Nuevos | S/7,194,140 | S/3,496,857 | — |
+
+**Avance real: 53.8% de la meta del mes, +32.1% por encima de lo proyectado para el mismo
+día.** Lectura de un solo mes a mitad de camino (día 13 de 31) — el backtest de junio (mes
+completo, cerrado) dio -4.7%, así que este +32.1% de adelanto a mitad de mes no debe
+tratarse como una revisión del backtest: puede diluirse o revertirse antes del cierre.
+Seguir el avance semana a semana; no ajustar tasa ni curva sin repetir el backtest
+(principio de modelado, `CLAUDE.md`).
+
 ## Pendientes de este enfoque
 
 1. ~~Backtest contra un mes real cerrado~~ — hecho 2026-07-13, ver arriba. Al igual que el
    modelo oficial, sigue siendo un solo mes de dato (`IDEAS.md` punto 1) — extenderlo a
    3-6 meses más antes de tratar -4.7% como error típico.
-2. **Decisión: sí, pasa a reportarse como métrica complementaria regular** (no reemplaza
-   recupero, que sigue siendo la meta oficial). El backtest da confianza suficiente. Ya
-   sumado a `SEGUIMIENTO.md` como columna adicional.
+2. ~~Decidir si pasa a reportarse como KPI~~ — **promovido a meta principal el
+   2026-07-13** (a pedido explícito del usuario), reemplazando al recupero como el número
+   que lidera `ESTADO.md`. El recupero oficial se sigue calculando y trackeando en
+   paralelo, no se descontinuó.
+3. Cerrar la fila de julio en `SEGUIMIENTO.md` cuando termine el mes (real final vs.
+   proyectado), igual que se hace con el recupero.

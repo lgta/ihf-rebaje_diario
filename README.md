@@ -1,10 +1,12 @@
 # Meta de recupero diaria — cartera de cobranza (mora 1–30)
 
-Metodología y herramientas para estimar, **día a día**, cuánto saldo capital debería
-recuperarse de la cartera de cobranza en mora 1–30 días — calibrada con 14 meses de
-historia real (dts_mambu_loans_hist, dts_okaapi_loans, dts_cobranza_creditos_cuotas en
-Athena, `dev_datalake_master`) y validada contra un mes real cerrado (backtest de junio
-2026: +5.4% de error).
+Metodología y herramientas para estimar, **día a día**, la cartera de cobranza en mora
+1–30 días — calibrada con 14 meses de historia real (dts_mambu_loans_hist,
+dts_okaapi_loans, dts_cobranza_creditos_cuotas en Athena, `dev_datalake_master`) y
+validada contra un mes real cerrado. **Desde 2026-07-13 la meta principal es capital
+asegurado** (Enfoque alfa: % de capital con actividad de pago, backtest -4.7% de error);
+el recupero oficial en soles (backtest +5.4% de error) se sigue trackeando en paralelo.
+Ver [`ESTADO.md`](ESTADO.md) para el detalle.
 
 ## Empezar por acá
 
@@ -121,18 +123,28 @@ enfoque_salida_mora.md       Doc dedicado del enfoque beta: cura real vs. reestr
 
 Ver [`ESTADO.md`](ESTADO.md) para la cifra vigente (se actualiza ahí, no acá) y
 [`SEGUIMIENTO.md`](SEGUIMIENTO.md) para el histórico mes a mes de proyectado vs. real.
-Resumen al 2026-07-10:
+Resumen al 2026-07-13:
 
+- **Desde 2026-07-13, la meta principal reportada es capital asegurado** (Enfoque alfa,
+  `enfoque_capital_asegurado.md`), a pedido explícito del usuario — no el recupero en
+  soles. El recupero oficial se sigue calculando y trackeando en paralelo.
+- **Meta de julio 2026 — capital asegurado:** S/8,919,611 proyectado (stock S/1,725,470 +
+  nuevos S/7,194,140). Al corte del día 13: real S/4,800,372 (53.8% de avance del mes,
+  +32.1% por encima de lo proyectado para el mismo día). Lectura de un solo mes a mitad de
+  camino — no sacar conclusiones todavía, ver `ESTADO.md`.
+- **Backtest de capital asegurado sobre junio 2026:** -4.7% de error al cierre (stock
+  +5.6%, nuevos -8.4%) — mismo orden de magnitud que el backtest del recupero oficial.
+- **Recupero oficial — backtest sobre junio 2026 (mes real y cerrado):** +5.4% de error al
+  cierre (stock +16.2%, nuevos +0.7% — casi exacto). Dos alternativas de tasa de entrada a
+  mora (25% plano, motor "cuota-consistente" 8.62%) se probaron y fallaron el backtest, en
+  direcciones opuestas (ver `BUGS.md` bug 10).
+- **Meta de julio 2026 — recupero oficial:** S/1,776,174 (stock S/426,651 + nuevos
+  S/1,349,523). Al corte del día 9: recuperado real S/527,375 (29.7% de avance); resta
+  S/1,248,799.
 - **Recupero mensual del stock por tramo:** 1–8 días: 18.1% · 9–15: 12.7% · 16–30: 7.8%
   del saldo capital.
 - **Severidad determinada por avance de amortización, no por tramo de mora** — de 14.9%
   (avance <10%) a 74.8% (avance 70%+), consistente en stock y en nuevos.
-- **Backtest sobre junio 2026 (mes real y cerrado):** +5.4% de error al cierre
-  (stock +16.2%, nuevos +0.7% — casi exacto). Es el único enfoque validado — dos
-  alternativas de tasa de entrada a mora (25% plano, motor "cuota-consistente" 8.62%)
-  se probaron y fallaron el backtest, en direcciones opuestas (ver `BUGS.md` bug 10).
-- **Meta de julio 2026:** S/1,776,174 (stock S/426,651 + nuevos S/1,349,523). Al corte
-  del día 9: recuperado real S/527,375 (29.7% de avance); resta S/1,248,799.
 - El enfoque "reinicio del reloj" (`meta_desde_hoy.*`) quedó **deprioritizado** — la meta
   oficial es siempre la del mes completo. Ver `ESTADO.md`.
 
