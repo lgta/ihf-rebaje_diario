@@ -1,401 +1,938 @@
-<title>Enfoque alfa: capital asegurado — julio 2026</title>
+<title>Capital asegurado — Enfoque alfa</title>
 <style>
-  :root{
-    --bg:#EEF1EE; --surface:#FCFCFB; --surface-2:#F2F4F1; --border:#DBE1DD;
-    --ink:#17211F; --ink-2:#48534F; --ink-3:#717B77;
-    --accent:#0E9C82; --accent-2:#C2721E;
-    --av1:#6FC3B3; --av2:#3DA391; --av3:#1C8C7B; --av4:#0B5C4F;
-    --shadow: 0 1px 2px rgba(20,30,27,0.06), 0 6px 20px rgba(20,30,27,0.05);
-    --radius: 10px;
+  :root {
+    --bg: #EFF3F1;
+    --surface: #FFFFFF;
+    --surface-2: #E6ECE9;
+    --ink: #14262A;
+    --ink-2: #46595B;
+    --ink-3: #7E9190;
+    --border: rgba(20,38,42,0.11);
+    --border-strong: rgba(20,38,42,0.22);
+    --teal: #0A9E8C;
+    --teal-ramp-1: #BFE6DD;
+    --teal-ramp-2: #79CDBC;
+    --teal-ramp-3: #2FAF9C;
+    --teal-ramp-4: #076F62;
+    --amber: #B8710F;
+    --amber-ramp-1: #F0D6A9;
+    --amber-ramp-2: #E0AC5C;
+    --amber-ramp-3: #C88A28;
+    --amber-ramp-4: #8A5309;
+    --grid: #DCE4E1;
+    --off: #C7D2CF;
+    --shadow: 0 1px 2px rgba(20,38,42,0.06), 0 8px 24px -12px rgba(20,38,42,0.18);
+    --radius: 14px;
   }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --bg:#0D1312; --surface:#131A19; --surface-2:#182120; --border:#28322F;
-      --ink:#E7ECEA; --ink-2:#B7C1BD; --ink-3:#8A948F;
-      --accent:#1FA88C; --accent-2:#CC7530;
-      --av1:#8FE0CE; --av2:#4FC3AC; --av3:#1FA88C; --av4:#0E7A64;
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  :root[data-theme="dark"] {
+    --bg: #0B1615;
+    --surface: #12201F;
+    --surface-2: #182726;
+    --ink: #E9F1EF;
+    --ink-2: #A9BDBA;
+    --ink-3: #6C807D;
+    --border: rgba(233,241,239,0.12);
+    --border-strong: rgba(233,241,239,0.22);
+    --teal: #33A89D;
+    --teal-ramp-1: #1C3634;
+    --teal-ramp-2: #235B54;
+    --teal-ramp-3: #2E8B7E;
+    --teal-ramp-4: #52C4B4;
+    --amber: #C77F1E;
+    --amber-ramp-1: #3A2F1C;
+    --amber-ramp-2: #6B4A17;
+    --amber-ramp-3: #A06E22;
+    --amber-ramp-4: #E0A947;
+    --grid: #223432;
+    --off: #33453F;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.5);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B1615;
+      --surface: #12201F;
+      --surface-2: #182726;
+      --ink: #E9F1EF;
+      --ink-2: #A9BDBA;
+      --ink-3: #6C807D;
+      --border: rgba(233,241,239,0.12);
+      --border-strong: rgba(233,241,239,0.22);
+      --teal: #33A89D;
+      --teal-ramp-1: #1C3634;
+      --teal-ramp-2: #235B54;
+      --teal-ramp-3: #2E8B7E;
+      --teal-ramp-4: #52C4B4;
+      --amber: #C77F1E;
+      --amber-ramp-1: #3A2F1C;
+      --amber-ramp-2: #6B4A17;
+      --amber-ramp-3: #A06E22;
+      --amber-ramp-4: #E0A947;
+      --grid: #223432;
+      --off: #33453F;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 28px -12px rgba(0,0,0,0.5);
     }
   }
-  :root[data-theme="dark"]{
-    --bg:#0D1312; --surface:#131A19; --surface-2:#182120; --border:#28322F;
-    --ink:#E7ECEA; --ink-2:#B7C1BD; --ink-3:#8A948F;
-    --accent:#1FA88C; --accent-2:#CC7530;
-    --av1:#8FE0CE; --av2:#4FC3AC; --av3:#1FA88C; --av4:#0E7A64;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
   }
-  :root[data-theme="light"]{
-    --bg:#EEF1EE; --surface:#FCFCFB; --surface-2:#F2F4F1; --border:#DBE1DD;
-    --ink:#17211F; --ink-2:#48534F; --ink-3:#717B77;
-    --accent:#0E9C82; --accent-2:#C2721E;
-    --av1:#6FC3B3; --av2:#3DA391; --av3:#1C8C7B; --av4:#0B5C4F;
-    --shadow: 0 1px 2px rgba(20,30,27,0.06), 0 6px 20px rgba(20,30,27,0.05);
+  .serif {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
   }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg); color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.55; font-size:15.5px; -webkit-font-smoothing:antialiased;
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+    font-variant-numeric: tabular-nums;
   }
-  .wrap{ max-width:1080px; margin:0 auto; padding:56px 28px 100px; }
-  h1,h2,h3{ font-family:Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua",serif; font-weight:600; text-wrap:balance; letter-spacing:-0.01em; }
+  h1, h2, h3 { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; font-weight: 600; text-wrap: balance; margin: 0; }
+  a { color: var(--teal); }
 
-  header.doc-head{ margin-bottom:34px; border-bottom:1px solid var(--border); padding-bottom:26px; }
-  header.doc-head .eyebrow{ text-transform:uppercase; letter-spacing:0.12em; font-size:11.5px; font-weight:700; color:var(--accent); margin-bottom:10px; }
-  header.doc-head h1{ font-size:32px; margin:0 0 8px; }
-  header.doc-head .sub{ color:var(--ink-2); font-size:15.5px; max-width:680px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 120px; }
+  .wide { max-width: 1080px; }
 
-  .callout{ background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; margin:0 0 20px; font-size:14.5px; color:var(--ink-2); }
-  .callout b{ color:var(--ink); }
-  .callout.warn{ border-color:var(--accent-2); }
-  .callout.warn b{ color:var(--accent-2); }
-  .example-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-  .example-tile{ background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:13.4px; }
-  .example-tile b{ display:block; color:var(--ink); font-size:14.5px; margin-bottom:2px; }
+  /* ---------- HERO ---------- */
+  .hero {
+    padding: 84px 24px 56px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-inner { max-width: 900px; margin: 0 auto; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--teal); font-weight: 600; margin-bottom: 18px;
+  }
+  .eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+  h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.08; letter-spacing: -0.01em; max-width: 15ch; }
+  .hero-sub {
+    margin-top: 20px; max-width: 62ch; font-size: 18px; color: var(--ink-2); text-wrap: pretty;
+  }
+  .hero-formula {
+    margin-top: 32px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    font-size: 14.5px; color: var(--ink-2);
+  }
+  .pill {
+    display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 100px;
+    background: var(--surface); border: 1px solid var(--border); font-weight: 600; color: var(--ink);
+    box-shadow: var(--shadow);
+  }
+  .pill.on { background: var(--amber); color: #fff; border-color: transparent; }
+  .arrow { color: var(--ink-3); font-size: 16px; }
 
-  section{ margin:52px 0; }
-  .section-label{ text-transform:uppercase; letter-spacing:0.1em; font-size:11.5px; font-weight:700; color:var(--ink-3); margin-bottom:6px; }
-  section > h2{ font-size:24px; margin:0 0 6px; }
-  section > .lede{ color:var(--ink-2); max-width:700px; margin:0 0 24px; font-size:14.5px; }
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section { padding: 64px 24px; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  .kicker {
+    font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink-3); margin-bottom: 10px;
+  }
+  h2 { font-size: clamp(24px, 3.4vw, 32px); max-width: 24ch; }
+  .lede { margin-top: 14px; max-width: 68ch; color: var(--ink-2); font-size: 16.5px; }
 
-  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; box-shadow:var(--shadow); margin-bottom:20px; }
-  .card h3{ font-size:16px; margin:0 0 4px; }
-  .card .cap{ font-size:13px; color:var(--ink-3); margin:0 0 16px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
 
-  .tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:8px; }
-  .tile{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); }
-  .tile .tl{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-3); margin-bottom:8px; }
-  .tile .tv{ font-family:Georgia,serif; font-size:25px; font-variant-numeric:tabular-nums; color:var(--ink); }
-  .tile .ts{ font-size:12.5px; color:var(--ink-2); margin-top:4px; }
-  .tile.accent .tv{ color:var(--accent); }
+  /* ---------- 5 CREDITOS ---------- */
+  .credit-grid {
+    margin-top: 32px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+  }
+  @media (max-width: 860px) { .credit-grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 520px) { .credit-grid { grid-template-columns: 1fr; } }
+  .credit-card { padding: 18px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .credit-num {
+    font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 13px; color: var(--ink-3);
+  }
+  .credit-name { font-size: 15px; font-weight: 700; line-height: 1.3; min-height: 39px; }
+  .credit-spark { width: 100%; height: 54px; }
+  .credit-stat-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--ink-3); }
+  .credit-stat-row b { font-family: inherit; color: var(--ink); font-size: 13.5px; }
+  .credit-badge {
+    align-self: flex-start; font-size: 11.5px; font-weight: 700; padding: 4px 9px; border-radius: 100px;
+    letter-spacing: 0.02em;
+  }
+  .credit-badge.on { background: color-mix(in srgb, var(--amber) 16%, transparent); color: var(--amber-ramp-4); }
+  .credit-badge.off { background: var(--surface-2); color: var(--ink-3); }
 
-  .table-scroll{ overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); }
-  table{ border-collapse:collapse; width:100%; font-size:13.6px; min-width:520px; }
-  thead th{ text-align:right; font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-3); padding:10px 14px; background:var(--surface-2); border-bottom:1px solid var(--border); }
-  thead th:first-child, thead th:nth-child(2){ text-align:left; }
-  tbody td{ padding:8px 14px; text-align:right; border-bottom:1px solid var(--border); font-variant-numeric:tabular-nums; color:var(--ink-2); }
-  tbody td:first-child, tbody td:nth-child(2){ text-align:left; color:var(--ink); }
-  tbody tr:last-child td{ border-bottom:none; }
-  tbody tr.grandtotal td{ background:var(--av1); color:#0B2420; font-weight:700; }
+  .summary-bar {
+    margin-top: 22px; padding: 20px 22px; display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between;
+  }
+  .summary-stat .num { font-size: 26px; font-weight: 700; font-family: "Iowan Old Style", Palatino, Georgia, serif; }
+  .summary-stat .lbl { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+  .summary-stat.hi .num { color: var(--amber); }
 
-  .chart-grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-  @media (max-width:820px){ .chart-grid-3{ grid-template-columns:1fr; } }
-  .chart-box{ position:relative; }
-  .chart-svg{ width:100%; height:auto; display:block; overflow:visible; }
-  .grid-line{ stroke:var(--border); stroke-width:1; }
-  .axis-label{ font-size:10.5px; fill:var(--ink-3); font-family:-apple-system,sans-serif; }
-  .end-label{ font-size:11px; font-weight:700; font-family:-apple-system,sans-serif; }
-  .crosshair{ stroke:var(--ink-3); stroke-width:1; pointer-events:none; }
-  .hover-dot{ pointer-events:none; stroke:var(--surface); stroke-width:1.5; }
-  .capture{ cursor:crosshair; }
-  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; font-size:12px; color:var(--ink-2); }
-  .legend-item{ display:inline-flex; align-items:center; gap:6px; }
-  .legend-item i{ width:10px; height:10px; border-radius:2px; display:inline-block; }
-  .chart-tooltip{ position:absolute; top:8px; left:0; opacity:0; pointer-events:none; transition:opacity .08s; background:var(--ink); color:var(--bg); border-radius:8px; padding:9px 12px; font-size:12px; min-width:150px; z-index:5; box-shadow:0 6px 18px rgba(0,0,0,0.25); }
-  .tt-head{ font-weight:700; margin-bottom:4px; opacity:0.85; }
-  .tt-row{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
-  .tt-row i{ width:8px; height:8px; border-radius:2px; display:inline-block; flex:none; }
-  .tt-row b{ margin-left:auto; font-variant-numeric:tabular-nums; }
+  /* ---------- TABLE ---------- */
+  .tbl-wrap { overflow-x: auto; margin-top: 18px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 14px; min-width: 640px; }
+  th, td { text-align: right; padding: 11px 14px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); font-weight: 700; background: var(--surface-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono, th.mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 100px; }
+  .tag.stock { background: color-mix(in srgb, var(--teal) 15%, transparent); color: var(--teal-ramp-4); }
+  .tag.nuevo { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber-ramp-4); }
 
-  footer{ margin-top:64px; padding-top:22px; border-top:1px solid var(--border); color:var(--ink-3); font-size:12.5px; }
-  footer p{ max-width:760px; }
+  /* ---------- CHARTS ---------- */
+  .chart-card { padding: 20px 22px 14px; margin-top: 18px; }
+  .chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+  .chart-title { font-size: 14.5px; font-weight: 700; }
+  .chart-note { font-size: 12.5px; color: var(--ink-3); max-width: 40ch; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .legend-swatch.line { height: 2px; border-radius: 1px; width: 14px; }
+  .chart-svg-wrap { position: relative; width: 100%; }
+  svg.chart { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart-tip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--bg);
+    font-size: 12px; padding: 7px 10px; border-radius: 8px; transform: translate(-50%, -115%);
+    white-space: nowrap; opacity: 0; transition: opacity 0.08s; z-index: 5; box-shadow: var(--shadow);
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  :root[data-theme="dark"] .chart-tip { background: var(--ink); color: var(--bg); }
+  .chart-tip.show { opacity: 1; }
+  .chart-tip .tt-day { color: var(--ink-3); font-size: 10.5px; margin-bottom: 2px; }
+  :root[data-theme="dark"] .chart-tip .tt-day { color: var(--ink-3); }
+
+  .small-multiples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  @media (max-width: 760px) { .small-multiples { grid-template-columns: 1fr; } }
+  .sm-panel { padding: 16px 16px 10px; }
+  .sm-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .sm-title .sub { color: var(--ink-3); font-weight: 500; font-size: 11.5px; }
+
+  /* ---------- STAT ROW ---------- */
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+  @media (max-width: 720px) { .stat-row { grid-template-columns: 1fr; } }
+  .stat-tile { padding: 20px 20px; }
+  .stat-tile .k { font-size: 12.5px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.03em; font-weight: 700; }
+  .stat-tile .v { font-size: 28px; font-weight: 700; margin-top: 8px; font-family: "Iowan Old Style", Palatino, Georgia, serif; }
+  .stat-tile .d { font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+  .stat-tile .d.pos { color: var(--teal-ramp-4); }
+  .stat-tile .d.warn-txt { color: var(--amber-ramp-4); }
+
+  .callout {
+    margin-top: 22px; padding: 18px 20px; border-radius: var(--radius); border: 1px solid var(--border-strong);
+    background: color-mix(in srgb, var(--amber) 9%, var(--surface)); font-size: 14.5px; color: var(--ink-2);
+    display: flex; gap: 12px;
+  }
+  .callout .ic { flex: none; font-size: 18px; line-height: 1.3; }
+  .callout b { color: var(--ink); }
+
+  footer { padding: 48px 24px 80px; }
+  .foot-grid { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 13px; color: var(--ink-3); }
+  .foot-grid code { font-family: ui-monospace, monospace; background: var(--surface-2); padding: 1px 6px; border-radius: 5px; color: var(--ink-2); }
+
+  ::selection { background: var(--amber); color: #fff; }
 </style>
 
-<div class="wrap">
-
-  <header class="doc-head">
-    <div class="eyebrow">Enfoque alfa · complementario a la meta oficial</div>
-    <h1>Capital asegurado — julio 2026</h1>
-    <p class="sub">No mide cuántos soles se recuperan (eso lo hace la meta oficial de
-      recupero). Mide cuánto del capital asignado pertenece a créditos que muestran
-      actividad de pago — así sea mínima — durante el mes.</p>
-  </header>
-
-  <div class="callout">
-    <b>El concepto, con números reales:</b> crédito A tiene S/12,000 de saldo capital;
-    crédito B tiene S/8,000. Durante el mes, A paga algo y reduce su saldo en S/50; B no
-    paga nada. El rebaje del mes es S/50 — pero el <b>capital asegurado</b> es
-    <b>S/12,000</b>: el crédito A "activó" su saldo completo, no solo los S/50 que pagó.
-    B no aporta nada, aunque su saldo (S/8,000) sea mayor que el rebaje de A.
-    <div class="example-grid">
-      <div class="example-tile"><b>Crédito A — S/12,000</b>Pagó S/50 → aporta S/12,000 completos al capital asegurado</div>
-      <div class="example-tile"><b>Crédito B — S/8,000</b>No pagó nada → aporta S/0</div>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow"><span class="dot"></span>Enfoque alfa — meta principal de julio 2026</div>
+    <h1 class="serif">Capital asegurado</h1>
+    <p class="hero-sub">No mide cuántos soles se cobran. Mide cuánto del capital asignado pertenece a créditos que muestran <b>al menos un día de pago</b> en el mes — el saldo completo se cuenta como "asegurado" apenas el cliente responde, sin importar cuánto pagó.</p>
+    <div class="hero-formula">
+      <span class="pill">Saldo completo</span>
+      <span class="arrow">×</span>
+      <span class="pill on">¿pagó ≥1 día?</span>
+      <span class="arrow">=</span>
+      <span class="pill">Capital asegurado</span>
     </div>
   </div>
-
-  <div class="callout warn">
-    <b>No reemplaza la meta de recupero.</b> Es una lectura distinta de la misma cartera:
-    "cuánta cartera tuvo algún contacto/pago efectivo" vs. "cuántos soles se recuperaron".
-    Útil como señal de actividad temprana — un mes puede tener bajo recupero en soles pero
-    alto capital asegurado (muchos créditos empezando a pagar poco a poco), lo cual es una
-    señal distinta a que nadie esté pagando.
-  </div>
-
-  <section id="stock">
-    <div class="section-label">Parte 1 de 3</div>
-    <h2>Stock / antiguos</h2>
-    <p class="lede">% del saldo capital del stock (créditos ya en mora al cierre de junio)
-      que pertenece a créditos con al menos 1 día de pago, acumulado día a día. Calibrado
-      sobre 14 meses de historia (mar-2025 a jun-2026), igual que el resto de la
-      metodología.</p>
-    <div class="card">
-      <h3>Curvas de capital asegurado — % de saldo con actividad de pago</h3>
-      <p class="cap">Un panel por tramo, 4 líneas por avance. A diferencia de la curva de
-        recupero (donde tramo predice frecuencia y avance predice severidad), acá el
-        avance también empuja hacia arriba la probabilidad de activación — dentro del
-        mismo tramo, avance 70%+ activa 15-20 puntos más que avance &lt;10%.</p>
-      <div class="chart-grid-3" id="stock-charts"></div>
-      <div class="legend" id="stock-legend"></div>
-    </div>
-    <div class="card">
-      <h3>Valor final (día 31) por segmento</h3>
-      <div class="table-scroll"><table id="tbl-stock"></table></div>
-    </div>
-  </section>
-
-  <section id="nuevos">
-    <div class="section-label">Parte 2 de 3</div>
-    <h2>Nuevos / flujo</h2>
-    <p class="lede">Misma lógica para créditos que entran en mora durante el mes: % del
-      saldo de entrada que muestra al menos 1 pago, acumulado por días desde la entrada.
-      Nota clave: llega mucho más alto que el stock (82-93% vs. 34-90%) — la mora recién
-      entrada activa muchísimo más que la mora crónica.</p>
-    <div class="card">
-      <div class="chart-box"><svg class="chart-svg" id="chart-nuevos-curva"></svg></div>
-      <div class="legend" id="nuevos-curva-legend"></div>
-    </div>
-  </section>
-
-  <section id="julio">
-    <div class="section-label">Parte 3 de 3</div>
-    <h2>Proyección de julio 2026</h2>
-    <p class="lede">Mismo mecanismo de combinación que la meta oficial (stock anclado al
-      cierre de junio + calendario de vencimientos × 13.38% × curva), solo que la curva
-      que se aplica es la de capital asegurado, no la de recupero. La tasa de entrada es
-      la misma (13.38%, dayslate) porque ambas curvas se calibraron sobre la misma
-      definición de entrada a mora — ver <code>DECISIONES.md</code>.</p>
-
-    <div class="tiles">
-      <div class="tile accent">
-        <div class="tl">Capital asegurado proyectado (31-jul)</div>
-        <div class="tv">S/ 8,919,611</div>
-        <div class="ts">stock S/1,725,470 + nuevos S/7,194,140</div>
-      </div>
-      <div class="tile">
-        <div class="tl">% del stock inicial asegurado</div>
-        <div class="tv">58.6%</div>
-        <div class="ts">de S/2,943,958 (stock al 30-jun)</div>
-      </div>
-      <div class="tile">
-        <div class="tl">Referencia — meta de recupero oficial</div>
-        <div class="tv">S/ 1,776,174</div>
-        <div class="ts">soles recuperados, no lo mismo que capital asegurado</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Trayectoria día a día</h3>
-      <p class="cap">Capital asegurado acumulado — stock, nuevos y total.</p>
-      <div class="chart-box"><svg class="chart-svg" id="chart-julio"></svg></div>
-      <div class="legend" id="julio-legend"></div>
-    </div>
-  </section>
-
-  <footer>
-    <p><b>Fuente:</b> mismo pipeline que la meta oficial (<code>dts_mambu_loans_hist</code>,
-      <code>dts_okaapi_loans</code>, <code>dts_cobranza_creditos_cuotas</code>), con
-      <code>investigacion_dayslate.sql</code> y las mismas exclusiones (reenganches,
-      status ACTIVE+COMPLETED). Queries: <code>q_capital_asegurado_seg.sql</code>,
-      <code>q_capital_asegurado_nuevos.sql</code>. Script de proyección:
-      <code>meta_julio_capital_asegurado.py</code>.</p>
-  </footer>
-
 </div>
 
-<script>
-const RAW = {"avances": ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 70%+"], "tramos": ["a. 1-8", "b. 9-15", "c. 16-30"], "stock_comp": {"a. 1-8|a. avance <10%": {"creditos": 188, "saldo": 435607.0}, "a. 1-8|b. avance 10-40%": {"creditos": 314, "saldo": 584314.0}, "a. 1-8|c. avance 40-70%": {"creditos": 240, "saldo": 230976.0}, "a. 1-8|d. avance 70%+": {"creditos": 100, "saldo": 45357.0}, "b. 9-15|a. avance <10%": {"creditos": 102, "saldo": 319360.0}, "b. 9-15|b. avance 10-40%": {"creditos": 156, "saldo": 309239.0}, "b. 9-15|c. avance 40-70%": {"creditos": 122, "saldo": 115577.0}, "b. 9-15|d. avance 70%+": {"creditos": 43, "saldo": 22503.0}, "c. 16-30|a. avance <10%": {"creditos": 140, "saldo": 387518.0}, "c. 16-30|b. avance 10-40%": {"creditos": 181, "saldo": 350919.0}, "c. 16-30|c. avance 40-70%": {"creditos": 127, "saldo": 121277.0}, "c. 16-30|d. avance 70%+": {"creditos": 43, "saldo": 21311.0}}, "curva_stock": {"a. 1-8": {"a. avance <10%": [16.215, 27.463, 34.429, 39.203, 43.57, 45.556, 47.941, 50.073, 51.939, 53.572, 55.156, 56.593, 57.707, 58.781, 60.48, 61.915, 62.548, 63.041, 63.619, 64.55, 65.068, 65.22, 66.017, 66.276, 66.718, 67.104, 67.67, 68.095, 69.036, 69.582, 69.662], "b. avance 10-40%": [17.926, 31.019, 39.698, 44.622, 49.696, 52.591, 54.471, 56.893, 58.909, 60.131, 61.69, 63.358, 65.085, 66.506, 67.782, 68.908, 69.788, 70.577, 71.933, 73.248, 74.382, 75.573, 76.148, 76.698, 77.4, 78.225, 78.856, 79.726, 80.453, 81.042, 81.147], "c. avance 40-70%": [19.322, 34.069, 42.68, 47.649, 53.155, 57.556, 60.056, 62.406, 64.571, 66.377, 68.173, 69.529, 70.631, 71.613, 72.844, 73.689, 74.434, 75.127, 76.253, 77.748, 78.236, 79.085, 79.978, 81.036, 81.629, 82.205, 82.87, 83.439, 84.494, 85.289, 85.502], "d. avance 70%+": [18.007, 32.895, 41.483, 47.31, 51.1, 55.462, 57.306, 60.655, 63.851, 66.388, 70.056, 72.718, 74.397, 75.914, 77.217, 78.068, 79.286, 80.247, 81.113, 82.718, 83.994, 84.596, 85.356, 86.507, 86.848, 87.125, 87.971, 88.878, 89.897, 90.243, 90.323]}, "b. 9-15": {"a. avance <10%": [5.752, 9.558, 12.208, 14.347, 17.207, 18.793, 19.799, 22.166, 22.837, 24.569, 26.403, 27.26, 28.117, 28.984, 30.211, 31.414, 33.305, 34.613, 35.9, 36.984, 37.678, 38.064, 38.403, 38.77, 39.014, 39.265, 39.443, 39.619, 40.367, 40.567, 41.196], "b. avance 10-40%": [6.26, 12.43, 16.105, 19.213, 22.916, 26.87, 27.995, 29.81, 31.512, 33.715, 35.455, 37.019, 38.716, 40.821, 43.108, 44.632, 46.007, 47.365, 48.437, 49.242, 50.79, 51.568, 53.284, 54.295, 55.42, 56.267, 56.738, 57.116, 57.872, 58.285, 58.644], "c. avance 40-70%": [9.262, 15.626, 20.101, 22.994, 28.072, 32.088, 34.375, 37.873, 40.927, 41.965, 43.696, 45.049, 47.679, 50.195, 51.531, 53.092, 54.651, 56.888, 57.647, 58.177, 58.77, 59.987, 61.458, 61.843, 62.477, 63.034, 63.282, 64.278, 64.278, 64.506, 64.604], "d. avance 70%+": [9.797, 14.822, 22.235, 25.65, 31.252, 34.875, 39.296, 41.206, 43.342, 43.571, 44.697, 45.486, 47.41, 50.531, 53.011, 54.899, 56.127, 57.489, 59.506, 62.693, 64.161, 67.963, 68.722, 69.975, 71.145, 71.616, 72.489, 73.456, 73.524, 74.142, 74.554]}, "c. 16-30": {"a. avance <10%": [2.573, 4.338, 5.533, 6.793, 8.514, 9.35, 9.755, 10.973, 12.079, 13.185, 13.763, 14.304, 14.81, 15.335, 15.83, 17.083, 18.017, 18.512, 18.863, 19.342, 19.975, 20.219, 20.805, 21.087, 21.208, 21.781, 22.096, 22.096, 22.32, 22.489, 22.562], "b. avance 10-40%": [3.645, 5.881, 8.341, 10.318, 12.478, 15.978, 17.347, 18.694, 20.042, 21.619, 23.242, 25.137, 26.217, 26.773, 28.015, 29.443, 30.565, 31.168, 31.986, 32.443, 33.52, 34.313, 34.644, 35.269, 36.161, 38.058, 38.507, 38.813, 38.958, 39.827, 40.621], "c. avance 40-70%": [5.08, 10.964, 13.823, 17.631, 21.077, 23.931, 26.972, 28.795, 30.317, 31.265, 32.471, 33.876, 35.413, 37.031, 39.989, 41.823, 42.828, 43.653, 44.731, 45.602, 46.248, 46.502, 47.435, 48.329, 48.775, 49.057, 49.591, 50.451, 51.329, 51.856, 52.002], "d. avance 70%+": [6.728, 9.97, 12.76, 15.418, 19.106, 20.532, 23.726, 27.358, 29.663, 30.868, 31.97, 33.641, 36.661, 37.7, 38.778, 40.318, 40.724, 43.733, 44.818, 46.134, 47.881, 48.892, 49.734, 50.474, 50.801, 50.967, 53.439, 55.169, 55.892, 56.187, 56.331]}}, "curva_nuevos": {"a. avance <10%": [26.615, 40.145, 50.001, 55.375, 59.062, 62.076, 64.286, 66.95, 68.688, 70.305, 71.541, 72.696, 73.726, 74.647, 75.559, 76.297, 76.832, 77.262, 77.82, 78.253, 78.578, 78.842, 79.124, 79.537, 79.961, 80.183, 80.463, 80.762, 81.302, 81.722, 81.952], "b. avance 10-40%": [24.966, 39.062, 50.281, 56.373, 60.71, 64.595, 67.181, 70.343, 72.64, 74.407, 75.85, 77.053, 78.275, 79.488, 80.763, 81.57, 82.211, 82.868, 83.408, 83.953, 84.347, 84.795, 85.226, 85.772, 86.274, 86.655, 87.158, 87.76, 88.307, 88.72, 88.979], "c. avance 40-70%": [24.894, 39.555, 51.043, 57.368, 61.983, 66.262, 69.454, 73.107, 75.348, 77.373, 78.85, 80.273, 81.544, 82.71, 83.655, 84.531, 85.321, 85.917, 86.515, 87.068, 87.512, 88.011, 88.396, 89.016, 89.441, 89.812, 90.28, 90.642, 91.132, 91.573, 91.759], "d. avance 70%+": [23.286, 37.379, 49.326, 55.86, 60.433, 65.085, 68.215, 71.475, 74.511, 76.546, 78.275, 79.603, 81.285, 82.987, 84.131, 85.342, 86.268, 87.028, 87.813, 88.514, 88.932, 89.622, 90.101, 90.596, 90.924, 91.258, 91.735, 92.057, 92.519, 92.861, 93.087]}, "filas_julio": [{"aseg_stock": 309168, "aseg_nuevos": 0, "aseg_total": 309168}, {"aseg_stock": 537718, "aseg_nuevos": 128340, "aseg_total": 666058}, {"aseg_stock": 686553, "aseg_nuevos": 294124, "aseg_total": 980677}, {"aseg_stock": 787800, "aseg_nuevos": 469898, "aseg_total": 1257698}, {"aseg_stock": 897836, "aseg_nuevos": 663273, "aseg_total": 1561109}, {"aseg_stock": 977583, "aseg_nuevos": 782287, "aseg_total": 1759871}, {"aseg_stock": 1026641, "aseg_nuevos": 1068863, "aseg_total": 2095504}, {"aseg_stock": 1087103, "aseg_nuevos": 1308424, "aseg_total": 2395527}, {"aseg_stock": 1136231, "aseg_nuevos": 1553083, "aseg_total": 2689314}, {"aseg_stock": 1180629, "aseg_nuevos": 1785428, "aseg_total": 2966057}, {"aseg_stock": 1225575, "aseg_nuevos": 1994577, "aseg_total": 3220152}, {"aseg_stock": 1266042, "aseg_nuevos": 2195710, "aseg_total": 3461752}, {"aseg_stock": 1304008, "aseg_nuevos": 2330001, "aseg_total": 3634008}, {"aseg_stock": 1339004, "aseg_nuevos": 2549297, "aseg_total": 3888301}, {"aseg_stock": 1380481, "aseg_nuevos": 2750551, "aseg_total": 4131032}, {"aseg_stock": 1418852, "aseg_nuevos": 3068871, "aseg_total": 4487723}, {"aseg_stock": 1450256, "aseg_nuevos": 3344370, "aseg_total": 4794627}, {"aseg_stock": 1475995, "aseg_nuevos": 3605943, "aseg_total": 5081938}, {"aseg_stock": 1503956, "aseg_nuevos": 3850409, "aseg_total": 5354365}, {"aseg_stock": 1531954, "aseg_nuevos": 4016783, "aseg_total": 5548737}, {"aseg_stock": 1557949, "aseg_nuevos": 4302283, "aseg_total": 5860232}, {"aseg_stock": 1577957, "aseg_nuevos": 4554528, "aseg_total": 6132485}, {"aseg_stock": 1600200, "aseg_nuevos": 4812858, "aseg_total": 6413058}, {"aseg_stock": 1617061, "aseg_nuevos": 4987020, "aseg_total": 6604081}, {"aseg_stock": 1634076, "aseg_nuevos": 5263555, "aseg_total": 6897631}, {"aseg_stock": 1655460, "aseg_nuevos": 5618825, "aseg_total": 7274284}, {"aseg_stock": 1670011, "aseg_nuevos": 5854932, "aseg_total": 7524942}, {"aseg_stock": 1684256, "aseg_nuevos": 6189534, "aseg_total": 7873790}, {"aseg_stock": 1702840, "aseg_nuevos": 6400817, "aseg_total": 8103657}, {"aseg_stock": 1717378, "aseg_nuevos": 6573746, "aseg_total": 8291124}, {"aseg_stock": 1725470, "aseg_nuevos": 7194140, "aseg_total": 8919611}], "stock_inicial": 2943958};
+<section id="ejemplo">
+  <div class="wrap">
+    <div class="kicker">01 — El concepto, con datos reales</div>
+    <h2>Cinco créditos de junio 2026, tomados de la cartera real</h2>
+    <p class="lede">Todos entraron a la cartera del mes con mora 1–8 días. Lo que cambia es cuándo —y cuánto— pagaron. La línea gris marca su saldo; el punto de color marca el día en que "se activan". Fíjate en el tamaño del pago: casi nunca importa.</p>
 
+    <div class="credit-grid" id="credit-grid"></div>
+
+    <div class="card summary-bar">
+      <div class="summary-stat">
+        <div class="num mono">S/ 60,626</div>
+        <div class="lbl">Capital total asignado (5 créditos)</div>
+      </div>
+      <div class="summary-stat">
+        <div class="num mono">S/ 3,348</div>
+        <div class="lbl">Soles efectivamente cobrados (5.5%)</div>
+      </div>
+      <div class="summary-stat hi">
+        <div class="num mono">S/ 44,974</div>
+        <div class="lbl">Capital asegurado (74.2%) — 4 de 5 créditos activaron</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="curvas">
+  <div class="wrap wide">
+    <div class="kicker">02 — Las curvas calibradas</div>
+    <h2>¿Qué tan rápido "se activa" cada segmento?</h2>
+    <p class="lede">Calibradas sobre 16 meses de historia (mar-2025 a jun-2026). El <b>stock</b> (mora ya existente al cierre del mes anterior) se segmenta por tramo de mora × avance de amortización. Los <b>nuevos</b> (entran en mora durante el mes) solo por avance, medidos desde su propio día de entrada.</p>
+
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Stock — % de saldo asegurado acumulado, por tramo</div>
+          <div class="chart-note">Cada panel es un tramo de mora al cierre del mes anterior. Dentro de cada uno, 4 líneas por avance de amortización.</div>
+        </div>
+        <div class="legend" id="legend-stock"></div>
+      </div>
+      <div class="small-multiples" id="sm-stock"></div>
+    </div>
+
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Nuevos — % de saldo asegurado acumulado, por días desde la entrada en mora</div>
+          <div class="chart-note">Créditos que caen en mora durante el mes. Activan mucho más rápido y más alto que el stock — mora fresca responde distinto de mora crónica.</div>
+        </div>
+        <div class="legend" id="legend-nuevos"></div>
+      </div>
+      <div class="chart-svg-wrap"><svg class="chart" id="chart-nuevos" viewBox="0 0 900 300"></svg><div class="chart-tip" id="tip-nuevos"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="backtest">
+  <div class="wrap wide">
+    <div class="kicker">03 — Backtest sobre junio 2026</div>
+    <h2>¿La curva predijo bien un mes real y cerrado?</h2>
+    <p class="lede">Misma prueba que se le exige al modelo de recupero oficial: proyectar con las curvas calibradas <i>fuera de muestra</i> y comparar contra lo que realmente pasó en junio.</p>
+
+    <div class="stat-row">
+      <div class="card stat-tile">
+        <div class="k">Error total</div>
+        <div class="v">-4.7%</div>
+        <div class="d">Proyectado S/8.77M · Real S/9.20M</div>
+      </div>
+      <div class="card stat-tile">
+        <div class="k">Error — stock</div>
+        <div class="v">+5.6%</div>
+        <div class="d">Sobreestimó levemente</div>
+      </div>
+      <div class="card stat-tile">
+        <div class="k">Error — nuevos</div>
+        <div class="v">-8.4%</div>
+        <div class="d">Subestimó — compensa al stock</div>
+      </div>
+    </div>
+
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Junio 2026 — proyectado vs. real, acumulado día a día</div>
+          <div class="chart-note">Mismo orden de magnitud de error que el backtest del recupero oficial (+5.4%) — buena señal de que la curva no está sesgada de forma grosera.</div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch line" style="background:var(--ink-3)"></span>Proyectado</span>
+          <span class="legend-item"><span class="legend-swatch line" style="background:var(--teal)"></span>Real</span>
+        </div>
+      </div>
+      <div class="chart-svg-wrap"><svg class="chart" id="chart-backtest" viewBox="0 0 900 300"></svg><div class="chart-tip" id="tip-backtest"></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="avance">
+  <div class="wrap wide">
+    <div class="kicker">04 — Avance de julio, en vivo</div>
+    <h2>Así va la meta principal del mes, hoy</h2>
+    <p class="lede">Julio 2026, corte 13-jul (día 13 de 31). Mismo mecanismo del backtest, aplicado al mes en curso: stock anclado al cierre real de junio + calendario de vencimientos de julio.</p>
+
+    <div class="stat-row">
+      <div class="card stat-tile">
+        <div class="k">Meta del mes (proyectada)</div>
+        <div class="v mono">S/ 8.92M</div>
+        <div class="d">Stock S/1.73M + Nuevos S/7.19M</div>
+      </div>
+      <div class="card stat-tile">
+        <div class="k">Real al 13-jul</div>
+        <div class="v mono">S/ 4.80M</div>
+        <div class="d">53.8% de la meta del mes</div>
+      </div>
+      <div class="card stat-tile">
+        <div class="k">Real vs. proyectado, mismo día</div>
+        <div class="v">+32.1%</div>
+        <div class="d pos">Adelantado — ver cautela abajo</div>
+      </div>
+    </div>
+
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Julio 2026 — proyección de mes completo vs. avance real</div>
+          <div class="chart-note">La línea real se corta en el día 13 (último dato disponible). La proyectada continúa punteada hasta el día 31.</div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch line" style="background:var(--ink-3); background-image: repeating-linear-gradient(90deg, var(--ink-3) 0 4px, transparent 4px 7px);"></span>Proyectado (mes completo)</span>
+          <span class="legend-item"><span class="legend-swatch line" style="background:var(--amber)"></span>Real (al 13-jul)</span>
+        </div>
+      </div>
+      <div class="chart-svg-wrap"><svg class="chart" id="chart-julio" viewBox="0 0 900 300"></svg><div class="chart-tip" id="tip-julio"></div></div>
+    </div>
+
+    <div class="callout">
+      <div class="ic">⚠</div>
+      <div><b>No sobre-interpretar el +32.1%.</b> Es la lectura de un solo mes, a mitad de camino (día 13 de 31). El backtest de junio —mes completo y cerrado— dio -4.7%. Este adelanto de julio puede diluirse o revertirse antes del cierre; no se ajusta tasa ni curva sin repetir el backtest con el mes cerrado.</div>
+    </div>
+  </div>
+</section>
+
+<section id="segmentado">
+  <div class="wrap wide">
+    <div class="kicker">05 — Julio, abierto por segmento</div>
+    <h2>¿De dónde viene realmente el +32.1%?</h2>
+    <p class="lede">El total mezcla dos historias muy distintas. Separando stock de nuevos —y cada uno por tramo o avance— se ve cuál de los dos está moviendo la aguja.</p>
+
+    <div class="stat-row">
+      <div class="card stat-tile">
+        <div class="k">Stock — real vs. meta, día 13</div>
+        <div class="v">-0.0pp</div>
+        <div class="d">S/1.30M real ≈ S/1.30M proyectado — calcado</div>
+      </div>
+      <div class="card stat-tile">
+        <div class="k">Nuevos — real vs. meta, día 13</div>
+        <div class="v" style="color:var(--amber)">+50.1%</div>
+        <div class="d warn-txt">S/3.50M real vs. S/2.33M del modelo</div>
+      </div>
+    </div>
+
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Stock — diferencia real menos meta, por tramo × avance (puntos porcentuales)</div>
+          <div class="chart-note">Sin patrón claro (-11.1 a +12.0pp) — se cancela casi perfecto en el total. Consistente con ruido normal de un solo mes, no con un sesgo del modelo.</div>
+        </div>
+      </div>
+      <div id="diverging-stock"></div>
+    </div>
+
+    <div class="chart-card card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Nuevos — capital asegurado real vs. modelo, por avance</div>
+          <div class="chart-note">Las 4 barras están por encima del modelo — avance &lt;10% casi duplica lo esperado (+98.9%).</div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--ink-3)"></span>Meta (modelo)</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--amber)"></span>Real</span>
+        </div>
+      </div>
+      <div class="chart-svg-wrap"><svg class="chart" id="chart-nuevos-seg" viewBox="0 0 900 260"></svg><div class="chart-tip" id="tip-nuevos-seg"></div></div>
+    </div>
+
+    <div class="callout">
+      <div class="ic">→</div>
+      <div><b>Todo el adelanto de julio viene de nuevos, no de stock.</b> Stock está prácticamente calcado a su meta (-0.0pp). Si esto se sostiene, la pregunta que vale la pena investigar es por qué los créditos recién entrados con poco avance activan casi el doble de lo calibrado — no ajustar la tasa ni la curva del modelo general sin antes entender esa causa puntual.</div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Segmento</th><th>Créditos</th><th>Asignado</th><th>Meta</th><th>Real</th><th>Diferencia</th></tr></thead>
+        <tbody id="tbl-segmentado"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <span>Fuente: <code>dts_mambu_loans_hist</code>, <code>dts_okaapi_loans</code>, <code>dts_cobranza_creditos_cuotas</code> — Athena, dev_datalake_master</span>
+      <span>Metodología completa: <code>enfoque_capital_asegurado.md</code></span>
+      <span>Backtest: <code>enfoque_capital_asegurado_backtest.sql</code></span>
+      <span>Avance en vivo: <code>avance_capital_asegurado_julio.py</code></span>
+      <span>Avance por segmento (Power BI): <code>avance_capital_asegurado_julio_segmentado.sql</code></span>
+    </div>
+  </div>
+</footer>
+
+<script id="art-data" type="application/json">{"curvas_stock": {"a. 1-8": {"a. avance <10%": [[1, 16.215], [2, 27.463], [3, 34.429], [4, 39.203], [5, 43.57], [6, 45.556], [7, 47.941], [8, 50.073], [9, 51.939], [10, 53.572], [11, 55.156], [12, 56.593], [13, 57.707], [14, 58.781], [15, 60.48], [16, 61.915], [17, 62.548], [18, 63.041], [19, 63.619], [20, 64.55], [21, 65.068], [22, 65.22], [23, 66.017], [24, 66.276], [25, 66.718], [26, 67.104], [27, 67.67], [28, 68.095], [29, 69.036], [30, 69.582], [31, 69.662]], "b. avance 10-40%": [[1, 17.926], [2, 31.019], [3, 39.698], [4, 44.622], [5, 49.696], [6, 52.591], [7, 54.471], [8, 56.893], [9, 58.909], [10, 60.131], [11, 61.69], [12, 63.358], [13, 65.085], [14, 66.506], [15, 67.782], [16, 68.908], [17, 69.788], [18, 70.577], [19, 71.933], [20, 73.248], [21, 74.382], [22, 75.573], [23, 76.148], [24, 76.698], [25, 77.4], [26, 78.225], [27, 78.856], [28, 79.726], [29, 80.453], [30, 81.042], [31, 81.147]], "c. avance 40-70%": [[1, 19.322], [2, 34.069], [3, 42.68], [4, 47.649], [5, 53.155], [6, 57.556], [7, 60.056], [8, 62.406], [9, 64.571], [10, 66.377], [11, 68.173], [12, 69.529], [13, 70.631], [14, 71.613], [15, 72.844], [16, 73.689], [17, 74.434], [18, 75.127], [19, 76.253], [20, 77.748], [21, 78.236], [22, 79.085], [23, 79.978], [24, 81.036], [25, 81.629], [26, 82.205], [27, 82.87], [28, 83.439], [29, 84.494], [30, 85.289], [31, 85.502]], "d. avance 70%+": [[1, 18.007], [2, 32.895], [3, 41.483], [4, 47.31], [5, 51.1], [6, 55.462], [7, 57.306], [8, 60.655], [9, 63.851], [10, 66.388], [11, 70.056], [12, 72.718], [13, 74.397], [14, 75.914], [15, 77.217], [16, 78.068], [17, 79.286], [18, 80.247], [19, 81.113], [20, 82.718], [21, 83.994], [22, 84.596], [23, 85.356], [24, 86.507], [25, 86.848], [26, 87.125], [27, 87.971], [28, 88.878], [29, 89.897], [30, 90.243], [31, 90.323]]}, "b. 9-15": {"a. avance <10%": [[1, 5.752], [2, 9.558], [3, 12.208], [4, 14.347], [5, 17.207], [6, 18.793], [7, 19.799], [8, 22.166], [9, 22.837], [10, 24.569], [11, 26.403], [12, 27.26], [13, 28.117], [14, 28.984], [15, 30.211], [16, 31.414], [17, 33.305], [18, 34.613], [19, 35.9], [20, 36.984], [21, 37.678], [22, 38.064], [23, 38.403], [24, 38.77], [25, 39.014], [26, 39.265], [27, 39.443], [28, 39.619], [29, 40.367], [30, 40.567], [31, 41.196]], "b. avance 10-40%": [[1, 6.26], [2, 12.43], [3, 16.105], [4, 19.213], [5, 22.916], [6, 26.87], [7, 27.995], [8, 29.81], [9, 31.512], [10, 33.715], [11, 35.455], [12, 37.019], [13, 38.716], [14, 40.821], [15, 43.108], [16, 44.632], [17, 46.007], [18, 47.365], [19, 48.437], [20, 49.242], [21, 50.79], [22, 51.568], [23, 53.284], [24, 54.295], [25, 55.42], [26, 56.267], [27, 56.738], [28, 57.116], [29, 57.872], [30, 58.285], [31, 58.644]], "c. avance 40-70%": [[1, 9.262], [2, 15.626], [3, 20.101], [4, 22.994], [5, 28.072], [6, 32.088], [7, 34.375], [8, 37.873], [9, 40.927], [10, 41.965], [11, 43.696], [12, 45.049], [13, 47.679], [14, 50.195], [15, 51.531], [16, 53.092], [17, 54.651], [18, 56.888], [19, 57.647], [20, 58.177], [21, 58.77], [22, 59.987], [23, 61.458], [24, 61.843], [25, 62.477], [26, 63.034], [27, 63.282], [28, 64.278], [30, 64.506], [31, 64.604]], "d. avance 70%+": [[1, 9.797], [2, 14.822], [3, 22.235], [4, 25.65], [5, 31.252], [6, 34.875], [7, 39.296], [8, 41.206], [9, 43.342], [10, 43.571], [11, 44.697], [12, 45.486], [13, 47.41], [14, 50.531], [15, 53.011], [16, 54.899], [17, 56.127], [18, 57.489], [19, 59.506], [20, 62.693], [21, 64.161], [22, 67.963], [23, 68.722], [24, 69.975], [25, 71.145], [26, 71.616], [27, 72.489], [28, 73.456], [29, 73.524], [30, 74.142], [31, 74.554]]}, "c. 16-30": {"a. avance <10%": [[1, 2.573], [2, 4.338], [3, 5.533], [4, 6.793], [5, 8.514], [6, 9.35], [7, 9.755], [8, 10.973], [9, 12.079], [10, 13.185], [11, 13.763], [12, 14.304], [13, 14.81], [14, 15.335], [15, 15.83], [16, 17.083], [17, 18.017], [18, 18.512], [19, 18.863], [20, 19.342], [21, 19.975], [22, 20.219], [23, 20.805], [24, 21.087], [25, 21.208], [26, 21.781], [27, 22.096], [29, 22.32], [30, 22.489], [31, 22.562]], "b. avance 10-40%": [[1, 3.645], [2, 5.881], [3, 8.341], [4, 10.318], [5, 12.478], [6, 15.978], [7, 17.347], [8, 18.694], [9, 20.042], [10, 21.619], [11, 23.242], [12, 25.137], [13, 26.217], [14, 26.773], [15, 28.015], [16, 29.443], [17, 30.565], [18, 31.168], [19, 31.986], [20, 32.443], [21, 33.52], [22, 34.313], [23, 34.644], [24, 35.269], [25, 36.161], [26, 38.058], [27, 38.507], [28, 38.813], [29, 38.958], [30, 39.827], [31, 40.621]], "c. avance 40-70%": [[1, 5.08], [2, 10.964], [3, 13.823], [4, 17.631], [5, 21.077], [6, 23.931], [7, 26.972], [8, 28.795], [9, 30.317], [10, 31.265], [11, 32.471], [12, 33.876], [13, 35.413], [14, 37.031], [15, 39.989], [16, 41.823], [17, 42.828], [18, 43.653], [19, 44.731], [20, 45.602], [21, 46.248], [22, 46.502], [23, 47.435], [24, 48.329], [25, 48.775], [26, 49.057], [27, 49.591], [28, 50.451], [29, 51.329], [30, 51.856], [31, 52.002]], "d. avance 70%+": [[1, 6.728], [2, 9.97], [3, 12.76], [4, 15.418], [5, 19.106], [6, 20.532], [7, 23.726], [8, 27.358], [9, 29.663], [10, 30.868], [11, 31.97], [12, 33.641], [13, 36.661], [14, 37.7], [15, 38.778], [16, 40.318], [17, 40.724], [18, 43.733], [19, 44.818], [20, 46.134], [21, 47.881], [22, 48.892], [23, 49.734], [24, 50.474], [25, 50.801], [26, 50.967], [27, 53.439], [28, 55.169], [29, 55.892], [30, 56.187], [31, 56.331]]}}, "curvas_nuevos": {"a. avance <10%": [[1, 26.615], [2, 40.145], [3, 50.001], [4, 55.375], [5, 59.062], [6, 62.076], [7, 64.286], [8, 66.95], [9, 68.688], [10, 70.305], [11, 71.541], [12, 72.696], [13, 73.726], [14, 74.647], [15, 75.559], [16, 76.297], [17, 76.832], [18, 77.262], [19, 77.82], [20, 78.253], [21, 78.578], [22, 78.842], [23, 79.124], [24, 79.537], [25, 79.961], [26, 80.183], [27, 80.463], [28, 80.762], [29, 81.302], [30, 81.722], [31, 81.952]], "b. avance 10-40%": [[1, 24.966], [2, 39.062], [3, 50.281], [4, 56.373], [5, 60.71], [6, 64.595], [7, 67.181], [8, 70.343], [9, 72.64], [10, 74.407], [11, 75.85], [12, 77.053], [13, 78.275], [14, 79.488], [15, 80.763], [16, 81.57], [17, 82.211], [18, 82.868], [19, 83.408], [20, 83.953], [21, 84.347], [22, 84.795], [23, 85.226], [24, 85.772], [25, 86.274], [26, 86.655], [27, 87.158], [28, 87.76], [29, 88.307], [30, 88.72], [31, 88.979]], "c. avance 40-70%": [[1, 24.894], [2, 39.555], [3, 51.043], [4, 57.368], [5, 61.983], [6, 66.262], [7, 69.454], [8, 73.107], [9, 75.348], [10, 77.373], [11, 78.85], [12, 80.273], [13, 81.544], [14, 82.71], [15, 83.655], [16, 84.531], [17, 85.321], [18, 85.917], [19, 86.515], [20, 87.068], [21, 87.512], [22, 88.011], [23, 88.396], [24, 89.016], [25, 89.441], [26, 89.812], [27, 90.28], [28, 90.642], [29, 91.132], [30, 91.573], [31, 91.759]], "d. avance 70%+": [[1, 23.286], [2, 37.379], [3, 49.326], [4, 55.86], [5, 60.433], [6, 65.085], [7, 68.215], [8, 71.475], [9, 74.511], [10, 76.546], [11, 78.275], [12, 79.603], [13, 81.285], [14, 82.987], [15, 84.131], [16, 85.342], [17, 86.268], [18, 87.028], [19, 87.813], [20, 88.514], [21, 88.932], [22, 89.622], [23, 90.101], [24, 90.596], [25, 90.924], [26, 91.258], [27, 91.735], [28, 92.057], [29, 92.519], [30, 92.861], [31, 93.087]]}, "backtest_junio": [{"dia": 1, "proy": 511515, "real": 672975, "proy_stock": 511515, "proy_nuevos": 0, "real_stock": 672975, "real_nuevos": 0}, {"dia": 2, "proy": 1000251, "real": 1047515, "proy_stock": 887256, "proy_nuevos": 112995, "real_stock": 1047515, "real_nuevos": 0}, {"dia": 3, "proy": 1396035, "real": 1410265, "proy_stock": 1127492, "proy_nuevos": 268543, "real_stock": 1296697, "real_nuevos": 113567}, {"dia": 4, "proy": 1716161, "real": 1703508, "proy_stock": 1284586, "proy_nuevos": 431575, "real_stock": 1436021, "real_nuevos": 267487}, {"dia": 5, "proy": 2064092, "real": 2011925, "proy_stock": 1447567, "proy_nuevos": 616525, "real_stock": 1544853, "real_nuevos": 467072}, {"dia": 6, "proy": 2405554, "real": 2207859, "proy_stock": 1555770, "proy_nuevos": 849784, "real_stock": 1612293, "real_nuevos": 595566}, {"dia": 7, "proy": 2691854, "real": 2339323, "proy_stock": 1629086, "proy_nuevos": 1062768, "real_stock": 1643156, "real_nuevos": 696167}, {"dia": 8, "proy": 2917852, "real": 2807981, "proy_stock": 1713562, "proy_nuevos": 1204290, "real_stock": 1710481, "real_nuevos": 1097500}, {"dia": 9, "proy": 3225390, "real": 3081264, "proy_stock": 1784775, "proy_nuevos": 1440615, "real_stock": 1772980, "real_nuevos": 1308284}, {"dia": 10, "proy": 3504489, "real": 3340375, "proy_stock": 1844665, "proy_nuevos": 1659824, "real_stock": 1827786, "real_nuevos": 1512590}, {"dia": 11, "proy": 3790037, "real": 3642953, "proy_stock": 1906274, "proy_nuevos": 1883763, "real_stock": 1890285, "real_nuevos": 1752668}, {"dia": 12, "proy": 4056162, "real": 3968198, "proy_stock": 1963396, "proy_nuevos": 2092765, "real_stock": 1940306, "real_nuevos": 2027892}, {"dia": 13, "proy": 4304819, "real": 4131534, "proy_stock": 2015592, "proy_nuevos": 2289227, "real_stock": 1962876, "real_nuevos": 2168658}, {"dia": 14, "proy": 4546928, "real": 4236017, "proy_stock": 2062751, "proy_nuevos": 2484177, "real_stock": 1971426, "real_nuevos": 2264591}, {"dia": 15, "proy": 4736635, "real": 4702743, "proy_stock": 2119379, "proy_nuevos": 2617256, "real_stock": 2033121, "real_nuevos": 2669623}, {"dia": 16, "proy": 5103920, "real": 4972308, "proy_stock": 2170332, "proy_nuevos": 2933588, "real_stock": 2107637, "real_nuevos": 2864671}, {"dia": 17, "proy": 5408076, "real": 5431860, "proy_stock": 2208029, "proy_nuevos": 3200047, "real_stock": 2145957, "real_nuevos": 3285903}, {"dia": 18, "proy": 5700435, "real": 5740103, "proy_stock": 2238990, "proy_nuevos": 3461445, "real_stock": 2173763, "real_nuevos": 3566340}, {"dia": 19, "proy": 5975004, "real": 6101606, "proy_stock": 2276910, "proy_nuevos": 3698094, "real_stock": 2212432, "real_nuevos": 3889173}, {"dia": 20, "proy": 6235455, "real": 6292746, "proy_stock": 2317781, "proy_nuevos": 3917675, "real_stock": 2227753, "real_nuevos": 4064993}, {"dia": 21, "proy": 6504557, "real": 6390834, "proy_stock": 2351704, "proy_nuevos": 4152854, "real_stock": 2237382, "real_nuevos": 4153453}, {"dia": 22, "proy": 6690677, "real": 6892393, "proy_stock": 2378514, "proy_nuevos": 4312163, "real_stock": 2267193, "real_nuevos": 4625201}, {"dia": 23, "proy": 6977047, "real": 7066341, "proy_stock": 2408224, "proy_nuevos": 4568823, "real_stock": 2282938, "real_nuevos": 4783403}, {"dia": 24, "proy": 7234784, "real": 7330085, "proy_stock": 2430475, "proy_nuevos": 4804309, "real_stock": 2302246, "real_nuevos": 5027839}, {"dia": 25, "proy": 7492184, "real": 7639816, "proy_stock": 2453204, "proy_nuevos": 5038980, "real_stock": 2320976, "real_nuevos": 5318840}, {"dia": 26, "proy": 7829975, "real": 8045411, "proy_stock": 2480609, "proy_nuevos": 5349366, "real_stock": 2354378, "real_nuevos": 5691032}, {"dia": 27, "proy": 8122667, "real": 8309514, "proy_stock": 2502255, "proy_nuevos": 5620412, "real_stock": 2375984, "real_nuevos": 5933530}, {"dia": 28, "proy": 8402948, "real": 8494128, "proy_stock": 2523617, "proy_nuevos": 5879331, "real_stock": 2390038, "real_nuevos": 6104090}, {"dia": 29, "proy": 8608484, "real": 8703727, "proy_stock": 2552093, "proy_nuevos": 6056391, "real_stock": 2402307, "real_nuevos": 6301420}, {"dia": 30, "proy": 8771300, "real": 9202188, "proy_stock": 2573309, "proy_nuevos": 6197991, "real_stock": 2436810, "real_nuevos": 6765378}], "avance_julio": [{"dia": 1, "proy": 309168, "real": 333968}, {"dia": 2, "proy": 666058, "real": 941764}, {"dia": 3, "proy": 980677, "real": 1506003}, {"dia": 4, "proy": 1257698, "real": 1751551}, {"dia": 5, "proy": 1561109, "real": 1907391}, {"dia": 6, "proy": 1759871, "real": 2555202}, {"dia": 7, "proy": 2095504, "real": 2888802}, {"dia": 8, "proy": 2395527, "real": 3338051}, {"dia": 9, "proy": 2689314, "real": 3768959}, {"dia": 10, "proy": 2966057, "real": 4314215}, {"dia": 11, "proy": 3220152, "real": 4606094}, {"dia": 12, "proy": 3461752, "real": 4790549}, {"dia": 13, "proy": 3634008, "real": 4800372}, {"dia": 14, "proy": 3888301, "real": null}, {"dia": 15, "proy": 4131032, "real": null}, {"dia": 16, "proy": 4487723, "real": null}, {"dia": 17, "proy": 4794627, "real": null}, {"dia": 18, "proy": 5081938, "real": null}, {"dia": 19, "proy": 5354365, "real": null}, {"dia": 20, "proy": 5548737, "real": null}, {"dia": 21, "proy": 5860232, "real": null}, {"dia": 22, "proy": 6132485, "real": null}, {"dia": 23, "proy": 6413058, "real": null}, {"dia": 24, "proy": 6604081, "real": null}, {"dia": 25, "proy": 6897631, "real": null}, {"dia": 26, "proy": 7274284, "real": null}, {"dia": 27, "proy": 7524942, "real": null}, {"dia": 28, "proy": 7873790, "real": null}, {"dia": 29, "proy": 8103657, "real": null}, {"dia": 30, "proy": 8291124, "real": null}, {"dia": 31, "proy": 8919611, "real": null}], "stock_inicial_julio": 2943958, "creditos": {"1_paga_poco_temprano": [{"f": "31", "m": 1.0, "s": 14583.81}, {"f": "01", "m": 2.0, "s": 14583.81}, {"f": "02", "m": 3.0, "s": 14583.81}, {"f": "03", "m": 4.0, "s": 14583.81}, {"f": "04", "m": 5.0, "s": 14583.81}, {"f": "05", "m": 6.0, "s": 14583.81}, {"f": "06", "m": 7.0, "s": 14583.81}, {"f": "07", "m": 8.0, "s": 14583.81}, {"f": "08", "m": 9.0, "s": 14583.81}, {"f": "09", "m": 10.0, "s": 14583.81}, {"f": "10", "m": 11.0, "s": 14583.81}, {"f": "11", "m": 12.0, "s": 14583.81}, {"f": "12", "m": 13.0, "s": 14583.81}, {"f": "13", "m": 14.0, "s": 14583.81}, {"f": "14", "m": 15.0, "s": 14583.81}, {"f": "15", "m": 16.0, "s": 14583.81}, {"f": "16", "m": 17.0, "s": 14583.81}, {"f": "17", "m": 0.0, "s": 14318.8}, {"f": "18", "m": 0.0, "s": 14318.8}, {"f": "19", "m": 0.0, "s": 14318.8}, {"f": "20", "m": 0.0, "s": 14318.8}, {"f": "21", "m": 0.0, "s": 14318.8}, {"f": "22", "m": 0.0, "s": 14318.8}, {"f": "23", "m": 0.0, "s": 14318.8}, {"f": "24", "m": 0.0, "s": 14318.8}, {"f": "25", "m": 0.0, "s": 14318.8}, {"f": "26", "m": 0.0, "s": 14318.8}, {"f": "27", "m": 0.0, "s": 14318.8}, {"f": "28", "m": 0.0, "s": 14318.8}, {"f": "29", "m": 0.0, "s": 14318.8}, {"f": "30", "m": 0.0, "s": 14318.8}], "2_no_paga": [{"f": "31", "m": 3.0, "s": 15651.25}, {"f": "01", "m": 4.0, "s": 15651.25}, {"f": "02", "m": 5.0, "s": 15651.25}, {"f": "03", "m": 6.0, "s": 15651.25}, {"f": "04", "m": 7.0, "s": 15651.25}, {"f": "05", "m": 8.0, "s": 15651.25}, {"f": "06", "m": 9.0, "s": 15651.25}, {"f": "07", "m": 10.0, "s": 15651.25}, {"f": "08", "m": 11.0, "s": 15651.25}, {"f": "09", "m": 12.0, "s": 15651.25}, {"f": "10", "m": 13.0, "s": 15651.25}, {"f": "11", "m": 14.0, "s": 15651.25}, {"f": "12", "m": 15.0, "s": 15651.25}, {"f": "13", "m": 16.0, "s": 15651.25}, {"f": "14", "m": 17.0, "s": 15651.25}, {"f": "15", "m": 18.0, "s": 15651.25}, {"f": "16", "m": 19.0, "s": 15651.25}, {"f": "17", "m": 20.0, "s": 15651.25}, {"f": "18", "m": 21.0, "s": 15651.25}, {"f": "19", "m": 22.0, "s": 15651.25}, {"f": "20", "m": 23.0, "s": 15651.25}, {"f": "21", "m": 24.0, "s": 15651.25}, {"f": "22", "m": 25.0, "s": 15651.25}, {"f": "23", "m": 26.0, "s": 15651.25}, {"f": "24", "m": 27.0, "s": 15651.25}, {"f": "25", "m": 28.0, "s": 15651.25}, {"f": "26", "m": 29.0, "s": 15651.25}, {"f": "27", "m": 30.0, "s": 15651.25}, {"f": "28", "m": 31.0, "s": 15651.25}, {"f": "29", "m": 32.0, "s": 15651.25}, {"f": "30", "m": 33.0, "s": 15651.25}], "3_paga_tarde": [{"f": "31", "m": 1.0, "s": 11397.63}, {"f": "01", "m": 2.0, "s": 11397.63}, {"f": "02", "m": 3.0, "s": 11397.63}, {"f": "03", "m": 4.0, "s": 11397.63}, {"f": "04", "m": 5.0, "s": 11397.63}, {"f": "05", "m": 6.0, "s": 11397.63}, {"f": "06", "m": 7.0, "s": 11397.63}, {"f": "07", "m": 8.0, "s": 11397.63}, {"f": "08", "m": 9.0, "s": 11397.63}, {"f": "09", "m": 10.0, "s": 11397.63}, {"f": "10", "m": 11.0, "s": 11397.63}, {"f": "11", "m": 12.0, "s": 11397.63}, {"f": "12", "m": 13.0, "s": 11397.63}, {"f": "13", "m": 14.0, "s": 11397.63}, {"f": "14", "m": 15.0, "s": 11397.63}, {"f": "15", "m": 16.0, "s": 11397.63}, {"f": "16", "m": 17.0, "s": 11397.63}, {"f": "17", "m": 18.0, "s": 11397.63}, {"f": "18", "m": 19.0, "s": 11397.63}, {"f": "19", "m": 20.0, "s": 11397.63}, {"f": "20", "m": 21.0, "s": 11397.63}, {"f": "21", "m": 22.0, "s": 11397.63}, {"f": "22", "m": 23.0, "s": 11397.63}, {"f": "23", "m": 24.0, "s": 11397.63}, {"f": "24", "m": 25.0, "s": 11397.63}, {"f": "25", "m": 26.0, "s": 11397.63}, {"f": "26", "m": 0.0, "s": 11350.04}, {"f": "27", "m": 0.0, "s": 11350.04}, {"f": "28", "m": 0.0, "s": 11350.04}, {"f": "29", "m": 0.0, "s": 11350.04}, {"f": "30", "m": 0.0, "s": 11350.04}], "4_nuevo_rapido": [{"f": "31", "m": 0.0, "s": 13847.25}, {"f": "01", "m": 0.0, "s": 13847.25}, {"f": "02", "m": 0.0, "s": 13847.25}, {"f": "03", "m": 1.0, "s": 13847.25}, {"f": "04", "m": 0.0, "s": 13638.03}, {"f": "05", "m": 0.0, "s": 13638.03}, {"f": "06", "m": 0.0, "s": 13638.03}, {"f": "07", "m": 0.0, "s": 13638.03}, {"f": "08", "m": 0.0, "s": 13638.03}, {"f": "09", "m": 0.0, "s": 13638.03}, {"f": "10", "m": 0.0, "s": 13638.03}, {"f": "11", "m": 0.0, "s": 13638.03}, {"f": "12", "m": 0.0, "s": 13638.03}, {"f": "13", "m": 0.0, "s": 13638.03}, {"f": "14", "m": 0.0, "s": 13638.03}, {"f": "15", "m": 0.0, "s": 13638.03}, {"f": "16", "m": 0.0, "s": 13638.03}, {"f": "17", "m": 0.0, "s": 13638.03}, {"f": "18", "m": 0.0, "s": 13638.03}, {"f": "19", "m": 0.0, "s": 13638.03}, {"f": "20", "m": 0.0, "s": 13638.03}, {"f": "21", "m": 0.0, "s": 13638.03}, {"f": "22", "m": 0.0, "s": 13638.03}, {"f": "23", "m": 0.0, "s": 13638.03}, {"f": "24", "m": 0.0, "s": 13638.03}, {"f": "25", "m": 0.0, "s": 13638.03}, {"f": "26", "m": 0.0, "s": 13638.03}, {"f": "27", "m": 0.0, "s": 13638.03}, {"f": "28", "m": 0.0, "s": 13638.03}, {"f": "29", "m": 0.0, "s": 13638.03}, {"f": "30", "m": 0.0, "s": 13638.03}], "5_paga_grande": [{"f": "31", "m": 1.0, "s": 5145.6}, {"f": "01", "m": 2.0, "s": 5145.6}, {"f": "02", "m": 3.0, "s": 5145.6}, {"f": "03", "m": 0.0, "s": 2430.36}, {"f": "04", "m": 0.0, "s": 2430.36}, {"f": "05", "m": 0.0, "s": 2430.36}, {"f": "06", "m": 0.0, "s": 2430.36}, {"f": "07", "m": 0.0, "s": 2430.36}, {"f": "08", "m": 0.0, "s": 2430.36}, {"f": "09", "m": 0.0, "s": 2430.36}, {"f": "10", "m": 0.0, "s": 2430.36}, {"f": "11", "m": 0.0, "s": 2430.36}, {"f": "12", "m": 0.0, "s": 2430.36}, {"f": "13", "m": 0.0, "s": 2430.36}, {"f": "14", "m": 0.0, "s": 2430.36}, {"f": "15", "m": 0.0, "s": 2430.36}, {"f": "16", "m": 0.0, "s": 2430.36}, {"f": "17", "m": 0.0, "s": 2430.36}, {"f": "18", "m": 0.0, "s": 2430.36}, {"f": "19", "m": 0.0, "s": 2430.36}, {"f": "20", "m": 0.0, "s": 2319.23}, {"f": "21", "m": 0.0, "s": 2319.23}, {"f": "22", "m": 0.0, "s": 2319.23}, {"f": "23", "m": 0.0, "s": 2319.23}, {"f": "24", "m": 0.0, "s": 2319.23}, {"f": "25", "m": 0.0, "s": 2319.23}, {"f": "26", "m": 0.0, "s": 2319.23}, {"f": "27", "m": 0.0, "s": 2319.23}, {"f": "28", "m": 0.0, "s": 2319.23}, {"f": "29", "m": 0.0, "s": 2319.23}, {"f": "30", "m": 0.0, "s": 2319.23}]}, "julio_segmentado": {"stock": [{"tramo": "a. 1-8", "avance": "a. avance <10%", "creditos": 188, "asignado": 435607, "meta_pct": 57.7, "real_pct": 51.2, "diff_pp": -6.5}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "creditos": 315, "asignado": 584506, "meta_pct": 65.1, "real_pct": 63.5, "diff_pp": -1.6}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "creditos": 239, "asignado": 230784, "meta_pct": 70.6, "real_pct": 65.3, "diff_pp": -5.3}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "creditos": 100, "asignado": 45357, "meta_pct": 74.4, "real_pct": 63.3, "diff_pp": -11.1}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "creditos": 102, "asignado": 319360, "meta_pct": 28.1, "real_pct": 23.1, "diff_pp": -5.0}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "creditos": 156, "asignado": 309239, "meta_pct": 38.7, "real_pct": 50.7, "diff_pp": 12.0}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "creditos": 122, "asignado": 115577, "meta_pct": 47.7, "real_pct": 46.2, "diff_pp": -1.5}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "creditos": 43, "asignado": 22503, "meta_pct": 47.4, "real_pct": 48.1, "diff_pp": 0.7}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "creditos": 140, "asignado": 387518, "meta_pct": 14.8, "real_pct": 21.8, "diff_pp": 7.0}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "creditos": 181, "asignado": 350919, "meta_pct": 26.2, "real_pct": 28.6, "diff_pp": 2.4}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "creditos": 127, "asignado": 121277, "meta_pct": 35.4, "real_pct": 33.6, "diff_pp": -1.8}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "creditos": 43, "asignado": 21311, "meta_pct": 36.7, "real_pct": 45.0, "diff_pp": 8.3}], "nuevos": [{"avance": "a. avance <10%", "entradas": 960, "asignado": 2542633, "real_s": 1517828, "real_pct": 59.7, "meta_s": 763000, "diff_pct": 98.9}, {"avance": "b. avance 10-40%", "entradas": 1380, "asignado": 2555838, "real_s": 1390410, "real_pct": 54.4, "meta_s": 1158125, "diff_pct": 20.1}, {"avance": "c. avance 40-70%", "entradas": 976, "asignado": 898152, "real_s": 498940, "real_pct": 55.6, "meta_s": 352660, "diff_pct": 41.5}, {"avance": "d. avance 70%+", "entradas": 347, "asignado": 147862, "real_s": 89679, "real_pct": 60.7, "meta_s": 56215, "diff_pct": 59.5}], "dia_corte": 13}}</script>
+<script>
 (function(){
-  const NS = "http://www.w3.org/2000/svg";
-  const AV_COLORS = ['var(--av1)','var(--av2)','var(--av3)','var(--av4)'];
-  const AV_NAMES = ['&lt;10%','10-40%','40-70%','70%+'];
-  const TRAMO_NAMES = {'a. 1-8':'Tramo 1-8 días','b. 9-15':'Tramo 9-15 días','c. 16-30':'Tramo 16-30 días'};
+  var DATA = JSON.parse(document.getElementById('art-data').textContent);
+
+  function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function fmtS(n){ return 'S/ ' + Math.round(n).toLocaleString('es-PE'); }
+  function fmtSk(n){
+    if (Math.abs(n) >= 1000000) return 'S/' + (n/1000000).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1000) return 'S/' + Math.round(n/1000) + 'k';
+    return 'S/' + Math.round(n);
+  }
+
+  /* ---------------- 5-CREDIT CARDS ---------------- */
+  var CREDIT_META = [
+    {key:'1_paga_poco_temprano', name:'Paga poco, a mitad de mes', badge:'Activa día 17', activo:true, tag:'stock',
+     note:'Pagó S/265 de S/14,584 (1.8%) — cuenta el saldo completo.'},
+    {key:'2_no_paga', name:'Nunca paga en el mes', badge:'No activa', activo:false, tag:'stock',
+     note:'Mora sube de 3 a 33 días. Aporta S/0 a capital asegurado.'},
+    {key:'3_paga_tarde', name:'Paga casi al cierre', badge:'Activa día 26', activo:true, tag:'stock',
+     note:'Pagó apenas S/48 de S/11,398 (0.4%), el día 26 de 30 — igual activa el 100%.'},
+    {key:'4_nuevo_rapido', name:'Nuevo, activa rápido', badge:'Activa 1 día después de entrar', activo:true, tag:'nuevo',
+     note:'No estaba en mora al cierre de mayo. Entra el 3-jun, paga el 4-jun.'},
+    {key:'5_paga_grande', name:'Paga grande, temprano', badge:'Activa día 3', activo:true, tag:'stock',
+     note:'Pagó S/2,826 de S/5,146 (54.9%) — mismo resultado binario que un pago chico.'}
+  ];
+
+  var creditGrid = document.getElementById('credit-grid');
+  CREDIT_META.forEach(function(meta, i){
+    var traj = DATA.creditos[meta.key];
+    var saldo0 = traj[0].s;
+    var card = document.createElement('div');
+    card.className = 'card credit-card';
+    var badgeClass = meta.activo ? 'on' : 'off';
+    card.innerHTML =
+      '<div class="credit-num mono">Crédito ' + (i+1) + ' <span class="tag ' + meta.tag + '" style="margin-left:6px">' + (meta.tag === 'nuevo' ? 'nuevo' : 'stock') + '</span></div>' +
+      '<div class="credit-name">' + meta.name + '</div>' +
+      '<svg class="credit-spark" viewBox="0 0 240 54" preserveAspectRatio="none"></svg>' +
+      '<div class="credit-badge ' + badgeClass + '">' + meta.badge + '</div>' +
+      '<div class="credit-stat-row"><span>Saldo asignado</span><b class="mono">' + fmtS(saldo0) + '</b></div>' +
+      '<div style="font-size:12px;color:var(--ink-3);line-height:1.4">' + meta.note + '</div>';
+    creditGrid.appendChild(card);
+    drawSparkline(card.querySelector('.credit-spark'), traj, meta.activo);
+  });
+
+  function drawSparkline(svg, traj, activo){
+    var w = 240, h = 54, pad = 4;
+    var vals = traj.map(function(d){ return d.s; });
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    if (min === max) { min -= 1; max += 1; }
+    var n = traj.length;
+    function x(i){ return pad + (i/(n-1)) * (w - pad*2); }
+    function y(v){ return pad + (1 - (v - min)/(max - min)) * (h - pad*2); }
+    var pts = traj.map(function(d,i){ return x(i).toFixed(1) + ',' + y(d.s).toFixed(1); }).join(' ');
+    var color = activo ? css('--amber') : css('--ink-3');
+    var ns = 'http://www.w3.org/2000/svg';
+    var poly = document.createElementNS(ns, 'polyline');
+    poly.setAttribute('points', pts);
+    poly.setAttribute('fill', 'none');
+    poly.setAttribute('stroke', color);
+    poly.setAttribute('stroke-width', '2');
+    poly.setAttribute('stroke-linecap', 'round');
+    poly.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(poly);
+    // baseline
+    var base = document.createElementNS(ns,'line');
+    base.setAttribute('x1', pad); base.setAttribute('x2', w-pad);
+    base.setAttribute('y1', h-pad); base.setAttribute('y2', h-pad);
+    base.setAttribute('stroke', css('--grid')); base.setAttribute('stroke-width','1');
+    svg.insertBefore(base, poly);
+    if (activo){
+      // find first drop
+      var dropIdx = -1;
+      for (var i=1;i<n;i++){ if (traj[i].s < traj[i-1].s - 0.01){ dropIdx = i; break; } }
+      if (dropIdx > -1){
+        var dot = document.createElementNS(ns,'circle');
+        dot.setAttribute('cx', x(dropIdx)); dot.setAttribute('cy', y(traj[dropIdx].s));
+        dot.setAttribute('r', 3.5); dot.setAttribute('fill', color);
+        dot.setAttribute('stroke', css('--surface')); dot.setAttribute('stroke-width','1.5');
+        svg.appendChild(dot);
+      }
+    }
+  }
+
+  /* ---------------- GENERIC LINE CHART ---------------- */
+  function buildChart(svg, tipEl, series, opts){
+    opts = opts || {};
+    var W = 900, H = 300;
+    var padL = 46, padR = 16, padT = 16, padB = 30;
+    var xmin = opts.xmin, xmax = opts.xmax;
+    var ymax = opts.ymax;
+    var allY = [];
+    series.forEach(function(s){ s.points.forEach(function(p){ if(p[1]!=null) allY.push(p[1]); }); });
+    if (ymax == null) ymax = Math.max.apply(null, allY);
+    ymax = ymax * 1.12;
+    var ymin = 0;
+
+    function X(v){ return padL + (v - xmin)/(xmax - xmin) * (W - padL - padR); }
+    function Y(v){ return H - padB - (v - ymin)/(ymax - ymin) * (H - padT - padB); }
+
+    var ns = 'http://www.w3.org/2000/svg';
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+    // gridlines (horizontal, 4 steps) + y labels
+    var steps = 4;
+    for (var i=0;i<=steps;i++){
+      var v = ymin + (ymax-ymin) * i/steps;
+      var gy = Y(v);
+      var gl = document.createElementNS(ns,'line');
+      gl.setAttribute('x1', padL); gl.setAttribute('x2', W-padR);
+      gl.setAttribute('y1', gy); gl.setAttribute('y2', gy);
+      gl.setAttribute('stroke', css('--grid')); gl.setAttribute('stroke-width','1');
+      svg.appendChild(gl);
+      var lab = document.createElementNS(ns,'text');
+      lab.setAttribute('x', padL - 8); lab.setAttribute('y', gy + 4);
+      lab.setAttribute('text-anchor','end'); lab.setAttribute('font-size','11');
+      lab.setAttribute('fill', css('--ink-3'));
+      lab.setAttribute('font-family','ui-monospace,monospace');
+      lab.textContent = opts.yfmt ? opts.yfmt(v) : Math.round(v);
+      svg.appendChild(lab);
+    }
+    // x axis labels
+    var xticks = opts.xticks || [xmin, Math.round((xmin+xmax)/2), xmax];
+    xticks.forEach(function(v){
+      var lab = document.createElementNS(ns,'text');
+      lab.setAttribute('x', X(v)); lab.setAttribute('y', H - 8);
+      lab.setAttribute('text-anchor','middle'); lab.setAttribute('font-size','11');
+      lab.setAttribute('fill', css('--ink-3'));
+      lab.setAttribute('font-family','ui-monospace,monospace');
+      lab.textContent = opts.xfmt ? opts.xfmt(v) : v;
+      svg.appendChild(lab);
+    });
+
+    // vertical marker (e.g. "today")
+    if (opts.markX != null){
+      var mx = X(opts.markX);
+      var vline = document.createElementNS(ns,'line');
+      vline.setAttribute('x1', mx); vline.setAttribute('x2', mx);
+      vline.setAttribute('y1', padT); vline.setAttribute('y2', H-padB);
+      vline.setAttribute('stroke', css('--ink-3')); vline.setAttribute('stroke-width','1');
+      vline.setAttribute('stroke-dasharray','2,3');
+      svg.appendChild(vline);
+      var mlab = document.createElementNS(ns,'text');
+      mlab.setAttribute('x', mx); mlab.setAttribute('y', padT + 10);
+      mlab.setAttribute('text-anchor','middle'); mlab.setAttribute('font-size','10.5');
+      mlab.setAttribute('fill', css('--ink-3'));
+      mlab.textContent = opts.markLabel || 'hoy';
+      svg.appendChild(mlab);
+    }
+
+    series.forEach(function(s){
+      var pts = s.points.filter(function(p){ return p[1] != null; });
+      var d = pts.map(function(p,i){ return (i===0?'M':'L') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1); }).join(' ');
+      var path = document.createElementNS(ns,'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke', s.color);
+      path.setAttribute('stroke-width', s.width || 2.25);
+      if (s.dashed) path.setAttribute('stroke-dasharray','5,5');
+      path.setAttribute('stroke-linecap','round');
+      path.setAttribute('stroke-linejoin','round');
+      svg.appendChild(path);
+      if (s.endLabel){
+        var last = pts[pts.length-1];
+        var dot = document.createElementNS(ns,'circle');
+        dot.setAttribute('cx', X(last[0])); dot.setAttribute('cy', Y(last[1])); dot.setAttribute('r', 3.5);
+        dot.setAttribute('fill', s.color);
+        svg.appendChild(dot);
+      }
+    });
+
+    // hover layer
+    if (tipEl){
+      var hitW = W - padL - padR;
+      var rect = document.createElementNS(ns,'rect');
+      rect.setAttribute('x', padL); rect.setAttribute('y', padT);
+      rect.setAttribute('width', hitW); rect.setAttribute('height', H-padT-padB);
+      rect.setAttribute('fill','transparent');
+      svg.appendChild(rect);
+      var cross = document.createElementNS(ns,'line');
+      cross.setAttribute('y1', padT); cross.setAttribute('y2', H-padB);
+      cross.setAttribute('stroke', css('--ink-3')); cross.setAttribute('stroke-width','1');
+      cross.setAttribute('opacity','0');
+      svg.appendChild(cross);
+
+      svg.addEventListener('mousemove', function(evt){
+        var box = svg.getBoundingClientRect();
+        var relX = (evt.clientX - box.left) / box.width * W;
+        var v = xmin + (relX - padL)/(W-padL-padR) * (xmax-xmin);
+        v = Math.max(xmin, Math.min(xmax, Math.round(v)));
+        cross.setAttribute('x1', X(v)); cross.setAttribute('x2', X(v));
+        cross.setAttribute('opacity','1');
+        var lines = [];
+        series.forEach(function(s){
+          var p = s.points.find(function(pt){ return pt[0] === v; });
+          if (p && p[1] != null) lines.push('<span style="color:'+s.color+'">●</span> ' + s.label + ': ' + (opts.tipfmt ? opts.tipfmt(p[1]) : p[1]));
+        });
+        if (lines.length){
+          tipEl.innerHTML = '<div class="tt-day">' + (opts.tipxfmt ? opts.tipxfmt(v) : ('Día ' + v)) + '</div>' + lines.join('<br>');
+          tipEl.style.left = (evt.clientX - box.left) + 'px';
+          tipEl.style.top = (evt.clientY - box.top) + 'px';
+          tipEl.classList.add('show');
+        }
+      });
+      svg.addEventListener('mouseleave', function(){
+        cross.setAttribute('opacity','0');
+        tipEl.classList.remove('show');
+      });
+    }
+  }
+
+  /* ---------------- STOCK SMALL MULTIPLES ---------------- */
+  var TRAMOS = [['a. 1-8','1–8 días'], ['b. 9-15','9–15 días'], ['c. 16-30','16–30 días']];
+  var AVANCES = [
+    ['a. avance <10%', 'Avance <10%', 'var(--teal-ramp-1)'],
+    ['b. avance 10-40%', 'Avance 10–40%', 'var(--teal-ramp-2)'],
+    ['c. avance 40-70%', 'Avance 40–70%', 'var(--teal-ramp-3)'],
+    ['d. avance 70%+', 'Avance 70%+', 'var(--teal-ramp-4)']
+  ];
+  var smWrap = document.getElementById('sm-stock');
+  TRAMOS.forEach(function(tr){
+    var panel = document.createElement('div');
+    panel.className = 'card sm-panel';
+    panel.innerHTML = '<div class="sm-title">Tramo ' + tr[1] + ' <span class="sub">al cierre del mes anterior</span></div>' +
+      '<div class="chart-svg-wrap"><svg class="chart" viewBox="0 0 300 190"></svg><div class="chart-tip"></div></div>';
+    smWrap.appendChild(panel);
+    var svg = panel.querySelector('svg');
+    var tip = panel.querySelector('.chart-tip');
+    var series = AVANCES.map(function(av){
+      var raw = DATA.curvas_stock[tr[0]][av[0]];
+      return { label: av[1], color: resolveVar(av[2]),
+        points: raw.map(function(p){ return [p[0], p[1]]; }), endLabel: false };
+    });
+    buildChartCompact(svg, tip, series, { xmin:1, xmax:31, ymax:100, xticks:[1,15,31], yfmt:function(v){return Math.round(v)+'%';}, tipfmt:function(v){return v.toFixed(1)+'%';}, tipxfmt:function(v){return 'Día '+v;} });
+  });
 
   function resolveVar(v){
-    if (typeof v === 'string' && v.startsWith('var(')){
-      return getComputedStyle(document.documentElement).getPropertyValue(v.slice(4,-1)).trim();
-    }
-    return v;
-  }
-  function el(tag, attrs){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
-  function fmtInt(v){ return Math.round(v).toLocaleString('es-PE'); }
-  function fmtS(v){ return 'S/ ' + fmtInt(v); }
-  function fmtSCompact(v){
-    if (Math.abs(v) >= 1000000) return (v/1000000).toFixed(1)+'M';
-    if (Math.abs(v) >= 1000) return Math.round(v/1000)+'k';
-    return Math.round(v);
-  }
-  function fmtPct1(v){ return v.toFixed(1)+'%'; }
-  const JUL_DATES = Array.from({length:31}, (_,i) => (i+1)+' jul');
-
-  function makeTooltip(container){
-    const tip = document.createElement('div');
-    tip.className = 'chart-tooltip';
-    container.style.position = container.style.position || 'relative';
-    container.appendChild(tip);
-    return tip;
+    if (v.indexOf('var(') !== 0) return v;
+    var name = v.slice(4, -1);
+    return css(name);
   }
 
-  function lineChart(svgEl, container, opts){
-    const width = opts.width || 620, height = opts.height || 260;
-    const margin = opts.margin || {top:14,right:56,bottom:26,left:44};
-    const innerW = width - margin.left - margin.right;
-    const innerH = height - margin.top - margin.bottom;
-    const n = opts.n;
-    let yMax = 0;
-    opts.series.forEach(s => s.data.forEach(v => { if (v!=null && v>yMax) yMax=v; }));
-    yMax = (opts.yMaxOverride || yMax*1.15) || 1;
-    const x = i => margin.left + innerW * (i/(n-1));
-    const y = v => margin.top + innerH * (1 - v/yMax);
-    svgEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    svgEl.innerHTML = '';
-    for (let g=0; g<=4; g++){
-      const v = yMax*g/4, yy = y(v);
-      svgEl.appendChild(el('line', {x1:margin.left, x2:width-margin.right, y1:yy.toFixed(1), y2:yy.toFixed(1), class:'grid-line'}));
-      const t = el('text', {x:margin.left-8, y:(yy+4).toFixed(1), class:'axis-label', 'text-anchor':'end'});
-      t.textContent = opts.yFmt ? opts.yFmt(v) : Math.round(v);
-      svgEl.appendChild(t);
-    }
-    if (opts.xTickEvery){
-      for (let i=0;i<n;i++){
-        if (i % opts.xTickEvery !== 0 && i !== n-1) continue;
-        const t = el('text', {x:x(i).toFixed(1), y:(height-margin.bottom+17).toFixed(1), class:'axis-label', 'text-anchor':'middle'});
-        t.textContent = opts.xLabel ? opts.xLabel(i) : (i+1);
-        svgEl.appendChild(t);
-      }
-    }
-    opts.series.forEach(s => {
-      let d = '', started = false;
-      s.data.forEach((v,i) => {
-        if (v==null) { started=false; return; }
-        d += (started? 'L':'M') + ` ${x(i).toFixed(1)} ${y(v).toFixed(1)} `;
-        started = true;
-      });
-      svgEl.appendChild(el('path', {d, fill:'none', stroke:resolveVar(s.color), 'stroke-width':2, 'stroke-linecap':'round', 'stroke-linejoin':'round'}));
-      let lastI = -1; s.data.forEach((v,i)=>{ if(v!=null) lastI=i; });
-      if (lastI>=0 && opts.endLabels!==false){
-        const t = el('text', {x:(x(lastI)+6).toFixed(1), y:(y(s.data[lastI])+4).toFixed(1), class:'end-label'});
-        t.setAttribute('fill', resolveVar(s.color));
-        t.textContent = s.labelFmt ? s.labelFmt(s.data[lastI]) : Math.round(s.data[lastI]);
-        svgEl.appendChild(t);
-      }
+  function buildChartCompact(svg, tipEl, series, opts){
+    // like buildChart but smaller viewBox (300x190) with tighter margins, reused logic
+    var W = 300, H = 190, padL = 32, padR = 8, padT = 8, padB = 22;
+    var xmin = opts.xmin, xmax = opts.xmax, ymax = opts.ymax, ymin = 0;
+    function X(v){ return padL + (v - xmin)/(xmax - xmin) * (W - padL - padR); }
+    function Y(v){ return H - padB - (v - ymin)/(ymax - ymin) * (H - padT - padB); }
+    var ns = 'http://www.w3.org/2000/svg';
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    [0,50,100].forEach(function(v){
+      var gy = Y(v);
+      var gl = document.createElementNS(ns,'line');
+      gl.setAttribute('x1',padL); gl.setAttribute('x2',W-padR); gl.setAttribute('y1',gy); gl.setAttribute('y2',gy);
+      gl.setAttribute('stroke', css('--grid')); gl.setAttribute('stroke-width','1');
+      svg.appendChild(gl);
+      var lab = document.createElementNS(ns,'text');
+      lab.setAttribute('x', padL-6); lab.setAttribute('y', gy+3.5); lab.setAttribute('text-anchor','end');
+      lab.setAttribute('font-size','9.5'); lab.setAttribute('fill', css('--ink-3'));
+      lab.setAttribute('font-family','ui-monospace,monospace');
+      lab.textContent = v+'%';
+      svg.appendChild(lab);
     });
-    const crosshair = el('line', {x1:0,x2:0,y1:margin.top,y2:height-margin.bottom, class:'crosshair', opacity:0});
-    svgEl.appendChild(crosshair);
-    const dots = opts.series.map(s => { const c = el('circle', {r:3.5, opacity:0}); c.setAttribute('fill', resolveVar(s.color)); return c; });
-    dots.forEach(d=>svgEl.appendChild(d));
-    const capture = el('rect', {x:margin.left,y:margin.top,width:innerW,height:innerH, fill:'transparent', class:'capture'});
-    svgEl.appendChild(capture);
-    const tip = makeTooltip(container);
-    capture.addEventListener('pointermove', (e)=>{
-      const rect = svgEl.getBoundingClientRect();
-      const scaleX = width/rect.width;
-      const mx = (e.clientX-rect.left)*scaleX;
-      let i = Math.round((mx-margin.left)/innerW*(n-1));
-      i = Math.max(0, Math.min(n-1, i));
-      crosshair.setAttribute('x1', x(i).toFixed(1)); crosshair.setAttribute('x2', x(i).toFixed(1)); crosshair.setAttribute('opacity',1);
-      let html = `<div class="tt-head">${opts.xLabel ? opts.xLabel(i) : 'día '+(i+1)}</div>`;
-      opts.series.forEach((s,si)=>{
-        const v = s.data[i];
-        dots[si].setAttribute('opacity', v!=null?1:0);
-        if (v!=null){ dots[si].setAttribute('cx',x(i).toFixed(1)); dots[si].setAttribute('cy',y(v).toFixed(1)); }
-        if (v!=null) html += `<div class="tt-row"><i style="background:${resolveVar(s.color)}"></i>${s.name} <b>${s.labelFmt?s.labelFmt(v):Math.round(v)}</b></div>`;
-      });
-      tip.innerHTML = html; tip.style.opacity = 1;
-      const cw = container.clientWidth;
-      let left = (x(i)/width)*cw + 14;
-      if (left > cw-190) left = (x(i)/width)*cw - 190;
-      tip.style.left = Math.max(4,left)+'px'; tip.style.top = '6px';
+    (opts.xticks||[]).forEach(function(v){
+      var lab = document.createElementNS(ns,'text');
+      lab.setAttribute('x', X(v)); lab.setAttribute('y', H-6); lab.setAttribute('text-anchor','middle');
+      lab.setAttribute('font-size','9.5'); lab.setAttribute('fill', css('--ink-3'));
+      lab.setAttribute('font-family','ui-monospace,monospace');
+      lab.textContent = 'D'+v;
+      svg.appendChild(lab);
     });
-    capture.addEventListener('pointerleave', ()=>{ crosshair.setAttribute('opacity',0); dots.forEach(d=>d.setAttribute('opacity',0)); tip.style.opacity=0; });
+    series.forEach(function(s){
+      var pts = s.points;
+      var d = pts.map(function(p,i){ return (i===0?'M':'L') + X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1); }).join(' ');
+      var path = document.createElementNS(ns,'path');
+      path.setAttribute('d', d); path.setAttribute('fill','none'); path.setAttribute('stroke', s.color);
+      path.setAttribute('stroke-width', 2); path.setAttribute('stroke-linecap','round'); path.setAttribute('stroke-linejoin','round');
+      svg.appendChild(path);
+    });
+    if (tipEl){
+      var rect = document.createElementNS(ns,'rect');
+      rect.setAttribute('x',padL); rect.setAttribute('y',padT); rect.setAttribute('width', W-padL-padR); rect.setAttribute('height', H-padT-padB);
+      rect.setAttribute('fill','transparent');
+      svg.appendChild(rect);
+      var cross = document.createElementNS(ns,'line');
+      cross.setAttribute('y1',padT); cross.setAttribute('y2',H-padB); cross.setAttribute('stroke', css('--ink-3')); cross.setAttribute('stroke-width','1'); cross.setAttribute('opacity','0');
+      svg.appendChild(cross);
+      svg.addEventListener('mousemove', function(evt){
+        var box = svg.getBoundingClientRect();
+        var relX = (evt.clientX - box.left)/box.width * W;
+        var v = xmin + (relX-padL)/(W-padL-padR) * (xmax-xmin);
+        v = Math.max(xmin, Math.min(xmax, Math.round(v)));
+        cross.setAttribute('x1', X(v)); cross.setAttribute('x2', X(v)); cross.setAttribute('opacity','1');
+        var lines = [];
+        series.forEach(function(s){
+          var p = s.points.find(function(pt){ return pt[0] === v; });
+          if (p) lines.push('<span style="color:'+s.color+'">●</span> '+s.label+': '+p[1].toFixed(1)+'%');
+        });
+        if (lines.length){
+          tipEl.innerHTML = '<div class="tt-day">Día '+v+'</div>' + lines.join('<br>');
+          tipEl.style.left = (evt.clientX - box.left) + 'px';
+          tipEl.style.top = (evt.clientY - box.top) + 'px';
+          tipEl.classList.add('show');
+        }
+      });
+      svg.addEventListener('mouseleave', function(){ cross.setAttribute('opacity','0'); tipEl.classList.remove('show'); });
+    }
   }
 
-  // Stock small multiples
-  const stockChartsEl = document.getElementById('stock-charts');
-  RAW.tramos.forEach(t => {
-    const box = document.createElement('div'); box.className = 'chart-box';
-    const h = document.createElement('div');
-    h.style.cssText = 'font-size:12.5px;font-weight:700;color:var(--ink-2);margin-bottom:4px;';
-    h.textContent = TRAMO_NAMES[t];
-    box.appendChild(h);
-    const svg = el('svg', {class:'chart-svg'});
-    box.appendChild(svg);
-    stockChartsEl.appendChild(box);
-    const series = RAW.avances.map((a,idx)=>({ name: AV_NAMES[idx], color: AV_COLORS[idx], data: RAW.curva_stock[t][a], labelFmt: fmtPct1 }));
-    lineChart(svg, box, { series, n:31, width:400, height:250, margin:{top:14,right:44,bottom:24,left:34}, yFmt: v=>v.toFixed(0)+'%', xLabel: i=>(i+1), xTickEvery:10, yMaxOverride:100 });
-  });
-  const stockLegend = document.getElementById('stock-legend');
-  RAW.avances.forEach((a,idx)=>{
-    const it = document.createElement('span'); it.className='legend-item';
-    it.innerHTML = `<i style="background:${resolveVar(AV_COLORS[idx])}"></i>avance ${AV_NAMES[idx]}`;
-    stockLegend.appendChild(it);
+  // stock legend
+  var legStock = document.getElementById('legend-stock');
+  AVANCES.forEach(function(av){
+    var it = document.createElement('span'); it.className='legend-item';
+    it.innerHTML = '<span class="legend-swatch line" style="background:'+resolveVar(av[2])+'"></span>'+av[1];
+    legStock.appendChild(it);
   });
 
-  // Stock table
+  /* ---------------- NUEVOS CHART ---------------- */
+  var AVANCES_N = [
+    ['a. avance <10%', 'Avance <10%', 'var(--amber-ramp-1)'],
+    ['b. avance 10-40%', 'Avance 10–40%', 'var(--amber-ramp-2)'],
+    ['c. avance 40-70%', 'Avance 40–70%', 'var(--amber-ramp-3)'],
+    ['d. avance 70%+', 'Avance 70%+', 'var(--amber-ramp-4)']
+  ];
+  var legNuevos = document.getElementById('legend-nuevos');
+  AVANCES_N.forEach(function(av){
+    var it = document.createElement('span'); it.className='legend-item';
+    it.innerHTML = '<span class="legend-swatch line" style="background:'+resolveVar(av[2])+'"></span>'+av[1];
+    legNuevos.appendChild(it);
+  });
+  var seriesNuevos = AVANCES_N.map(function(av){
+    return { label: av[1], color: resolveVar(av[2]), points: DATA.curvas_nuevos[av[0]].map(function(p){return [p[0],p[1]];}) };
+  });
+  buildChart(document.getElementById('chart-nuevos'), document.getElementById('tip-nuevos'), seriesNuevos,
+    { xmin:1, xmax:31, ymax:100, xticks:[1,10,20,31], yfmt:function(v){return Math.round(v)+'%';}, tipxfmt:function(v){return 'Día '+v+' desde entrada';} });
+
+  /* ---------------- BACKTEST CHART ---------------- */
+  var bt = DATA.backtest_junio;
+  buildChart(document.getElementById('chart-backtest'), document.getElementById('tip-backtest'), [
+    { label:'Proyectado', color: css('--ink-3'), points: bt.map(function(d){return [d.dia, d.proy];}) },
+    { label:'Real', color: css('--teal'), points: bt.map(function(d){return [d.dia, d.real];}), endLabel:true }
+  ], { xmin:1, xmax:30, xticks:[1,10,20,30], yfmt:fmtSk, tipfmt:fmtS, tipxfmt:function(v){return 'Día '+v+' de junio';} });
+
+  /* ---------------- JULIO CHART ---------------- */
+  var jl = DATA.avance_julio;
+  buildChart(document.getElementById('chart-julio'), document.getElementById('tip-julio'), [
+    { label:'Proyectado', color: css('--ink-3'), points: jl.map(function(d){return [d.dia, d.proy];}), dashed:true },
+    { label:'Real', color: css('--amber'), points: jl.map(function(d){return [d.dia, d.real];}), endLabel:true }
+  ], { xmin:1, xmax:31, xticks:[1,10,20,31], yfmt:fmtSk, tipfmt:fmtS, markX:13, markLabel:'hoy (día 13)' });
+
+  /* ---------------- STOCK DIVERGING BARS (segmentado) ---------------- */
+  var SEG = DATA.julio_segmentado;
+  var TRAMO_LABEL = {'a. 1-8':'1–8','b. 9-15':'9–15','c. 16-30':'16–30'};
+  var AVANCE_LABEL = {'a. avance <10%':'<10%','b. avance 10-40%':'10–40%','c. avance 40-70%':'40–70%','d. avance 70%+':'70%+'};
   (function(){
-    const tbl = document.getElementById('tbl-stock');
-    let html = `<thead><tr><th>Tramo</th><th>Avance</th><th>Créditos</th><th>Saldo 30-jun</th><th>% asegurado día 31</th><th>Capital asegurado</th></tr></thead><tbody>`;
-    let grandCred=0, grandSaldo=0, grandAseg=0;
-    RAW.tramos.forEach(t=>{
-      RAW.avances.forEach((a,idx)=>{
-        const comp = RAW.stock_comp[t+'|'+a];
-        const pct = RAW.curva_stock[t][a][30];
-        const aseg = comp.saldo*pct/100;
-        grandCred+=comp.creditos; grandSaldo+=comp.saldo; grandAseg+=aseg;
-        html += `<tr><td>${TRAMO_NAMES[t]}</td><td>avance ${AV_NAMES[idx]}</td><td>${fmtInt(comp.creditos)}</td><td>${fmtS(comp.saldo)}</td><td>${fmtPct1(pct)}</td><td>${fmtS(aseg)}</td></tr>`;
+    var wrap = document.getElementById('diverging-stock');
+    var maxAbs = Math.max.apply(null, SEG.stock.map(function(r){ return Math.abs(r.diff_pp); }));
+    var rowsHtml = '';
+    var lastTramo = null;
+    SEG.stock.forEach(function(r){
+      var isNewTramo = r.tramo !== lastTramo;
+      lastTramo = r.tramo;
+      var pct = Math.abs(r.diff_pp) / maxAbs * 50;
+      var positive = r.diff_pp >= 0;
+      var barColor = positive ? 'var(--amber)' : 'var(--ink-3)';
+      rowsHtml +=
+        '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;' + (isNewTramo ? 'border-top:1px solid var(--border);margin-top:4px;padding-top:9px;' : '') + '">' +
+          '<div style="width:150px;flex:none;font-size:12px;color:var(--ink-2)">' +
+            (isNewTramo ? '<b style="color:var(--ink)">Tramo ' + TRAMO_LABEL[r.tramo] + '</b><br>' : '') +
+            'Avance ' + AVANCE_LABEL[r.avance] +
+          '</div>' +
+          '<div style="flex:1;position:relative;height:16px;background:var(--grid);border-radius:3px;overflow:visible">' +
+            '<div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border-strong)"></div>' +
+            '<div style="position:absolute;top:1px;bottom:1px;border-radius:3px;background:' + barColor + ';' +
+              (positive ? 'left:50%;width:' + pct + '%;' : 'right:50%;width:' + pct + '%;') + '"></div>' +
+          '</div>' +
+          '<div class="mono" style="width:56px;flex:none;text-align:right;font-size:12.5px;font-weight:700;color:' + (positive?'var(--amber-ramp-4)':'var(--ink-3)') + '">' + (positive?'+':'') + r.diff_pp.toFixed(1) + 'pp</div>' +
+        '</div>';
+    });
+    wrap.innerHTML = rowsHtml;
+  })();
+
+  /* ---------------- NUEVOS SEGMENTADO (grouped bars) ---------------- */
+  (function(){
+    var svg = document.getElementById('chart-nuevos-seg');
+    var tip = document.getElementById('tip-nuevos-seg');
+    var W = 900, H = 260, padL = 70, padR = 16, padT = 16, padB = 44;
+    var rows = SEG.nuevos;
+    var maxV = Math.max.apply(null, rows.map(function(r){ return Math.max(r.meta_s, r.real_s); })) * 1.15;
+    var groupW = (W - padL - padR) / rows.length;
+    var barW = groupW * 0.28;
+    var ns = 'http://www.w3.org/2000/svg';
+    svg.setAttribute('viewBox','0 0 ' + W + ' ' + H);
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    function Y(v){ return H - padB - (v/maxV) * (H - padT - padB); }
+    [0, maxV/2, maxV].forEach(function(v){
+      var gy = Y(v);
+      var gl = document.createElementNS(ns,'line');
+      gl.setAttribute('x1',padL); gl.setAttribute('x2', W-padR); gl.setAttribute('y1',gy); gl.setAttribute('y2',gy);
+      gl.setAttribute('stroke', css('--grid')); gl.setAttribute('stroke-width','1');
+      svg.appendChild(gl);
+      var lab = document.createElementNS(ns,'text');
+      lab.setAttribute('x', padL-10); lab.setAttribute('y', gy+4); lab.setAttribute('text-anchor','end');
+      lab.setAttribute('font-size','11'); lab.setAttribute('fill', css('--ink-3'));
+      lab.setAttribute('font-family','ui-monospace,monospace');
+      lab.textContent = fmtSk(v);
+      svg.appendChild(lab);
+    });
+    rows.forEach(function(r, i){
+      var cx = padL + groupW * i + groupW/2;
+      [['meta_s', css('--ink-3'), -1], ['real_s', css('--amber'), 1]].forEach(function(spec){
+        var val = r[spec[0]];
+        var x = cx + spec[2]*barW*0.62 - barW/2;
+        var y = Y(val);
+        var rect = document.createElementNS(ns,'rect');
+        rect.setAttribute('x', x); rect.setAttribute('y', y);
+        rect.setAttribute('width', barW); rect.setAttribute('height', H-padB-y);
+        rect.setAttribute('rx', 3); rect.setAttribute('fill', spec[1]);
+        rect.setAttribute('data-avance', r.avance); rect.setAttribute('data-field', spec[0]);
+        svg.appendChild(rect);
       });
+      var lab = document.createElementNS(ns,'text');
+      lab.setAttribute('x', cx); lab.setAttribute('y', H-padB+18); lab.setAttribute('text-anchor','middle');
+      lab.setAttribute('font-size','11.5'); lab.setAttribute('fill', css('--ink-2')); lab.setAttribute('font-weight','600');
+      lab.textContent = AVANCE_LABEL[r.avance];
+      svg.appendChild(lab);
+      var lab2 = document.createElementNS(ns,'text');
+      lab2.setAttribute('x', cx); lab2.setAttribute('y', Y(r.real_s) - 8); lab2.setAttribute('text-anchor','middle');
+      lab2.setAttribute('font-size','11.5'); lab2.setAttribute('fill', css('--amber-ramp-4')); lab2.setAttribute('font-weight','700');
+      lab2.setAttribute('font-family','ui-monospace,monospace');
+      lab2.textContent = '+' + r.diff_pct.toFixed(0) + '%';
+      svg.appendChild(lab2);
+
+      var hit = document.createElementNS(ns,'rect');
+      hit.setAttribute('x', padL + groupW*i); hit.setAttribute('y', padT);
+      hit.setAttribute('width', groupW); hit.setAttribute('height', H-padT-padB);
+      hit.setAttribute('fill','transparent');
+      hit.addEventListener('mousemove', function(evt){
+        var box = svg.getBoundingClientRect();
+        tip.innerHTML = '<div class="tt-day">Avance ' + AVANCE_LABEL[r.avance] + '</div>' +
+          '<span style="color:'+css('--ink-3')+'">●</span> Meta: ' + fmtS(r.meta_s) + '<br>' +
+          '<span style="color:'+css('--amber')+'">●</span> Real: ' + fmtS(r.real_s) + ' (' + r.real_pct.toFixed(1) + '% del asignado)';
+        tip.style.left = (evt.clientX - box.left) + 'px';
+        tip.style.top = (evt.clientY - box.top) + 'px';
+        tip.classList.add('show');
+      });
+      hit.addEventListener('mouseleave', function(){ tip.classList.remove('show'); });
+      svg.appendChild(hit);
     });
-    html += `<tr class="grandtotal"><td colspan="2">TOTAL STOCK</td><td>${fmtInt(grandCred)}</td><td>${fmtS(grandSaldo)}</td><td></td><td>${fmtS(grandAseg)}</td></tr>`;
-    html += `</tbody>`;
-    tbl.innerHTML = html;
   })();
 
-  // Nuevos curve
+  /* ---------------- TABLA SEGMENTADA (stock + nuevos) ---------------- */
   (function(){
-    const svg = document.getElementById('chart-nuevos-curva');
-    const box = svg.closest('.chart-box');
-    const series = RAW.avances.map((a,idx)=>({ name:'avance '+AV_NAMES[idx], color:AV_COLORS[idx], data: RAW.curva_nuevos[a], labelFmt: fmtPct1 }));
-    lineChart(svg, box, { series, n:31, width:1000, height:280, xLabel:i=>(i+1), xTickEvery:4, yFmt:v=>v.toFixed(0)+'%', yMaxOverride:100 });
-    const legend = document.getElementById('nuevos-curva-legend');
-    RAW.avances.forEach((a,idx)=>{
-      const it = document.createElement('span'); it.className='legend-item';
-      it.innerHTML = `<i style="background:${resolveVar(AV_COLORS[idx])}"></i>avance ${AV_NAMES[idx]} — llega a ${RAW.curva_nuevos[a][30].toFixed(1)}% al día 31`;
-      legend.appendChild(it);
+    var tbody = document.getElementById('tbl-segmentado');
+    var rowsHtml = '';
+    SEG.stock.forEach(function(r){
+      var positive = r.diff_pp >= 0;
+      rowsHtml += '<tr><td><span class="tag stock">stock</span> Tramo ' + TRAMO_LABEL[r.tramo] + ' · avance ' + AVANCE_LABEL[r.avance] + '</td>' +
+        '<td class="mono">' + r.creditos + '</td>' +
+        '<td class="mono">' + fmtS(r.asignado) + '</td>' +
+        '<td class="mono">' + r.meta_pct.toFixed(1) + '%</td>' +
+        '<td class="mono">' + r.real_pct.toFixed(1) + '%</td>' +
+        '<td class="mono" style="color:' + (positive?'var(--amber-ramp-4)':'var(--ink-3)') + ';font-weight:700">' + (positive?'+':'') + r.diff_pp.toFixed(1) + 'pp</td></tr>';
     });
+    SEG.nuevos.forEach(function(r){
+      rowsHtml += '<tr><td><span class="tag nuevo">nuevo</span> Avance ' + AVANCE_LABEL[r.avance] + '</td>' +
+        '<td class="mono">' + r.entradas + '</td>' +
+        '<td class="mono">' + fmtS(r.asignado) + '</td>' +
+        '<td class="mono">' + fmtS(r.meta_s) + '</td>' +
+        '<td class="mono">' + fmtS(r.real_s) + '</td>' +
+        '<td class="mono" style="color:var(--amber-ramp-4);font-weight:700">+' + r.diff_pct.toFixed(1) + '%</td></tr>';
+    });
+    tbody.innerHTML = rowsHtml;
   })();
 
-  // Julio trajectory
-  (function(){
-    const svg = document.getElementById('chart-julio');
-    const box = svg.closest('.chart-box');
-    const stock = RAW.filas_julio.map(f=>f.aseg_stock);
-    const nuevos = RAW.filas_julio.map(f=>f.aseg_nuevos);
-    const total = RAW.filas_julio.map(f=>f.aseg_total);
-    lineChart(svg, box, {
-      series: [
-        { name:'stock', color:'var(--av3)', data: stock, labelFmt: v=>fmtS(v) },
-        { name:'nuevos', color:'var(--accent-2)', data: nuevos, labelFmt: v=>fmtS(v) },
-        { name:'total', color:'var(--accent)', data: total, labelFmt: v=>fmtS(v) },
-      ],
-      n:31, width:1000, height:300, xLabel:i=>JUL_DATES[i], xTickEvery:4, yFmt: v=>'S/ '+fmtSCompact(v)
-    });
-    const legend = document.getElementById('julio-legend');
-    [['stock','var(--av3)'],['nuevos','var(--accent-2)'],['total','var(--accent)']].forEach(([name,color])=>{
-      const it = document.createElement('span'); it.className='legend-item';
-      it.innerHTML = `<i style="background:${resolveVar(color)}"></i>${name}`;
-      legend.appendChild(it);
-    });
-  })();
 })();
 </script>

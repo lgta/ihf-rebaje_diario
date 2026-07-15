@@ -1,0 +1,548 @@
+<title>Enfoque alfa — Curvas y matriz mensual</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --surface-page:   #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6; /* blue    -- avance <10%   */
+    --series-2:       #1baf7a; /* aqua    -- avance 10-40%  */
+    --series-3:       #eda100; /* yellow  -- avance 40-70%  */
+    --series-4:       #008300; /* green   -- avance 70%+    */
+    --seq-100: #cde2fb; --seq-200: #9ec5f4; --seq-300: #6da7ec;
+    --seq-400: #3987e5; --seq-500: #256abf; --seq-600: #184f95; --seq-700: #0d366b;
+    --tooltip-bg: #1a1a19;
+    --tooltip-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --surface-page:   #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-2:       #199e70;
+      --series-3:       #c98500;
+      --series-4:       #008300;
+      --tooltip-bg: #f9f9f7;
+      --tooltip-text: #0b0b0b;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --surface-page:   #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --series-2:       #199e70;
+    --series-3:       #c98500;
+    --series-4:       #008300;
+    --tooltip-bg: #f9f9f7;
+    --tooltip-text: #0b0b0b;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface-page);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin: 0 0 20px; max-width: 760px; line-height: 1.5; }
+
+  .banner {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--series-1);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 28px;
+  }
+  .banner b { color: var(--text-primary); }
+  .banner code { background: var(--gridline); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+  section { margin-bottom: 40px; }
+  h2 { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+  .section-note { color: var(--text-secondary); font-size: 13px; margin: 0 0 16px; max-width: 780px; line-height: 1.5; }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    font-size: 12px; color: var(--text-secondary);
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: fit-content;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 12px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  @media (max-width: 720px) { .chart-grid { grid-template-columns: 1fr; } }
+
+  .chart-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px 8px;
+    position: relative;
+  }
+  .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .chart-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+
+  .chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .grid-line { stroke: var(--gridline); stroke-width: 1; }
+  .axis-line { stroke: var(--baseline); stroke-width: 1; }
+  .axis-label { fill: var(--text-muted); font-size: 9.5px; }
+  .series-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .hover-x { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; pointer-events: none; }
+  .hover-dot { r: 3.5; stroke: var(--surface-1); stroke-width: 1.5; opacity: 0; pointer-events: none; }
+  .hit-rect { fill: transparent; cursor: crosshair; }
+
+  .tooltip {
+    position: absolute;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    font-size: 11px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.08s;
+    white-space: nowrap;
+    z-index: 10;
+    line-height: 1.6;
+  }
+  .tooltip .t-day { font-weight: 700; margin-bottom: 3px; }
+  .tooltip .t-row { display: flex; align-items: center; gap: 6px; }
+  .tooltip .t-sw { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .tooltip .t-val { margin-left: auto; padding-left: 10px; font-variant-numeric: tabular-nums; }
+
+  /* ---- Matrix table ---- */
+  .matrix-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-1);
+  }
+  table.matrix {
+    border-collapse: collapse;
+    font-size: 12px;
+    width: 100%;
+  }
+  table.matrix th, table.matrix td {
+    padding: 8px 10px;
+    text-align: right;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--gridline);
+  }
+  table.matrix thead th {
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+    position: sticky;
+    top: 0;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
+  }
+  table.matrix th.row-label, table.matrix td.row-label {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--surface-1);
+    font-weight: 600;
+    border-right: 1px solid var(--border);
+    z-index: 2;
+  }
+  table.matrix td.row-label { font-weight: 500; }
+  table.matrix tr.total-row td, table.matrix tr.total-row th { font-weight: 700; border-top: 1px solid var(--baseline); }
+  table.matrix td.cell { min-width: 92px; }
+  .cell-pct { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; }
+  .cell-sub { font-size: 10px; color: var(--text-secondary); font-weight: 400; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .month-inprogress { font-style: italic; }
+  .badge-inprogress {
+    display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.02em;
+    color: var(--series-1); border: 1px solid var(--series-1); border-radius: 4px;
+    padding: 0 4px; margin-left: 4px; vertical-align: 1px;
+  }
+
+  .foot-note { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; line-height: 1.5; }
+</style>
+
+<div class="viz-root">
+<div class="wrap">
+  <h1>Enfoque alfa — Capital asegurado: curvas y matriz mensual</h1>
+  <p class="subtitle">
+    Curvas de maduración calibradas (mar-2025 a jul-2026) y el detalle mes a mes de cuánto
+    capital se asignó (entró en mora) vs. cuánto quedó asegurado (mostró ≥1 día de pago),
+    separado por antiguos (por tramo) y nuevos.
+  </p>
+
+  <div class="banner">
+    <b>Definición corregida (2026-07-14, bug 12):</b> un crédito que entra en mora
+    (<code>dayslate</code> 0→1) el día 1 de un mes viene siempre de una cuota vencida el
+    último día del mes anterior — es <b>antiguo</b>, no nuevo. "Antiguo" = mora 1-30 al
+    cierre del mes anterior <b>más</b> esos entrantes del día 1. "Nuevo" arranca a contar
+    desde el día 2. Curvas, backtest de junio y este reporte ya usan la definición
+    corregida — ver <code>BUGS.md</code> bug 12.
+  </div>
+
+  <section>
+    <h2>Curvas de maduración</h2>
+    <p class="section-note">
+      % acumulado del saldo con ≥1 pago, por día. Antiguos: un panel por tramo de mora al
+      momento de asignación (fijo todo el mes). Nuevos: un panel único, día 1 = día
+      siguiente a la entrada en mora (el día 1 real ya se contó como antiguo).
+    </p>
+    <div class="legend" id="legend-avance"></div>
+    <div class="chart-grid" id="chart-grid"></div>
+  </section>
+
+  <section>
+    <h2>Matriz mensual — asignado, asegurado y %</h2>
+    <p class="section-note">
+      Cada celda: % asegurado sobre el asignado del mes (arriba, con tinte de intensidad) y
+      los montos en soles debajo. Antiguo = mora 1-30 al cierre del mes anterior + entrantes
+      del día 1 (bug 12). Nuevo = entradas desde el día 2. El mes marcado <span class="badge-inprogress">EN CURSO</span>
+      todavía no cierra — su % es provisional y va a subir.
+    </p>
+    <div class="matrix-scroll">
+      <table class="matrix" id="matrix-table"></table>
+    </div>
+    <p class="foot-note">
+      Fuente: <code>enfoque_capital_asegurado.sql</code> (curvas) y consultas de matriz
+      mensual sobre <code>dts_mambu_loans_hist</code>/<code>dts_okaapi_loans</code>
+      (mismo patrón que <code>fase1_stock.sql</code>/<code>fase2_nuevos.sql</code>, con la
+      definición corregida de antiguo/nuevo). % = asegurado ÷ asignado del mismo mes.
+    </p>
+  </section>
+</div>
+</div>
+
+<script id="viz-data" type="application/json">
+{"stock_curve": [{"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 1, "pct": 12.56}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 2, "pct": 27.554}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 3, "pct": 34.975}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 4, "pct": 40.7}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 5, "pct": 45.236}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 6, "pct": 47.88}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 7, "pct": 50.458}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 8, "pct": 52.47}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 9, "pct": 54.372}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 10, "pct": 55.79}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 11, "pct": 57.304}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 12, "pct": 58.635}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 13, "pct": 59.843}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 14, "pct": 60.802}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 15, "pct": 62.366}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 16, "pct": 63.753}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 17, "pct": 64.582}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 18, "pct": 65.149}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 19, "pct": 65.728}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 20, "pct": 66.649}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 21, "pct": 67.072}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 22, "pct": 67.366}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 23, "pct": 68.026}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 24, "pct": 68.317}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 25, "pct": 68.895}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 26, "pct": 69.375}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 27, "pct": 69.813}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 28, "pct": 70.143}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 29, "pct": 70.89}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 30, "pct": 71.679}, {"tramo": "a. 1-8", "avance": "a. avance <10%", "dia": 31, "pct": 71.823}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 1, "pct": 14.249}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 2, "pct": 30.624}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 3, "pct": 39.884}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 4, "pct": 46.036}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 5, "pct": 51.123}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 6, "pct": 54.153}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 7, "pct": 56.31}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 8, "pct": 58.739}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 9, "pct": 60.858}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 10, "pct": 62.239}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 11, "pct": 63.876}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 12, "pct": 65.523}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 13, "pct": 67.025}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 14, "pct": 68.547}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 15, "pct": 69.881}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 16, "pct": 71.226}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 17, "pct": 72.101}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 18, "pct": 72.825}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 19, "pct": 74.076}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 20, "pct": 75.177}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 21, "pct": 76.093}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 22, "pct": 77.197}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 23, "pct": 77.681}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 24, "pct": 78.203}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 25, "pct": 78.818}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 26, "pct": 79.522}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 27, "pct": 80.11}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 28, "pct": 80.94}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 29, "pct": 81.967}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 30, "pct": 82.743}, {"tramo": "a. 1-8", "avance": "b. avance 10-40%", "dia": 31, "pct": 82.971}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 1, "pct": 15.418}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 2, "pct": 32.788}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 3, "pct": 42.404}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 4, "pct": 48.446}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 5, "pct": 54.22}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 6, "pct": 58.321}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 7, "pct": 60.951}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 8, "pct": 63.227}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 9, "pct": 65.81}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 10, "pct": 67.478}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 11, "pct": 69.236}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 12, "pct": 70.623}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 13, "pct": 71.745}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 14, "pct": 72.793}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 15, "pct": 73.992}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 16, "pct": 74.82}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 17, "pct": 75.717}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 18, "pct": 76.405}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 19, "pct": 77.329}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 20, "pct": 78.771}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 21, "pct": 79.238}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 22, "pct": 79.985}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 23, "pct": 80.8}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 24, "pct": 81.689}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 25, "pct": 82.294}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 26, "pct": 82.831}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 27, "pct": 83.632}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 28, "pct": 84.298}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 29, "pct": 85.227}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 30, "pct": 85.95}, {"tramo": "a. 1-8", "avance": "c. avance 40-70%", "dia": 31, "pct": 86.24}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 1, "pct": 13.779}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 2, "pct": 30.304}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 3, "pct": 40.479}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 4, "pct": 47.523}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 5, "pct": 52.187}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 6, "pct": 56.308}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 7, "pct": 58.627}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 8, "pct": 61.915}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 9, "pct": 65.086}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 10, "pct": 67.485}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 11, "pct": 70.896}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 12, "pct": 73.686}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 13, "pct": 75.237}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 14, "pct": 76.871}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 15, "pct": 78.292}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 16, "pct": 79.192}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 17, "pct": 80.324}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 18, "pct": 81.131}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 19, "pct": 81.941}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 20, "pct": 83.223}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 21, "pct": 84.573}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 22, "pct": 85.034}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 23, "pct": 86.109}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 24, "pct": 87.282}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 25, "pct": 87.64}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 26, "pct": 88.446}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 27, "pct": 89.093}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 28, "pct": 89.787}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 29, "pct": 90.575}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 30, "pct": 90.948}, {"tramo": "a. 1-8", "avance": "d. avance 70%+", "dia": 31, "pct": 91.073}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 1, "pct": 5.752}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 2, "pct": 9.558}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 3, "pct": 12.208}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 4, "pct": 14.347}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 5, "pct": 17.207}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 6, "pct": 18.793}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 7, "pct": 19.799}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 8, "pct": 22.166}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 9, "pct": 22.837}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 10, "pct": 24.569}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 11, "pct": 26.403}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 12, "pct": 27.26}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 13, "pct": 28.117}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 14, "pct": 28.984}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 15, "pct": 30.211}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 16, "pct": 31.414}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 17, "pct": 33.305}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 18, "pct": 34.613}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 19, "pct": 35.9}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 20, "pct": 36.984}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 21, "pct": 37.678}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 22, "pct": 38.064}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 23, "pct": 38.403}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 24, "pct": 38.77}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 25, "pct": 39.014}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 26, "pct": 39.265}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 27, "pct": 39.443}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 28, "pct": 39.619}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 29, "pct": 40.367}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 30, "pct": 40.567}, {"tramo": "b. 9-15", "avance": "a. avance <10%", "dia": 31, "pct": 41.196}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 1, "pct": 6.26}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 2, "pct": 12.43}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 3, "pct": 16.105}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 4, "pct": 19.213}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 5, "pct": 22.916}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 6, "pct": 26.87}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 7, "pct": 27.995}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 8, "pct": 29.81}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 9, "pct": 31.512}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 10, "pct": 33.715}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 11, "pct": 35.455}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 12, "pct": 37.019}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 13, "pct": 38.716}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 14, "pct": 40.821}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 15, "pct": 43.108}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 16, "pct": 44.632}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 17, "pct": 46.007}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 18, "pct": 47.365}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 19, "pct": 48.437}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 20, "pct": 49.242}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 21, "pct": 50.79}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 22, "pct": 51.568}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 23, "pct": 53.284}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 24, "pct": 54.295}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 25, "pct": 55.42}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 26, "pct": 56.267}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 27, "pct": 56.738}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 28, "pct": 57.116}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 29, "pct": 57.872}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 30, "pct": 58.285}, {"tramo": "b. 9-15", "avance": "b. avance 10-40%", "dia": 31, "pct": 58.644}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 1, "pct": 9.262}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 2, "pct": 15.626}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 3, "pct": 20.101}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 4, "pct": 22.994}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 5, "pct": 28.072}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 6, "pct": 32.088}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 7, "pct": 34.375}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 8, "pct": 37.873}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 9, "pct": 40.927}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 10, "pct": 41.965}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 11, "pct": 43.696}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 12, "pct": 45.049}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 13, "pct": 47.679}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 14, "pct": 50.195}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 15, "pct": 51.531}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 16, "pct": 53.092}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 17, "pct": 54.651}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 18, "pct": 56.888}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 19, "pct": 57.647}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 20, "pct": 58.177}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 21, "pct": 58.77}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 22, "pct": 59.987}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 23, "pct": 61.458}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 24, "pct": 61.843}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 25, "pct": 62.477}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 26, "pct": 63.034}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 27, "pct": 63.282}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 28, "pct": 64.278}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 30, "pct": 64.506}, {"tramo": "b. 9-15", "avance": "c. avance 40-70%", "dia": 31, "pct": 64.604}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 1, "pct": 9.797}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 2, "pct": 14.822}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 3, "pct": 22.235}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 4, "pct": 25.65}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 5, "pct": 31.252}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 6, "pct": 34.875}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 7, "pct": 39.296}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 8, "pct": 41.206}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 9, "pct": 43.342}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 10, "pct": 43.571}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 11, "pct": 44.697}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 12, "pct": 45.486}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 13, "pct": 47.41}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 14, "pct": 50.531}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 15, "pct": 53.011}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 16, "pct": 54.899}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 17, "pct": 56.127}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 18, "pct": 57.489}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 19, "pct": 59.506}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 20, "pct": 62.693}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 21, "pct": 64.161}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 22, "pct": 67.963}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 23, "pct": 68.722}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 24, "pct": 69.975}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 25, "pct": 71.145}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 26, "pct": 71.616}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 27, "pct": 72.489}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 28, "pct": 73.456}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 29, "pct": 73.524}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 30, "pct": 74.142}, {"tramo": "b. 9-15", "avance": "d. avance 70%+", "dia": 31, "pct": 74.554}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 1, "pct": 2.573}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 2, "pct": 4.338}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 3, "pct": 5.533}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 4, "pct": 6.793}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 5, "pct": 8.514}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 6, "pct": 9.35}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 7, "pct": 9.755}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 8, "pct": 10.973}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 9, "pct": 12.079}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 10, "pct": 13.185}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 11, "pct": 13.763}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 12, "pct": 14.304}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 13, "pct": 14.81}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 14, "pct": 15.335}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 15, "pct": 15.83}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 16, "pct": 17.083}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 17, "pct": 18.017}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 18, "pct": 18.512}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 19, "pct": 18.863}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 20, "pct": 19.342}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 21, "pct": 19.975}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 22, "pct": 20.219}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 23, "pct": 20.805}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 24, "pct": 21.087}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 25, "pct": 21.208}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 26, "pct": 21.781}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 27, "pct": 22.096}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 29, "pct": 22.32}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 30, "pct": 22.489}, {"tramo": "c. 16-30", "avance": "a. avance <10%", "dia": 31, "pct": 22.562}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 1, "pct": 3.645}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 2, "pct": 5.881}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 3, "pct": 8.341}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 4, "pct": 10.318}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 5, "pct": 12.478}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 6, "pct": 15.978}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 7, "pct": 17.347}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 8, "pct": 18.694}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 9, "pct": 20.042}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 10, "pct": 21.619}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 11, "pct": 23.242}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 12, "pct": 25.137}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 13, "pct": 26.217}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 14, "pct": 26.773}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 15, "pct": 28.015}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 16, "pct": 29.443}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 17, "pct": 30.565}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 18, "pct": 31.168}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 19, "pct": 31.986}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 20, "pct": 32.443}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 21, "pct": 33.52}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 22, "pct": 34.313}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 23, "pct": 34.644}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 24, "pct": 35.269}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 25, "pct": 36.161}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 26, "pct": 38.058}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 27, "pct": 38.507}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 28, "pct": 38.813}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 29, "pct": 38.958}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 30, "pct": 39.827}, {"tramo": "c. 16-30", "avance": "b. avance 10-40%", "dia": 31, "pct": 40.621}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 1, "pct": 5.08}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 2, "pct": 10.964}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 3, "pct": 13.823}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 4, "pct": 17.631}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 5, "pct": 21.077}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 6, "pct": 23.931}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 7, "pct": 26.972}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 8, "pct": 28.795}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 9, "pct": 30.317}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 10, "pct": 31.265}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 11, "pct": 32.471}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 12, "pct": 33.876}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 13, "pct": 35.413}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 14, "pct": 37.031}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 15, "pct": 39.989}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 16, "pct": 41.823}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 17, "pct": 42.828}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 18, "pct": 43.653}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 19, "pct": 44.731}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 20, "pct": 45.602}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 21, "pct": 46.248}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 22, "pct": 46.502}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 23, "pct": 47.435}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 24, "pct": 48.329}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 25, "pct": 48.775}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 26, "pct": 49.057}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 27, "pct": 49.591}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 28, "pct": 50.451}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 29, "pct": 51.329}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 30, "pct": 51.856}, {"tramo": "c. 16-30", "avance": "c. avance 40-70%", "dia": 31, "pct": 52.002}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 1, "pct": 6.728}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 2, "pct": 9.97}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 3, "pct": 12.76}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 4, "pct": 15.418}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 5, "pct": 19.106}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 6, "pct": 20.532}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 7, "pct": 23.726}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 8, "pct": 27.358}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 9, "pct": 29.663}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 10, "pct": 30.868}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 11, "pct": 31.97}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 12, "pct": 33.641}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 13, "pct": 36.661}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 14, "pct": 37.7}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 15, "pct": 38.778}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 16, "pct": 40.318}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 17, "pct": 40.724}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 18, "pct": 43.733}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 19, "pct": 44.818}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 20, "pct": 46.134}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 21, "pct": 47.881}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 22, "pct": 48.892}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 23, "pct": 49.734}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 24, "pct": 50.474}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 25, "pct": 50.801}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 26, "pct": 50.967}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 27, "pct": 53.439}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 28, "pct": 55.169}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 29, "pct": 55.892}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 30, "pct": 56.187}, {"tramo": "c. 16-30", "avance": "d. avance 70%+", "dia": 31, "pct": 56.331}], "nuevos_curve": [{"avance": "a. avance <10%", "dia": 1, "pct": 26.506}, {"avance": "a. avance <10%", "dia": 2, "pct": 40.262}, {"avance": "a. avance <10%", "dia": 3, "pct": 50.151}, {"avance": "a. avance <10%", "dia": 4, "pct": 55.523}, {"avance": "a. avance <10%", "dia": 5, "pct": 59.154}, {"avance": "a. avance <10%", "dia": 6, "pct": 62.16}, {"avance": "a. avance <10%", "dia": 7, "pct": 64.404}, {"avance": "a. avance <10%", "dia": 8, "pct": 67.104}, {"avance": "a. avance <10%", "dia": 9, "pct": 68.904}, {"avance": "a. avance <10%", "dia": 10, "pct": 70.544}, {"avance": "a. avance <10%", "dia": 11, "pct": 71.791}, {"avance": "a. avance <10%", "dia": 12, "pct": 72.924}, {"avance": "a. avance <10%", "dia": 13, "pct": 73.982}, {"avance": "a. avance <10%", "dia": 14, "pct": 74.896}, {"avance": "a. avance <10%", "dia": 15, "pct": 75.793}, {"avance": "a. avance <10%", "dia": 16, "pct": 76.491}, {"avance": "a. avance <10%", "dia": 17, "pct": 77.013}, {"avance": "a. avance <10%", "dia": 18, "pct": 77.435}, {"avance": "a. avance <10%", "dia": 19, "pct": 77.977}, {"avance": "a. avance <10%", "dia": 20, "pct": 78.429}, {"avance": "a. avance <10%", "dia": 21, "pct": 78.731}, {"avance": "a. avance <10%", "dia": 22, "pct": 78.999}, {"avance": "a. avance <10%", "dia": 23, "pct": 79.276}, {"avance": "a. avance <10%", "dia": 24, "pct": 79.656}, {"avance": "a. avance <10%", "dia": 25, "pct": 80.06}, {"avance": "a. avance <10%", "dia": 26, "pct": 80.295}, {"avance": "a. avance <10%", "dia": 27, "pct": 80.59}, {"avance": "a. avance <10%", "dia": 28, "pct": 80.902}, {"avance": "a. avance <10%", "dia": 29, "pct": 81.424}, {"avance": "a. avance <10%", "dia": 30, "pct": 81.848}, {"avance": "a. avance <10%", "dia": 31, "pct": 82.069}, {"avance": "b. avance 10-40%", "dia": 1, "pct": 24.741}, {"avance": "b. avance 10-40%", "dia": 2, "pct": 38.956}, {"avance": "b. avance 10-40%", "dia": 3, "pct": 50.196}, {"avance": "b. avance 10-40%", "dia": 4, "pct": 56.345}, {"avance": "b. avance 10-40%", "dia": 5, "pct": 60.723}, {"avance": "b. avance 10-40%", "dia": 6, "pct": 64.645}, {"avance": "b. avance 10-40%", "dia": 7, "pct": 67.24}, {"avance": "b. avance 10-40%", "dia": 8, "pct": 70.438}, {"avance": "b. avance 10-40%", "dia": 9, "pct": 72.751}, {"avance": "b. avance 10-40%", "dia": 10, "pct": 74.511}, {"avance": "b. avance 10-40%", "dia": 11, "pct": 75.949}, {"avance": "b. avance 10-40%", "dia": 12, "pct": 77.181}, {"avance": "b. avance 10-40%", "dia": 13, "pct": 78.368}, {"avance": "b. avance 10-40%", "dia": 14, "pct": 79.566}, {"avance": "b. avance 10-40%", "dia": 15, "pct": 80.795}, {"avance": "b. avance 10-40%", "dia": 16, "pct": 81.6}, {"avance": "b. avance 10-40%", "dia": 17, "pct": 82.25}, {"avance": "b. avance 10-40%", "dia": 18, "pct": 82.897}, {"avance": "b. avance 10-40%", "dia": 19, "pct": 83.449}, {"avance": "b. avance 10-40%", "dia": 20, "pct": 84.018}, {"avance": "b. avance 10-40%", "dia": 21, "pct": 84.392}, {"avance": "b. avance 10-40%", "dia": 22, "pct": 84.856}, {"avance": "b. avance 10-40%", "dia": 23, "pct": 85.288}, {"avance": "b. avance 10-40%", "dia": 24, "pct": 85.848}, {"avance": "b. avance 10-40%", "dia": 25, "pct": 86.363}, {"avance": "b. avance 10-40%", "dia": 26, "pct": 86.743}, {"avance": "b. avance 10-40%", "dia": 27, "pct": 87.237}, {"avance": "b. avance 10-40%", "dia": 28, "pct": 87.758}, {"avance": "b. avance 10-40%", "dia": 29, "pct": 88.26}, {"avance": "b. avance 10-40%", "dia": 30, "pct": 88.656}, {"avance": "b. avance 10-40%", "dia": 31, "pct": 88.925}, {"avance": "c. avance 40-70%", "dia": 1, "pct": 24.752}, {"avance": "c. avance 40-70%", "dia": 2, "pct": 39.467}, {"avance": "c. avance 40-70%", "dia": 3, "pct": 51.019}, {"avance": "c. avance 40-70%", "dia": 4, "pct": 57.321}, {"avance": "c. avance 40-70%", "dia": 5, "pct": 62.022}, {"avance": "c. avance 40-70%", "dia": 6, "pct": 66.35}, {"avance": "c. avance 40-70%", "dia": 7, "pct": 69.604}, {"avance": "c. avance 40-70%", "dia": 8, "pct": 73.23}, {"avance": "c. avance 40-70%", "dia": 9, "pct": 75.528}, {"avance": "c. avance 40-70%", "dia": 10, "pct": 77.574}, {"avance": "c. avance 40-70%", "dia": 11, "pct": 79.05}, {"avance": "c. avance 40-70%", "dia": 12, "pct": 80.484}, {"avance": "c. avance 40-70%", "dia": 13, "pct": 81.754}, {"avance": "c. avance 40-70%", "dia": 14, "pct": 82.925}, {"avance": "c. avance 40-70%", "dia": 15, "pct": 83.879}, {"avance": "c. avance 40-70%", "dia": 16, "pct": 84.725}, {"avance": "c. avance 40-70%", "dia": 17, "pct": 85.521}, {"avance": "c. avance 40-70%", "dia": 18, "pct": 86.14}, {"avance": "c. avance 40-70%", "dia": 19, "pct": 86.705}, {"avance": "c. avance 40-70%", "dia": 20, "pct": 87.267}, {"avance": "c. avance 40-70%", "dia": 21, "pct": 87.716}, {"avance": "c. avance 40-70%", "dia": 22, "pct": 88.215}, {"avance": "c. avance 40-70%", "dia": 23, "pct": 88.607}, {"avance": "c. avance 40-70%", "dia": 24, "pct": 89.225}, {"avance": "c. avance 40-70%", "dia": 25, "pct": 89.653}, {"avance": "c. avance 40-70%", "dia": 26, "pct": 89.975}, {"avance": "c. avance 40-70%", "dia": 27, "pct": 90.414}, {"avance": "c. avance 40-70%", "dia": 28, "pct": 90.772}, {"avance": "c. avance 40-70%", "dia": 29, "pct": 91.264}, {"avance": "c. avance 40-70%", "dia": 30, "pct": 91.682}, {"avance": "c. avance 40-70%", "dia": 31, "pct": 91.878}, {"avance": "d. avance 70%+", "dia": 1, "pct": 23.371}, {"avance": "d. avance 70%+", "dia": 2, "pct": 37.389}, {"avance": "d. avance 70%+", "dia": 3, "pct": 49.391}, {"avance": "d. avance 70%+", "dia": 4, "pct": 55.868}, {"avance": "d. avance 70%+", "dia": 5, "pct": 60.514}, {"avance": "d. avance 70%+", "dia": 6, "pct": 65.212}, {"avance": "d. avance 70%+", "dia": 7, "pct": 68.345}, {"avance": "d. avance 70%+", "dia": 8, "pct": 71.615}, {"avance": "d. avance 70%+", "dia": 9, "pct": 74.715}, {"avance": "d. avance 70%+", "dia": 10, "pct": 76.717}, {"avance": "d. avance 70%+", "dia": 11, "pct": 78.36}, {"avance": "d. avance 70%+", "dia": 12, "pct": 79.699}, {"avance": "d. avance 70%+", "dia": 13, "pct": 81.362}, {"avance": "d. avance 70%+", "dia": 14, "pct": 83.057}, {"avance": "d. avance 70%+", "dia": 15, "pct": 84.206}, {"avance": "d. avance 70%+", "dia": 16, "pct": 85.438}, {"avance": "d. avance 70%+", "dia": 17, "pct": 86.401}, {"avance": "d. avance 70%+", "dia": 18, "pct": 87.169}, {"avance": "d. avance 70%+", "dia": 19, "pct": 87.987}, {"avance": "d. avance 70%+", "dia": 20, "pct": 88.635}, {"avance": "d. avance 70%+", "dia": 21, "pct": 89.079}, {"avance": "d. avance 70%+", "dia": 22, "pct": 89.684}, {"avance": "d. avance 70%+", "dia": 23, "pct": 90.118}, {"avance": "d. avance 70%+", "dia": 24, "pct": 90.618}, {"avance": "d. avance 70%+", "dia": 25, "pct": 90.816}, {"avance": "d. avance 70%+", "dia": 26, "pct": 91.169}, {"avance": "d. avance 70%+", "dia": 27, "pct": 91.675}, {"avance": "d. avance 70%+", "dia": 28, "pct": 92.013}, {"avance": "d. avance 70%+", "dia": 29, "pct": 92.476}, {"avance": "d. avance 70%+", "dia": 30, "pct": 92.822}, {"avance": "d. avance 70%+", "dia": 31, "pct": 93.017}], "matrix_stock": [{"periodo": "202504", "tramo": "a. 1-8", "creditos": 494, "asignado": 835007.94, "asegurado": 600571.0}, {"periodo": "202504", "tramo": "b. 9-15", "creditos": 81, "asignado": 116132.62, "asegurado": 68718.02}, {"periodo": "202504", "tramo": "c. 16-30", "creditos": 152, "asignado": 323280.43, "asegurado": 80029.22}, {"periodo": "202505", "tramo": "a. 1-8", "creditos": 762, "asignado": 1322227.38, "asegurado": 1082503.08}, {"periodo": "202505", "tramo": "b. 9-15", "creditos": 144, "asignado": 224022.38, "asegurado": 126668.5}, {"periodo": "202505", "tramo": "c. 16-30", "creditos": 175, "asignado": 312989.29, "asegurado": 130066.68}, {"periodo": "202506", "tramo": "a. 1-8", "creditos": 728, "asignado": 1167195.92, "asegurado": 907046.44}, {"periodo": "202506", "tramo": "b. 9-15", "creditos": 101, "asignado": 181659.12, "asegurado": 94035.88}, {"periodo": "202506", "tramo": "c. 16-30", "creditos": 215, "asignado": 482905.8, "asegurado": 188758.52}, {"periodo": "202507", "tramo": "a. 1-8", "creditos": 795, "asignado": 1401453.43, "asegurado": 1217095.34}, {"periodo": "202507", "tramo": "b. 9-15", "creditos": 170, "asignado": 374541.59, "asegurado": 222655.95}, {"periodo": "202507", "tramo": "c. 16-30", "creditos": 218, "asignado": 422264.38, "asegurado": 135896.78}, {"periodo": "202508", "tramo": "a. 1-8", "creditos": 892, "asignado": 1698468.53, "asegurado": 1365658.28}, {"periodo": "202508", "tramo": "b. 9-15", "creditos": 147, "asignado": 221362.61, "asegurado": 131958.97}, {"periodo": "202508", "tramo": "c. 16-30", "creditos": 205, "asignado": 407409.75, "asegurado": 172440.2}, {"periodo": "202509", "tramo": "a. 1-8", "creditos": 534, "asignado": 915392.63, "asegurado": 681717.88}, {"periodo": "202509", "tramo": "b. 9-15", "creditos": 165, "asignado": 307325.97, "asegurado": 213712.67}, {"periodo": "202509", "tramo": "c. 16-30", "creditos": 267, "asignado": 599899.57, "asegurado": 189170.52}, {"periodo": "202510", "tramo": "a. 1-8", "creditos": 996, "asignado": 1753222.61, "asegurado": 1316893.17}, {"periodo": "202510", "tramo": "b. 9-15", "creditos": 211, "asignado": 415946.8, "asegurado": 202523.18}, {"periodo": "202510", "tramo": "c. 16-30", "creditos": 306, "asignado": 646302.21, "asegurado": 194679.13}, {"periodo": "202511", "tramo": "a. 1-8", "creditos": 960, "asignado": 1742152.97, "asegurado": 1378217.72}, {"periodo": "202511", "tramo": "b. 9-15", "creditos": 192, "asignado": 318010.55, "asegurado": 176257.18}, {"periodo": "202511", "tramo": "c. 16-30", "creditos": 342, "asignado": 683477.91, "asegurado": 250549.09}, {"periodo": "202512", "tramo": "a. 1-8", "creditos": 617, "asignado": 1026105.94, "asegurado": 839800.39}, {"periodo": "202512", "tramo": "b. 9-15", "creditos": 197, "asignado": 367646.94, "asegurado": 221657.13}, {"periodo": "202512", "tramo": "c. 16-30", "creditos": 228, "asignado": 477839.72, "asegurado": 211506.5}, {"periodo": "202601", "tramo": "a. 1-8", "creditos": 923, "asignado": 1652324.25, "asegurado": 1336247.56}, {"periodo": "202601", "tramo": "b. 9-15", "creditos": 154, "asignado": 258016.75, "asegurado": 122421.65}, {"periodo": "202601", "tramo": "c. 16-30", "creditos": 312, "asignado": 707269.62, "asegurado": 239078.52}, {"periodo": "202602", "tramo": "a. 1-8", "creditos": 1134, "asignado": 1957262.8, "asegurado": 1584823.76}, {"periodo": "202602", "tramo": "b. 9-15", "creditos": 195, "asignado": 316893.11, "asegurado": 162550.18}, {"periodo": "202602", "tramo": "c. 16-30", "creditos": 301, "asignado": 608836.44, "asegurado": 206475.99}, {"periodo": "202603", "tramo": "a. 1-8", "creditos": 1979, "asignado": 3093643.58, "asegurado": 2573302.1}, {"periodo": "202603", "tramo": "b. 9-15", "creditos": 265, "asignado": 471728.02, "asegurado": 212657.16}, {"periodo": "202603", "tramo": "c. 16-30", "creditos": 360, "asignado": 705230.57, "asegurado": 206704.35}, {"periodo": "202604", "tramo": "a. 1-8", "creditos": 1198, "asignado": 2010913.37, "asegurado": 1536925.65}, {"periodo": "202604", "tramo": "b. 9-15", "creditos": 315, "asignado": 537207.93, "asegurado": 216460.92}, {"periodo": "202604", "tramo": "c. 16-30", "creditos": 412, "asignado": 749553.08, "asegurado": 225655.03}, {"periodo": "202605", "tramo": "a. 1-8", "creditos": 1477, "asignado": 2449522.97, "asegurado": 1972303.46}, {"periodo": "202605", "tramo": "b. 9-15", "creditos": 333, "asignado": 569330.07, "asegurado": 302425.46}, {"periodo": "202605", "tramo": "c. 16-30", "creditos": 439, "asignado": 812762.47, "asegurado": 277817.47}, {"periodo": "202606", "tramo": "a. 1-8", "creditos": 1490, "asignado": 2527210.1, "asegurado": 1898827.69}, {"periodo": "202606", "tramo": "b. 9-15", "creditos": 331, "asignado": 561319.07, "asegurado": 267210.17}, {"periodo": "202606", "tramo": "c. 16-30", "creditos": 506, "asignado": 917850.29, "asegurado": 270248.7}, {"periodo": "202607", "tramo": "a. 1-8", "creditos": 1830, "asignado": 3008354.49, "asegurado": 1929467.77}, {"periodo": "202607", "tramo": "b. 9-15", "creditos": 423, "asignado": 766677.84, "asegurado": 296072.49}, {"periodo": "202607", "tramo": "c. 16-30", "creditos": 491, "asignado": 881025.89, "asegurado": 236440.01}], "matrix_nuevos": [{"periodo": "202504", "entradas": 2857, "asignado": 4039426.18, "asegurado": 3544594.03}, {"periodo": "202505", "entradas": 3322, "asignado": 5065463.57, "asegurado": 4375624.06}, {"periodo": "202506", "entradas": 3156, "asignado": 4842390.62, "asegurado": 4168936.47}, {"periodo": "202507", "entradas": 3870, "asignado": 6072309.87, "asegurado": 5352350.11}, {"periodo": "202508", "entradas": 3932, "asignado": 6134368.11, "asegurado": 5322437.95}, {"periodo": "202509", "entradas": 4464, "asignado": 7353032.23, "asegurado": 6323295.22}, {"periodo": "202510", "entradas": 4611, "asignado": 7634718.47, "asegurado": 6587130.81}, {"periodo": "202511", "entradas": 4032, "asignado": 6486738.88, "asegurado": 5850717.22}, {"periodo": "202512", "entradas": 4898, "asignado": 7835298.83, "asegurado": 6864482.71}, {"periodo": "202601", "entradas": 5041, "asignado": 7854046.85, "asegurado": 6911177.25}, {"periodo": "202602", "entradas": 4760, "asignado": 7092504.13, "asegurado": 6139659.9}, {"periodo": "202603", "entradas": 6054, "asignado": 9296748.0, "asegurado": 7849810.09}, {"periodo": "202604", "entradas": 6331, "asignado": 9620200.54, "asegurado": 8452640.49}, {"periodo": "202605", "entradas": 7091, "asignado": 11121740.19, "asegurado": 9479937.4}, {"periodo": "202606", "entradas": 6338, "asignado": 9741923.12, "asegurado": 8124948.01}, {"periodo": "202607", "entradas": 2730, "asignado": 4501539.84, "asegurado": 2511895.09}]}
+</script>
+<script>
+(function () {
+  var DATA = JSON.parse(document.getElementById('viz-data').textContent);
+  var root = document.querySelector('.viz-root');
+  var cs, cvar;
+
+  var AVANCE_ORDER = ['a. avance <10%', 'b. avance 10-40%', 'c. avance 40-70%', 'd. avance 70%+'];
+  var AVANCE_LABEL = {
+    'a. avance <10%': 'Avance <10%',
+    'b. avance 10-40%': 'Avance 10-40%',
+    'c. avance 40-70%': 'Avance 40-70%',
+    'd. avance 70%+': 'Avance 70%+'
+  };
+  var SERIES_VAR = ['--series-1', '--series-2', '--series-3', '--series-4'];
+
+  // ---------------- Line chart renderer ----------------
+  function renderLineChart(container, seriesList, opts) {
+    var W = 480, H = 190;
+    var padL = 30, padR = 10, padT = 10, padB = 22;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var xMin = 1, xMax = 31;
+    var yMax = opts.yMax || 100;
+
+    function xPix(x) { return padL + (x - xMin) / (xMax - xMin) * plotW; }
+    function yPix(y) { return padT + plotH - (y / yMax) * plotH; }
+
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.setAttribute('class', 'chart-svg');
+
+    // gridlines (horizontal, at 0/25/50/75/100% of yMax)
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) {
+      var y = yPix(f * yMax);
+      var line = document.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
+      line.setAttribute('y1', y); line.setAttribute('y2', y);
+      line.setAttribute('class', 'grid-line');
+      svg.appendChild(line);
+      var lbl = document.createElementNS(svgNS, 'text');
+      lbl.setAttribute('x', padL - 5); lbl.setAttribute('y', y + 3);
+      lbl.setAttribute('text-anchor', 'end'); lbl.setAttribute('class', 'axis-label');
+      lbl.textContent = Math.round(f * yMax) + '%';
+      svg.appendChild(lbl);
+    });
+    // x axis ticks at day 1, 8, 15, 22, 31
+    [1, 8, 15, 22, 31].forEach(function (d) {
+      var lbl = document.createElementNS(svgNS, 'text');
+      lbl.setAttribute('x', xPix(d)); lbl.setAttribute('y', H - 6);
+      lbl.setAttribute('text-anchor', 'middle'); lbl.setAttribute('class', 'axis-label');
+      lbl.textContent = 'd' + d;
+      svg.appendChild(lbl);
+    });
+    var baseline = document.createElementNS(svgNS, 'line');
+    baseline.setAttribute('x1', padL); baseline.setAttribute('x2', W - padR);
+    baseline.setAttribute('y1', padT + plotH); baseline.setAttribute('y2', padT + plotH);
+    baseline.setAttribute('class', 'axis-line');
+    svg.appendChild(baseline);
+
+    // lines
+    var dotEls = [];
+    seriesList.forEach(function (s) {
+      var d = s.points.map(function (p, i) {
+        return (i === 0 ? 'M' : 'L') + xPix(p.x).toFixed(2) + ',' + yPix(p.y).toFixed(2);
+      }).join(' ');
+      var path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('class', 'series-line');
+      path.setAttribute('stroke', s.color);
+      svg.appendChild(path);
+
+      var dot = document.createElementNS(svgNS, 'circle');
+      dot.setAttribute('class', 'hover-dot');
+      dot.setAttribute('fill', s.color);
+      svg.appendChild(dot);
+      dotEls.push(dot);
+    });
+
+    var hoverLine = document.createElementNS(svgNS, 'line');
+    hoverLine.setAttribute('y1', padT); hoverLine.setAttribute('y2', padT + plotH);
+    hoverLine.setAttribute('class', 'hover-x');
+    svg.appendChild(hoverLine);
+
+    var hit = document.createElementNS(svgNS, 'rect');
+    hit.setAttribute('x', padL); hit.setAttribute('y', padT);
+    hit.setAttribute('width', plotW); hit.setAttribute('height', plotH);
+    hit.setAttribute('class', 'hit-rect');
+    svg.appendChild(hit);
+
+    container.appendChild(svg);
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    container.appendChild(tooltip);
+
+    hit.addEventListener('mousemove', function (ev) {
+      var rect = svg.getBoundingClientRect();
+      var px = (ev.clientX - rect.left) / rect.width * W;
+      var day = Math.round(xMin + (px - padL) / plotW * (xMax - xMin));
+      day = Math.max(xMin, Math.min(xMax, day));
+      var x = xPix(day);
+      hoverLine.setAttribute('x1', x); hoverLine.setAttribute('x2', x);
+      hoverLine.style.opacity = 1;
+
+      var lines = ['<div class="t-day">Día ' + day + '</div>'];
+      seriesList.forEach(function (s, i) {
+        var pt = s.points.find(function (p) { return p.x === day; });
+        var val = pt ? pt.y.toFixed(1) + '%' : '—';
+        dotEls[i].style.opacity = pt ? 1 : 0;
+        if (pt) { dotEls[i].setAttribute('cx', x); dotEls[i].setAttribute('cy', yPix(pt.y)); }
+        lines.push('<div class="t-row"><span class="t-sw" style="background:' + s.color + '"></span>' +
+          s.label + '<span class="t-val">' + val + '</span></div>');
+      });
+      tooltip.innerHTML = lines.join('');
+      tooltip.style.opacity = 1;
+      var left = ev.clientX - container.getBoundingClientRect().left + 14;
+      var top = ev.clientY - container.getBoundingClientRect().top + 14;
+      if (left + 150 > container.clientWidth) left = ev.clientX - container.getBoundingClientRect().left - 160;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    });
+    hit.addEventListener('mouseleave', function () {
+      hoverLine.style.opacity = 0;
+      dotEls.forEach(function (d) { d.style.opacity = 0; });
+      tooltip.style.opacity = 0;
+    });
+  }
+
+  // ---------------- Static helpers (no color dependency) ----------------
+  var TRAMO_LABEL = { 'a. 1-8': 'Antiguo — tramo 1-8', 'b. 9-15': 'Antiguo — tramo 9-15', 'c. 16-30': 'Antiguo — tramo 16-30' };
+  var MES_LABEL = { '01': 'ene', '02': 'feb', '03': 'mar', '04': 'abr', '05': 'may', '06': 'jun',
+    '07': 'jul', '08': 'ago', '09': 'sep', '10': 'oct', '11': 'nov', '12': 'dic' };
+  function fmtMes(periodo) {
+    var y = periodo.slice(2, 4), m = periodo.slice(4, 6);
+    return MES_LABEL[m] + '-' + y;
+  }
+  function fmtMonto(v) {
+    if (Math.abs(v) >= 1000000) return (v / 1000000).toFixed(2) + 'M';
+    return Math.round(v / 1000) + 'K';
+  }
+
+  var periodos = Array.from(new Set(DATA.matrix_nuevos.map(function (r) { return r.periodo; }))).sort();
+  var lastPeriodo = periodos[periodos.length - 1];
+
+  function stockByPeriodoTramo(periodo, tramo) {
+    return DATA.matrix_stock.find(function (r) { return r.periodo === periodo && r.tramo === tramo; });
+  }
+  function nuevosByPeriodo(periodo) {
+    return DATA.matrix_nuevos.find(function (r) { return r.periodo === periodo; });
+  }
+
+  // ---------------- Full render (re-run on theme change so colors stay live) ----------------
+  function render() {
+    cs = getComputedStyle(root);
+    cvar = function (name) { return cs.getPropertyValue(name).trim(); };
+
+    function seqColor(pct) {
+      // pct 0..100 mapped onto the 100..700 sequential blue ramp
+      var steps = [
+        [0, '--seq-100'], [20, '--seq-200'], [35, '--seq-300'], [50, '--seq-400'],
+        [65, '--seq-500'], [80, '--seq-600'], [100, '--seq-700']
+      ];
+      var v = Math.max(0, Math.min(100, pct));
+      for (var i = 0; i < steps.length; i++) {
+        if (v <= steps[i][0]) return cvar(steps[i][1]);
+      }
+      return cvar('--seq-700');
+    }
+    function textOnSeq(pct) {
+      return pct >= 50 ? '#ffffff' : cvar('--text-primary');
+    }
+
+    // ---- Legend ----
+    var legendEl = document.getElementById('legend-avance');
+    legendEl.innerHTML = '';
+    AVANCE_ORDER.forEach(function (a, i) {
+      var item = document.createElement('div');
+      item.className = 'legend-item';
+      var sw = document.createElement('span');
+      sw.className = 'legend-swatch';
+      sw.style.background = cvar(SERIES_VAR[i]);
+      var label = document.createElement('span');
+      label.textContent = AVANCE_LABEL[a];
+      item.appendChild(sw); item.appendChild(label);
+      legendEl.appendChild(item);
+    });
+
+    // ---- Chart panels ----
+    var grid = document.getElementById('chart-grid');
+    grid.innerHTML = '';
+    function makeCard(title, sub) {
+      var card = document.createElement('div');
+      card.className = 'chart-card';
+      var t = document.createElement('div'); t.className = 'chart-title'; t.textContent = title;
+      var s = document.createElement('div'); s.className = 'chart-sub'; s.textContent = sub;
+      card.appendChild(t); card.appendChild(s);
+      grid.appendChild(card);
+      return card;
+    }
+
+    ['a. 1-8', 'b. 9-15', 'c. 16-30'].forEach(function (tramo) {
+      var card = makeCard(TRAMO_LABEL[tramo], '% de saldo asegurado acumulado, por avance');
+      var seriesList = AVANCE_ORDER.map(function (av, i) {
+        var pts = DATA.stock_curve.filter(function (r) { return r.tramo === tramo && r.avance === av; })
+          .sort(function (a, b) { return a.dia - b.dia; })
+          .map(function (r) { return { x: r.dia, y: r.pct }; });
+        return { color: cvar(SERIES_VAR[i]), label: AVANCE_LABEL[av], points: pts };
+      });
+      renderLineChart(card, seriesList, { yMax: 100 });
+    });
+
+    (function () {
+      var card = makeCard('Nuevos', '% de saldo asegurado acumulado, por avance (día 1 = día siguiente a la entrada)');
+      var seriesList = AVANCE_ORDER.map(function (av, i) {
+        var pts = DATA.nuevos_curve.filter(function (r) { return r.avance === av; })
+          .sort(function (a, b) { return a.dia - b.dia; })
+          .map(function (r) { return { x: r.dia, y: r.pct }; });
+        return { color: cvar(SERIES_VAR[i]), label: AVANCE_LABEL[av], points: pts };
+      });
+      renderLineChart(card, seriesList, { yMax: 100 });
+    })();
+
+    // ---- Matrix table ----
+    var table = document.getElementById('matrix-table');
+    table.innerHTML = '';
+    var thead = document.createElement('thead');
+    var headRow = document.createElement('tr');
+    var thSeg = document.createElement('th'); thSeg.className = 'row-label'; thSeg.textContent = 'Segmento';
+    headRow.appendChild(thSeg);
+    periodos.forEach(function (p) {
+      var th = document.createElement('th');
+      th.innerHTML = fmtMes(p) + (p === lastPeriodo ? '<br><span class="badge-inprogress">EN CURSO</span>' : '');
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+
+    function addRow(label, getRowData, opts) {
+      opts = opts || {};
+      var tr = document.createElement('tr');
+      if (opts.total) tr.className = 'total-row';
+      var tdLabel = document.createElement('td');
+      tdLabel.className = 'row-label';
+      tdLabel.textContent = label;
+      tr.appendChild(tdLabel);
+      periodos.forEach(function (p) {
+        var d = getRowData(p); // {asignado, asegurado} or null
+        var td = document.createElement('td');
+        td.className = 'cell';
+        if (!d || !d.asignado) {
+          td.innerHTML = '<span class="cell-sub">—</span>';
+        } else {
+          var pct = 100 * d.asegurado / d.asignado;
+          if (!opts.total) {
+            td.style.background = seqColor(pct);
+            td.style.color = textOnSeq(pct);
+          }
+          td.innerHTML =
+            '<div class="cell-pct">' + pct.toFixed(1) + '%</div>' +
+            '<div class="cell-sub" style="color:' + (!opts.total ? (pct >= 50 ? 'rgba(255,255,255,0.85)' : '') : '') + '">' +
+            'S/' + fmtMonto(d.asignado) + ' → ' + fmtMonto(d.asegurado) + '</div>';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+
+    addRow('Nuevo', function (p) { return nuevosByPeriodo(p); });
+    addRow('Antiguo 1-8', function (p) { return stockByPeriodoTramo(p, 'a. 1-8'); });
+    addRow('Antiguo 9-15', function (p) { return stockByPeriodoTramo(p, 'b. 9-15'); });
+    addRow('Antiguo 16-30', function (p) { return stockByPeriodoTramo(p, 'c. 16-30'); });
+    addRow('Total antiguo', function (p) {
+      var rows = ['a. 1-8', 'b. 9-15', 'c. 16-30'].map(function (t) { return stockByPeriodoTramo(p, t); }).filter(Boolean);
+      if (!rows.length) return null;
+      return { asignado: rows.reduce(function (s, r) { return s + r.asignado; }, 0), asegurado: rows.reduce(function (s, r) { return s + r.asegurado; }, 0) };
+    }, { total: true });
+    addRow('Total general', function (p) {
+      var nu = nuevosByPeriodo(p);
+      var st = ['a. 1-8', 'b. 9-15', 'c. 16-30'].map(function (t) { return stockByPeriodoTramo(p, t); }).filter(Boolean);
+      if (!nu && !st.length) return null;
+      var asignado = (nu ? nu.asignado : 0) + st.reduce(function (s, r) { return s + r.asignado; }, 0);
+      var asegurado = (nu ? nu.asegurado : 0) + st.reduce(function (s, r) { return s + r.asegurado; }, 0);
+      return { asignado: asignado, asegurado: asegurado };
+    }, { total: true });
+
+    table.appendChild(tbody);
+  }
+
+  render();
+
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mq.addEventListener) mq.addEventListener('change', render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>

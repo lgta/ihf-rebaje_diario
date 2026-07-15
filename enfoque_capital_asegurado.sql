@@ -1,7 +1,9 @@
 -- =====================================================================
 -- ENFOQUE ALFA - "CAPITAL ASEGURADO"
--- Ejecutado 2026-07-10 en Athena (db dev_datalake_master). Ver
--- enfoque_capital_asegurado.md para la explicacion completa.
+-- v2: recalibrado 2026-07-14 con la definicion corregida de antiguos/
+-- nuevos (ver mas abajo y BUGS.md bug 12). Version original ejecutada
+-- 2026-07-10. Ver enfoque_capital_asegurado.md para la explicacion
+-- completa.
 --
 -- Concepto: no mide cuantos soles se recuperan (eso lo hace la meta
 -- oficial de rebaje/recupero) -- mide cuanto del capital ASIGNADO
@@ -10,6 +12,18 @@
 -- Ejemplo del usuario: credito A saldo S/12,000 paga S/50 -> aporta
 -- S/12,000 completos al capital asegurado (no S/50). Credito B saldo
 -- S/8,000 no paga nada -> aporta S/0.
+--
+-- DEFINICION CORREGIDA DE ANTIGUOS/NUEVOS (bug 12, solo aplica a este
+-- enfoque -- fase1_stock.sql/fase2_nuevos.sql del recupero oficial NO
+-- se tocan): un credito con dayslate 0->1 exactamente el DIA 1 del mes
+-- matematicamente solo puede venir de una cuota que vencio el ULTIMO
+-- DIA DEL MES ANTERIOR (vencimiento = dia - dayslate) -- es un antiguo
+-- mal clasificado como nuevo, no un caso raro (es TODA la cohorte de
+-- entradas de dia 1, todos los meses). Fix: anclar "antiguos" a la foto
+-- del DIA 1 del mes meta (no al cierre del mes anterior), y que
+-- "nuevos" arranque a detectar entradas desde el dia 2. Asi "nuevo" =
+-- vence DENTRO del mes y se atrasa, "antiguo" = ya inicia el mes con
+-- mora, sin excepciones.
 --
 -- Mismas CTEs base y mismos filtros (status, flg_last_loan_in_chain)
 -- que fase1_stock.sql / fase2_nuevos.sql -- ver FUENTES_DATOS.md.
@@ -49,7 +63,8 @@ with loan_chain as (
   select *, row_number() over (partition by id_loan, periodo order by fechaproceso desc) as rn
   from fotos
 )
-, stock as (
+, stock_previo as (
+  -- stock "de siempre": mora 1-30 al cierre del mes anterior (sin cambios).
   select
     date_format(date_add('month', 1, date_parse(periodo, '%Y%m')), '%Y%m') as periodo_meta
   , id_loan
@@ -63,6 +78,35 @@ with loan_chain as (
          else 'd. avance 70%+' end as avance_band
   from cierre_mes
   where rn = 1 and mora between 1 and 30 and saldo > 0 and amountfinanced > 0
+)
+, primer_dia_mes as (
+  select *, row_number() over (partition by id_loan, periodo order by fechaproceso asc) as rn
+  from fotos
+)
+, dia1_entrantes as (
+  -- bug 12: creditos con mora=1 el DIA 1 del mes (mora=0 el dia anterior, cierre
+  -- del mes previo) -- su cuota vencio el ultimo dia del mes anterior, son
+  -- antiguos mal clasificados como nuevos. NO se usa el mismo truco de "anclar
+  -- TODA la poblacion al dia 1" (eso excluye por accidente a cualquier stock
+  -- que pague justo ese dia, la foto ya reflejaria el pago -> colapsa la curva
+  -- de dia 1 a ~0%, verificado). Se suma esta poblacion puntual al stock de
+  -- siempre, sin tocar el resto.
+  select
+    periodo as periodo_meta
+  , id_loan
+  , saldo as saldo_inicial
+  , 'a. 1-8' as tramo  -- mora=1 siempre cae en el tramo mas bajo
+  , case when saldo >= 0.9*amountfinanced then 'a. avance <10%'
+         when saldo >= 0.6*amountfinanced then 'b. avance 10-40%'
+         when saldo >= 0.3*amountfinanced then 'c. avance 40-70%'
+         else 'd. avance 70%+' end as avance_band
+  from primer_dia_mes
+  where rn = 1 and mora = 1 and saldo > 0 and amountfinanced > 0
+)
+, stock as (
+  select * from stock_previo
+  union all
+  select * from dia1_entrantes
 )
 , rebajes as (
   select s.periodo_meta, s.tramo, s.avance_band, s.id_loan, s.saldo_inicial, f.dia,
@@ -98,9 +142,13 @@ order by 1, 2, 3
 ;
 
 -- ---------------------------------------------------------------------
--- Q2. NUEVOS - curva de capital asegurado, avance x dias desde entrada
--- (misma definicion de "entrada" -- dayslate 0->1 -- que fase2_nuevos.sql,
--- por eso la misma tasa P(no paga)=13.38% es consistente con esta curva).
+-- Q2. NUEVOS - curva de capital asegurado, avance x dias desde entrada.
+-- Entrada = dayslate 0->1, EXCLUYENDO el dia 1 del mes (bug 12: esas
+-- entradas vienen de una cuota vencida el ultimo dia del mes anterior,
+-- ya capturadas en Q1/stock). Ya NO es la misma definicion que
+-- fase2_nuevos.sql (que si cuenta dia 1) -- la tasa P(no paga)=13.38%,
+-- calibrada sobre la definicion vieja, deja de ser consistente con esta
+-- curva; ver enfoque_capital_asegurado.md para el tratamiento.
 -- Resultado en datos_capital_asegurado/curva_asegurado_nuevos_seg.csv.
 -- ---------------------------------------------------------------------
 with loan_chain as (
@@ -144,6 +192,7 @@ with loan_chain as (
   where nro_foto > 1 and mora_ant = 0 and mora = 1
     and fechaproceso between '20250301' and '20260531'
     and amountfinanced > 0
+    and cast(substr(fechaproceso, 7, 2) as int) <> 1  -- bug 12: dia 1 = cuota vencio el mes anterior, es stock
 )
 , pagos as (
   select e.id_loan, e.avance_band, e.saldo_entrada,

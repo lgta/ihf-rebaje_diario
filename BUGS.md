@@ -141,3 +141,35 @@ Q2, Q4, Q5) ya lo tiene. **Pendiente:** el resto de queries de este proyecto
 re-corrieron porque el impacto ahí es sobre agregados de saldo/curvas (mucho menos
 sensibles a un desempate de un día que un contador de episodios discretos), pero si algún
 resultado de esos archivos se ve raro o no reproducible, este es el primer sospechoso.
+
+### 12. Antiguos/nuevos mal cortados en el límite de mes — el día 1 de cada mes se clasificaba como "nuevo" siendo "antiguo" (solo Enfoque alfa)
+**Síntoma:** ninguno visible en los agregados (el error total del backtest no se movía
+mucho), lo encontró el usuario con un ejemplo conceptual, no un número raro. **Causa:**
+`dayslate` cuenta días desde el vencimiento de la cuota — un crédito que muestra
+`dayslate=1` exactamente el DÍA 1 de un mes matemáticamente solo puede venir de una cuota
+que venció el ÚLTIMO DÍA DEL MES ANTERIOR (vencimiento = día − dayslate). La detección de
+"nuevos" vía `mora_ant=0 and mora=1` (sin excluir el día 1) contaba a TODA esa cohorte
+como "nuevo" cuando en realidad es "antiguo" (ya inicia el mes con mora, la cuota es de
+antes) — no es un caso raro, es sistemático, todos los meses. **Fix:** en
+`enfoque_capital_asegurado.sql` (Q1/Q2) y `enfoque_capital_asegurado_backtest.sql`
+(BT-ASEG-0/1/2): "nuevos" excluye entradas del día 1 del mes; "antiguos" (stock) = stock de
+siempre (mora 1-30 al cierre del mes anterior) **UNION** los entrantes del día 1. **OJO —
+intento fallido primero:** la primera versión del fix re-ancló TODA la población de stock
+al snapshot del día 1 (en vez de sumar solo los entrantes) — eso excluye por accidente a
+cualquier crédito de stock que pague justo ese día (la foto del día 1 ya refleja el pago,
+así que no aparece como "en mora" y desaparece sin ser contado en ningún lado). Sesgo de
+supervivencia: la curva de stock día 1 colapsó de 16.2% a 0.263% de activación acumulada —
+señal inequívoca de que algo estaba mal. El fix correcto es la UNIÓN (no tocar la población
+existente, solo agregar la puntual de día 1), verificado porque tramos 9-15/16-30
+(no afectados por el bug) dieron números IDÉNTICOS antes/después del fix. **Scope:** solo
+Enfoque alfa (`enfoque_capital_asegurado*.sql`) — `fase1_stock.sql`/`fase2_nuevos.sql` del
+recupero oficial NO se tocaron (no fue parte del pedido). **Impacto medido:**
+- Calibración 14 meses: stock +2.9M→+... la población de stock creció ~16% (S/34.1M→S/39.7M,
+  19,172→22,418 créditos-mes), toda concentrada en tramo 1-8 (los otros tramos no cambiaron
+  — confirma que el fix no tiene efectos secundarios). Forma de las curvas casi no cambió
+  (día 31 stock 1-8/avance<10%: 69.7%→71.8%; nuevos día 31 por avance: cambios <0.2pp).
+- Backtest de junio 2026: error total **-4.7% → -4.4%** (prácticamente igual, incluso algo
+  mejor) — stock +5.6%→+7.2%, nuevos -8.4%→-8.6%. La tasa `P(no paga a tiempo)=13.38%`
+  sigue siendo válida sin recalibrar (mide si la entrada ocurre, no en qué día del mes cae).
+- Julio en vivo: pendiente de re-correr `avance_capital_asegurado_julio_diario.sql` /
+  `_segmentado.sql` / `avance_cobranza_fase.sql` con la definición corregida.

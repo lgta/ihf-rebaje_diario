@@ -1,12 +1,22 @@
 """
 Tracking en vivo del capital asegurado de julio 2026 (enfoque alfa), anclado
-al cierre real de junio -- misma poblacion (stock/calendario) que meta_julio.py,
-comparado contra el capital asegurado REAL a la fecha de corte. Mismo patron
-que meta_julio.py, cambiando la curva de "% recuperado" por la de "% con >=1
-pago" (capital asegurado) -- ver enfoque_capital_asegurado.md.
+al cierre real de junio -- mismo calendario (jul_calendario.csv) que
+meta_julio.py, comparado contra el capital asegurado REAL a la fecha de
+corte. Mismo patron que meta_julio.py, cambiando la curva de "%
+recuperado" por la de "% con >=1 pago" (capital asegurado) -- ver
+enfoque_capital_asegurado.md.
+
+v2 (2026-07-14, bug 12): la poblacion de STOCK ya NO reutiliza
+datos_meta_julio/stock_julio_seg.csv (compartido con el recupero oficial,
+ancla solo al cierre de junio) -- usa stock_julio_aseg_seg.csv, propio de
+este enfoque (stock de junio UNION entrantes del dia 1 de julio, cuya
+cuota vencio el 30-jun). El calendario SI se reutiliza (ya esta bien
+scopeado a vencimientos DENTRO de julio, no tenia el bug). Ver BUGS.md
+bug 12.
 
 Insumos:
-  datos_meta_julio/stock_julio_seg.csv, jul_calendario.csv (poblacion, reutilizada)
+  datos_avance_capital_asegurado_julio/stock_julio_aseg_seg.csv (poblacion stock, solo este enfoque)
+  datos_meta_julio/jul_calendario.csv (calendario, reutilizado)
   datos_capital_asegurado/curva_asegurado_stock_seg.csv, curva_asegurado_nuevos_seg.csv
   datos_avance_capital_asegurado_julio/jul_aseg_real_stock.csv, jul_aseg_real_nuevos.csv
     (capital REAL activado por dia, poblacion stock/nuevos, generado igual que el
@@ -20,7 +30,7 @@ DIR_ASEG = "datos_capital_asegurado"
 DIR_REAL = "datos_avance_capital_asegurado_julio"
 
 stock_julio = {}
-with open(f"{DIR_JULIO}/stock_julio_seg.csv") as f:
+with open(f"{DIR_REAL}/stock_julio_aseg_seg.csv") as f:
     for row in csv.DictReader(f):
         stock_julio[(row["tramo"], row["avance_band"])] = float(row["saldo_total"])
 

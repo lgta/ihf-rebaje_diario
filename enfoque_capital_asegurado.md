@@ -45,10 +45,14 @@ CapitalAsegurado_nuevos(d) = Σ(D≤d) Σ(avance) saldo_riesgo(D,avance) × P(no
 ```
 
 **La tasa `P(no paga a tiempo)=13.38%` es la misma que usa el modelo oficial**, y sigue
-siendo válida acá porque `curva_asegurado_nuevos` se calibró sobre la MISMA definición de
-"entrada" (`dayslate` 0→1) que `curva_nuevos` — ver `feedback-tasa-curva-consistente` en
-memoria y `DECISIONES.md`. Si en algún momento se cambia cómo se define "entrada" para
-esta curva, hay que recalibrar la tasa junto con ella, no una sin la otra.
+siendo válida acá porque mide si la entrada a mora ocurre (`dayslate` 0→1) a nivel crédito,
+no en qué día del mes cae — el bucketing stock/nuevos (bug 12, ver `BUGS.md`) no cambia esa
+tasa. `curva_asegurado_nuevos` YA NO usa exactamente la misma población que `curva_nuevos`
+del recupero oficial: excluye las entradas del día 1 del mes (que pasan a `curva_asegurado_
+stock`), mientras que `curva_nuevos` (recupero) todavía no tiene ese ajuste — ver
+`feedback-tasa-curva-consistente` en memoria y `DECISIONES.md`. Si en algún momento se
+cambia de nuevo cómo se define "entrada" para esta curva, hay que recalibrar la tasa junto
+con ella, no una sin la otra.
 
 Queries: `enfoque_capital_asegurado.sql` (Q1 stock, Q2 nuevos). Script de proyección:
 `meta_julio_capital_asegurado.py`. Datos cacheados: `datos_capital_asegurado/`.
@@ -130,19 +134,31 @@ calendario real de junio sin filtro `installmentstate`, capital asegurado real v
 nuevo son los CSV de activación real (`bt_real_aseg_stock.csv`, `bt_real_aseg_nuevos.csv`).
 Script: `backtest_capital_asegurado_junio.py`.
 
+**Recalibrado 2026-07-14 (bug 12, ver `BUGS.md`):** la definición de antiguos/nuevos se
+corrigió — un crédito que entra en mora (`dayslate` 0→1) el día 1 del mes es antiguo (su
+cuota venció el último día del mes anterior), no nuevo. Ya no reutiliza
+`bt_stock_junio.csv` (compartido con el backtest oficial de recupero, que ancla solo al
+cierre de mayo) — usa `bt_stock_junio_aseg.csv`, propio de este enfoque
+(`enfoque_capital_asegurado_backtest.sql` BT-ASEG-0).
+
 | | Proyectado | Real | Error |
 |---|---:|---:|---:|
-| Total | S/8,771,300 | S/9,202,188 | **-4.7%** |
-| Stock | S/2,573,309 | S/2,436,810 | +5.6% |
-| Nuevos | S/6,197,991 | S/6,765,378 | -8.4% |
+| Total | S/8,818,202 | S/9,225,523 | **-4.4%** |
+| Stock | S/2,611,863 | S/2,436,287 | +7.2% |
+| Nuevos | S/6,206,338 | S/6,789,236 | -8.6% |
 
-**El error total (-4.7%) es del mismo orden de magnitud que el backtest del modelo oficial
+(Antes de la corrección: -4.7% total, stock +5.6%, nuevos -8.4% — la corrección deja el
+error total prácticamente igual, incluso una pizca mejor. La tasa `P(no paga a
+tiempo)=13.38%` no se recalibró: mide si la entrada a mora ocurre, no en qué día del mes
+cae, así que sigue siendo válida sin cambios.)
+
+**El error total (-4.4%) es del mismo orden de magnitud que el backtest del modelo oficial
 de recupero (+5.4%)** — buena señal de que la curva de capital asegurado no está sesgada
 de forma grosera, aunque va en la dirección opuesta (oficial sobreestima, este subestima) y
 el desglose stock/nuevos también se invierte (acá el stock sobreestima y nuevos
 subestima, al revés que en recupero). No se tocó la tasa `P(no paga a tiempo)=13.38%` ni la
-curva por separado — el error no es lo bastante grande como para justificarlo, y el
-principio de modelado de `CLAUDE.md` aplica igual acá.
+curva por separado más allá del fix de bucketing — el error no es lo bastante grande como
+para justificar tocar la tasa, y el principio de modelado de `CLAUDE.md` aplica igual acá.
 
 ## Tracking en vivo — julio 2026 (meta principal)
 
@@ -154,16 +170,24 @@ en `datos_avance_capital_asegurado_julio/`, adaptando fechas a julio).
 
 | | Proyectado (mes completo) | Real al 13-jul | Proyectado al mismo día (13) |
 |---|---:|---:|---:|
-| Total | S/8,919,611 | S/4,800,372 | S/3,634,008 |
-| Stock | S/1,725,470 | S/1,303,515 | — |
-| Nuevos | S/7,194,140 | S/3,496,857 | — |
+| Total | S/8,919,611 | S/4,969,508 | S/3,634,008 |
+| Stock | S/1,725,470 | S/1,311,107 | — |
+| Nuevos | S/7,194,140 | S/3,658,402 | — |
 
-**Avance real: 53.8% de la meta del mes, +32.1% por encima de lo proyectado para el mismo
+**Avance real: 55.7% de la meta del mes, +36.8% por encima de lo proyectado para el mismo
 día.** Lectura de un solo mes a mitad de camino (día 13 de 31) — el backtest de junio (mes
-completo, cerrado) dio -4.7%, así que este +32.1% de adelanto a mitad de mes no debe
+completo, cerrado) dio -4.7%, así que este +36.8% de adelanto a mitad de mes no debe
 tratarse como una revisión del backtest: puede diluirse o revertirse antes del cierre.
 Seguir el avance semana a semana; no ajustar tasa ni curva sin repetir el backtest
 (principio de modelado, `CLAUDE.md`).
+
+**Nota de refresco intradía (13-jul):** el real del día 13 subió de S/4,800,372 a
+S/4,969,508 al re-consultar horas después (stock 1,303,515→1,311,107, nuevos
+3,496,857→3,658,402) — `dts_mambu_loans_hist` sigue recibiendo fotos del día en curso, así
+que "hoy" es el único día que puede moverse en una corrida posterior; los días ya cerrados
+no cambiaron (verificado). Ver el desglose día a día completo (asignación de nuevos +
+activación de nuevos/antiguos, desde el 1-jul) en `avance_capital_asegurado_julio_diario.sql`
+y `datos_avance_capital_asegurado_julio/tabla_diaria_alfa.csv`.
 
 ## Pendientes de este enfoque
 

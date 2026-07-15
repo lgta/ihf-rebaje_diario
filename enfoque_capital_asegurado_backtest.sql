@@ -1,23 +1,96 @@
 -- =====================================================================
 -- BACKTEST DEL ENFOQUE ALFA ("CAPITAL ASEGURADO") SOBRE JUNIO 2026
--- Ejecutado 2026-07-13. Resultado: -4.7% de error total (stock +5.6%,
--- nuevos -8.4%) -- ver enfoque_capital_asegurado.md, seccion "Backtest".
+-- v2: recalibrado 2026-07-14 con la definicion corregida antiguos/nuevos
+-- (bug 12, ver enfoque_capital_asegurado.sql). Version original ejecutada
+-- 2026-07-13, resultado -4.7% de error total (stock +5.6%, nuevos -8.4%).
 --
--- Reutiliza poblacion/calendario YA CACHEADOS de datos_backtest_junio/
--- (bt_stock_junio.csv, bt_calendario_junio.csv -- vienen de
--- fase3_backtest.sql 3G-1/3G-2, no dependen de la metrica) y las curvas
--- YA CALIBRADAS de datos_capital_asegurado/ (enfoque_capital_asegurado.sql
--- Q1/Q2). Lo unico nuevo son las dos queries de abajo: capital REAL
--- activado (primer pago) por dia de junio, poblacion stock y nuevos --
--- mismo criterio pago_flag/primer_pago que enfoque_capital_asegurado.sql,
--- pero con fechas de calendario reales en vez de dia relativo de curva.
+-- YA NO reutiliza bt_stock_junio.csv (fase3_backtest.sql 3G-1) para la
+-- poblacion de stock -- ese archivo ancla al cierre de MAYO (31-may), lo
+-- que deja afuera (ni stock ni calendario-de-junio) a los creditos cuya
+-- cuota vencio el 31-may y no pagaron: no son mora al cierre de mayo
+-- (dayslate=0, vence "hoy") y su vencimiento no cae dentro de junio para
+-- el calendario prospectivo -- quedaban en un hueco. BT-ASEG-0 (nueva)
+-- reconstruye el stock anclado al DIA 1 de junio, que los recupera.
+-- bt_calendario_junio.csv SI se sigue reutilizando -- ya esta bien
+-- scopeado a vencimientos DENTRO de junio, no tenia el bug.
+--
+-- Curvas: usar curva_asegurado_stock_seg.csv / curva_asegurado_nuevos_seg.csv
+-- YA RECALIBRADAS con la misma definicion (enfoque_capital_asegurado.sql
+-- Q1/Q2), no las viejas -- si no, se vuelve a mezclar poblaciones (bug 10).
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
+-- BT-ASEG-0. STOCK DE JUNIO (poblacion) = stock de siempre (cierre de
+-- mayo) UNION los entrantes del dia 1 de junio (mora=0 el 31-may,
+-- mora=1 el 1-jun) -- por tramo x avance. NO se re-ancla TODA la
+-- poblacion al dia 1 (eso excluye por accidente a cualquier stock que
+-- pague justo ese dia, sesgo de supervivencia verificado -- ver
+-- enfoque_capital_asegurado.sql). Reemplaza bt_stock_junio.csv para
+-- este enfoque. Resultado en datos_backtest_junio/bt_stock_junio_aseg_v2.csv.
+-- ---------------------------------------------------------------------
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, fotos as (
+  select
+    a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.fechaproceso
+  , a.balances_principalbalance as saldo
+  , coalesce(a.dayslate,0) as mora
+  , b.amountfinanced
+  from dts_mambu_loans_hist a
+  join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+  left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+  where b.status in ('ACTIVE','COMPLETED')
+    and coalesce(lc.last_in_chain,1) = 1
+    and a.fechaproceso >= '20260525' and a.fechaproceso <= '20260610'
+)
+, cierre_mayo as (
+  select *, row_number() over (partition by id_loan order by fechaproceso desc) as rn
+  from fotos where fechaproceso <= '20260531'
+)
+, dia1_junio as (
+  select *, row_number() over (partition by id_loan order by fechaproceso asc) as rn
+  from fotos where fechaproceso >= '20260601'
+)
+, stock_previo as (
+  select id_loan, saldo,
+    case when mora between 1 and 8 then 'a. 1-8'
+         when mora between 9 and 15 then 'b. 9-15'
+         else 'c. 16-30' end as tramo,
+    case when saldo >= 0.9*amountfinanced then 'a. avance <10%'
+         when saldo >= 0.6*amountfinanced then 'b. avance 10-40%'
+         when saldo >= 0.3*amountfinanced then 'c. avance 40-70%'
+         else 'd. avance 70%+' end as avance_band
+  from cierre_mayo
+  where rn = 1 and mora between 1 and 30 and saldo > 0 and amountfinanced > 0
+)
+, dia1_entrantes as (
+  select id_loan, saldo,
+    'a. 1-8' as tramo,
+    case when saldo >= 0.9*amountfinanced then 'a. avance <10%'
+         when saldo >= 0.6*amountfinanced then 'b. avance 10-40%'
+         when saldo >= 0.3*amountfinanced then 'c. avance 40-70%'
+         else 'd. avance 70%+' end as avance_band
+  from dia1_junio
+  where rn = 1 and mora = 1 and saldo > 0 and amountfinanced > 0
+)
+, stock_junio as (
+  select * from stock_previo
+  union all
+  select * from dia1_entrantes
+)
+select tramo, avance_band, count(*) as creditos, round(sum(saldo),2) as saldo_total
+from stock_junio
+group by 1,2
+order by 1,2
+;
+
+-- ---------------------------------------------------------------------
 -- BT-ASEG-1. STOCK -- capital real activado por dia, junio 2026.
--- Poblacion: mismo stock_junio (mora 1-30 al cierre de mayo) que
--- fase3_backtest.sql 3G-1/bt_stock_junio.csv. Resultado en
--- datos_backtest_junio/bt_real_aseg_stock.csv.
+-- Poblacion: la de BT-ASEG-0 (stock de mayo UNION entrantes de dia 1).
+-- Resultado en datos_backtest_junio/bt_real_aseg_stock_v2.csv.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
@@ -42,10 +115,20 @@ with loan_chain as (
   select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso desc) as rn
   from fotos where fechaproceso <= '20260531'
 )
+, dia1_junio as (
+  select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso asc) as rn
+  from fotos where fechaproceso >= '20260601'
+)
+, stock_previo as (
+  select id_loan, saldo as saldo_inicial from cierre_mayo where rn = 1 and mora between 1 and 30 and saldo > 0
+)
+, dia1_entrantes as (
+  select id_loan, saldo as saldo_inicial from dia1_junio where rn = 1 and mora = 1 and saldo > 0
+)
 , stock_junio as (
-  select id_loan, saldo as saldo_inicial
-  from cierre_mayo
-  where rn = 1 and mora between 1 and 30 and saldo > 0
+  select * from stock_previo
+  union all
+  select * from dia1_entrantes
 )
 , pagos_junio as (
   select s.id_loan, s.saldo_inicial, f.fechaproceso,
@@ -69,8 +152,9 @@ order by 1
 -- ---------------------------------------------------------------------
 -- BT-ASEG-2. NUEVOS -- capital real activado por dia, junio 2026.
 -- Poblacion: creditos que entran en mora (dayslate 0->1) DURANTE junio,
--- excluyendo el stock_junio_ids (mismo criterio que 3G-4). Resultado en
--- datos_backtest_junio/bt_real_aseg_nuevos.csv.
+-- EXCLUYENDO el dia 1 (bug 12: esos son stock, ver BT-ASEG-0) y
+-- excluyendo el stock_junio_ids. Resultado en
+-- datos_backtest_junio/bt_real_aseg_nuevos_v2.csv.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
@@ -91,20 +175,20 @@ with loan_chain as (
   left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
   where b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain,1) = 1
-    and a.fechaproceso >= '20260501' and a.fechaproceso <= '20260630'
+    and a.fechaproceso >= '20260601' and a.fechaproceso <= '20260630'
 )
-, cierre_mayo as (
-  select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso desc) as rn
-  from fotos where fechaproceso <= '20260531'
+, dia1_junio as (
+  select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso asc) as rn
+  from fotos
 )
 , stock_junio_ids as (
-  select id_loan from cierre_mayo where rn = 1 and mora between 1 and 30 and saldo > 0
+  select id_loan from dia1_junio where rn = 1 and mora between 1 and 30 and saldo > 0
 )
 , entradas_junio as (
   select f.id_loan, f.fechaproceso as fecha_entrada, f.saldo as saldo_entrada
   from fotos f
   where f.mora_ant = 0 and f.mora = 1
-    and f.fechaproceso between '20260601' and '20260630'
+    and f.fechaproceso between '20260602' and '20260630'  -- bug 12: arranca dia 2, dia 1 es stock (BT-ASEG-0)
     and f.id_loan not in (select id_loan from stock_junio_ids)
 )
 , pagos as (

@@ -5,7 +5,7 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-07-13.
+Última actualización: 2026-07-14.
 
 ## La meta vigente
 
@@ -14,26 +14,46 @@
 > calculando y trackeando (sigue siendo válido, con su propio backtest +5.4%), pero ya no
 > es el número que lidera esta sección. Ver `enfoque_capital_asegurado.md`.
 
-**Julio 2026, corte 13-jul — Capital asegurado:** meta proyectada **S/8,919,611** (stock
-S/1,725,470 + nuevos S/7,194,140). Real asegurado a la fecha: **S/4,800,372** (53.8% de
-avance del total del mes) — **+32.1% por encima de lo proyectado para el mismo día**
-(proyección al día 13: S/3,634,008). Resta: S/4,119,238 (días 14-31). Fuente:
+> **2026-07-14 — corrección de definición antiguos/nuevos (bug 12, ver `BUGS.md`):** un
+> crédito que entra en mora el DÍA 1 de un mes viene siempre de una cuota vencida el
+> ÚLTIMO DÍA DEL MES ANTERIOR — es antiguo, no nuevo. Se corrigió en curvas, backtest y el
+> tracking de julio de abajo (`avance_cobranza_fase.md`, el análisis por fase, **todavía
+> no** se re-corrió con la definición nueva — pendiente). Efecto: el backtest de junio casi
+> no se mueve (-4.7%→-4.4%), pero el **avance de julio sí cambia bastante** — el "adelanto"
+> reportado antes (+36.8%) bajaba en gran parte de que el stock proyectado estaba
+> subestimado (no incluía a los entrantes de día 1). Números corregidos abajo.
+
+**Julio 2026, corte 13-jul — Capital asegurado:** meta proyectada **S/10,306,231** (stock
+S/3,105,418 + nuevos S/7,200,813). Real asegurado a la fecha: **S/4,971,669** (48.2% de
+avance del total del mes) — **+4.1% por encima de lo proyectado para el mismo día**
+(proyección al día 13: S/4,776,792). Resta: S/5,334,562 (días 14-31). Fuente:
 `avance_capital_asegurado_julio.py` + `datos_avance_capital_asegurado_julio/`. Curvas
-calibradas y ya validadas con backtest de junio (-4.7% de error), ver
+calibradas y ya validadas con backtest de junio (-4.4% de error), ver
 `enfoque_capital_asegurado.md`.
 
-**Nota de cautela:** el +32.1% de adelanto es la lectura de un solo mes a mitad de
-camino (día 13 de 31) — el backtest de junio (mes completo, cerrado) dio -4.7%. Con datos
-tan parciales, un adelanto grande a día 13 puede diluirse o revertirse antes del cierre;
-no hay base todavía para saber si es señal real o solo el patrón normal de que julio
-arranca con más actividad de la típica. Seguir el avance semana a semana antes de sacar
-conclusiones.
+(Antes de la corrección: meta S/8,919,611, real S/4,969,508, 55.7% de avance, **+36.8%** de
+adelanto — el real casi no cambió, lo que cambió fue la meta proyectada, que creció 15.5%
+al corregir la población de stock.)
+
+**Nuevo — tabla día a día (nuevos vs. antiguos), desde el 1-jul:** ver
+`avance_capital_asegurado_julio_diario.sql` (queries D1-D4, incluye una consolidada D4 con
+acumulados calculados en Athena) y `datos_avance_capital_asegurado_julio/tabla_diaria_alfa.csv`.
+Nota: el capital asegurado de "hoy" (el día de corte) puede recalcularse y subir horas
+después — es dato intradía de `dts_mambu_loans_hist` que sigue llegando durante el día, no
+un error; los días ya cerrados no cambian.
+
+**Nota de cautela:** el +4.1% de adelanto (ya con la definición corregida) es la lectura de
+un solo mes a mitad de camino (día 13 de 31) — el backtest de junio (mes completo, cerrado)
+dio -4.4%. Con datos tan parciales, la lectura puede diluirse o revertirse antes del
+cierre; no hay base todavía para saber si es señal real o solo el patrón normal de que
+julio arranca con más actividad de la típica. Seguir el avance semana a semana antes de
+sacar conclusiones.
 
 Metodología: modelo evento × magnitud, dos motores (stock anclado al cierre del mes
-anterior, nuevos vía calendario de vencimientos × P(no paga a tiempo)=13.38% × curva de
-maduración) — igual mecanismo que el recupero oficial, solo que la curva mide "% de saldo
-con ≥1 pago" (capital asegurado) en vez de "% recuperado". Detalle completo en
-`enfoque_capital_asegurado.md`.
+anterior UNION entrantes del día 1, nuevos vía calendario de vencimientos × P(no paga a
+tiempo)=13.38% × curva de maduración, arrancando el día 2) — igual mecanismo que el
+recupero oficial, solo que la curva mide "% de saldo con ≥1 pago" (capital asegurado) en
+vez de "% recuperado". Detalle completo en `enfoque_capital_asegurado.md`.
 
 ### Recupero oficial (soles cobrados, se sigue trackeando en paralelo)
 
@@ -52,9 +72,10 @@ completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
 | [Deck (11 slides)](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) | ⚠ desactualizado | Mismo motivo |
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado | Enfoque alfa, **ahora la meta principal de julio** (ver "La meta vigente" arriba) — el artifact no refleja el backtest de junio (-4.7%) ni el tracking en vivo. Ver `enfoque_capital_asegurado.md` |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado (números pre-bug 12) | Enfoque alfa, **meta principal de julio** — explicado con 5 créditos reales, curvas por segmento, backtest de junio y avance en vivo de julio. Números vigentes en `enfoque_capital_asegurado.md`/`ESTADO.md`, el artifact todavía tiene los de antes del fix del 2026-07-14 (bug 12) |
 | [🔓 Salida de mora — hallazgos](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) | ⚠ desactualizado | Enfoque beta — tiene los números de ANTES del fix de dedup (bug 11, `BUGS.md`: 513/364 → 376/363) y no incluye el hallazgo de reincidencia (80.8% recae). Ver `enfoque_salida_mora.md` |
 | [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) | ✓ vigente | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques (acumulado, reinicio, capital asegurado, salida de mora). Ver `guia_4_enfoques.html` |
+| [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) | ✓ vigente (2026-07-15) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, ya con la definición corregida (bug 12). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
@@ -68,7 +89,7 @@ no republicar sin actualizarlos primero.
 
 | Enfoque | Archivo | Qué mide | Estado |
 |---|---|---|---|
-| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.7% (jun-2026), tracking en vivo de julio |
+| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.4% (jun-2026, definición corregida — bug 12), tracking en vivo de julio |
 | Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4% |
 | Reinicio del reloj | `enfoque_reinicio_reloj.md` | Lo mismo, pero re-anclado a "hoy" | 🕓 Deprioritizado, no oficial |
 | Beta — Salida de mora | `enfoque_salida_mora.md` | Cura real vs. reestructuración al salir de mora; reincidencia | 🔬 Exploratorio — reincidencia confirmada (80.8% recae), falta curva/proyección (opción a) |
@@ -88,6 +109,8 @@ Detalle de los dos últimos:
   ESPECIALIZADA / RECOVERY × nuevo/stock. Corte 2-jul a 12-jul. Hallazgo: Temprana va
   ligeramente atrasada (-4 a -13pp según tramo, salvo 16-30 que va +2.7pp adelantado);
   Especializada/Recovery no tienen curva calibrada (el modelo nunca cubrió mora 31+).
+  **⚠ Pendiente:** todavía usa la definición vieja de nuevo/stock (día 1 = nuevo, bug 12) —
+  no se re-corrió, los números de este análisis puntual pueden cambiar.
 
 ## Pendiente de copiar al repo desde scratchpad
 
@@ -99,7 +122,31 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Pendiente de git
 
-Nada — todo commiteado y pusheado al cierre de la sesión del 2026-07-13.
+Sin commitear: actualización del artifact de capital asegurado (`capital_asegurado.html`
+reescrito con 5 créditos reales + curvas + backtest + avance en vivo — ⚠ con números
+pre-bug 12, falta re-generarlo), `ejemplos_capital_asegurado_5_creditos.sql`,
+`datos_avance_capital_asegurado_julio/artifact_data.json`, las notas en
+`ESTADO.md`/`README.md`, y lo nuevo de la tabla día a día: `avance_capital_
+asegurado_julio_segmentado.py`/`.sql`, `avance_capital_asegurado_julio_diario.sql`.
+
+**2026-07-14 — fix bug 12 (antiguos/nuevos, ver arriba y `BUGS.md`):** modificados
+`enfoque_capital_asegurado.sql`, `enfoque_capital_asegurado_backtest.sql`,
+`avance_capital_asegurado_julio.py`, `avance_capital_asegurado_julio_diario.sql`,
+`avance_capital_asegurado_julio_segmentado.sql`, `backtest_capital_asegurado_junio.py`,
+`GLOSARIO.md`, `enfoque_capital_asegurado.md`, `BUGS.md` (bug 12 nuevo); CSV
+recalibrados/regenerados: `datos_capital_asegurado/curva_asegurado_stock_seg.csv`,
+`curva_asegurado_nuevos_seg.csv`, `datos_backtest_junio/bt_stock_junio_aseg.csv` (nuevo),
+`bt_real_aseg_stock.csv`, `bt_real_aseg_nuevos.csv`, y en
+`datos_avance_capital_asegurado_julio/`: `tabla_diaria_alfa.csv`, `jul_aseg_real_stock.csv`,
+`jul_aseg_real_nuevos.csv`, `jul_aseg_real_stock_seg.csv`, `jul_aseg_real_nuevos_seg.csv`,
+`stock_julio_aseg_seg.csv` (nuevo). **Pendiente:** `avance_cobranza_fase.sql`/`.py` todavía
+NO se re-corrieron con la definición corregida (ver nota arriba); el artifact
+`capital_asegurado.html` tampoco se re-generó.
+
+**2026-07-15 — artifact nuevo (curvas + matriz mensual):** `curvas_matriz_alfa.html`
+(fuente del artifact publicado, ver tabla de arriba) y `matriz_mensual_alfa.sql` (las dos
+queries que arman la matriz mes a mes, ya con la definición corregida). Pendiente de que
+el usuario pida commitear.
 
 ## Índice de los demás documentos
 

@@ -4,11 +4,16 @@ Definiciones cortas. Si un término tiene matices, acá va la versión de una l�
 detalle completo está en `guia_tecnica_recupero.md` o `DECISIONES.md`.
 
 **Antiguos / stock** — créditos con mora 1-30 días al cierre del mes anterior. Se les mide
-capital una sola vez (ese cierre) y se les da seguimiento con la curva de stock.
+capital una sola vez (ese cierre) y se les da seguimiento con la curva de stock. **Excepción
+(solo Enfoque alfa, `BUGS.md` bug 12):** también incluye a los que muestran `dayslate=1`
+justo el día 1 del mes — su cuota venció el último día del mes anterior, son antiguos
+aunque `dayslate` recién lo refleje al día siguiente. El recupero oficial (`fase1_stock.sql`)
+no tiene este ajuste todavía.
 
 **Nuevos / flujo** — créditos que NO estaban en mora al cierre del mes anterior pero
 tienen una cuota que vence durante el mes. Cada día de vencimiento genera su propia
-cohorte.
+cohorte. **En Enfoque alfa**, el día 1 del mes queda excluido de "nuevos" por la excepción
+de arriba.
 
 **Tramo** — banda de mora del stock al momento de asignación: 1-8 / 9-15 / 16-30 días.
 Fijo todo el mes aunque el crédito cruce 30 días después (ver `DECISIONES.md`). Predice

@@ -23,9 +23,10 @@ de datos, decisiones).
 | [Guía técnica](https://claude.ai/code/artifact/9df13c20-7758-4174-8346-ed6563d25c5d) — `guia_tecnica_recupero.md` | Técnico | Mismo contenido + SQL copiable para Athena |
 | [Detalle con curvas interactivas](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) — `meta_recupero_detalle.html` | Equipo | El más completo: composición, calendario, curvas por avance, cohortes, trayectoria — todo interactivo |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) — `julio_25pct_no_recomendado.html` | Referencia | Registro de por qué la tasa oficial es 13.38%, no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) — `capital_asegurado.html` | ⚠ Desactualizado | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. Ya validado con backtest (-4.7%) pero el artifact no lo refleja. Ver `enfoque_capital_asegurado.md` |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) — `capital_asegurado.html` | Meta principal, ⚠ desactualizado (números pre-bug 12) | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. 5 créditos reales, curvas por segmento, backtest de junio (-4.4%) y avance en vivo de julio. Ver `enfoque_capital_asegurado.md` |
 | [🔓 Salida de mora](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) — `salida_mora.html` | ⚠ Desactualizado | Enfoque beta: cura real vs. reestructuración al salir de mora. El artifact tiene números de antes de un fix de datos (ver `BUGS.md` bug 11) y no incluye el hallazgo de reincidencia. Ver `enfoque_salida_mora.md` |
 | [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) — `guia_4_enfoques.html` | Técnico | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques |
+| [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) — `curvas_matriz_alfa.html` | Equipo | Enfoque alfa: curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes de asignado/asegurado/%, ya con la definición corregida (bug 12). Ver `matriz_mensual_alfa.sql` |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) — `meta_julio_en_vivo.html` | Operativo, ⚠ desactualizado | Caso de uso real: cálculo de la meta del mes en curso |
 | [Deck completo](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) — `deck_meta_recupero.html` | Presentación, ⚠ desactualizado | De la asignación (antiguos/nuevos) a la meta, en 11 slides |
 
@@ -123,17 +124,20 @@ enfoque_salida_mora.md       Doc dedicado del enfoque beta: cura real vs. reestr
 
 Ver [`ESTADO.md`](ESTADO.md) para la cifra vigente (se actualiza ahí, no acá) y
 [`SEGUIMIENTO.md`](SEGUIMIENTO.md) para el histórico mes a mes de proyectado vs. real.
-Resumen al 2026-07-13:
+Resumen al 2026-07-14:
 
 - **Desde 2026-07-13, la meta principal reportada es capital asegurado** (Enfoque alfa,
   `enfoque_capital_asegurado.md`), a pedido explícito del usuario — no el recupero en
   soles. El recupero oficial se sigue calculando y trackeando en paralelo.
-- **Meta de julio 2026 — capital asegurado:** S/8,919,611 proyectado (stock S/1,725,470 +
-  nuevos S/7,194,140). Al corte del día 13: real S/4,800,372 (53.8% de avance del mes,
-  +32.1% por encima de lo proyectado para el mismo día). Lectura de un solo mes a mitad de
+- **2026-07-14 — corrección de definición antiguos/nuevos** (bug 12, ver `BUGS.md`): un
+  crédito que entra en mora el día 1 de un mes viene de una cuota vencida el último día del
+  mes anterior — es antiguo, no nuevo. Los números de abajo ya reflejan el fix.
+- **Meta de julio 2026 — capital asegurado:** S/10,306,231 proyectado (stock S/3,105,418 +
+  nuevos S/7,200,813). Al corte del día 13: real S/4,971,669 (48.2% de avance del mes,
+  +4.1% por encima de lo proyectado para el mismo día). Lectura de un solo mes a mitad de
   camino — no sacar conclusiones todavía, ver `ESTADO.md`.
-- **Backtest de capital asegurado sobre junio 2026:** -4.7% de error al cierre (stock
-  +5.6%, nuevos -8.4%) — mismo orden de magnitud que el backtest del recupero oficial.
+- **Backtest de capital asegurado sobre junio 2026:** -4.4% de error al cierre (stock
+  +7.2%, nuevos -8.6%) — mismo orden de magnitud que el backtest del recupero oficial.
 - **Recupero oficial — backtest sobre junio 2026 (mes real y cerrado):** +5.4% de error al
   cierre (stock +16.2%, nuevos +0.7% — casi exacto). Dos alternativas de tasa de entrada a
   mora (25% plano, motor "cuota-consistente" 8.62%) se probaron y fallaron el backtest, en

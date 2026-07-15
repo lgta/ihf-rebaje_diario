@@ -4,21 +4,30 @@ cerrado) -- mismo mes que el backtest oficial de recupero (backtest_junio.py),
 para poder comparar manzanas con manzanas. Ver enfoque_capital_asegurado.md,
 seccion "Pendientes", punto 1.
 
-Reutiliza insumos ya cacheados que NO dependen de la metrica (misma
-poblacion stock/nuevos y calendario que el backtest oficial):
-  datos_backtest_junio/bt_stock_junio.csv      : stock al cierre de mayo (fase3_backtest.sql 3G-1)
-  datos_backtest_junio/bt_calendario_junio.csv : calendario real de junio (fase3_backtest.sql 3G-2)
+v2 (2026-07-14, bug 12): definicion de antiguos/nuevos corregida -- un
+credito que entra en mora (dayslate 0->1) el DIA 1 de un mes viene siempre
+de una cuota vencida el ULTIMO DIA DEL MES ANTERIOR, es antiguo, no nuevo.
+YA NO reutiliza bt_stock_junio.csv (fase3_backtest.sql 3G-1, compartido con
+el backtest oficial de recupero) para la poblacion de stock -- ese archivo
+ancla al cierre de mayo y no incluye a esos entrantes de dia 1. Usa en su
+lugar bt_stock_junio_aseg.csv (stock de mayo UNION entrantes de dia 1, ver
+enfoque_capital_asegurado_backtest.sql BT-ASEG-0). Resultado: -4.4% de error
+total (antes -4.7%), ver BUGS.md bug 12.
+
+Insumos:
+  datos_backtest_junio/bt_stock_junio_aseg.csv : stock (BT-ASEG-0, solo de este enfoque)
+  datos_backtest_junio/bt_calendario_junio.csv : calendario real de junio (fase3_backtest.sql 3G-2,
+                                                  compartido con recupero -- ya scopeado a vencimientos
+                                                  DENTRO de junio, no tenia el bug)
   datos_capital_asegurado/curva_asegurado_stock_seg.csv  : curva ya calibrada (enfoque_capital_asegurado.sql Q1)
   datos_capital_asegurado/curva_asegurado_nuevos_seg.csv : curva ya calibrada (enfoque_capital_asegurado.sql Q2)
-
-Insumos NUEVOS de este backtest (capital REAL activado por primer pago,
-poblacion stock y poblacion nuevos, dia a dia de junio):
-  datos_backtest_junio/bt_real_aseg_stock.csv
-  datos_backtest_junio/bt_real_aseg_nuevos.csv
+  datos_backtest_junio/bt_real_aseg_stock.csv  : capital real activado por dia, stock (BT-ASEG-1)
+  datos_backtest_junio/bt_real_aseg_nuevos.csv : capital real activado por dia, nuevos (BT-ASEG-2)
 
 Misma tasa P(no paga a tiempo)=13.38% que el modelo oficial -- sigue siendo
-consistente porque curva_asegurado_nuevos se calibro sobre la MISMA
-definicion de entrada (dayslate 0->1) que curva_nuevos. Ver
+consistente porque mide si la entrada ocurre (a nivel credito), no en que
+dia del mes cae -- el bug 12 solo cambia el bucketing (stock vs nuevos) de
+entradas ya ocurridas, no cuenta ni deja de contar ninguna. Ver
 feedback-tasa-curva-consistente en memoria y DECISIONES.md.
 """
 import csv
@@ -28,7 +37,7 @@ DIR_BT = "datos_backtest_junio"
 DIR_ASEG = "datos_capital_asegurado"
 
 stock_junio = {}
-with open(f"{DIR_BT}/bt_stock_junio.csv") as f:
+with open(f"{DIR_BT}/bt_stock_junio_aseg.csv") as f:
     for row in csv.DictReader(f):
         stock_junio[(row["tramo"], row["avance_band"])] = float(row["saldo_total"])
 
