@@ -5,7 +5,14 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-07-14.
+Última actualización: 2026-07-15.
+
+> **2026-07-15 — recorte de alcance a 2 enfoques:** a pedido explícito del usuario, el
+> proyecto ahora solo mantiene el enfoque acumulado/oficial (rebaje, capital reducido) y
+> el enfoque alfa (capital asegurado). "Reinicio del reloj" y "salida de mora" (beta) se
+> descontinuaron y sus archivos se eliminaron del repo — ver `DECISIONES.md`. **Para
+> completar lo pendiente de los 2 enfoques vigentes, ver [`PENDIENTES.md`](PENDIENTES.md)
+> — es el documento de handoff, pensado para retomar sin releer todo este archivo.**
 
 ## La meta vigente
 
@@ -72,14 +79,16 @@ completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
 | [Deck (11 slides)](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) | ⚠ desactualizado | Mismo motivo |
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado (números pre-bug 12) | Enfoque alfa, **meta principal de julio** — explicado con 5 créditos reales, curvas por segmento, backtest de junio y avance en vivo de julio. Números vigentes en `enfoque_capital_asegurado.md`/`ESTADO.md`, el artifact todavía tiene los de antes del fix del 2026-07-14 (bug 12) |
-| [🔓 Salida de mora — hallazgos](https://claude.ai/code/artifact/f1b0c577-4044-40a3-bebd-e01f5141ed98) | ⚠ desactualizado | Enfoque beta — tiene los números de ANTES del fix de dedup (bug 11, `BUGS.md`: 513/364 → 376/363) y no incluye el hallazgo de reincidencia (80.8% recae). Ver `enfoque_salida_mora.md` |
-| [🧭 Los 4 enfoques explicados](https://claude.ai/code/artifact/a75f705d-9522-4843-af77-d79ce90b047f) | ✓ vigente | Concepto + SQL explicado + un crédito real de Athena por cada uno de los 4 enfoques (acumulado, reinicio, capital asegurado, salida de mora). Ver `guia_4_enfoques.html` |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado (números pre-bug 12) | Enfoque alfa, **meta principal de julio** — explicado con 5 créditos reales, curvas por segmento, backtest de junio y avance en vivo de julio. Números vigentes en `enfoque_capital_asegurado.md`/`ESTADO.md`, el artifact todavía tiene los de antes del fix del 2026-07-14 (bug 12). **Pendiente en `PENDIENTES.md` tarea 2.** |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) | ✓ vigente (2026-07-15) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, ya con la definición corregida (bug 12). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
 no republicar sin actualizarlos primero.
+
+*(Los artifacts de "Salida de mora" y "Los 4 enfoques explicados" ya no están en esta
+tabla — sus enfoques se descontinuaron 2026-07-15, ver `DECISIONES.md`. Los artifacts
+siguen existiendo en claude.ai, solo dejaron de mantenerse.)*
 
 ## Índice de enfoques
 
@@ -87,19 +96,21 @@ no republicar sin actualizarlos primero.
 > sesión futura pueda armar un markdown integral sin tener que releer todo el historial.
 > Cada uno tiene su propio archivo `enfoque_*.md` con el detalle completo.
 
+> **Solo estos 2 enfoques se mantienen desde 2026-07-15** (ver `DECISIONES.md`). "Reinicio
+> del reloj" y "Beta — Salida de mora" se descontinuaron y sus archivos se eliminaron del
+> repo (recuperables vía git history).
+
 | Enfoque | Archivo | Qué mide | Estado |
 |---|---|---|---|
-| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.4% (jun-2026, definición corregida — bug 12), tracking en vivo de julio |
-| Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4% |
-| Reinicio del reloj | `enfoque_reinicio_reloj.md` | Lo mismo, pero re-anclado a "hoy" | 🕓 Deprioritizado, no oficial |
-| Beta — Salida de mora | `enfoque_salida_mora.md` | Cura real vs. reestructuración al salir de mora; reincidencia | 🔬 Exploratorio — reincidencia confirmada (80.8% recae), falta curva/proyección (opción a) |
-| Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
+| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.4% (jun-2026, definición corregida — bug 12), tracking en vivo de julio. Pendientes en `PENDIENTES.md` |
+| Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4%. Pendientes en `PENDIENTES.md` |
+| Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` (respaldo de una decisión del enfoque acumulado, no es un enfoque propio) | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
 
-Detalle de los dos últimos:
+Detalle del último:
 - ⚠️ **Descartado por backtest:** tasa plana 25-28% (sobreestima +66% a +81%); motor
   "cuota-consistente" con tasa 8.62% + curva propia (subestima -35.7%). Ver `BUGS.md` y
-  `motor_cuota_vencimiento.sql`. No son un "enfoque" completo (solo tocan la constante
-  `P(no paga a tiempo)` del enfoque acumulado), por eso no tienen `enfoque_*.md` propio.
+  `motor_cuota_vencimiento.sql`. No es un "enfoque" completo (solo toca la constante
+  `P(no paga a tiempo)` del enfoque acumulado), por eso no tiene `enfoque_*.md` propio.
 
 ## Análisis puntuales (snapshots, no enfoques con curva propia)
 
@@ -122,31 +133,12 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Pendiente de git
 
-Sin commitear: actualización del artifact de capital asegurado (`capital_asegurado.html`
-reescrito con 5 créditos reales + curvas + backtest + avance en vivo — ⚠ con números
-pre-bug 12, falta re-generarlo), `ejemplos_capital_asegurado_5_creditos.sql`,
-`datos_avance_capital_asegurado_julio/artifact_data.json`, las notas en
-`ESTADO.md`/`README.md`, y lo nuevo de la tabla día a día: `avance_capital_
-asegurado_julio_segmentado.py`/`.sql`, `avance_capital_asegurado_julio_diario.sql`.
-
-**2026-07-14 — fix bug 12 (antiguos/nuevos, ver arriba y `BUGS.md`):** modificados
-`enfoque_capital_asegurado.sql`, `enfoque_capital_asegurado_backtest.sql`,
-`avance_capital_asegurado_julio.py`, `avance_capital_asegurado_julio_diario.sql`,
-`avance_capital_asegurado_julio_segmentado.sql`, `backtest_capital_asegurado_junio.py`,
-`GLOSARIO.md`, `enfoque_capital_asegurado.md`, `BUGS.md` (bug 12 nuevo); CSV
-recalibrados/regenerados: `datos_capital_asegurado/curva_asegurado_stock_seg.csv`,
-`curva_asegurado_nuevos_seg.csv`, `datos_backtest_junio/bt_stock_junio_aseg.csv` (nuevo),
-`bt_real_aseg_stock.csv`, `bt_real_aseg_nuevos.csv`, y en
-`datos_avance_capital_asegurado_julio/`: `tabla_diaria_alfa.csv`, `jul_aseg_real_stock.csv`,
-`jul_aseg_real_nuevos.csv`, `jul_aseg_real_stock_seg.csv`, `jul_aseg_real_nuevos_seg.csv`,
-`stock_julio_aseg_seg.csv` (nuevo). **Pendiente:** `avance_cobranza_fase.sql`/`.py` todavía
-NO se re-corrieron con la definición corregida (ver nota arriba); el artifact
-`capital_asegurado.html` tampoco se re-generó.
-
-**2026-07-15 — artifact nuevo (curvas + matriz mensual):** `curvas_matriz_alfa.html`
-(fuente del artifact publicado, ver tabla de arriba) y `matriz_mensual_alfa.sql` (las dos
-queries que arman la matriz mes a mes, ya con la definición corregida). Pendiente de que
-el usuario pida commitear.
+**2026-07-15 — recorte a 2 enfoques:** eliminados `enfoque_reinicio_reloj.md`,
+`meta_desde_hoy.py`/`.sql`, `datos_meta_desde_hoy/`, `enfoque_salida_mora.md`/`.sql`,
+`salida_mora.html`, `datos_salida_mora/`, `guia_4_enfoques.html`,
+`ejemplos_4_enfoques.sql`; actualizados `DECISIONES.md`, `GLOSARIO.md`, `LINAJE.md`,
+`BUGS.md`, `IDEAS.md`, `ESTADO.md`, `README.md`, `SEGUIMIENTO.md`; nuevo `PENDIENTES.md`
+(documento de handoff). Pendiente de que el usuario pida commitear.
 
 ## Índice de los demás documentos
 
@@ -158,8 +150,10 @@ el usuario pida commitear.
   asignaciones), su grano y sus quirks.
 - `LINAJE.md` — de qué sistema viene cada columna (Mambu, OkaAPI, o calculada internamente).
 - `SEGUIMIENTO.md` — tabla mes a mes de proyectado vs. real (empieza con junio 2026).
-- `plan_analisis.md` — bitácora cronológica completa (el historial crudo).
+- `plan_analisis.md` — bitácora cronológica completa (el historial crudo, incluye el
+  historial de los enfoques descontinuados).
 - `guia_tecnica_recupero.md` — guía técnica externa con SQL replicable.
-- `enfoque_acumulado.md`, `enfoque_reinicio_reloj.md`, `enfoque_capital_asegurado.md`,
-  `enfoque_salida_mora.md` — un archivo por enfoque, ver "Índice de enfoques" arriba.
+- `enfoque_acumulado.md`, `enfoque_capital_asegurado.md` — un archivo por enfoque (los
+  únicos 2 vigentes), ver "Índice de enfoques" arriba.
 - `avance_cobranza_fase.md` — análisis puntual por fase de cobranza, ver sección arriba.
+- `PENDIENTES.md` — plan de continuación accionable para los 2 enfoques vigentes.

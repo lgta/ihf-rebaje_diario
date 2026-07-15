@@ -12,8 +12,8 @@ mora durante el mes) proyectados con el modelo evento × magnitud:
 
 El stock se ancla al cierre real del mes anterior (no al día de la consulta) — clasifica
 tramo y saldo UNA sola vez, al momento de asignación, y nunca vuelve a re-filtrar por la
-mora del día corriente. Por eso no sufre el bug de "aged-out survivors" que sí afecta al
-`enfoque_reinicio_reloj.md`.
+mora del día corriente. Por eso no sufre el bug de "aged-out survivors" que sí afectaba al
+enfoque "reinicio del reloj" (descontinuado 2026-07-15, ver `DECISIONES.md`).
 
 ## Por qué es el oficial
 

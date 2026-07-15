@@ -29,7 +29,7 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 | Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Notas |
 |---|---:|---:|---:|---:|---:|---|
 | Junio 2026 | S/8,771,300 | S/9,202,188 | **-4.7%** | +5.6% | -8.4% | Primer backtest, 2026-07-13. Reutiliza población/calendario de `datos_backtest_junio/` y curvas de `datos_capital_asegurado/`. Ver `enfoque_capital_asegurado.md`, `backtest_capital_asegurado_junio.py`. |
-| Julio 2026 | S/8,919,611 | *(mes en curso, corte 13-jul: S/4,800,372, +32.1% vs. proyectado al mismo día)* | — | — | — | Meta principal vigente, ver `ESTADO.md`. Cerrar esta fila cuando termine julio. `avance_capital_asegurado_julio.py` + `datos_avance_capital_asegurado_julio/`. |
+| Julio 2026 | S/10,306,231 | *(mes en curso, corte 13-jul: S/4,971,669, +4.1% vs. proyectado al mismo día)* | — | — | — | Meta principal vigente, ver `ESTADO.md`. Números ya con la definición corregida de antiguos/nuevos (bug 12, `BUGS.md`) — la meta y el avance subieron respecto a la primera lectura porque el stock estaba subestimado, no por un cambio real en el recupero. Cerrar esta fila cuando termine julio. `avance_capital_asegurado_julio.py` + `datos_avance_capital_asegurado_julio/`. |
 
 ## Qué mirar si el error crece
 

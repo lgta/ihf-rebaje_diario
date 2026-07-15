@@ -4,6 +4,11 @@ Un registro por bug: síntoma, causa raíz, fix, impacto medido. Orden cronológ
 escribir una query nueva sobre estas tablas, vale la pena escanear esta lista — varios de
 estos ya mordieron más de una vez.
 
+> **Nota (2026-07-15):** los bugs 7 y 11 documentan archivos de los enfoques "reinicio del
+> reloj" y "salida de mora", descontinuados y eliminados del repo ese día (ver
+> `DECISIONES.md`) — el registro se conserva como historial, pero `meta_desde_hoy.sql` y
+> `enfoque_salida_mora.sql` ya no existen.
+
 ---
 
 ### 1. Filtro de prueba hardcodeado en `rebaje.sql`

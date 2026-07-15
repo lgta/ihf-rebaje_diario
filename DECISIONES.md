@@ -67,3 +67,18 @@ debatir en teoría qué número es "más correcto" — es correr el backtest ya 
 cambio propuesto y ver el error real. Esto resolvió en minutos la discusión sobre 13.38% vs
 25% donde el razonamiento abstracto se hubiera estancado. Ver
 `feedback-tasa-curva-consistente` en memoria para el detalle.
+
+### Enfoque "reinicio del reloj" y Enfoque beta "salida de mora" descontinuados (2026-07-15)
+A pedido explícito del usuario, el proyecto acota su alcance a **2 enfoques**: el
+acumulado/oficial (rebaje, capital reducido) y el alfa (capital asegurado, meta principal
+desde 2026-07-13). Ambos venían ya señalados como no prioritarios (el primero
+"deprioritizado" desde el 2026-07-10, ver más arriba; el segundo "exploratorio") pero
+nunca se había formalizado su descarte. Se eliminaron del repo sus archivos
+(`enfoque_reinicio_reloj.md`, `meta_desde_hoy.py/.sql`, `datos_meta_desde_hoy/`,
+`enfoque_salida_mora.md/.sql`, `salida_mora.html`, `datos_salida_mora/`) junto con
+`guia_4_enfoques.html`/`ejemplos_4_enfoques.sql` (quedaba obsoleta: explicaba 2 enfoques
+que ya no existen). Quedan recuperables vía `git log`/`git show` de cualquier commit
+anterior a esta limpieza — no se pierde el trabajo, solo deja de mantenerse. Los
+artifacts ya publicados de ambos no se retiran de claude.ai, solo se sacan de las tablas
+de "vigente" en `README.md`/`ESTADO.md`. El plan de continuación para los 2 enfoques que
+quedan está en `PENDIENTES.md`.

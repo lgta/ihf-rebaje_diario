@@ -63,8 +63,9 @@ se usa para excluir a los créditos reemplazados. Ver `FUENTES_DATOS.md`.
 **Enfoque acumulado** — la metodología oficial: stock anclado al cierre del mes anterior +
 calendario real del mes. Ver `meta_julio.py`.
 
-**Enfoque "reinicio del reloj"** — metodología alternativa (no oficial, deprioritizada):
-trata la foto de HOY como nueva línea base. Ver `meta_desde_hoy.py` y `ESTADO.md`.
+**Enfoque "reinicio del reloj"** — metodología alternativa: trataba la foto de HOY como
+nueva línea base. **Descontinuada 2026-07-15** (ver `DECISIONES.md`) — el proyecto solo
+mantiene el enfoque acumulado y el alfa. Archivos eliminados, recuperables vía git history.
 
 **Backtest** — comparar la proyección del modelo contra el recupero REAL de un mes ya
 cerrado. La única forma confiable de validar un cambio de constante o metodología — ver
@@ -77,7 +78,9 @@ Ver `enfoque_capital_asegurado.md`.
 
 **Cura sin pago** — episodio de mora que termina (`dayslate` vuelve a 0) sin que el saldo
 capital baje. Candidato a reestructuración crediticia (facilidad de pago), no un cobro
-real. Ver `enfoque_salida_mora.md` (enfoque beta).
+real. Era el foco del enfoque beta "salida de mora", **descontinuado 2026-07-15** (ver
+`DECISIONES.md`) — el hallazgo (80.8% de reincidencia) queda documentado en `BUGS.md`
+bug 11 y `plan_analisis.md`.
 
 **`motivo_apertura`** — campo de `dts_cobranza_creditos_cuotas`
 (`_motivo_apertura__motivo_apertura`, nombre duplicado por venir de un custom field
