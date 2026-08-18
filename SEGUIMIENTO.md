@@ -16,7 +16,8 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 | Mes | Meta proyectada | Real | Error total | Error stock | Error nuevos | Notas |
 |---|---:|---:|---:|---:|---:|---|
 | Junio 2026 | S/1,806,299 | S/1,713,815 | **+5.4%** | +16.2% | +0.7% | Primer backtest. Curvas calibradas sobre 14 meses (incluyen junio, peso ~1/14 — no es estrictamente fuera de muestra, solo la tasa de entrada lo es). Ver `fase3_backtest.sql`, `backtest_junio.py`. |
-| Julio 2026 | S/1,776,174 | *(mes en curso, corte 9-jul: S/527,375)* | — | — | — | Ver `ESTADO.md`. Cerrar esta fila cuando termine julio. |
+| Julio 2026 | S/1,776,174 | S/2,088,911 | **+17.6%** | +2.0% | +22.5% | Cerrado 2026-08-18 (mes completo). El error es notablemente mayor que junio, y va en dirección opuesta al de capital asegurado del mismo mes (abajo) — "nuevos" es la fuente principal (+22.5%), no "stock" como en junio. Un solo mes adicional todavía no alcanza para saber si es varianza normal o degradación — ver tarea 9 de `PENDIENTES.md`. Ver `cierre_julio.sql` (bloques J3/J4). |
+| Agosto 2026 | S/2,108,435 | *(mes en curso, corte 18-ago: S/1,147,110, -1.5% vs. proyectado al mismo día)* | — | — | — | Stock S/711,160 + nuevos S/1,397,275. Ver `meta_agosto.py`. Cerrar esta fila cuando termine agosto. |
 
 ## Capital asegurado (enfoque alfa) — meta principal desde 2026-07-13
 
@@ -29,7 +30,8 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 | Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Notas |
 |---|---:|---:|---:|---:|---:|---|
 | Junio 2026 | S/8,771,300 | S/9,202,188 | **-4.7%** | +5.6% | -8.4% | Primer backtest, 2026-07-13. Reutiliza población/calendario de `datos_backtest_junio/` y curvas de `datos_capital_asegurado/`. Ver `enfoque_capital_asegurado.md`, `backtest_capital_asegurado_junio.py`. |
-| Julio 2026 | S/10,306,231 | *(mes en curso, corte 13-jul: S/4,971,669, +4.1% vs. proyectado al mismo día)* | — | — | — | Meta principal vigente, ver `ESTADO.md`. Números ya con la definición corregida de antiguos/nuevos (bug 12, `BUGS.md`) — la meta y el avance subieron respecto a la primera lectura porque el stock estaba subestimado, no por un cambio real en el recupero. Cerrar esta fila cuando termine julio. `avance_capital_asegurado_julio.py` + `datos_avance_capital_asegurado_julio/`. |
+| Julio 2026 | S/10,306,231 | S/10,789,362 | **+4.7%** | +1.0% | +6.3% | Cerrado 2026-08-18 (mes completo). Mismo orden de magnitud que junio, pero signo invertido (subestima en vez de sobreestimar) — consistente con que el error del modelo todavía no muestra un sesgo direccional estable en 2 meses de dato. Ver `cierre_julio.sql` (bloques J1/J2). |
+| Agosto 2026 | S/10,245,695 | *(mes en curso, corte 18-ago: S/6,795,074, +8.7% vs. proyectado al mismo día)* | — | — | — | Meta principal vigente. Stock S/2,956,828 + nuevos S/7,288,868. Ver `meta_agosto_capital_asegurado.py` + `datos_avance_capital_asegurado_agosto/`. Cerrar esta fila cuando termine agosto. |
 
 ## Qué mirar si el error crece
 

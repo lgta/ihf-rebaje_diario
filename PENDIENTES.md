@@ -79,12 +79,14 @@ a diferencia de `enfoque_salida_mora.sql` donde sí cambió 513→376 episodios)
 **Criterio de terminado:** backtest re-corrido, diferencia documentada en `BUGS.md` (aunque
 sea "no cambió", para cerrar el pendiente del punto 11 de `IDEAS.md`).
 
-### Tarea 4 — Seguir el tracking en vivo de julio y cerrar la fila de `SEGUIMIENTO.md`
-**Archivos:** `avance_capital_asegurado_julio_diario.sql` (diario), `SEGUIMIENTO.md`.
+### Tarea 4 — ~~Seguir el tracking en vivo de julio y cerrar la fila de `SEGUIMIENTO.md`~~ hecho 2026-08-18
+Julio cerró con **+4.7% de error** (stock +1.0%, nuevos +6.3%) — ver `SEGUIMIENTO.md` y
+`cierre_julio.sql`. Meta de agosto ya armada y en tracking (`meta_agosto_capital_
+asegurado.py`, `datos_avance_capital_asegurado_agosto/`) — nueva tarea abajo (Tarea 4b).
 
-Cuando julio cierre, calcular el error final (proyectado S/10,306,231 vs. real) y
-completar la fila "Capital asegurado — Julio 2026" en `SEGUIMIENTO.md` (hoy dice "mes en
-curso").
+### Tarea 4b — Cerrar la fila de agosto en `SEGUIMIENTO.md` cuando termine el mes
+Meta proyectada S/10,245,695 (stock S/2,956,828 + nuevos S/7,288,868) vs. real final.
+Fuente: `meta_agosto_capital_asegurado.py` + `datos_avance_capital_asegurado_agosto/`.
 
 ---
 
@@ -119,18 +121,27 @@ Podría precisar el punto ciego de ~1 día de `dayslate` (bug 9 en `BUGS.md`: un
 pagada 1 día tarde casi nunca hace que `dayslate` llegue a mostrar 1) cruzándolo contra la
 fecha exacta en que `dayslate` pasa a 1 para el mismo crédito.
 
-### Tarea 8 — Cerrar la fila de julio en `SEGUIMIENTO.md` (recupero oficial)
-Meta proyectada S/1,776,174 vs. real, cuando cierre el mes.
+### Tarea 8 — ~~Cerrar la fila de julio en `SEGUIMIENTO.md` (recupero oficial)~~ hecho 2026-08-18
+Julio cerró con **+17.6% de error** (stock +2.0%, nuevos +22.5%) — el más alto medido hasta
+ahora en este enfoque. Ver `SEGUIMIENTO.md` y `cierre_julio.sql`. Meta de agosto ya armada
+(`meta_agosto.py`, `datos_meta_agosto/`) — nueva tarea abajo (Tarea 8b).
+
+### Tarea 8b — Cerrar la fila de agosto en `SEGUIMIENTO.md` (recupero oficial) cuando termine el mes
+Meta proyectada S/2,108,435 (stock S/711,160 + nuevos S/1,397,275) vs. real final. Fuente:
+`meta_agosto.py` + `datos_meta_agosto/`.
 
 ---
 
 ## Compartidas entre ambos enfoques
 
 ### Tarea 9 — Extender el backtest a 3-6 meses cerrados más
-Junio 2026 es un solo punto de dato para ambos enfoques — antes de tratar ±5-16% como el
-error típico del modelo, hay que repetir el backtest en varios meses cerrados
-(replicar el patrón de `fase3_backtest.sql` / `enfoque_capital_asegurado_backtest.sql`
-ajustando fechas, y anotar cada mes en `SEGUIMIENTO.md`).
+**Avance 2026-08-18:** julio ya se cerró como segundo punto de dato para ambos enfoques
+(`cierre_julio.sql`, ver `SEGUIMIENTO.md`) — capital asegurado +4.7% (vs. -4.7% en junio,
+signo invertido), recupero oficial +17.6% (vs. +5.4% en junio, mismo signo pero mucho más
+grande, concentrado en "nuevos"). Con 2 meses todavía no alcanza para saber si ±5-22% es el
+error típico o si julio fue una anomalía — faltan 2-4 meses más (replicar `cierre_julio.sql`
+ajustando fechas para meses previos ya cerrados: mayo, abril, etc., y anotar cada uno en
+`SEGUIMIENTO.md`).
 
 ### Tarea 10 — Recalibrar las curvas excluyendo el mes de prueba
 Hoy `curva_stock`/`curva_nuevos` (ambos enfoques) se calibran sobre los 14 meses completos
@@ -171,5 +182,9 @@ limpieza del 2026-07-15 el root ya bajó en 8 archivos + 2 carpetas de datos.
   de metodología. Query fuente: `homologacion_tipo_mora_gestiones.sql`.
 - **No incluido en este cierre** (fuera del pedido explícito del usuario, que priorizó solo
   la homologación antiguo/nuevo): el 3.7% de créditos "sin mora" para este proyecto que sí
-  aparecen con mora en `gestiones_cobranza` (ver nota en bug 13), y el cierre de julio/
-  tracking de agosto en `SEGUIMIENTO.md` (sigue pendiente, tareas 4 y 8 de arriba).
+  aparecen con mora en `gestiones_cobranza` (ver nota en bug 13).
+- **Cerrado julio y armada la meta de agosto (mismo día, a pedido del usuario):** ver
+  tareas 4/4b y 8/8b arriba, `SEGUIMIENTO.md` y `cierre_julio.sql`/`meta_agosto.py`/
+  `meta_agosto_capital_asegurado.py`. Julio: capital asegurado +4.7%, recupero oficial
+  +17.6% (el error más alto medido hasta ahora, en "nuevos"). Agosto: metas proyectadas y
+  tracking en vivo al corte 18-ago, ambos enfoques.

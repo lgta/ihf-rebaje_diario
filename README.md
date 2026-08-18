@@ -93,20 +93,25 @@ enfoque_capital_asegurado.sql  Enfoque alfa: curvas de capital asegurado (valida
 enfoque_capital_asegurado_backtest.sql  Backtest de junio del enfoque alfa
 avance_cobranza_fase.sql     Análisis puntual: avance por fase de cobranza (Temprana/Especializada/Recovery)
 homologacion_tipo_mora_gestiones.sql  Homologación antiguo/nuevo contra tipo_mora del proyecto gestiones_cobranzas (bug 13)
+cierre_julio.sql             Cierre de julio 2026 (real final, ambos enfoques) vs. proyectado
 
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
 backtest_junio.py            Compara proyección vs. recupero real de junio (backtest)
 backtest_capital_asegurado_junio.py  Backtest de junio del enfoque alfa (capital asegurado)
 backtest_motor_cuota.py      Backtest del motor alternativo (descartado)
-meta_julio.py                Meta del mes en curso, anclada al cierre del mes anterior
+meta_julio.py                Meta de julio (histórico, mes ya cerrado — ver cierre_julio.sql)
 meta_julio_25pct.py          Meta de julio bajo el escenario 25% plano (no recomendado)
-meta_julio_capital_asegurado.py  Proyección de julio bajo el enfoque alfa
+meta_julio_capital_asegurado.py  Proyección de julio bajo el enfoque alfa (histórico)
+meta_agosto.py                Meta del mes en curso (recupero oficial), anclada al cierre de julio
+meta_agosto_capital_asegurado.py  Meta del mes en curso (enfoque alfa), anclada al cierre de julio
 avance_cobranza_fase.py      Agregación + cruce con curvas del análisis por fase de cobranza
 
 datos_backtest_junio/        Insumos (CSV) del backtest de junio (recupero + capital asegurado)
-datos_meta_julio/            Insumos (CSV) de la meta de julio (enfoque acumulado)
+datos_meta_julio/            Insumos (CSV) de la meta de julio (enfoque acumulado, histórico)
+datos_meta_agosto/            Insumos (CSV) de la meta de agosto (enfoque acumulado)
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
-datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado)
+datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado, curvas)
+datos_avance_capital_asegurado_agosto/  Insumos (CSV) de la meta de agosto (enfoque alfa)
 datos_avance_fase/           Insumos (CSV) del análisis de avance por fase de cobranza
 scripts/run_athena.sh        Helper para correr un .sql contra Athena y bajar el CSV
 
@@ -132,27 +137,31 @@ repo al descontinuarse esos 2 enfoques — ver `DECISIONES.md`. Recuperables ví
 
 Ver [`ESTADO.md`](ESTADO.md) para la cifra vigente (se actualiza ahí, no acá) y
 [`SEGUIMIENTO.md`](SEGUIMIENTO.md) para el histórico mes a mes de proyectado vs. real.
-Resumen al 2026-07-14:
+Resumen al 2026-08-18:
 
 - **Desde 2026-07-13, la meta principal reportada es capital asegurado** (Enfoque alfa,
   `enfoque_capital_asegurado.md`), a pedido explícito del usuario — no el recupero en
   soles. El recupero oficial se sigue calculando y trackeando en paralelo.
-- **2026-07-14 — corrección de definición antiguos/nuevos** (bug 12, ver `BUGS.md`): un
-  crédito que entra en mora el día 1 de un mes viene de una cuota vencida el último día del
-  mes anterior — es antiguo, no nuevo. Los números de abajo ya reflejan el fix.
-- **Meta de julio 2026 — capital asegurado:** S/10,306,231 proyectado (stock S/3,105,418 +
-  nuevos S/7,200,813). Al corte del día 13: real S/4,971,669 (48.2% de avance del mes,
-  +4.1% por encima de lo proyectado para el mismo día). Lectura de un solo mes a mitad de
-  camino — no sacar conclusiones todavía, ver `ESTADO.md`.
+- **Julio 2026 cerrado (mes completo) — capital asegurado:** proyectado S/10,306,231, real
+  S/10,789,362 — **+4.7% de error** (stock +1.0%, nuevos +6.3%). Ver `SEGUIMIENTO.md`,
+  `cierre_julio.sql`.
+- **Julio 2026 cerrado — recupero oficial:** proyectado S/1,776,174, real S/2,088,911 —
+  **+17.6% de error** (stock +2.0%, nuevos +22.5%) — el error más alto medido hasta ahora en
+  este enfoque, concentrado en "nuevos". Con solo 2 meses cerrados (junio +5.4%, julio
+  +17.6%) todavía no hay base para saber si es tendencia o varianza — ver `PENDIENTES.md`
+  tarea 9.
+- **Meta de agosto 2026 — capital asegurado:** S/10,245,695 proyectado (stock S/2,956,828 +
+  nuevos S/7,288,868). Al corte del día 18: real S/6,795,074 (66.3% de avance, +8.7% sobre
+  lo proyectado al mismo día). Ver `meta_agosto_capital_asegurado.py`.
+- **Meta de agosto 2026 — recupero oficial:** S/2,108,435 proyectado (stock S/711,160 +
+  nuevos S/1,397,275). Al corte del día 18: real S/1,147,110 (54.4% de avance, -1.5% vs. lo
+  proyectado al mismo día). Ver `meta_agosto.py`.
 - **Backtest de capital asegurado sobre junio 2026:** -4.4% de error al cierre (stock
   +7.2%, nuevos -8.6%) — mismo orden de magnitud que el backtest del recupero oficial.
 - **Recupero oficial — backtest sobre junio 2026 (mes real y cerrado):** +5.4% de error al
   cierre (stock +16.2%, nuevos +0.7% — casi exacto). Dos alternativas de tasa de entrada a
   mora (25% plano, motor "cuota-consistente" 8.62%) se probaron y fallaron el backtest, en
   direcciones opuestas (ver `BUGS.md` bug 10).
-- **Meta de julio 2026 — recupero oficial:** S/1,776,174 (stock S/426,651 + nuevos
-  S/1,349,523). Al corte del día 9: recuperado real S/527,375 (29.7% de avance); resta
-  S/1,248,799.
 - **Recupero mensual del stock por tramo:** 1–8 días: 18.1% · 9–15: 12.7% · 16–30: 7.8%
   del saldo capital.
 - **Severidad determinada por avance de amortización, no por tramo de mora** — de 14.9%
@@ -160,6 +169,10 @@ Resumen al 2026-07-14:
 - **2026-07-15 — recorte de alcance:** el enfoque "reinicio del reloj" y el enfoque beta
   "salida de mora" se descontinuaron formalmente y sus archivos se eliminaron del repo —
   el proyecto ahora mantiene solo el enfoque acumulado y el alfa. Ver `DECISIONES.md`.
+- **2026-08-18 — homologación con `gestiones_cobranzas`:** `tipo_mora` valida el fix de bug
+  12 (98.5% de acuerdo en mora 1-30) y se repuntó el desarrollo de `dts_asignaciones_
+  cobranza` (congelada desde 2026-07-10) a `dts_asignaciones_gestiones_cobranza`. Ver
+  `BUGS.md` bug 13.
 
 ## Pendientes
 

@@ -7,12 +7,14 @@
 
 Última actualización: 2026-08-18.
 
-> **2026-08-18 — homologación con `gestiones_cobranzas`:** ver bug 13 en `BUGS.md` y la
-> entrada nueva en "Análisis puntuales" abajo. `dts_asignaciones_cobranza` quedó congelada
-> desde 2026-07-10 — repuntado a `dts_asignaciones_gestiones_cobranza` en
-> `avance_cobranza_fase.sql`/`FUENTES_DATOS.md`. **Nota aparte, no resuelta esta sesión:**
-> el repo llevaba ~1 mes sin actividad (último commit antes de hoy: `b0b5f73`, 2026-07-15)
-> — julio nunca se cerró en `SEGUIMIENTO.md` y agosto no tiene tracking; sigue pendiente.
+> **2026-08-18 — homologación con `gestiones_cobranzas` + julio cerrado + meta de agosto:**
+> ver bug 13 en `BUGS.md` (homologación de `tipo_mora`) y `SEGUIMIENTO.md` (cierre de julio,
+> ambos enfoques). `dts_asignaciones_cobranza` quedó congelada desde 2026-07-10 — repuntado
+> a `dts_asignaciones_gestiones_cobranza` en `avance_cobranza_fase.sql`/`FUENTES_DATOS.md`.
+> El repo había estado ~1 mes sin actividad (último commit antes de hoy: `b0b5f73`,
+> 2026-07-15) — ya resuelto: julio cerrado y agosto con meta + tracking en vivo (ver "La
+> meta vigente" abajo). **Sigue pendiente:** re-correr `avance_cobranza_fase.md` con la
+> definición corregida (bug 12, tarea 1 de `PENDIENTES.md`) — no se tocó en este cierre.
 
 > **2026-07-15 — recorte de alcance a 2 enfoques:** a pedido explícito del usuario, el
 > proyecto ahora solo mantiene el enfoque acumulado/oficial (rebaje, capital reducido) y
@@ -30,38 +32,29 @@
 
 > **2026-07-14 — corrección de definición antiguos/nuevos (bug 12, ver `BUGS.md`):** un
 > crédito que entra en mora el DÍA 1 de un mes viene siempre de una cuota vencida el
-> ÚLTIMO DÍA DEL MES ANTERIOR — es antiguo, no nuevo. Se corrigió en curvas, backtest y el
-> tracking de julio de abajo (`avance_cobranza_fase.md`, el análisis por fase, **todavía
-> no** se re-corrió con la definición nueva — pendiente). Efecto: el backtest de junio casi
-> no se mueve (-4.7%→-4.4%), pero el **avance de julio sí cambia bastante** — el "adelanto"
-> reportado antes (+36.8%) bajaba en gran parte de que el stock proyectado estaba
-> subestimado (no incluía a los entrantes de día 1). Números corregidos abajo.
+> ÚLTIMO DÍA DEL MES ANTERIOR — es antiguo, no nuevo. Se corrigió en curvas y backtest.
+> `avance_cobranza_fase.md` (el análisis por fase) **todavía no** se re-corrió con la
+> definición nueva — pendiente (tarea 1, `PENDIENTES.md`).
 
-**Julio 2026, corte 13-jul — Capital asegurado:** meta proyectada **S/10,306,231** (stock
-S/3,105,418 + nuevos S/7,200,813). Real asegurado a la fecha: **S/4,971,669** (48.2% de
-avance del total del mes) — **+4.1% por encima de lo proyectado para el mismo día**
-(proyección al día 13: S/4,776,792). Resta: S/5,334,562 (días 14-31). Fuente:
-`avance_capital_asegurado_julio.py` + `datos_avance_capital_asegurado_julio/`. Curvas
-calibradas y ya validadas con backtest de junio (-4.4% de error), ver
-`enfoque_capital_asegurado.md`.
+> **2026-08-18 — julio cerrado, meta vigente pasa a agosto:** ver `SEGUIMIENTO.md` para el
+> detalle de ambos cierres. Julio quedó con **+4.7% de error** en capital asegurado (stock
+> +1.0%, nuevos +6.3%) y **+17.6%** en recupero oficial (stock +2.0%, nuevos +22.5% — el
+> error más alto medido hasta ahora en este enfoque, ver nota de cautela abajo). Fuente:
+> `cierre_julio.sql`.
 
-(Antes de la corrección: meta S/8,919,611, real S/4,969,508, 55.7% de avance, **+36.8%** de
-adelanto — el real casi no cambió, lo que cambió fue la meta proyectada, que creció 15.5%
-al corregir la población de stock.)
+**Agosto 2026, corte 18-ago — Capital asegurado:** meta proyectada **S/10,245,695** (stock
+S/2,956,828 + nuevos S/7,288,868). Real asegurado a la fecha: **S/6,795,074** (66.3% de
+avance del total del mes) — **+8.7% por encima de lo proyectado para el mismo día**
+(proyección al día 18: S/6,254,010). Resta: S/3,450,622 (días 19-31). Fuente:
+`meta_agosto_capital_asegurado.py` + `datos_avance_capital_asegurado_agosto/`. Curvas
+calibradas y ya validadas con backtest de junio (-4.4% de error) y ahora también con el
+cierre real de julio (+4.7%), ver `enfoque_capital_asegurado.md`.
 
-**Nuevo — tabla día a día (nuevos vs. antiguos), desde el 1-jul:** ver
-`avance_capital_asegurado_julio_diario.sql` (queries D1-D4, incluye una consolidada D4 con
-acumulados calculados en Athena) y `datos_avance_capital_asegurado_julio/tabla_diaria_alfa.csv`.
-Nota: el capital asegurado de "hoy" (el día de corte) puede recalcularse y subir horas
-después — es dato intradía de `dts_mambu_loans_hist` que sigue llegando durante el día, no
-un error; los días ya cerrados no cambian.
-
-**Nota de cautela:** el +4.1% de adelanto (ya con la definición corregida) es la lectura de
-un solo mes a mitad de camino (día 13 de 31) — el backtest de junio (mes completo, cerrado)
-dio -4.4%. Con datos tan parciales, la lectura puede diluirse o revertirse antes del
-cierre; no hay base todavía para saber si es señal real o solo el patrón normal de que
-julio arranca con más actividad de la típica. Seguir el avance semana a semana antes de
-sacar conclusiones.
+**Nota de cautela:** el +8.7% de adelanto es la lectura de un solo mes a mitad de camino
+(día 18 de 31) — julio cerró con +4.7%, en la misma dirección pero de menor magnitud. Con
+solo 2 meses de cierre real, todavía no hay base para saber si el error tiende a crecer o
+es varianza normal (ver tarea 9, `PENDIENTES.md`, extender el backtest a más meses). Seguir
+el avance semana a semana antes de sacar conclusiones.
 
 Metodología: modelo evento × magnitud, dos motores (stock anclado al cierre del mes
 anterior UNION entrantes del día 1, nuevos vía calendario de vencimientos × P(no paga a
@@ -71,10 +64,14 @@ vez de "% recuperado". Detalle completo en `enfoque_capital_asegurado.md`.
 
 ### Recupero oficial (soles cobrados, se sigue trackeando en paralelo)
 
-**Julio 2026, corte 9-jul:** meta total **S/1,776,174** (stock S/426,651 + nuevos
-S/1,349,523). Real recuperado a la fecha: S/527,375 (29.7% de avance). Resta:
-**S/1,248,799** (días 10-31). Fuente: `meta_julio.py` + `datos_meta_julio/`. Detalle
-completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
+**Agosto 2026, corte 18-ago:** meta total **S/2,108,435** (stock S/711,160 + nuevos
+S/1,397,275). Real recuperado a la fecha: S/1,147,110 (54.4% de avance) — **-1.5% respecto
+a lo proyectado para el mismo día** (proyección al día 18: S/1,164,716). Resta:
+**S/961,325** (días 19-31). Fuente: `meta_agosto.py` + `datos_meta_agosto/`. Julio cerró
+con +17.6% de error (ver `SEGUIMIENTO.md`) — el error más alto medido hasta ahora en este
+enfoque, concentrado en "nuevos" (+22.5%); agosto a mitad de mes va casi exacto (-1.5%), sin
+señal todavía de que se repita. Detalle completo en `guia_tecnica_recupero.md` y en el
+artifact interactivo de abajo.
 
 ## Artifacts publicados
 
