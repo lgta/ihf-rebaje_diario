@@ -5,7 +5,14 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-07-15.
+Última actualización: 2026-08-18.
+
+> **2026-08-18 — homologación con `gestiones_cobranzas`:** ver bug 13 en `BUGS.md` y la
+> entrada nueva en "Análisis puntuales" abajo. `dts_asignaciones_cobranza` quedó congelada
+> desde 2026-07-10 — repuntado a `dts_asignaciones_gestiones_cobranza` en
+> `avance_cobranza_fase.sql`/`FUENTES_DATOS.md`. **Nota aparte, no resuelta esta sesión:**
+> el repo llevaba ~1 mes sin actividad (último commit antes de hoy: `b0b5f73`, 2026-07-15)
+> — julio nunca se cerró en `SEGUIMIENTO.md` y agosto no tiene tracking; sigue pendiente.
 
 > **2026-07-15 — recorte de alcance a 2 enfoques:** a pedido explícito del usuario, el
 > proyecto ahora solo mantiene el enfoque acumulado/oficial (rebaje, capital reducido) y
@@ -115,13 +122,20 @@ Detalle del último:
 ## Análisis puntuales (snapshots, no enfoques con curva propia)
 
 - **Avance de julio por fase de cobranza** (`avance_cobranza_fase.md`, 2026-07-13): cruza
-  la asignación REAL del negocio (tabla nueva `dts_asignaciones_cobranza`, ver
-  `FUENTES_DATOS.md`) contra capital asegurado (Enfoque alfa) por fase TEMPRANA /
+  la asignación REAL del negocio (tabla `dts_asignaciones_gestiones_cobranza` desde
+  2026-08-18 — la original, `dts_asignaciones_cobranza`, quedó congelada el 2026-07-10, ver
+  bug 13 en `BUGS.md` — contra capital asegurado (Enfoque alfa) por fase TEMPRANA /
   ESPECIALIZADA / RECOVERY × nuevo/stock. Corte 2-jul a 12-jul. Hallazgo: Temprana va
   ligeramente atrasada (-4 a -13pp según tramo, salvo 16-30 que va +2.7pp adelantado);
   Especializada/Recovery no tienen curva calibrada (el modelo nunca cubrió mora 31+).
   **⚠ Pendiente:** todavía usa la definición vieja de nuevo/stock (día 1 = nuevo, bug 12) —
   no se re-corrió, los números de este análisis puntual pueden cambiar.
+- **Homologación con `gestiones_cobranzas`** (2026-08-18, `homologacion_tipo_mora_gestiones.sql`,
+  bug 13 en `BUGS.md`): el `tipo_mora` de ese proyecto hermano valida el fix de bug 12 —
+  98.5% de acuerdo con nuestra clasificación antiguo/nuevo en la población mora 1-30
+  (muestra 10-ago). El 1.5% de diferencia es un comportamiento esperado (créditos que curan
+  y recaen dentro del mes; este proyecto fija "stock" todo el mes por diseño). No requiere
+  cambios al modelo.
 
 ## Pendiente de copiar al repo desde scratchpad
 

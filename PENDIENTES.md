@@ -38,7 +38,10 @@ aplicó a `enfoque_capital_asegurado.sql` (Q1/Q2) y a `enfoque_capital_asegurado
 de re-anclar toda la población — ¡ojo con el "intento fallido" documentado en bug 12,
 re-anclar toda la población causa sesgo de supervivencia!) a este archivo, re-correr
 contra Athena (`scripts/run_athena.sh`), actualizar la agregación en `.py` y los números
-en `avance_cobranza_fase.md`.
+en `avance_cobranza_fase.md`. **Ya aplicado (2026-08-18):** el SQL se repuntó a
+`dts_asignaciones_gestiones_cobranza` (la tabla vieja, `dts_asignaciones_cobranza`, quedó
+congelada el 2026-07-10 — ver bug 13 en `BUGS.md`); falta todavía el fix de bug 12 en sí y
+re-correr/actualizar `.py`/`.md`.
 
 **Criterio de terminado:** los números de avance por fase (Temprana/Especializada/
 Recovery × nuevo/stock) en `avance_cobranza_fase.md` reflejan la definición corregida;
@@ -156,3 +159,17 @@ limpieza del 2026-07-15 el root ya bajó en 8 archivos + 2 carpetas de datos.
   (S/4,971,669 real, +4.1% vs. proyectado — antes decía S/4,800,372 / +32.1%, un residuo
   de antes del fix).
 - Pendientes activos de `IDEAS.md` consolidados en este archivo, organizados por enfoque.
+
+## Ya resuelto 2026-08-18 (homologación con `gestiones_cobranzas`)
+
+- Confirmado que `dts_asignaciones_cobranza` quedó congelada el 2026-07-10 — repuntado
+  `avance_cobranza_fase.sql`/`FUENTES_DATOS.md` a `dts_asignaciones_gestiones_cobranza`
+  (tabla viva). Ver bug 13 en `BUGS.md`.
+- Homologado `tipo_mora` (gestiones_cobranzas) contra antiguo/nuevo (`dayslate`+bug12, este
+  proyecto): 98.5% de acuerdo en población mora 1-30 (muestra 10-ago). El 1.5% restante
+  tiene causa identificada (créditos que curan y recaen dentro del mes) y no amerita cambio
+  de metodología. Query fuente: `homologacion_tipo_mora_gestiones.sql`.
+- **No incluido en este cierre** (fuera del pedido explícito del usuario, que priorizó solo
+  la homologación antiguo/nuevo): el 3.7% de créditos "sin mora" para este proyecto que sí
+  aparecen con mora en `gestiones_cobranza` (ver nota en bug 13), y el cierre de julio/
+  tracking de agosto en `SEGUIMIENTO.md` (sigue pendiente, tareas 4 y 8 de arriba).

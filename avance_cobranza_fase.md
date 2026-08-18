@@ -6,9 +6,16 @@
 
 ## El concepto
 
+> **Nota 2026-08-18:** esta corrida (12-jul) usó `dts_asignaciones_cobranza`, que quedó
+> congelada el 2026-07-10 poco después — ver bug 13 en `BUGS.md`. El SQL ya se repuntó a
+> `dts_asignaciones_gestiones_cobranza` (tabla viva, mismo grano) para cualquier re-corte
+> futuro; los números de este documento siguen siendo los de la corrida original con la
+> tabla vieja, todavía no re-ejecutados (sigue pendiente la tarea 1 de `PENDIENTES.md`).
+
 El proyecto viene trabajando con una población de mora **inferida** (mora 1-30 vía
 `dayslate`, ver `FUENTES_DATOS.md`). El usuario proporcionó una tabla nueva,
-`dts_asignaciones_cobranza`, que trae la asignación **real** de cobranza día a día — quién
+`dts_asignaciones_cobranza` (hoy reemplazada por `dts_asignaciones_gestiones_cobranza`, ver
+nota arriba), que trae la asignación **real** de cobranza día a día — quién
 trabaja el negocio, y bajo qué fase de estrategia (`fase_estrategia`: TEMPRANA,
 ESPECIALIZADA, RECOVERY). Este análisis cruza esa asignación real contra
 `dts_mambu_loans_hist` para medir avance, usando la métrica de **capital asegurado**

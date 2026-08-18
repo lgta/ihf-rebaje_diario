@@ -31,6 +31,15 @@ moroso. Ojo: tiene DOS definiciones distintas en este proyecto, y no son interca
   paga hasta la fecha de vencimiento (inclusive). Captura TODO atraso, incluido el que se
   resuelve al día siguiente.
 
+**`tipo_mora`** — campo de `dts_asignaciones_gestiones_cobranza` (proyecto hermano
+`gestiones_cobranzas`): `antiguo`/`nuevo`/`sin mora`, calculado A NIVEL CUOTA
+(`dias_mora >= day(current_date)` → antiguo) y **recalculado a diario** desde la cuota
+vigente — a diferencia del "tramo" de este proyecto, que se fija una vez al mes y no
+cambia aunque el crédito cure y recaiga. Homologado (2026-08-18) contra antiguo/nuevo
+(`dayslate`+bug 12): 98.5% de acuerdo en mora 1-30; el 1.5% de diferencia son créditos que
+curan y vuelven a caer en mora con una cuota distinta dentro del mismo mes — ver bug 13 en
+`BUGS.md` y `homologacion_tipo_mora_gestiones.sql`.
+
 **`dayslate`** — campo de `dts_mambu_loans_hist`, días de mora del crédito en esa foto.
 `NULL` cuando está al día (usar siempre `coalesce(dayslate,0)`). Tiene un punto ciego: una
 cuota pagada 1 día tarde casi nunca hace que `dayslate` llegue a mostrar 1 (solo 4.3% de

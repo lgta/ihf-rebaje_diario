@@ -58,26 +58,45 @@ de vencimientos y para la validación en # de operaciones.
 Sin `flg_last_loan_in_chain=1`, la curva de # operaciones sale ~10 puntos más baja de lo
 real (cuotas de créditos reenganchados quedan `LATE` para siempre).
 
-## `dts_asignaciones_cobranza` (nueva, incorporada 2026-07-13)
+## `dts_asignaciones_gestiones_cobranza` (tabla viva — usar esta, no la de abajo)
 
 **Grano:** `(dni_ce, producto)` por `fecha_base` — la asignación REAL de cobranza día a
-día (a diferencia de las 3 tablas de arriba, esto viene directo del sistema de asignación
-del negocio, no es una población inferida vía `dayslate`). Usada en
-`avance_cobranza_fase.md`/`.sql`/`.py`.
+día, escrita por el Lambda del proyecto hermano `gestiones_cobranzas` (a diferencia de las
+3 tablas de arriba, esto viene directo del sistema de asignación del negocio, no es una
+población inferida vía `dayslate`). **Reemplaza a `dts_asignaciones_cobranza`** (ver nota
+de abajo — esa quedó congelada el 2026-07-10). Confirmado 2026-08-18 vía
+`homologacion_tipo_mora_gestiones.sql`, ver bug 13 en `BUGS.md`.
 
 | Campo | Notas |
 |---|---|
 | `dni_ce` | documento del cliente — **no hay `id_ihfintech_loan` directo**, hay que cruzar contra `dts_cobranza_creditos_cuotas` (`dni`, `producto`, `status='ACTIVE'`, `flg_last_loan_in_chain=1`) — cruce limpio 1:1, matchea ~96.5% |
-| `fecha_base` | fecha de la foto de asignación. **Solo tiene datos desde 2026-07-02** (tabla nueva, sin histórico de meses previos ni del 1-jul) |
+| `fecha_base` | fecha de la foto de asignación. **`varchar` (`'YYYY-MM-DD'`), no `date`** — comparar con literal string, no `date('...')`. Datos desde 2026-07-01, continuos hasta hoy |
+| `tipo_mora` | `antiguo` / `nuevo` / `sin mora`, calculado A NIVEL CUOTA vigente (`dias_mora >= day(current_date)` → antiguo) y **recalculado a diario** — no fijo como el "tramo" de este proyecto. Homologado contra `dayslate`+bug12: 98.5% de acuerdo en mora 1-30 (ver bug 13, `BUGS.md`); el 1.5% de diferencia son créditos que curan y recaen dentro del mismo mes (este proyecto los mantiene "antiguo" todo el mes por diseño, gestiones_cobranzas los reclasifica a "nuevo") |
 | `fase_estrategia` | TEMPRANA / ESPECIALIZADA / RECOVERY — se fija al momento de asignar la campaña, NO se recalcula a diario (un crédito puede seguir en una fase aunque su mora real ya haya cambiado de tramo) |
 | `subsegmento_fase_estrategia` | sub-banda de mora dentro de la fase (ej. "VENCIDO 1 A 8"), definida por el negocio — no coincide exactamente con los tramos `a.1-8/b.9-15/c.16-30` que usa el resto del proyecto |
-| `dias_mora` / `max_dias_mora_dni` | mora del negocio — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar |
-| `monto_capital_pendiente` | saldo según esta tabla — **no usarlo para capital**, seguir el patrón del proyecto de tomar el saldo desde `dts_mambu_loans_hist` (mismo principio que descartó `principalamountpaid`/`principalamountdue`, bug 5 en `BUGS.md`) |
+| `dias_mora` / `max_dias_mora_dni` | mora del negocio a nivel cuota — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar |
+| `monto_capital_pendiente` / `monto_capital_pendiente_asignado` | saldo según esta tabla — **no usarlo para capital**, seguir el patrón del proyecto de tomar el saldo desde `dts_mambu_loans_hist` (mismo principio que descartó `principalamountpaid`/`principalamountdue`, bug 5 en `BUGS.md`) |
 | `grupo_control` | existe un grupo de control (no gestionado) — no explorado todavía, revisar antes de usar esta tabla para medir "efecto de la gestión" |
+| `fecha_de_vencimiento_cuota`, `hora_base`, `fecha_proceso`, `abtest_cob_wapp`, `segmento_piloto_cbr`, `grupo_control_fisica` | columnas nuevas vs. `dts_asignaciones_cobranza`, sin explotar todavía en este proyecto |
 
 **La asignación a Especializada/Recovery es a nivel CLIENTE, no crédito** — si un cliente
 tiene otro crédito en mora profunda, todos sus créditos (sanos o no) se asignan a la fase
 más severa por arrastre. Ver `avance_cobranza_fase.md` para el detalle completo.
+
+**Tablas hermanas `_recon`:** `dts_asignaciones_gestiones_cobranza_recon`/`_recon_v2`/
+`_recon_v3`/`_recon_v4` — mismo esquema, cubren TODO julio (2026-07-01 a 2026-07-31) de una
+sola vez. Confirmado por el usuario (2026-08-18): son las tablas que usa `gestiones_
+cobranzas` para **validar su propia reconstrucción** (versiones sucesivas de un reproceso,
+no la tabla operativa viva) — no usar como fuente de la asignación real del día a día, solo
+como referencia si se necesita auditar una reconstrucción puntual de julio.
+
+## `dts_asignaciones_cobranza` (⚠️ congelada desde 2026-07-10, no usar en desarrollo nuevo)
+
+Incorporada 2026-07-13, usada originalmente por `avance_cobranza_fase.md`/`.sql`/`.py`
+(corte 2-jul a 12-jul). **Dejó de recibir datos el 2026-07-10** (confirmado 2026-08-18:
+rango real `2026-07-02` a `2026-07-10`, 7 días — nunca se actualizó después). Se mantiene
+esta sección solo como referencia histórica de esa corrida; cualquier re-corte nuevo debe
+usar `dts_asignaciones_gestiones_cobranza` de arriba (mismo grano y columnas, superset).
 
 ## Patrón de CTEs base (aparece en casi todos los `.sql` del proyecto)
 

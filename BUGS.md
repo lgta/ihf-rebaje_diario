@@ -178,3 +178,49 @@ recupero oficial NO se tocaron (no fue parte del pedido). **Impacto medido:**
   sigue siendo válida sin recalibrar (mide si la entrada ocurre, no en qué día del mes cae).
 - Julio en vivo: pendiente de re-correr `avance_capital_asegurado_julio_diario.sql` /
   `_segmentado.sql` / `avance_cobranza_fase.sql` con la definición corregida.
+
+### 13. `dts_asignaciones_cobranza` quedó congelada el 2026-07-10; homologación de `tipo_mora` contra `gestiones_cobranzas` confirma el fix de bug 12
+**Contexto:** el 2026-08-18, una sesión del proyecto hermano `gestiones_cobranzas` entregó
+un handoff (`prompt_handoff_reconciliacion_gestiones_cobranzas.txt`) para homologar la
+clasificación antiguo/nuevo de ambos proyectos. Investigado con
+`homologacion_tipo_mora_gestiones.sql`.
+
+**Hallazgo 1 — tabla muerta:** `dts_asignaciones_cobranza` (la que documentaba
+`FUENTES_DATOS.md` y usa `avance_cobranza_fase.sql`) dejó de recibir datos el 2026-07-10
+(solo 7 días de historia, `min=2026-07-02`, `max=2026-07-10`). La tabla viva equivalente es
+**`dts_asignaciones_gestiones_cobranza`** (datos continuos hasta hoy, mismo grano
+`(dni_ce, producto)` por `fecha_base`, superset de columnas — incluye `tipo_mora`, que
+`dts_asignaciones_cobranza` también tenía pero congelado). **Fix:** cualquier desarrollo
+nuevo debe apuntar a `dts_asignaciones_gestiones_cobranza`, no a `dts_asignaciones_cobranza`
+— ya aplicado en `avance_cobranza_fase.sql`. Ojo: `fecha_base` es `varchar` en la tabla
+nueva (no `date` como en la vieja) — comparar con literal string, no `date('...')`. También
+existen `dts_asignaciones_gestiones_cobranza_recon`/`_v2`/`_v3`/`_v4` (backfill estático de
+julio completo, 2026-07-01 a 2026-07-31) — no confirmado si son reprocesos puntuales o
+snapshots vivos, no usar sin verificar antes.
+
+**Hallazgo 2 — `tipo_mora` (gestiones_cobranzas, fórmula `dias_mora >= day(current_date)`
+→ antiguo, a nivel CUOTA) valida el fix de bug 12 (dayslate, a nivel CRÉDITO):** cruce en
+día de mitad de mes (2026-08-10, representativo — el día 1 no sirve como test porque la
+fórmula de gestiones fuerza TODO a "antiguo" ese día por construcción) sobre la población
+mora 1-30 compartida: **98.5% de acuerdo** (1,864/1,892 créditos: 917 antiguo/antiguo + 947
+nuevo/nuevo). Cero casos "nuevo(propio)/antiguo(gestiones)" — el desacuerdo va en una sola
+dirección.
+
+**Los 28 casos "antiguo(propio)/nuevo(gestiones)" tienen una causa común, no es ruido:** en
+los 28, `mora_jul31` (dayslate al cierre de julio) está entre 23-30 días — créditos cerca
+del límite de 30 — y entre el 1-ago y el 10-ago el crédito **curó y volvió a caer en mora
+con una cuota distinta** (mora al 10-ago bajó a 2-9 días, sobre una cuota recién vencida en
+agosto). No es un bug de join ni de datos: es que este proyecto fija la membresía "stock"
+para todo el mes por diseño (`DECISIONES.md`, "tramo fijo aunque cruce 30 días"), mientras
+que `tipo_mora` se recalcula a diario desde la cuota vigente — si el crédito cura y recae,
+gestiones_cobranzas lo reclasifica a "nuevo" y este proyecto no. Conecta directo con la
+reincidencia medida en el enfoque beta descontinuado (80.8% de "cura sin pago" recae, bug
+11). **No amerita cambiar la regla** (1.5% de la población, comportamiento intencional y ya
+documentado) — se deja como diferencia conocida entre ambos proyectos, no como pendiente.
+
+**Nota aparte (no es bug 12, es un hallazgo distinto):** 324 de ~8,800 créditos cruzados
+(3.7%) que este proyecto ve "sin mora" (`dayslate`=0/NULL) muestran mora según
+`tipo_mora`/`dias_mora` de gestiones_cobranzas — posible punto ciego adicional de `dayslate`
+(ver bug 9) a nivel cuota vs. crédito. No investigado a fondo (fuera del alcance pedido por
+el usuario, que priorizó solo la homologación antiguo/nuevo) — candidato para
+`installmentlastpaiddate` (pendiente #7 de `PENDIENTES.md`) si se retoma.

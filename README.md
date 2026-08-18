@@ -92,6 +92,7 @@ motor_cuota_vencimiento.sql  Motor alternativo por vencimiento de cuota (descart
 enfoque_capital_asegurado.sql  Enfoque alfa: curvas de capital asegurado (validado, backtest -4.7%)
 enfoque_capital_asegurado_backtest.sql  Backtest de junio del enfoque alfa
 avance_cobranza_fase.sql     Análisis puntual: avance por fase de cobranza (Temprana/Especializada/Recovery)
+homologacion_tipo_mora_gestiones.sql  Homologación antiguo/nuevo contra tipo_mora del proyecto gestiones_cobranzas (bug 13)
 
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
 backtest_junio.py            Compara proyección vs. recupero real de junio (backtest)

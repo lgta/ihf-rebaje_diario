@@ -1,0 +1,98 @@
+HANDOFF — Reconciliar "capital asegurado" (Enfoque alfa) con el proyecto gestiones_cobranzas
+
+Contexto: este prompt viene de una sesión de Claude Code en OTRO proyecto del mismo usuario
+(luisgherson@oka.com.pe), la carpeta `gestiones_cobranzas` (Lambda AWS que asigna canal de
+cobranza real — CALL/IVR/ESPECIALIZADA/RECOVERY — y mide recupero real en Power BI). Esa
+sesión no tiene memoria de este repo ni viceversa, así que abajo va todo el contexto necesario
+sin asumir que ya lo conoces.
+
+El pedido del usuario fue: "quiero que afines Rebaje diario con lo que hemos desarrollado en
+gestiones_cobranzas". Tras revisar ambos proyectos, el usuario confirmó que el foco es el
+Enfoque alfa ("capital asegurado", la meta principal desde 2026-07-13) — NO tocar el enfoque
+oficial (`fase1_stock.sql`/`fase2_nuevos.sql`, recupero en soles) como parte de este trabajo.
+
+⚠️ Antes de lo que sigue: verificar `ESTADO.md` — el repo lleva ~1 mes sin actividad
+(último commit `b0b5f73`, 2026-07-15), julio nunca se cerró en `SEGUIMIENTO.md`, agosto no
+tiene ningún tracking. Puede que el usuario quiera cerrar esa brecha aparte — no asumir que
+este handoff reemplaza esa tarea, preguntar si hace falta priorizar.
+
+## Lo que ya sabemos de gestiones_cobranzas (verificado en su código, no de memoria)
+
+1. **`tipo_mora`** (`Call_IVR/scripts/constants.py`, CTE `base_con_tipo_mora`, líneas ~766-774):
+   ```sql
+   CASE
+       WHEN COALESCE(dias_mora, 0) <= 0 THEN 'sin mora'
+       WHEN dias_mora >= day(current_date) THEN 'antiguo'
+       ELSE 'nuevo'
+   END AS tipo_mora
+   ```
+   `dias_mora` ahí es `date_diff('day', fecha_vencimiento_cuota, current_date)` — es decir,
+   está a nivel **CUOTA**, no a nivel crédito (línea ~17 del mismo archivo).
+
+   Esta fórmula (`dias_mora >= day(current_date)` → antiguo) es matemáticamente la MISMA
+   regla que ustedes documentaron como "bug 12" (un crédito con `dayslate=1` el día 1 del mes
+   viene de una cuota vencida el último día del mes anterior → antiguo, no nuevo) — pero
+   gestiones_cobranzas nunca tuvo ese bug porque compara siempre contra `day(current_date)`
+   en vez de un corte fijo. Vale la pena usar esta fórmula como cross-check independiente del
+   fix que ya aplicaron en `enfoque_capital_asegurado.sql`.
+
+   **OJO — no es un reemplazo directo:** el motor "cuota-consistente" que ya probaron (bug 10,
+   `BUGS.md`) mostró que la tasa de entrada a mora a nivel cuota (8.62%) NO es intercambiable
+   con la de nivel crédito/dayslate (13.38%) — usarla sin recalibrar subestima el backtest en
+   -35.7%. Si se usa `tipo_mora` de gestiones_cobranzas como población, hay que tratarlo como
+   una definición DISTINTA a validar con su propio backtest, no un parche del modelo actual.
+
+2. **`fase_estrategia`** (mismo archivo, líneas ~525-569): TEMPRANA (`dias_atraso_cuota<=30`),
+   ESPECIALIZADA (`<=120`), RECOVERY (resto) — también a nivel cuota. PERO hay una regla de
+   escalamiento a nivel CLIENTE: `max_dias_mora_dni` (máximo de `dias_atraso_cuota` sobre TODOS
+   los créditos del mismo DNI) empuja a ESPECIALIZADA/RECOVERY a un crédito sano si otro
+   crédito del mismo cliente está en mora profunda (`CANAL_ASIGNADO` prioridad 1 en el Lambda:
+   `max_dias_mora_dni >= 31` → ESPECIALIZADA, gana sobre cualquier regla de ese crédito
+   puntual). Esto coincide con lo que ya encontraron el 2026-07-13 en `avance_cobranza_fase.md`
+   ("la asignación a Especializada/Recovery es a nivel CLIENTE, no crédito") — confirma que no
+   fue una rareza de los datos de ese día, es una regla de negocio estable.
+
+3. **Tabla persistida**: el Lambda escribe un snapshot diario completo (incl. `tipo_mora`,
+   `fase_estrategia`, `CANAL_ASIGNADO`, `GRUPO_CONTROL`) a S3, prefijo `ASIGNACIONES_COBRANZA`
+   (bucket `datalakeingestion-dev-oka-raw`, `Call_IVR/lambda_function.py` líneas ~3099-3103),
+   expuesto en Athena como tabla de Glue en `dev_datalake_master`. **Falta confirmar** si el
+   nombre real de esa tabla en Glue coincide con `dts_asignaciones_cobranza` (la que este
+   proyecto ya usó en `avance_cobranza_fase.sql` el 2026-07-13) — verificar con
+   `DESCRIBE dev_datalake_master.dts_asignaciones_cobranza` / listar tablas del prefijo antes
+   de asumir que son la misma, aunque por nombre y contenido es muy probable.
+
+4. **Lo que gestiones_cobranzas mide NO es un forecast** — es tracking real ex-post en Power
+   BI: `capital_recupero_total_mes_credito` responde "¿el crédito pagó dentro del mes
+   calendario, se haya gestionado o no?", a nivel crédito (coalescido de sus cuotas),
+   congelado por período. Es conceptualmente vecino a "capital asegurado" (ambos son
+   ex-post, ambos no exigen gestión) pero NO igual: capital asegurado pondera el saldo
+   COMPLETO de cualquier crédito con ≥1 día de pago; la medida de gestiones_cobranzas pondera
+   soles efectivamente pagados. No tratarlas como intercambiables sin decisión explícita.
+
+## Qué investigar / decidir (no asumir un único camino — confirmar con el usuario)
+
+1. Confirmar el nombre real de la tabla de asignaciones en Athena (punto 3 arriba) antes de
+   cruzar nada.
+2. Cuantificar cuánto diverge, día a día, la población "mora 1-30" de capital asegurado
+   (dayslate, nivel crédito) contra `fase_estrategia='TEMPRANA'` real (nivel cuota, con el
+   escalamiento por DNI). Separar la divergencia en 2 causas antes de sacar conclusiones:
+   (a) grano cuota vs crédito (créditos con 2+ cuotas en mora simultánea), (b) el
+   escalamiento real por `max_dias_mora_dni` (un crédito "stock" propio que gestiones_cobranzas
+   ya movió a Especializada por un hermano del mismo DNI).
+3. Usar `tipo_mora` de gestiones_cobranzas (fórmula arriba) como cross-check independiente del
+   fix de "bug 12" ya aplicado en `enfoque_capital_asegurado.sql` — ¿coinciden crédito por
+   crédito en el corte de mes, o el grano cuota introduce discrepancias nuevas?
+4. Con el usuario, decidir entre (no elegir por tu cuenta):
+   - (A) Dejar la población propia de capital asegurado (dayslate, ya con backtest -4.4%) y
+     usar la asignación real de gestiones_cobranzas SOLO como validación/QA cruzada.
+   - (B) Extender capital asegurado a Especializada/Recovery (66% de la cartera real
+     asignada que hoy no tiene curva, hallazgo de `avance_cobranza_fase.md`) usando
+     `fase_estrategia` real como frontera de población.
+   - (C) Otra opción que surja de los números de los puntos 2-3.
+5. Cualquier cambio queda ACOTADO a `enfoque_capital_asegurado.sql`/`.md` y sus artifacts — no
+   tocar `fase1_stock.sql`/`fase2_nuevos.sql`/`fase3_*` (enfoque oficial) como efecto
+   colateral; el usuario fue explícito en que el foco es solo capital asegurado.
+6. Al cerrar, actualizar `PENDIENTES.md`/`ESTADO.md`/`GLOSARIO.md` según la convención propia
+   del repo (foto del momento vs. bitácora), y dejar constancia de que este cruce se originó
+   en una sesión de `gestiones_cobranzas` (para que quien retome después sepa dónde está el
+   contexto fuente si hace falta releerlo).

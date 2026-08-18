@@ -3,7 +3,7 @@
 -- Ejecutado 2026-07-13. Ver avance_cobranza_fase.md para la explicacion
 -- completa e interpretacion de resultados.
 --
--- Fuente nueva: dts_asignaciones_cobranza -- asignacion REAL dia a dia
+-- Fuente: dts_asignaciones_gestiones_cobranza -- asignacion REAL dia a dia
 -- del negocio (no la poblacion inferida via dayslate que usa el resto
 -- del proyecto). Grano: (dni_ce, producto) por fecha_base -- NO trae
 -- id_ihfintech_loan directo, hay que cruzar via dni+producto contra
@@ -12,9 +12,19 @@
 -- filas asignadas (el resto probablemente ya se cancelo/pago entre la
 -- asignacion y la corrida de esta query).
 --
--- OJO: la tabla solo tiene datos desde 2026-07-02 (no hay 1-jul) --
--- se usa 2-jul como "dia 1" de julio (decision confirmada con el
--- usuario 2026-07-13, ver avance_cobranza_fase.md).
+-- CAMBIO 2026-08-18: esta query originalmente usaba dts_asignaciones_
+-- cobranza (sin "gestiones"), que quedo congelada el 2026-07-10 -- ver
+-- bug 13 en BUGS.md. Se repunto a dts_asignaciones_gestiones_cobranza
+-- (mismo grano, tabla viva). OJO: fecha_base ahi es varchar, no date --
+-- comparar con literal string ('2026-07-02'), no date('2026-07-02').
+--
+-- OJO: la corrida original (12-jul) uso 2-jul como "dia 1" de julio
+-- porque dts_asignaciones_cobranza no tenia el 1-jul (decision
+-- confirmada con el usuario 2026-07-13, ver avance_cobranza_fase.md).
+-- dts_asignaciones_gestiones_cobranza SI tiene 1-jul -- si se re-corre
+-- este analisis desde cero, evaluar si conviene usar 1-jul en vez de
+-- 2-jul (no cambiado aca para no alterar la corrida historica sin
+-- pedido explicito).
 --
 -- "Rebaje" en este cuadro = capital ASEGURADO (enfoque alfa: saldo
 -- COMPLETO del credito si mostro >=1 dia de pago, no soles cobrados) --
@@ -44,8 +54,8 @@ with loan_chain as (
 )
 , asignados_dia1 as (
   select dni_ce, producto, fase_estrategia, subsegmento_fase_estrategia
-  from dts_asignaciones_cobranza
-  where fecha_base = date('2026-07-02')
+  from dts_asignaciones_gestiones_cobranza
+  where fecha_base = '2026-07-02'
 )
 , cohorte as (
   select a.fase_estrategia, a.subsegmento_fase_estrategia, c.id_ihfintech_loan
