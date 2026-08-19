@@ -5,7 +5,13 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-08-18.
+Última actualización: 2026-08-19.
+
+> **2026-08-19 — reconciliación contra vista oficial externa, punto ciego de `dayslate`
+> cuantificado en ~27%:** ver bug 14 en `BUGS.md` y el plan de trabajo en
+> `reconciliacion_vw_seguimiento_temprana.md`. Nuestra población de mora 1-30 cuadra casi
+> exacto con la oficial (`vw_seguimiento_diario_cohorte_tramo`) donde ambas coinciden — el
+> gap es de cobertura, no de cálculo. **Pendiente activo, prioridad elevada.**
 
 > **2026-08-18 — homologación con `gestiones_cobranzas` + julio cerrado + meta de agosto:**
 > ver bug 13 en `BUGS.md` (homologación de `tipo_mora`) y `SEGUIMIENTO.md` (cierre de julio,
@@ -85,6 +91,7 @@ artifact interactivo de abajo.
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
 | [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado (números pre-bug 12) | Enfoque alfa, **meta principal de julio** — explicado con 5 créditos reales, curvas por segmento, backtest de junio y avance en vivo de julio. Números vigentes en `enfoque_capital_asegurado.md`/`ESTADO.md`, el artifact todavía tiene los de antes del fix del 2026-07-14 (bug 12). **Pendiente en `PENDIENTES.md` tarea 2.** |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) | ✓ vigente (2026-07-15) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, ya con la definición corregida (bug 12). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
+| De julio a agosto — cómo se arma la meta | ⚠ solo local, sin publicar | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto con datos reales al 18-ago), ambos enfoques con toggle. **Sin URL de claude.ai** — esta sesión no tuvo la herramienta Artifact disponible para publicarlo; abrir directo `resumen_julio_agosto.html` en un navegador, o publicarlo desde una sesión que sí tenga esa herramienta. Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
@@ -133,6 +140,12 @@ Detalle del último:
   (muestra 10-ago). El 1.5% de diferencia es un comportamiento esperado (créditos que curan
   y recaen dentro del mes; este proyecto fija "stock" todo el mes por diseño). No requiere
   cambios al modelo.
+- **Reconciliación contra `vw_seguimiento_diario_cohorte_tramo`** (2026-08-19, vista
+  externa "oficial" aportada por el usuario, bug 14 en `BUGS.md`): nuestra población de
+  mora 1-30 cuadra casi exacto (0.15%) con la oficial en los créditos que ambas comparten,
+  pero el punto ciego de `dayslate` (bug 9) explica ~27% de TODA la población TEMPRANA
+  oficial que no estamos capturando — mucho más grande de lo estimado antes. **⚠
+  Pendiente activo, con plan de trabajo:** `reconciliacion_vw_seguimiento_temprana.md`.
 
 ## Pendiente de copiar al repo desde scratchpad
 
@@ -144,12 +157,10 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Pendiente de git
 
-**2026-07-15 — recorte a 2 enfoques:** eliminados `enfoque_reinicio_reloj.md`,
-`meta_desde_hoy.py`/`.sql`, `datos_meta_desde_hoy/`, `enfoque_salida_mora.md`/`.sql`,
-`salida_mora.html`, `datos_salida_mora/`, `guia_4_enfoques.html`,
-`ejemplos_4_enfoques.sql`; actualizados `DECISIONES.md`, `GLOSARIO.md`, `LINAJE.md`,
-`BUGS.md`, `IDEAS.md`, `ESTADO.md`, `README.md`, `SEGUIMIENTO.md`; nuevo `PENDIENTES.md`
-(documento de handoff). Pendiente de que el usuario pida commitear.
+**2026-08-19:** documentación de la reconciliación contra `vw_seguimiento_diario_cohorte_
+tramo` (`reconciliacion_vw_seguimiento_temprana.md`, bug 14 en `BUGS.md`, actualizaciones
+en `PENDIENTES.md`/`FUENTES_DATOS.md`/`README.md`/este archivo). Pendiente de que el
+usuario pida commitear.
 
 ## Índice de los demás documentos
 
@@ -167,4 +178,6 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 - `enfoque_acumulado.md`, `enfoque_capital_asegurado.md` — un archivo por enfoque (los
   únicos 2 vigentes), ver "Índice de enfoques" arriba.
 - `avance_cobranza_fase.md` — análisis puntual por fase de cobranza, ver sección arriba.
+- `reconciliacion_vw_seguimiento_temprana.md` — pendiente activo: reconciliación contra
+  vista externa oficial, plan de trabajo para cerrar el punto ciego de `dayslate` (bug 14).
 - `PENDIENTES.md` — plan de continuación accionable para los 2 enfoques vigentes.

@@ -35,6 +35,7 @@ lo que falta sin releer todo el historial.
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) — `curvas_matriz_alfa.html` | Equipo | Enfoque alfa: curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes de asignado/asegurado/%, ya con la definición corregida (bug 12). Ver `matriz_mensual_alfa.sql` |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) — `meta_julio_en_vivo.html` | Operativo, ⚠ desactualizado | Caso de uso real: cálculo de la meta del mes en curso |
 | [Deck completo](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) — `deck_meta_recupero.html` | Presentación, ⚠ desactualizado | De la asignación (antiguos/nuevos) a la meta, en 11 slides |
+| De julio a agosto — `resumen_julio_agosto.html` | Equipo, **sin publicar en claude.ai** | Guía paso a paso: curvas, asignación de julio, walkthrough completo de la meta de agosto (datos reales al 18-ago), ambos enfoques. Abrir el `.html` directo en un navegador. |
 
 *(Los artifacts son privados hasta que se compartan explícitamente desde su menú de
 compartir en claude.ai. Los marcados ⚠ no tienen error, solo no incorporan el fix de
@@ -77,6 +78,7 @@ archivos de referencia de abajo para consultas puntuales.
 | [`enfoque_acumulado.md`](enfoque_acumulado.md) | Enfoque oficial (validado): resumen corto, apunta a `guia_tecnica_recupero.md` |
 | [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa (validado, backtest -4.7%): % de capital con actividad de pago |
 | [`avance_cobranza_fase.md`](avance_cobranza_fase.md) | Análisis puntual: avance de julio por fase de cobranza (Temprana/Especializada/Recovery), usando la asignación real del negocio |
+| [`reconciliacion_vw_seguimiento_temprana.md`](reconciliacion_vw_seguimiento_temprana.md) | **Pendiente activo** — reconciliación contra la vista oficial externa `vw_seguimiento_diario_cohorte_tramo`: cuadra casi exacto en la población compartida, pero cuantifica el punto ciego de `dayslate` en ~27% de TEMPRANA (bug 14, `BUGS.md`) |
 
 ## Estructura del repositorio
 
@@ -125,6 +127,8 @@ meta_recupero_detalle.html   Detalle con curvas interactivas (copia del artifact
 julio_25pct_no_recomendado.html  Por qué NO usar 25% (copia del artifact)
 capital_asegurado.html       Enfoque alfa: capital asegurado (copia del artifact, pendiente de refresco)
 enfoque_capital_asegurado.md Doc dedicado del enfoque alfa: concepto, metodología, resultados
+resumen_julio_agosto.html    De julio a agosto: curvas + asignación + walkthrough de la meta (sin publicar en claude.ai)
+armar_artifact_julio_agosto.py  Prepara los datos embebidos de resumen_julio_agosto.html
 PENDIENTES.md                Plan de continuación accionable para los 2 enfoques vigentes
 ```
 

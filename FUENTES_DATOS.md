@@ -76,7 +76,7 @@ de abajo — esa quedó congelada el 2026-07-10). Confirmado 2026-08-18 vía
 | `subsegmento_fase_estrategia` | sub-banda de mora dentro de la fase (ej. "VENCIDO 1 A 8"), definida por el negocio — no coincide exactamente con los tramos `a.1-8/b.9-15/c.16-30` que usa el resto del proyecto |
 | `dias_mora` / `max_dias_mora_dni` | mora del negocio a nivel cuota — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar |
 | `monto_capital_pendiente` / `monto_capital_pendiente_asignado` | saldo según esta tabla — **no usarlo para capital**, seguir el patrón del proyecto de tomar el saldo desde `dts_mambu_loans_hist` (mismo principio que descartó `principalamountpaid`/`principalamountdue`, bug 5 en `BUGS.md`) |
-| `grupo_control` | existe un grupo de control (no gestionado) — no explorado todavía, revisar antes de usar esta tabla para medir "efecto de la gestión" |
+| `grupo_control` | confirmado 2026-08-19 (`reconciliacion_vw_seguimiento_temprana.md`): valores incluyen `'CONTROL'` (créditos deliberadamente NO gestionados, para medir "efecto de la gestión") y `NULL`/otros — explica la mayoría (82%) de los créditos en mora 1-30 propios que NO aparecen en la fase TEMPRANA oficial. Sigue sin explorarse a fondo su uso para medir el efecto causal de la gestión |
 | `fecha_de_vencimiento_cuota`, `hora_base`, `fecha_proceso`, `abtest_cob_wapp`, `segmento_piloto_cbr`, `grupo_control_fisica` | columnas nuevas vs. `dts_asignaciones_cobranza`, sin explotar todavía en este proyecto |
 
 **La asignación a Especializada/Recovery es a nivel CLIENTE, no crédito** — si un cliente
@@ -97,6 +97,22 @@ Incorporada 2026-07-13, usada originalmente por `avance_cobranza_fase.md`/`.sql`
 rango real `2026-07-02` a `2026-07-10`, 7 días — nunca se actualizó después). Se mantiene
 esta sección solo como referencia histórica de esa corrida; cualquier re-corte nuevo debe
 usar `dts_asignaciones_gestiones_cobranza` de arriba (mismo grano y columnas, superset).
+
+## `vw_seguimiento_diario_cohorte_tramo` (vista externa "oficial", aportada por el usuario 2026-08-19)
+
+Vista de Athena mantenida FUERA de este proyecto (definición completa en
+`vw_seguimiento_diario_cohorte_tramo.txt`, raíz del repo). Da el detalle a nivel crédito
+de la asignación real (fase_estrategia, tipo_mora, `monto_asignado` fijado al primer día
+del mes que el crédito aparece en `dts_asignaciones_gestiones_cobranza`) y el saldo/mora
+de Mambu día a día. Usada como fuente de verdad externa para reconciliar nuestra
+población de mora 1-30 — ver `reconciliacion_vw_seguimiento_temprana.md` y bug 14 en
+`BUGS.md` para el resultado (cuadra casi exacto en la población compartida; el punto
+ciego de `dayslate` explica el 93% de lo que la vista oficial ve y nosotros no, ~27% de
+toda la población TEMPRANA). **No usar `monto_asignado` de esta vista como sustituto del
+saldo de Mambu para nuestro propio cálculo de capital** — es el mismo campo
+`monto_capital_pendiente` de `dts_asignaciones_gestiones_cobranza` que `FUENTES_DATOS.md`
+ya advierte no usar (mismo principio que bug 5), aunque en la práctica difiere solo ~1%
+del saldo Mambu en la muestra vista hasta ahora.
 
 ## Patrón de CTEs base (aparece en casi todos los `.sql` del proyecto)
 

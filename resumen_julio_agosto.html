@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>De julio a agosto — cómo se arma la meta | REBAJE_DIARIO</title>
+<style>
+  :root {
+    --surface-1: #fcfcfb; --page: #f9f9f7;
+    --ink-1: #0b0b0b; --ink-2: #52514e; --ink-muted: #898781;
+    --grid: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --blue: #2a78d6; --orange: #eb6834; --aqua: #1baf7a;
+    --good: #0ca30c; --serious: #ec835a; --warning: #fab219;
+    --av1: #6FC3B3; --av2: #3DA391; --av3: #1C8C7B; --av4: #0B5C4F;
+    --tr1: #2a78d6; --tr2: #1baf7a; --tr3: #4a3aa7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink-1);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.hero {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px 32px; margin-bottom: 20px;
+  }
+  header.hero h1 { margin: 0 0 6px; font-size: 26px; }
+  header.hero p.sub { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 760px; }
+  nav.toc {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 0;
+  }
+  nav.toc a {
+    font-size: 13px; color: var(--ink-2); text-decoration: none; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--page);
+  }
+  nav.toc a:hover { border-color: var(--baseline); color: var(--ink-1); }
+
+  .enfoque-toggle {
+    position: sticky; top: 12px; z-index: 20; display: flex; gap: 8px; margin: 0 0 24px;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 6px; width: fit-content; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .enfoque-toggle button {
+    font: inherit; font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 8px;
+    border: none; background: transparent; color: var(--ink-2); cursor: pointer;
+  }
+  .enfoque-toggle button.active { background: var(--blue); color: #fff; }
+  .enfoque-toggle .hint { align-self: center; font-size: 12px; color: var(--ink-muted); padding: 0 10px; }
+
+  section { margin-bottom: 48px; scroll-margin-top: 16px; }
+  section > h2 {
+    font-size: 20px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px;
+  }
+  section > h2 .step { display:inline-flex; align-items:center; justify-content:center;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--ink-1); color: #fff;
+    font-size: 13px; font-weight: 700; flex: none; }
+  section > p.lead { color: var(--ink-2); margin: 6px 0 20px; max-width: 800px; font-size: 14.5px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .grid3, .grid2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px 10px;
+  }
+  .card h3 { margin: 0 0 2px; font-size: 14px; }
+  .card p.note { margin: 0 0 8px; font-size: 12px; color: var(--ink-muted); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 2px 4px; font-size: 12px; color: var(--ink-2); }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+  .legend .line { width: 14px; height: 2px; border-radius: 2px; flex: none; }
+
+  svg { display: block; overflow: visible; font-family: inherit; }
+  .axis-label { fill: var(--ink-muted); font-size: 10.5px; }
+  .grid-line { stroke: var(--grid); stroke-width: 1; }
+  .baseline { stroke: var(--baseline); stroke-width: 1; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--ink-1); color: #fff;
+    font-size: 12px; padding: 8px 10px; border-radius: 8px; line-height: 1.45;
+    transform: translate(-50%, -110%); white-space: nowrap; z-index: 30;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .tooltip .t-title { font-weight: 700; margin-bottom: 3px; }
+  .tooltip .t-row { display: flex; gap: 10px; justify-content: space-between; }
+  .tooltip .t-swatch { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:5px; }
+
+  table.datatable { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
+  table.datatable th, table.datatable td { padding: 7px 10px; text-align: right; font-variant-numeric: tabular-nums; }
+  table.datatable th:first-child, table.datatable td:first-child { text-align: left; font-variant-numeric: normal; }
+  table.datatable thead th { color: var(--ink-muted); font-weight: 600; font-size: 11.5px; text-transform: uppercase;
+    letter-spacing: .03em; border-bottom: 1px solid var(--grid); }
+  table.datatable tbody tr { border-bottom: 1px solid var(--grid); }
+  table.datatable tbody tr:last-child { border-bottom: none; font-weight: 700; }
+  table.datatable td.seg-name { display:flex; align-items:center; gap:8px; }
+  table.datatable .dot { width:9px; height:9px; border-radius:2px; flex:none; }
+
+  .statrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 4px; }
+  .stat { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .stat .k { font-size: 12px; color: var(--ink-muted); margin-bottom: 6px; }
+  .stat .v { font-size: 24px; font-weight: 700; }
+  .stat .d { font-size: 12.5px; margin-top: 4px; font-weight: 600; }
+  .stat .d.up { color: var(--serious); }
+  .stat .d.down { color: var(--blue); }
+  @media (max-width: 900px) { .statrow { grid-template-columns: 1fr; } }
+
+  .callout {
+    display: flex; gap: 10px; align-items: flex-start; background: #fff6ef;
+    border: 1px solid #f1cfa8; border-radius: 10px; padding: 12px 14px; font-size: 13px;
+    color: #6b3a12; margin: 10px 0 0;
+  }
+  .callout b { color: #4a2600; }
+  .callout .ic { flex: none; font-size: 15px; }
+
+  .formula {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px;
+    background: var(--page); border: 1px dashed var(--baseline); border-radius: 10px;
+    padding: 12px 16px; margin: 14px 0;
+  }
+  .formula .box { background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font-weight: 600; }
+  .formula .op { color: var(--ink-muted); font-weight: 700; }
+  .formula .arrow { color: var(--ink-muted); }
+
+  footer.foot { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--ink-muted); }
+  code { background: var(--grid); padding: 1px 5px; border-radius: 4px; font-size: 90%; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>De julio a agosto — cómo se arma la meta</h1>
+    <p class="sub">Guía paso a paso, pensada para alguien que ve este modelo por primera vez: qué
+    curvas usamos, cómo quedó la cartera asignada en julio, cómo se comparó lo proyectado contra
+    lo real, y cómo se construye — de punta a punta — la meta de agosto que estamos siguiendo hoy.
+    Corte de datos: <b>18 de agosto de 2026</b>.</p>
+    <nav class="toc">
+      <a href="#curvas">1. Las curvas</a>
+      <a href="#julio">2. Julio: asignación y resultado</a>
+      <a href="#agosto">3. Agosto: de vencimientos a proyección</a>
+    </nav>
+  </header>
+
+  <div class="enfoque-toggle" id="toggle">
+    <button data-enfoque="asegurado" class="active">Capital asegurado (meta principal)</button>
+    <button data-enfoque="recupero">Recupero oficial (soles)</button>
+    <span class="hint">cambia las curvas y la meta de agosto de las secciones 1 y 3 — la cartera de julio (sección 2) es casi idéntica en ambos, se muestra una sola vez</span>
+  </div>
+
+  <section id="curvas">
+    <h2><span class="step">1</span>Las curvas con las que se arma la proyección</h2>
+    <p class="lead">Todo el modelo se reduce a dos curvas de maduración, calibradas sobre 14 meses
+    de historia real (mar-2025 a jun-2026) y validadas contra un mes cerrado antes de usarse.
+    Miden <b><span id="curva-def">% del saldo con al menos 1 día de pago en el mes</span></b>,
+    acumulado día a día. No cambian mes a mes — son las mismas para julio y para agosto.</p>
+
+    <h3 style="font-size:15px;margin:18px 0 8px;">Curva de <b>stock</b> — créditos que ya venían en mora, por tramo × avance</h3>
+    <p class="note" style="margin:-4px 0 10px;">El <b>tramo</b> (mora al momento de asignación) separa los 3 paneles — predice con qué frecuencia paga.
+    El <b>avance de amortización</b> (color) predice cuánto paga cuando paga — por eso, dentro de cada panel, más oscuro (más avance) siempre madura más alto.</p>
+    <div class="grid3" id="chart-stock"></div>
+
+    <h3 style="font-size:15px;margin:24px 0 8px;">Curva de <b>nuevos</b> — créditos que caen en mora durante el mes, por avance</h3>
+    <p class="note" style="margin:-4px 0 10px;">Indexada a "días desde que entró en mora", no al día calendario — cada cohorte diaria madura con la misma forma, solo que arranca en un día distinto.</p>
+    <div class="card"><div id="chart-nuevos"></div></div>
+  </section>
+
+  <section id="julio">
+    <h2><span class="step">2</span>Julio: cómo quedó la asignación por segmento, y qué pasó</h2>
+    <p class="lead">Julio ya cerró (mes completo). Antes de ver la meta de agosto, esto es lo que
+    se asignó en julio y cómo terminó contra lo proyectado — es el mismo mecanismo que se repite en la sección 3.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Stock — créditos que ya venían en mora al cierre de junio</h3>
+        <p class="note">Saldo por tramo × avance, al momento en que se congela la asignación de julio. Barra = saldo asignado (S/).</p>
+        <div id="chart-stock-julio"></div>
+      </div>
+      <div class="card">
+        <h3>Nuevos — calendario de vencimientos de julio</h3>
+        <p class="note">Saldo en riesgo por día de vencimiento (no todo entra en mora — ver la tasa histórica en la sección 3).</p>
+        <div id="chart-cal-julio"></div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 4px;">Resultado: proyectado vs. real, mes completo</h3>
+    <p class="note" style="margin:0 0 10px;">Los dos enfoques se calculan en paralelo, con el mismo mecanismo — cambia solo qué mide la curva (soles recuperados vs. saldo activado).</p>
+    <div style="display:flex;flex-direction:column;gap:14px;" id="julio-resultado"></div>
+    <div id="julio-callout"></div>
+  </section>
+
+  <section id="agosto">
+    <h2><span class="step">3</span>Agosto: de vencimientos a proyección, paso a paso</h2>
+    <p class="lead">Mismo mecanismo exacto que julio, ancladas al cierre real de julio en vez de junio. Nada de esto cambió: mismas curvas, misma tasa histórica.</p>
+
+    <div class="formula">
+      <div class="box">1. Stock (cierre de julio)</div><span class="op">×</span><div class="box">curva de stock</div>
+      <span class="arrow">＋</span>
+      <div class="box">2. Calendario de vencimientos</div><span class="op">×</span><div class="box"><span id="tasa-label">13.38%</span> (tasa histórica)</div><span class="op">×</span><div class="box">curva de nuevos</div>
+      <span class="arrow">＝</span>
+      <div class="box" style="background:var(--blue);color:#fff;">Meta de agosto</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>1. El stock de agosto (cierre real de julio)</h3>
+        <p class="note">Misma lógica que julio: mora 1-30 al cierre del mes anterior, por tramo × avance.</p>
+        <div id="chart-stock-agosto"></div>
+      </div>
+      <div class="card">
+        <h3>2. El calendario de vencimientos de agosto</h3>
+        <p class="note">Días 1-18 con saldo exacto (ya pasaron); días 19-31 con el saldo vigente al 18-ago como aproximación (todavía no se fotografían).</p>
+        <div id="chart-cal-agosto"></div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 4px;">3. Aplicar la tasa histórica y la curva — segmento por segmento</h3>
+    <p class="note" style="margin:0 0 10px;">
+      <span id="tasa-explicacion">De cada sol que vence, históricamente el <b><span class="tasa-inline">13.38%</span></b> no se paga a tiempo y entra en mora — esa es la única constante del calendario. El resto de la meta depende 100% de las curvas de arriba.</span>
+    </p>
+    <div class="card" style="padding-bottom:16px;">
+      <div id="tabla-agosto"></div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 8px;">4. La meta resultante, día a día — proyectado vs. real al corte</h3>
+    <div class="card"><div id="chart-trayectoria"></div></div>
+    <div class="statrow" id="agosto-resumen" style="margin-top:14px;"></div>
+  </section>
+
+  <footer class="foot">
+    Generado 2026-08-19 a partir de <code>datos_artifact_julio_agosto.json</code>
+    (<code>armar_artifact_julio_agosto.py</code>). Fuente completa: <code>cierre_julio.sql</code>,
+    <code>meta_agosto.py</code>, <code>meta_agosto_capital_asegurado.py</code>,
+    <code>enfoque_capital_asegurado.md</code>, <code>guia_tecnica_recupero.md</code>. Metodología
+    y decisiones en <code>DECISIONES.md</code> / <code>CLAUDE.md</code> del repo REBAJE_DIARIO.
+  </footer>
+
+</div>
+
+<script id="data-json" type="application/json">
+{"curvas":{"recupero":{"stock":{"a. 1-8":{"a. avance <10%":[[1,1.518],[2,2.662],[3,3.428],[4,4.035],[5,4.412],[6,4.649],[7,4.999],[8,5.225],[9,5.432],[10,5.581],[11,5.826],[12,6.0],[13,6.084],[14,6.203],[15,6.352],[16,6.533],[17,6.616],[18,6.765],[19,6.857],[20,7.004],[21,7.087],[22,7.13],[23,7.262],[24,7.407],[25,7.554],[26,7.935],[27,8.472],[28,8.857],[29,9.455],[30,9.996],[31,10.251]],"b. avance 10-40%":[[1,2.439],[2,4.335],[3,5.601],[4,6.25],[5,6.875],[6,7.312],[7,7.617],[8,7.965],[9,8.29],[10,8.44],[11,8.693],[12,8.869],[13,9.273],[14,9.417],[15,9.627],[16,9.777],[17,9.978],[18,10.153],[19,10.4],[20,10.684],[21,10.94],[22,11.319],[23,11.595],[24,11.823],[25,12.219],[26,12.654],[27,13.233],[28,13.977],[29,14.66],[30,15.487],[31,15.919]],"c. avance 40-70%":[[1,6.053],[2,10.762],[3,13.459],[4,15.219],[5,16.893],[6,18.306],[7,19.218],[8,20.248],[9,20.955],[10,21.48],[11,22.034],[12,22.418],[13,22.726],[14,23.1],[15,23.582],[16,23.888],[17,24.165],[18,24.397],[19,24.843],[20,25.415],[21,25.698],[22,26.169],[23,26.666],[24,27.266],[25,27.995],[26,28.98],[27,29.873],[28,30.934],[29,32.035],[30,33.895],[31,34.691]],"d. avance 70%+":[[1,12.165],[2,21.936],[3,27.897],[4,31.814],[5,34.492],[6,37.141],[7,38.375],[8,40.761],[9,42.674],[10,44.439],[11,46.877],[12,48.317],[13,49.385],[14,50.321],[15,51.205],[16,51.795],[17,52.635],[18,53.507],[19,53.98],[20,55.044],[21,56.081],[22,56.706],[23,57.537],[24,58.539],[25,59.159],[26,60.132],[27,61.501],[28,62.83],[29,64.68],[30,66.662],[31,67.583]]},"b. 9-15":{"a. avance <10%":[[1,0.498],[2,0.855],[3,1.069],[4,1.268],[5,1.47],[6,1.642],[7,1.75],[8,1.863],[9,2.07],[10,2.937],[11,3.087],[12,3.189],[13,3.319],[14,3.393],[15,3.558],[16,3.685],[17,3.838],[18,3.964],[19,4.156],[20,4.56],[21,4.715],[22,4.85],[23,5.031],[24,5.272],[25,5.543],[26,5.681],[27,5.784],[28,5.834],[29,6.263],[30,6.541],[31,6.686]],"b. avance 10-40%":[[1,0.94],[2,1.823],[3,2.36],[4,2.73],[5,3.357],[6,3.825],[7,4.042],[8,4.268],[9,4.498],[10,4.888],[11,5.092],[12,5.301],[13,5.618],[14,5.857],[15,6.327],[16,6.747],[17,7.348],[18,7.763],[19,8.002],[20,8.74],[21,9.253],[22,9.494],[23,9.786],[24,10.159],[25,10.587],[26,10.978],[27,11.3],[28,11.443],[29,11.801],[30,12.035],[31,12.193]],"c. avance 40-70%":[[1,2.811],[2,4.631],[3,5.941],[4,6.933],[5,8.663],[6,10.126],[7,10.939],[8,12.04],[9,13.601],[10,14.154],[11,14.647],[12,15.03],[13,15.89],[14,16.71],[15,17.211],[16,17.621],[17,18.627],[18,19.468],[19,20.151],[20,20.976],[21,21.717],[22,22.543],[23,23.383],[24,23.813],[25,24.269],[26,24.649],[27,25.217],[28,26.023],[29,26.316],[30,27.167],[31,27.537]],"d. avance 70%+":[[1,6.13],[2,9.726],[3,13.977],[4,16.044],[5,19.974],[6,22.311],[7,25.269],[8,26.72],[9,28.029],[10,28.102],[11,29.285],[12,29.89],[13,31.328],[14,34.082],[15,36.406],[16,38.042],[17,39.465],[18,40.321],[19,41.618],[20,44.197],[21,44.77],[22,46.593],[23,47.78],[24,50.368],[25,51.223],[26,51.768],[27,52.746],[28,53.867],[29,54.081],[30,55.076],[31,56.388]]},"c. 16-30":{"a. avance <10%":[[1,0.22],[2,0.362],[3,0.458],[4,0.586],[5,0.833],[6,0.952],[7,1.027],[8,1.137],[9,1.413],[10,1.51],[11,1.68],[12,1.74],[13,1.827],[14,1.894],[15,1.994],[16,2.081],[17,2.15],[18,2.253],[19,2.324],[20,2.362],[21,2.457],[22,2.505],[23,2.606],[24,2.647],[25,2.698],[26,2.758],[27,2.822],[28,2.83],[29,2.884],[30,2.942],[31,2.978]],"b. avance 10-40%":[[1,0.477],[2,0.786],[3,1.124],[4,1.377],[5,1.763],[6,2.346],[7,2.536],[8,2.802],[9,2.992],[10,3.39],[11,3.721],[12,4.07],[13,4.252],[14,4.471],[15,4.704],[16,5.058],[17,5.332],[18,5.432],[19,5.649],[20,5.807],[21,5.995],[22,6.171],[23,6.264],[24,6.391],[25,7.014],[26,7.371],[27,7.505],[28,7.668],[29,7.773],[30,7.906],[31,8.014]],"c. avance 40-70%":[[1,1.519],[2,3.209],[3,3.982],[4,5.097],[5,6.176],[6,6.89],[7,7.56],[8,8.177],[9,8.706],[10,9.054],[11,9.841],[12,10.478],[13,11.602],[14,12.178],[15,13.144],[16,13.811],[17,14.434],[18,14.843],[19,15.535],[20,15.892],[21,16.201],[22,16.509],[23,17.097],[24,17.913],[25,18.586],[26,18.798],[27,19.292],[28,19.848],[29,20.298],[30,20.691],[31,20.833]],"d. avance 70%+":[[1,4.514],[2,7.243],[3,8.709],[4,10.472],[5,13.124],[6,13.915],[7,16.409],[8,19.416],[9,21.288],[10,22.705],[11,24.207],[12,25.587],[13,28.117],[14,28.893],[15,30.009],[16,30.895],[17,31.161],[18,33.741],[19,34.772],[20,35.763],[21,37.099],[22,37.912],[23,38.458],[24,38.988],[25,39.521],[26,39.94],[27,42.1],[28,43.073],[29,43.796],[30,44.791],[31,45.499]]}},"nuevos":{"a. avance <10%":[[1,3.13],[2,4.784],[3,5.952],[4,6.684],[5,7.122],[6,7.564],[7,7.798],[8,8.063],[9,8.266],[10,8.45],[11,8.65],[12,8.787],[13,8.89],[14,9.028],[15,9.162],[16,9.297],[17,9.413],[18,9.503],[19,9.615],[20,9.726],[21,9.801],[22,9.887],[23,10.018],[24,10.237],[25,10.41],[26,10.634],[27,11.042],[28,11.473],[29,12.282],[30,13.369],[31,14.362]],"b. avance 10-40%":[[1,3.644],[2,5.697],[3,7.433],[4,8.416],[5,9.044],[6,9.649],[7,10.067],[8,10.591],[9,10.966],[10,11.289],[11,11.525],[12,11.715],[13,11.929],[14,12.111],[15,12.326],[16,12.486],[17,12.669],[18,12.82],[19,12.937],[20,13.108],[21,13.221],[22,13.378],[23,13.55],[24,13.794],[25,14.081],[26,14.39],[27,14.956],[28,15.631],[29,16.818],[30,18.32],[31,19.8]],"c. avance 40-70%":[[1,8.704],[2,13.658],[3,17.667],[4,19.752],[5,21.315],[6,22.688],[7,23.734],[8,24.993],[9,25.769],[10,26.475],[11,27.014],[12,27.499],[13,27.918],[14,28.326],[15,28.737],[16,29.029],[17,29.283],[18,29.625],[19,29.89],[20,30.186],[21,30.466],[22,30.712],[23,31.014],[24,31.434],[25,31.832],[26,32.351],[27,33.206],[28,34.184],[29,35.895],[30,38.365],[31,40.876]],"d. avance 70%+":[[1,16.07],[2,26.155],[3,34.371],[4,38.864],[5,42.171],[6,45.429],[7,47.383],[8,49.727],[9,51.795],[10,53.339],[11,54.408],[12,55.286],[13,56.424],[14,57.503],[15,58.222],[16,59.149],[17,59.818],[18,60.302],[19,60.931],[20,61.408],[21,61.788],[22,62.32],[23,62.9],[24,63.548],[25,64.001],[26,64.69],[27,65.975],[28,66.99],[29,68.933],[30,71.572],[31,74.189]]}},"asegurado":{"stock":{"a. 1-8":{"a. avance <10%":[[1,12.56],[2,27.554],[3,34.975],[4,40.7],[5,45.236],[6,47.88],[7,50.458],[8,52.47],[9,54.372],[10,55.79],[11,57.304],[12,58.635],[13,59.843],[14,60.802],[15,62.366],[16,63.753],[17,64.582],[18,65.149],[19,65.728],[20,66.649],[21,67.072],[22,67.366],[23,68.026],[24,68.317],[25,68.895],[26,69.375],[27,69.813],[28,70.143],[29,70.89],[30,71.679],[31,71.823]],"b. avance 10-40%":[[1,14.249],[2,30.624],[3,39.884],[4,46.036],[5,51.123],[6,54.153],[7,56.31],[8,58.739],[9,60.858],[10,62.239],[11,63.876],[12,65.523],[13,67.025],[14,68.547],[15,69.881],[16,71.226],[17,72.101],[18,72.825],[19,74.076],[20,75.177],[21,76.093],[22,77.197],[23,77.681],[24,78.203],[25,78.818],[26,79.522],[27,80.11],[28,80.94],[29,81.967],[30,82.743],[31,82.971]],"c. avance 40-70%":[[1,15.418],[2,32.788],[3,42.404],[4,48.446],[5,54.22],[6,58.321],[7,60.951],[8,63.227],[9,65.81],[10,67.478],[11,69.236],[12,70.623],[13,71.745],[14,72.793],[15,73.992],[16,74.82],[17,75.717],[18,76.405],[19,77.329],[20,78.771],[21,79.238],[22,79.985],[23,80.8],[24,81.689],[25,82.294],[26,82.831],[27,83.632],[28,84.298],[29,85.227],[30,85.95],[31,86.24]],"d. avance 70%+":[[1,13.779],[2,30.304],[3,40.479],[4,47.523],[5,52.187],[6,56.308],[7,58.627],[8,61.915],[9,65.086],[10,67.485],[11,70.896],[12,73.686],[13,75.237],[14,76.871],[15,78.292],[16,79.192],[17,80.324],[18,81.131],[19,81.941],[20,83.223],[21,84.573],[22,85.034],[23,86.109],[24,87.282],[25,87.64],[26,88.446],[27,89.093],[28,89.787],[29,90.575],[30,90.948],[31,91.073]]},"b. 9-15":{"a. avance <10%":[[1,5.752],[2,9.558],[3,12.208],[4,14.347],[5,17.207],[6,18.793],[7,19.799],[8,22.166],[9,22.837],[10,24.569],[11,26.403],[12,27.26],[13,28.117],[14,28.984],[15,30.211],[16,31.414],[17,33.305],[18,34.613],[19,35.9],[20,36.984],[21,37.678],[22,38.064],[23,38.403],[24,38.77],[25,39.014],[26,39.265],[27,39.443],[28,39.619],[29,40.367],[30,40.567],[31,41.196]],"b. avance 10-40%":[[1,6.26],[2,12.43],[3,16.105],[4,19.213],[5,22.916],[6,26.87],[7,27.995],[8,29.81],[9,31.512],[10,33.715],[11,35.455],[12,37.019],[13,38.716],[14,40.821],[15,43.108],[16,44.632],[17,46.007],[18,47.365],[19,48.437],[20,49.242],[21,50.79],[22,51.568],[23,53.284],[24,54.295],[25,55.42],[26,56.267],[27,56.738],[28,57.116],[29,57.872],[30,58.285],[31,58.644]],"c. avance 40-70%":[[1,9.262],[2,15.626],[3,20.101],[4,22.994],[5,28.072],[6,32.088],[7,34.375],[8,37.873],[9,40.927],[10,41.965],[11,43.696],[12,45.049],[13,47.679],[14,50.195],[15,51.531],[16,53.092],[17,54.651],[18,56.888],[19,57.647],[20,58.177],[21,58.77],[22,59.987],[23,61.458],[24,61.843],[25,62.477],[26,63.034],[27,63.282],[28,64.278],[30,64.506],[31,64.604]],"d. avance 70%+":[[1,9.797],[2,14.822],[3,22.235],[4,25.65],[5,31.252],[6,34.875],[7,39.296],[8,41.206],[9,43.342],[10,43.571],[11,44.697],[12,45.486],[13,47.41],[14,50.531],[15,53.011],[16,54.899],[17,56.127],[18,57.489],[19,59.506],[20,62.693],[21,64.161],[22,67.963],[23,68.722],[24,69.975],[25,71.145],[26,71.616],[27,72.489],[28,73.456],[29,73.524],[30,74.142],[31,74.554]]},"c. 16-30":{"a. avance <10%":[[1,2.573],[2,4.338],[3,5.533],[4,6.793],[5,8.514],[6,9.35],[7,9.755],[8,10.973],[9,12.079],[10,13.185],[11,13.763],[12,14.304],[13,14.81],[14,15.335],[15,15.83],[16,17.083],[17,18.017],[18,18.512],[19,18.863],[20,19.342],[21,19.975],[22,20.219],[23,20.805],[24,21.087],[25,21.208],[26,21.781],[27,22.096],[29,22.32],[30,22.489],[31,22.562]],"b. avance 10-40%":[[1,3.645],[2,5.881],[3,8.341],[4,10.318],[5,12.478],[6,15.978],[7,17.347],[8,18.694],[9,20.042],[10,21.619],[11,23.242],[12,25.137],[13,26.217],[14,26.773],[15,28.015],[16,29.443],[17,30.565],[18,31.168],[19,31.986],[20,32.443],[21,33.52],[22,34.313],[23,34.644],[24,35.269],[25,36.161],[26,38.058],[27,38.507],[28,38.813],[29,38.958],[30,39.827],[31,40.621]],"c. avance 40-70%":[[1,5.08],[2,10.964],[3,13.823],[4,17.631],[5,21.077],[6,23.931],[7,26.972],[8,28.795],[9,30.317],[10,31.265],[11,32.471],[12,33.876],[13,35.413],[14,37.031],[15,39.989],[16,41.823],[17,42.828],[18,43.653],[19,44.731],[20,45.602],[21,46.248],[22,46.502],[23,47.435],[24,48.329],[25,48.775],[26,49.057],[27,49.591],[28,50.451],[29,51.329],[30,51.856],[31,52.002]],"d. avance 70%+":[[1,6.728],[2,9.97],[3,12.76],[4,15.418],[5,19.106],[6,20.532],[7,23.726],[8,27.358],[9,29.663],[10,30.868],[11,31.97],[12,33.641],[13,36.661],[14,37.7],[15,38.778],[16,40.318],[17,40.724],[18,43.733],[19,44.818],[20,46.134],[21,47.881],[22,48.892],[23,49.734],[24,50.474],[25,50.801],[26,50.967],[27,53.439],[28,55.169],[29,55.892],[30,56.187],[31,56.331]]}},"nuevos":{"a. avance <10%":[[1,26.506],[2,40.262],[3,50.151],[4,55.523],[5,59.154],[6,62.16],[7,64.404],[8,67.104],[9,68.904],[10,70.544],[11,71.791],[12,72.924],[13,73.982],[14,74.896],[15,75.793],[16,76.491],[17,77.013],[18,77.435],[19,77.977],[20,78.429],[21,78.731],[22,78.999],[23,79.276],[24,79.656],[25,80.06],[26,80.295],[27,80.59],[28,80.902],[29,81.424],[30,81.848],[31,82.069]],"b. avance 10-40%":[[1,24.741],[2,38.956],[3,50.196],[4,56.345],[5,60.723],[6,64.645],[7,67.24],[8,70.438],[9,72.751],[10,74.511],[11,75.949],[12,77.181],[13,78.368],[14,79.566],[15,80.795],[16,81.6],[17,82.25],[18,82.897],[19,83.449],[20,84.018],[21,84.392],[22,84.856],[23,85.288],[24,85.848],[25,86.363],[26,86.743],[27,87.237],[28,87.758],[29,88.26],[30,88.656],[31,88.925]],"c. avance 40-70%":[[1,24.752],[2,39.467],[3,51.019],[4,57.321],[5,62.022],[6,66.35],[7,69.604],[8,73.23],[9,75.528],[10,77.574],[11,79.05],[12,80.484],[13,81.754],[14,82.925],[15,83.879],[16,84.725],[17,85.521],[18,86.14],[19,86.705],[20,87.267],[21,87.716],[22,88.215],[23,88.607],[24,89.225],[25,89.653],[26,89.975],[27,90.414],[28,90.772],[29,91.264],[30,91.682],[31,91.878]],"d. avance 70%+":[[1,23.371],[2,37.389],[3,49.391],[4,55.868],[5,60.514],[6,65.212],[7,68.345],[8,71.615],[9,74.715],[10,76.717],[11,78.36],[12,79.699],[13,81.362],[14,83.057],[15,84.206],[16,85.438],[17,86.401],[18,87.169],[19,87.987],[20,88.635],[21,89.079],[22,89.684],[23,90.118],[24,90.618],[25,90.816],[26,91.169],[27,91.675],[28,92.013],[29,92.476],[30,92.822],[31,93.017]]}}},"julio":{"stock_recup":{"a. 1-8":{"a. avance <10%":435607.0,"b. avance 10-40%":584314.0,"c. avance 40-70%":230976.0,"d. avance 70%+":45357.0},"b. 9-15":{"a. avance <10%":319360.0,"b. avance 10-40%":309239.0,"c. avance 40-70%":115577.0,"d. avance 70%+":22503.0},"c. 16-30":{"a. avance <10%":387518.0,"b. avance 10-40%":350919.0,"c. avance 40-70%":121277.0,"d. avance 70%+":21311.0}},"stock_aseg":{"a. 1-8":{"a. avance <10%":1111310.0,"b. avance 10-40%":1305997.0,"c. avance 40-70%":497599.0,"d. avance 70%+":93448.0},"b. 9-15":{"a. avance <10%":319360.0,"b. avance 10-40%":309239.0,"c. avance 40-70%":115577.0,"d. avance 70%+":22503.0},"c. 16-30":{"a. avance <10%":387518.0,"b. avance 10-40%":350919.0,"c. avance 40-70%":121277.0,"d. avance 70%+":21311.0}},"calendario":{"2026-07-01":{"a. avance <10%":1488908.0,"b. avance 10-40%":1705999.0,"c. avance 40-70%":453551.0,"d. avance 70%+":104487.0},"2026-07-02":{"a. avance <10%":832370.0,"b. avance 10-40%":1510639.0,"c. avance 40-70%":401889.0,"d. avance 70%+":75073.0},"2026-07-03":{"a. avance <10%":675678.0,"b. avance 10-40%":975735.0,"c. avance 40-70%":328790.0,"d. avance 70%+":47086.0},"2026-07-04":{"a. avance <10%":863261.0,"b. avance 10-40%":1230547.0,"c. avance 40-70%":352124.0,"d. avance 70%+":47532.0},"2026-07-06":{"a. avance <10%":1887565.0,"b. avance 10-40%":2958027.0,"c. avance 40-70%":913123.0,"d. avance 70%+":135991.0},"2026-07-07":{"a. avance <10%":577410.0,"b. avance 10-40%":1147285.0,"c. avance 40-70%":330612.0,"d. avance 70%+":53950.0},"2026-07-08":{"a. avance <10%":605004.0,"b. avance 10-40%":1060223.0,"c. avance 40-70%":370036.0,"d. avance 70%+":50769.0},"2026-07-09":{"a. avance <10%":710704.0,"b. avance 10-40%":1131285.0,"c. avance 40-70%":305427.0,"d. avance 70%+":41103.0},"2026-07-10":{"a. avance <10%":744530.0,"b. avance 10-40%":624308.0,"c. avance 40-70%":185317.0,"d. avance 70%+":27599.0},"2026-07-11":{"a. avance <10%":655352.0,"b. avance 10-40%":650126.0,"c. avance 40-70%":210495.0,"d. avance 70%+":31352.0},"2026-07-13":{"a. avance <10%":1491861.0,"b. avance 10-40%":1274588.0,"c. avance 40-70%":385510.0,"d. avance 70%+":68209.0},"2026-07-14":{"a. avance <10%":806771.0,"b. avance 10-40%":620933.0,"c. avance 40-70%":264868.0,"d. avance 70%+":30509.0},"2026-07-15":{"a. avance <10%":2410647.0,"b. avance 10-40%":1872466.0,"c. avance 40-70%":619762.0,"d. avance 70%+":74199.0},"2026-07-16":{"a. avance <10%":1010046.0,"b. avance 10-40%":829172.0,"c. avance 40-70%":299567.0,"d. avance 70%+":36083.0},"2026-07-17":{"a. avance <10%":921322.0,"b. avance 10-40%":810865.0,"c. avance 40-70%":286931.0,"d. avance 70%+":31353.0},"2026-07-18":{"a. avance <10%":916860.0,"b. avance 10-40%":766514.0,"c. avance 40-70%":278826.0,"d. avance 70%+":38863.0},"2026-07-20":{"a. avance <10%":2010928.0,"b. avance 10-40%":1739795.0,"c. avance 40-70%":628196.0,"d. avance 70%+":91883.0},"2026-07-21":{"a. avance <10%":791707.0,"b. avance 10-40%":914779.0,"c. avance 40-70%":333994.0,"d. avance 70%+":32595.0},"2026-07-22":{"a. avance <10%":853436.0,"b. avance 10-40%":874176.0,"c. avance 40-70%":295228.0,"d. avance 70%+":37472.0},"2026-07-24":{"a. avance <10%":1803990.0,"b. avance 10-40%":1686458.0,"c. avance 40-70%":648048.0,"d. avance 70%+":76923.0},"2026-07-25":{"a. avance <10%":2450908.0,"b. avance 10-40%":1885787.0,"c. avance 40-70%":590803.0,"d. avance 70%+":90897.0},"2026-07-27":{"a. avance <10%":1989111.0,"b. avance 10-40%":1733335.0,"c. avance 40-70%":648728.0,"d. avance 70%+":86761.0},"2026-07-30":{"a. avance <10%":7257818.0,"b. avance 10-40%":5022982.0,"c. avance 40-70%":1822899.0,"d. avance 70%+":264048.0},"2026-07-31":{"a. avance <10%":50185.0,"b. avance 10-40%":61300.0,"c. avance 40-70%":31687.0,"d. avance 70%+":4764.0}},"comparacion":{"asegurado":{"asignado":{"stock":4656058.0,"nuevos":9567714.05,"total":14223772.05},"proyectado":{"stock":3105418,"nuevos":7200813,"total":10306231},"real":{"stock":3137199.21,"nuevos":7652162.98,"total":10789362.19}},"recupero":{"asignado":{"stock":2943958.0,"nuevos":13116158.27,"total":16060116.27},"proyectado":{"stock":426651,"nuevos":1349523,"total":1776174},"real":{"stock":435390.98,"nuevos":1653520.25,"total":2088911.23}}}},"agosto":{"stock_recup":{"a. 1-8":{"a. avance <10%":1138797.25,"b. avance 10-40%":1134409.39,"c. avance 40-70%":514804.28,"d. avance 70%+":85644.33},"b. 9-15":{"a. avance <10%":192370.22,"b. avance 10-40%":250160.48,"c. avance 40-70%":124336.02,"d. avance 70%+":24846.27},"c. 16-30":{"a. avance <10%":438208.6,"b. avance 10-40%":378804.0,"c. avance 40-70%":142762.86,"d. avance 70%+":27698.01}},"stock_aseg":{"a. 1-8":{"a. avance <10%":1138797.25,"b. avance 10-40%":1140103.49,"c. avance 40-70%":517995.68,"d. avance 70%+":86575.66},"b. 9-15":{"a. avance <10%":192370.22,"b. avance 10-40%":250160.48,"c. avance 40-70%":124336.02,"d. avance 70%+":24846.27},"c. 16-30":{"a. avance <10%":438208.6,"b. avance 10-40%":378804.0,"c. avance 40-70%":142762.86,"d. avance 70%+":27698.01}},"calendario":{"2026-08-01":{"a. avance <10%":1276347.64,"b. avance 10-40%":1605156.75,"c. avance 40-70%":488824.64,"d. avance 70%+":82100.35},"2026-08-03":{"a. avance <10%":1713507.49,"b. avance 10-40%":2400731.33,"c. avance 40-70%":724453.67,"d. avance 70%+":93736.67},"2026-08-04":{"a. avance <10%":874170.07,"b. avance 10-40%":1254420.97,"c. avance 40-70%":378430.17,"d. avance 70%+":45846.18},"2026-08-05":{"a. avance <10%":1352232.45,"b. avance 10-40%":1829544.94,"c. avance 40-70%":558922.56,"d. avance 70%+":85178.37},"2026-08-07":{"a. avance <10%":1206759.46,"b. avance 10-40%":2171787.79,"c. avance 40-70%":683094.76,"d. avance 70%+":101615.43},"2026-08-08":{"a. avance <10%":664534.36,"b. avance 10-40%":1020344.04,"c. avance 40-70%":364413.57,"d. avance 70%+":61511.94},"2026-08-10":{"a. avance <10%":1327840.55,"b. avance 10-40%":2080945.98,"c. avance 40-70%":711526.69,"d. avance 70%+":86417.29},"2026-08-11":{"a. avance <10%":582298.98,"b. avance 10-40%":955541.13,"c. avance 40-70%":297607.07,"d. avance 70%+":44951.35},"2026-08-12":{"a. avance <10%":611487.06,"b. avance 10-40%":826353.2,"c. avance 40-70%":265018.31,"d. avance 70%+":41586.39},"2026-08-13":{"a. avance <10%":591951.09,"b. avance 10-40%":1008795.32,"c. avance 40-70%":303073.8,"d. avance 70%+":36246.89},"2026-08-14":{"a. avance <10%":474044.17,"b. avance 10-40%":837866.38,"c. avance 40-70%":305650.71,"d. avance 70%+":52622.42},"2026-08-15":{"a. avance <10%":1960384.99,"b. avance 10-40%":2217246.69,"c. avance 40-70%":776200.15,"d. avance 70%+":117966.03},"2026-08-17":{"a. avance <10%":1479487.11,"b. avance 10-40%":2075495.87,"c. avance 40-70%":677474.34,"d. avance 70%+":111954.29},"2026-08-18":{"a. avance <10%":830514.68,"b. avance 10-40%":988123.54,"c. avance 40-70%":311067.21,"d. avance 70%+":46471.89},"2026-08-19":{"a. avance <10%":742517.05,"b. avance 10-40%":816053.86,"c. avance 40-70%":280283.92,"d. avance 70%+":49634.18},"2026-08-20":{"a. avance <10%":1069818.33,"b. avance 10-40%":1196998.55,"c. avance 40-70%":371132.22,"d. avance 70%+":70338.73},"2026-08-21":{"a. avance <10%":791710.17,"b. avance 10-40%":1033429.26,"c. avance 40-70%":340072.64,"d. avance 70%+":51893.3},"2026-08-22":{"a. avance <10%":820339.74,"b. avance 10-40%":883250.63,"c. avance 40-70%":319373.3,"d. avance 70%+":54445.48},"2026-08-24":{"a. avance <10%":1811849.88,"b. avance 10-40%":1780850.14,"c. avance 40-70%":704232.01,"d. avance 70%+":96512.68},"2026-08-25":{"a. avance <10%":2671764.41,"b. avance 10-40%":2150422.86,"c. avance 40-70%":648218.3,"d. avance 70%+":93480.96},"2026-08-26":{"a. avance <10%":1036930.41,"b. avance 10-40%":926469.61,"c. avance 40-70%":347633.87,"d. avance 70%+":50375.09},"2026-08-27":{"a. avance <10%":1214665.27,"b. avance 10-40%":938508.36,"c. avance 40-70%":327574.73,"d. avance 70%+":47237.68},"2026-08-28":{"a. avance <10%":1069080.61,"b. avance 10-40%":1039919.22,"c. avance 40-70%":462818.02,"d. avance 70%+":45811.71},"2026-08-29":{"a. avance <10%":893205.19,"b. avance 10-40%":670596.96,"c. avance 40-70%":197456.83,"d. avance 70%+":39137.35},"2026-08-31":{"a. avance <10%":5206329.57,"b. avance 10-40%":3233919.71,"c. avance 40-70%":806750.15,"d. avance 70%+":144595.94}},"corte_real":"2026-08-18","tasa_no_paga":13.38,"proyeccion_diaria":{"recupero":[{"dia":1,"fecha":"2026-08-01","stock":101052.41,"nuevos":0.0,"total":101052.41},{"dia":2,"fecha":"2026-08-02","stock":179212.49,"nuevos":20624.45,"total":199836.93},{"dia":3,"fecha":"2026-08-03","stock":228937.53,"nuevos":32203.39,"total":261140.92},{"dia":4,"fecha":"2026-08-04","stock":262282.39,"nuevos":70775.1,"total":333057.48},{"dia":5,"fecha":"2026-08-05","stock":294481.18,"nuevos":107608.0,"total":402089.18},{"dia":6,"fecha":"2026-08-06","stock":319550.03,"nuevos":155680.31,"total":475230.34},{"dia":7,"fecha":"2026-08-07","stock":337939.73,"nuevos":186089.23,"total":524028.96},{"dia":8,"fecha":"2026-08-08","stock":357522.69,"nuevos":233142.48,"total":590665.17},{"dia":9,"fecha":"2026-08-09","stock":375287.48,"nuevos":276709.13,"total":651996.61},{"dia":10,"fecha":"2026-08-10","stock":389071.43,"nuevos":307260.06,"total":696331.5},{"dia":11,"fecha":"2026-08-11","stock":404915.72,"nuevos":356441.54,"total":761357.26},{"dia":12,"fecha":"2026-08-12","stock":416326.08,"nuevos":398709.81,"total":815035.89},{"dia":13,"fecha":"2026-08-13","stock":430211.71,"nuevos":441638.72,"total":871850.43},{"dia":14,"fecha":"2026-08-14","stock":440531.92,"nuevos":482227.33,"total":922759.25},{"dia":15,"fecha":"2026-08-15","stock":453551.98,"nuevos":521818.61,"total":975370.59},{"dia":16,"fecha":"2026-08-16","stock":464526.5,"nuevos":581493.13,"total":1046019.63},{"dia":17,"fecha":"2026-08-17","stock":475602.84,"nuevos":620545.07,"total":1096147.91},{"dia":18,"fecha":"2026-08-18","stock":485893.6,"nuevos":678822.74,"total":1164716.34},{"dia":19,"fecha":"2026-08-19","stock":496989.73,"nuevos":729242.92,"total":1226232.65},{"dia":20,"fecha":"2026-08-20","stock":511580.52,"nuevos":778259.35,"total":1289839.87},{"dia":21,"fecha":"2026-08-21","stock":522359.66,"nuevos":829904.74,"total":1352264.4},{"dia":22,"fecha":"2026-08-22","stock":533993.24,"nuevos":878981.26,"total":1412974.5},{"dia":23,"fecha":"2026-08-23","stock":546101.27,"nuevos":929111.64,"total":1475212.91},{"dia":24,"fecha":"2026-08-24","stock":558832.83,"nuevos":964626.01,"total":1523458.83},{"dia":25,"fecha":"2026-08-25","stock":575346.32,"nuevos":1020795.79,"total":1596142.11},{"dia":26,"fecha":"2026-08-26","stock":594409.41,"nuevos":1090506.45,"total":1684915.86},{"dia":27,"fecha":"2026-08-27","stock":616907.12,"nuevos":1155276.6,"total":1772183.71},{"dia":28,"fecha":"2026-08-28","stock":639782.14,"nuevos":1219238.15,"total":1859020.29},{"dia":29,"fecha":"2026-08-29","stock":665207.96,"nuevos":1282172.27,"total":1947380.23},{"dia":30,"fecha":"2026-08-30","stock":696043.36,"nuevos":1344521.95,"total":2040565.31},{"dia":31,"fecha":"2026-08-31","stock":711160.47,"nuevos":1397274.98,"total":2108435.46}],"asegurado":[{"dia":1,"fecha":"2026-08-01","stock":472153.88,"nuevos":0.0,"total":472153.88},{"dia":2,"fecha":"2026-08-02","stock":991299.92,"nuevos":117128.92,"total":1108428.84},{"dia":3,"fecha":"2026-08-03","stock":1281109.82,"nuevos":182298.2,"total":1463408.02},{"dia":4,"fecha":"2026-08-04","stock":1489359.15,"nuevos":399311.86,"total":1888671.0},{"dia":5,"fecha":"2026-08-05","stock":1677094.76,"nuevos":606189.12,"total":2283283.88},{"dia":6,"fecha":"2026-08-06","stock":1806787.33,"nuevos":874744.62,"total":2681531.95},{"dia":7,"fecha":"2026-08-07","stock":1897246.76,"nuevos":1039901.15,"total":2937147.91},{"dia":8,"fecha":"2026-08-08","stock":1990454.75,"nuevos":1295339.87,"total":3285794.62},{"dia":9,"fecha":"2026-08-09","stock":2075039.24,"nuevos":1528458.93,"total":3603498.17},{"dia":10,"fecha":"2026-08-10","stock":2140347.2,"nuevos":1690026.4,"total":3830373.6},{"dia":11,"fecha":"2026-08-11","stock":2209332.22,"nuevos":1952304.61,"total":4161636.83},{"dia":12,"fecha":"2026-08-12","stock":2272324.3,"nuevos":2180032.6,"total":4452356.9},{"dia":13,"fecha":"2026-08-13","stock":2329341.1,"nuevos":2409116.28,"total":4738457.39},{"dia":14,"fecha":"2026-08-14","stock":2382299.69,"nuevos":2624995.17,"total":5007294.86},{"dia":15,"fecha":"2026-08-15","stock":2444514.73,"nuevos":2833616.93,"total":5278131.66},{"dia":16,"fecha":"2026-08-16","stock":2503193.96,"nuevos":3155903.58,"total":5659097.54},{"dia":17,"fecha":"2026-08-17","stock":2547448.16,"nuevos":3362442.88,"total":5909891.04},{"dia":18,"fecha":"2026-08-18","stock":2581919.7,"nuevos":3672090.15,"total":6254009.85},{"dia":19,"fecha":"2026-08-19","stock":2621342.19,"nuevos":3941065.46,"total":6562407.65},{"dia":20,"fecha":"2026-08-20","stock":2663950.49,"nuevos":4200206.1,"total":6864156.6},{"dia":21,"fecha":"2026-08-21","stock":2697368.06,"nuevos":4471567.54,"total":7168935.61},{"dia":22,"fecha":"2026-08-22","stock":2727433.82,"nuevos":4730812.06,"total":7458245.89},{"dia":23,"fecha":"2026-08-23","stock":2757969.73,"nuevos":4991499.27,"total":7749469.0},{"dia":24,"fecha":"2026-08-24","stock":2781965.16,"nuevos":5168907.36,"total":7950872.52},{"dia":25,"fecha":"2026-08-25","stock":2808002.0,"nuevos":5459353.13,"total":8267355.13},{"dia":26,"fecha":"2026-08-26","stock":2838530.7,"nuevos":5839706.89,"total":8678237.59},{"dia":27,"fecha":"2026-08-27","stock":2861505.9,"nuevos":6178520.24,"total":9040026.14},{"dia":28,"fecha":"2026-08-28","stock":2884406.38,"nuevos":6502496.24,"total":9386902.62},{"dia":29,"fecha":"2026-08-29","stock":2916448.06,"nuevos":6809467.9,"total":9725915.96},{"dia":30,"fecha":"2026-08-30","stock":2945069.8,"nuevos":7089709.05,"total":10034778.85},{"dia":31,"fecha":"2026-08-31","stock":2956827.72,"nuevos":7288867.72,"total":10245695.45}]},"real_a_hoy":{"asegurado":{"stock":2605896.73,"nuevos":4189176.85,"total":6795073.58},"recupero":{"stock":447341.09,"nuevos":699769.22,"total":1147110.31}}}}
+</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data-json').textContent);
+
+const AVANCES = ["a. avance <10%","b. avance 10-40%","c. avance 40-70%","d. avance 70%+"];
+const AVANCE_LABEL = {"a. avance <10%":"<10%","b. avance 10-40%":"10-40%","c. avance 40-70%":"40-70%","d. avance 70%+":"70%+"};
+const AVANCE_COLOR = {"a. avance <10%":"var(--av1)","b. avance 10-40%":"var(--av2)","c. avance 40-70%":"var(--av3)","d. avance 70%+":"var(--av4)"};
+const TRAMOS = ["a. 1-8","b. 9-15","c. 16-30"];
+const TRAMO_LABEL = {"a. 1-8":"Tramo 1-8 días","b. 9-15":"Tramo 9-15 días","c. 16-30":"Tramo 16-30 días"};
+
+const fmtS = (v) => "S/ " + Math.round(v).toLocaleString("es-PE");
+const fmtPct = (v) => v.toFixed(1) + "%";
+const fmtPctSigned = (v) => (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
+
+let state = { enfoque: "asegurado" };
+
+// ---------- generic SVG helpers ----------
+function svgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+function resolveColor(v) {
+  if (v.startsWith("var(")) {
+    return getComputedStyle(document.documentElement).getPropertyValue(v.slice(4, -1)).trim();
+  }
+  return v;
+}
+
+// ---------- line chart (multi-series, hover crosshair) ----------
+function lineChart(container, opts) {
+  clear(container);
+  const W = opts.width || container.clientWidth || 520, H = opts.height || 220;
+  const M = { top: 10, right: 14, bottom: 26, left: 40 };
+  const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
+  const xMax = opts.xMax, yMax = opts.yMax;
+  const x = (d) => M.left + (d / xMax) * iw;
+  const y = (v) => M.top + ih - (v / yMax) * ih;
+
+  const wrapDiv = document.createElement("div");
+  wrapDiv.style.position = "relative";
+  const svg = svgEl("svg", { width: "100%", viewBox: `0 0 ${W} ${H}`, height: H });
+
+  // gridlines (y)
+  const ySteps = 4;
+  for (let i = 0; i <= ySteps; i++) {
+    const v = (yMax / ySteps) * i;
+    const gy = y(v);
+    svg.appendChild(svgEl("line", { x1: M.left, x2: W - M.right, y1: gy, y2: gy, class: "grid-line" }));
+    const t = svgEl("text", { x: M.left - 8, y: gy + 3, class: "axis-label", "text-anchor": "end" });
+    t.textContent = opts.yFmt ? opts.yFmt(v) : Math.round(v);
+    svg.appendChild(t);
+  }
+  // x axis ticks
+  const xTicks = opts.xTicks || [1, 8, 15, 22, xMax];
+  xTicks.forEach((d) => {
+    const t = svgEl("text", { x: x(d), y: H - 6, class: "axis-label", "text-anchor": "middle" });
+    t.textContent = opts.xFmt ? opts.xFmt(d) : d;
+    svg.appendChild(t);
+  });
+  svg.appendChild(svgEl("line", { x1: M.left, x2: W - M.right, y1: M.top + ih, y2: M.top + ih, class: "baseline" }));
+
+  // series lines
+  opts.series.forEach((s) => {
+    const pts = s.points;
+    const d = pts.map((p, i) => (i === 0 ? "M" : "L") + x(p[0]).toFixed(1) + "," + y(Math.min(p[1], yMax)).toFixed(1)).join(" ");
+    svg.appendChild(svgEl("path", { d, fill: "none", stroke: resolveColor(s.color), "stroke-width": s.width || 2, "stroke-linecap": "round", "stroke-dasharray": s.dashed ? "5,4" : "none" }));
+    if (s.markLast) {
+      const last = pts[pts.length - 1];
+      svg.appendChild(svgEl("circle", { cx: x(last[0]), cy: y(Math.min(last[1], yMax)), r: 3.5, fill: resolveColor(s.color) }));
+    }
+  });
+
+  // vertical marker (e.g. "hoy")
+  if (opts.markX) {
+    svg.appendChild(svgEl("line", { x1: x(opts.markX), x2: x(opts.markX), y1: M.top, y2: M.top + ih, stroke: "var(--ink-muted)", "stroke-width": 1, "stroke-dasharray": "3,3" }));
+    const t = svgEl("text", { x: x(opts.markX), y: M.top - 2, class: "axis-label", "text-anchor": "middle" });
+    t.textContent = opts.markLabel || "";
+    svg.appendChild(t);
+  }
+
+  // hover layer
+  const hoverLine = svgEl("line", { y1: M.top, y2: M.top + ih, stroke: "var(--ink-2)", "stroke-width": 1, opacity: 0 });
+  svg.appendChild(hoverLine);
+  const rect = svgEl("rect", { x: M.left, y: M.top, width: iw, height: ih, fill: "transparent" });
+  svg.appendChild(rect);
+  const tooltip = document.createElement("div");
+  tooltip.className = "tooltip"; tooltip.style.display = "none";
+  wrapDiv.appendChild(svg); wrapDiv.appendChild(tooltip);
+
+  rect.addEventListener("mousemove", (ev) => {
+    const bb = svg.getBoundingClientRect();
+    const px = ((ev.clientX - bb.left) / bb.width) * W;
+    const d = Math.max(1, Math.min(xMax, Math.round(((px - M.left) / iw) * xMax)));
+    hoverLine.setAttribute("x1", x(d)); hoverLine.setAttribute("x2", x(d)); hoverLine.setAttribute("opacity", 1);
+    let html = `<div class="t-title">${opts.xTooltipLabel ? opts.xTooltipLabel(d) : "Día " + d}</div>`;
+    opts.series.forEach((s) => {
+      const p = s.points.find((pp) => pp[0] === d) || s.points.filter((pp) => pp[0] <= d).slice(-1)[0];
+      if (!p) return;
+      html += `<div class="t-row"><span><span class="t-swatch" style="background:${resolveColor(s.color)}"></span>${s.label}</span><span>${opts.tooltipFmt ? opts.tooltipFmt(p[1]) : p[1]}</span></div>`;
+    });
+    tooltip.innerHTML = html;
+    tooltip.style.display = "block";
+    tooltip.style.left = (ev.clientX - bb.left) + "px";
+    tooltip.style.top = (ev.clientY - bb.top) + "px";
+  });
+  rect.addEventListener("mouseleave", () => { hoverLine.setAttribute("opacity", 0); tooltip.style.display = "none"; });
+
+  container.appendChild(wrapDiv);
+  return svg;
+}
+
+// ---------- stacked bar chart ----------
+function stackedBarChart(container, opts) {
+  clear(container);
+  const W = opts.width || container.clientWidth || 520, H = opts.height || 220;
+  const M = { top: 10, right: 10, bottom: 34, left: 54 };
+  const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
+  const cats = opts.categories;
+  const n = cats.length;
+  const gap = opts.gap != null ? opts.gap : 6;
+  const bw = Math.max(3, iw / n - gap);
+  const totals = cats.map((c) => opts.seriesKeys.reduce((a, k) => a + (opts.dataByCategory[c][k] || 0), 0));
+  const yMax = opts.yMax || Math.max(...totals) * 1.08;
+  const y = (v) => M.top + ih - (v / yMax) * ih;
+
+  const wrapDiv = document.createElement("div");
+  wrapDiv.style.position = "relative";
+  const svg = svgEl("svg", { width: "100%", viewBox: `0 0 ${W} ${H}`, height: H });
+
+  const ySteps = 4;
+  for (let i = 0; i <= ySteps; i++) {
+    const v = (yMax / ySteps) * i;
+    const gy = y(v);
+    svg.appendChild(svgEl("line", { x1: M.left, x2: W - M.right, y1: gy, y2: gy, class: "grid-line" }));
+    const t = svgEl("text", { x: M.left - 8, y: gy + 3, class: "axis-label", "text-anchor": "end" });
+    t.textContent = opts.yFmt ? opts.yFmt(v) : Math.round(v);
+    svg.appendChild(t);
+  }
+  svg.appendChild(svgEl("line", { x1: M.left, x2: W - M.right, y1: M.top + ih, y2: M.top + ih, class: "baseline" }));
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "tooltip"; tooltip.style.display = "none";
+
+  cats.forEach((c, i) => {
+    const cx = M.left + i * (bw + gap) + gap / 2;
+    let acc = 0;
+    const seg = [];
+    opts.seriesKeys.forEach((k) => {
+      const v = opts.dataByCategory[c][k] || 0;
+      const y0 = y(acc), y1 = y(acc + v);
+      const r = svgEl("rect", { x: cx, y: y1, width: bw, height: Math.max(0, y0 - y1 - 1.5), fill: resolveColor(opts.colorFor(k)), rx: 2 });
+      svg.appendChild(r);
+      seg.push({ k, v, el: r });
+      acc += v;
+    });
+    // hover hit area for whole bar
+    const hit = svgEl("rect", { x: cx - gap / 2, y: M.top, width: bw + gap, height: ih, fill: "transparent" });
+    hit.addEventListener("mousemove", (ev) => {
+      const bb = svg.getBoundingClientRect();
+      let html = `<div class="t-title">${opts.catLabel ? opts.catLabel(c) : c}</div>`;
+      seg.slice().reverse().forEach((s) => {
+        html += `<div class="t-row"><span><span class="t-swatch" style="background:${resolveColor(opts.colorFor(s.k))}"></span>${opts.keyLabel ? opts.keyLabel(s.k) : s.k}</span><span>${opts.tooltipFmt ? opts.tooltipFmt(s.v) : s.v}</span></div>`;
+      });
+      html += `<div class="t-row" style="margin-top:3px;border-top:1px solid rgba(255,255,255,.2);padding-top:3px;"><span>Total</span><span>${opts.tooltipFmt ? opts.tooltipFmt(acc) : acc}</span></div>`;
+      tooltip.innerHTML = html; tooltip.style.display = "block";
+      tooltip.style.left = (ev.clientX - bb.left) + "px"; tooltip.style.top = (ev.clientY - bb.top) + "px";
+    });
+    hit.addEventListener("mouseleave", () => tooltip.style.display = "none");
+    svg.appendChild(hit);
+
+    const t = svgEl("text", { x: cx + bw / 2, y: H - 8, class: "axis-label", "text-anchor": "middle" });
+    t.textContent = opts.xFmt ? opts.xFmt(c) : c;
+    svg.appendChild(t);
+  });
+
+  wrapDiv.appendChild(svg); wrapDiv.appendChild(tooltip);
+  container.appendChild(wrapDiv);
+  return svg;
+}
+
+function legendFor(container, items) {
+  const l = document.createElement("div");
+  l.className = "legend";
+  items.forEach((it) => {
+    const item = document.createElement("span"); item.className = "item";
+    const sw = document.createElement("span");
+    sw.className = it.line ? "line" : "swatch";
+    sw.style.background = resolveColor(it.color);
+    item.appendChild(sw);
+    const lab = document.createElement("span"); lab.textContent = it.label;
+    item.appendChild(lab);
+    l.appendChild(item);
+  });
+  container.appendChild(l);
+}
+
+// ---------- section 1: curves ----------
+function lastPoint(series) { return series[series.length - 1]; }
+
+function renderCurvas() {
+  const curvas = DATA.curvas[state.enfoque];
+  const isAseg = state.enfoque === "asegurado";
+  document.getElementById("curva-def").textContent = isAseg
+    ? "% del saldo con al menos 1 día de pago en el mes (capital asegurado)"
+    : "% del saldo capital efectivamente recuperado (soles cobrados)";
+
+  const stockWrap = document.getElementById("chart-stock");
+  clear(stockWrap);
+  TRAMOS.forEach((t) => {
+    const card = document.createElement("div"); card.className = "card";
+    const h = document.createElement("h3"); h.textContent = TRAMO_LABEL[t]; card.appendChild(h);
+    const p = document.createElement("p"); p.className = "note";
+    p.textContent = "% acumulado a día 31 por avance →";
+    card.appendChild(p);
+    const chartDiv = document.createElement("div"); card.appendChild(chartDiv);
+    const series = AVANCES.map((a) => ({
+      label: AVANCE_LABEL[a], color: AVANCE_COLOR[a], points: curvas.stock[t][a],
+    }));
+    lineChart(chartDiv, {
+      series, xMax: 31, yMax: 100, height: 190,
+      xTicks: [1, 15, 31], yFmt: (v) => v + "%",
+      xTooltipLabel: (d) => "Día " + d + " del mes",
+      tooltipFmt: (v) => v.toFixed(1) + "%",
+    });
+    const tbl = document.createElement("table"); tbl.className = "datatable";
+    tbl.innerHTML = "<tbody>" + AVANCES.map((a) => {
+      const lp = lastPoint(curvas.stock[t][a]);
+      return `<tr><td class="seg-name"><span class="dot" style="background:${resolveColor(AVANCE_COLOR[a])}"></span>${AVANCE_LABEL[a]}</td><td>${lp[1].toFixed(1)}%</td></tr>`;
+    }).join("") + "</tbody>";
+    card.appendChild(tbl);
+    stockWrap.appendChild(card);
+  });
+
+  const nuevosWrap = document.getElementById("chart-nuevos");
+  clear(nuevosWrap);
+  const chartDiv = document.createElement("div"); nuevosWrap.appendChild(chartDiv);
+  const seriesN = AVANCES.map((a) => ({ label: AVANCE_LABEL[a], color: AVANCE_COLOR[a], points: curvas.nuevos[a] }));
+  lineChart(chartDiv, {
+    series: seriesN, xMax: 31, yMax: 100, height: 210,
+    xTicks: [1, 8, 15, 22, 31], yFmt: (v) => v + "%",
+    xTooltipLabel: (d) => "Día " + d + " desde que entró en mora",
+    tooltipFmt: (v) => v.toFixed(1) + "%",
+  });
+  legendFor(nuevosWrap, AVANCES.map((a) => ({ label: "Avance " + AVANCE_LABEL[a], color: AVANCE_COLOR[a], line: true })));
+  const tbl = document.createElement("table"); tbl.className = "datatable";
+  tbl.innerHTML = "<thead><tr><th>Avance de amortización</th><th>% acumulado a día 31</th></tr></thead><tbody>" +
+    AVANCES.map((a) => {
+      const lp = lastPoint(curvas.nuevos[a]);
+      return `<tr><td class="seg-name"><span class="dot" style="background:${resolveColor(AVANCE_COLOR[a])}"></span>${AVANCE_LABEL[a]}</td><td>${lp[1].toFixed(1)}%</td></tr>`;
+    }).join("") + "</tbody>";
+  nuevosWrap.appendChild(tbl);
+}
+
+// ---------- section 2: julio ----------
+function stockToCategoryData(stockObj) {
+  const out = {};
+  TRAMOS.forEach((t) => { out[t] = stockObj[t]; });
+  return out;
+}
+function renderJulio() {
+  const chartStock = document.getElementById("chart-stock-julio");
+  clear(chartStock);
+  const div1 = document.createElement("div"); chartStock.appendChild(div1);
+  stackedBarChart(div1, {
+    categories: TRAMOS, seriesKeys: AVANCES, dataByCategory: stockToCategoryData(DATA.julio.stock_aseg),
+    colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
+    xFmt: (c) => TRAMO_LABEL[c].replace("Tramo ", ""), catLabel: (c) => TRAMO_LABEL[c],
+    keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 210,
+  });
+  legendFor(chartStock, AVANCES.map((a) => ({ label: AVANCE_LABEL[a], color: AVANCE_COLOR[a] })));
+  const totalStock = TRAMOS.reduce((a, t) => a + AVANCES.reduce((b, av) => b + DATA.julio.stock_aseg[t][av], 0), 0);
+  const p = document.createElement("p"); p.className = "note"; p.style.marginTop = "6px";
+  p.innerHTML = `Total stock asignado: <b>${fmtS(totalStock)}</b> (créditos ya en mora 1-30 al cierre de junio, más los que entraron el día 1 de julio).`;
+  chartStock.appendChild(p);
+
+  const chartCal = document.getElementById("chart-cal-julio");
+  clear(chartCal);
+  const div2 = document.createElement("div"); chartCal.appendChild(div2);
+  const dias = Object.keys(DATA.julio.calendario).sort();
+  stackedBarChart(div2, {
+    categories: dias, seriesKeys: AVANCES, dataByCategory: DATA.julio.calendario,
+    colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
+    xFmt: (c) => c.slice(8, 10), catLabel: (c) => "Vence " + c,
+    keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 210, gap: 3,
+  });
+  const totalCal = dias.reduce((a, d) => a + AVANCES.reduce((b, av) => b + (DATA.julio.calendario[d][av] || 0), 0), 0);
+  const p2 = document.createElement("p"); p2.className = "note"; p2.style.marginTop = "6px";
+  p2.innerHTML = `Total en riesgo en julio: <b>${fmtS(totalCal)}</b> — de eso, históricamente ~13.38% cae en mora (ver sección 3).`;
+  chartCal.appendChild(p2);
+
+  const resDiv = document.getElementById("julio-resultado");
+  clear(resDiv);
+  ["asegurado", "recupero"].forEach((enf) => {
+    const c = DATA.julio.comparacion[enf];
+    const err = (c.real.total - c.proyectado.total) / c.proyectado.total * 100;
+    const errS = (c.real.stock - c.proyectado.stock) / c.proyectado.stock * 100;
+    const errN = (c.real.nuevos - c.proyectado.nuevos) / c.proyectado.nuevos * 100;
+    const covS = c.real.stock / c.asignado.stock * 100;
+    const covN = c.real.nuevos / c.asignado.nuevos * 100;
+    const covT = c.real.total / c.asignado.total * 100;
+    const unidad = enf === "asegurado" ? "asegurado" : "recuperado";
+    const card = document.createElement("div"); card.className = "card";
+    card.innerHTML = `<h3>${enf === "asegurado" ? "Capital asegurado" : "Recupero oficial"}</h3>
+      <table class="datatable">
+        <thead><tr><th></th><th>Capital asignado</th><th>Proyectado</th><th>Real</th><th>Error</th><th>% ${unidad}</th></tr></thead>
+        <tbody>
+          <tr><td>Stock</td><td>${fmtS(c.asignado.stock)}</td><td>${fmtS(c.proyectado.stock)}</td><td>${fmtS(c.real.stock)}</td><td>${fmtPctSigned(errS)}</td><td>${covS.toFixed(1)}%</td></tr>
+          <tr><td>Nuevos</td><td>${fmtS(c.asignado.nuevos)}</td><td>${fmtS(c.proyectado.nuevos)}</td><td>${fmtS(c.real.nuevos)}</td><td>${fmtPctSigned(errN)}</td><td>${covN.toFixed(1)}%</td></tr>
+          <tr><td>Total</td><td>${fmtS(c.asignado.total)}</td><td>${fmtS(c.proyectado.total)}</td><td>${fmtS(c.real.total)}</td><td>${fmtPctSigned(err)}</td><td>${covT.toFixed(1)}%</td></tr>
+        </tbody>
+      </table>
+      <p class="note" style="margin-top:8px;">"Capital asignado" = saldo total de la población medida (stock al cierre del mes anterior + créditos que realmente entraron en mora en julio). "% ${unidad}" = real ÷ asignado — qué parte de lo asignado terminó ${unidad}.</p>`;
+    resDiv.appendChild(card);
+  });
+
+  document.getElementById("julio-callout").innerHTML = `<div class="callout">
+    <span class="ic">⚠️</span>
+    <span><b>El recupero oficial de julio (+17.6%) es el error más alto medido hasta ahora en ese enfoque</b> —
+    junio había dado +5.4%. Casi todo viene de "nuevos" (+22.5%), no de "stock" (+2.0%). Capital asegurado se
+    mantuvo en el mismo orden de magnitud que junio (+4.7% vs. -4.7%, signo invertido). Con solo 2 meses cerrados
+    todavía no alcanza para saber si es tendencia o varianza normal del mes — se sigue extendiendo el backtest
+    a más meses antes de sacar conclusiones.</span>
+  </div>`;
+}
+
+// ---------- section 3: agosto ----------
+function renderAgosto() {
+  const isAseg = state.enfoque === "asegurado";
+  const stockKey = isAseg ? "stock_aseg" : "stock_recup";
+  const curvas = DATA.curvas[state.enfoque];
+  const tasa = DATA.agosto.tasa_no_paga;
+  document.querySelectorAll(".tasa-inline, #tasa-label").forEach((el) => el.textContent = tasa + "%");
+
+  const chartStock = document.getElementById("chart-stock-agosto");
+  clear(chartStock);
+  const div1 = document.createElement("div"); chartStock.appendChild(div1);
+  stackedBarChart(div1, {
+    categories: TRAMOS, seriesKeys: AVANCES, dataByCategory: stockToCategoryData(DATA.agosto[stockKey]),
+    colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
+    xFmt: (c) => TRAMO_LABEL[c].replace("Tramo ", ""), catLabel: (c) => TRAMO_LABEL[c],
+    keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 190,
+  });
+  legendFor(chartStock, AVANCES.map((a) => ({ label: AVANCE_LABEL[a], color: AVANCE_COLOR[a] })));
+
+  const chartCal = document.getElementById("chart-cal-agosto");
+  clear(chartCal);
+  const div2 = document.createElement("div"); chartCal.appendChild(div2);
+  const dias = Object.keys(DATA.agosto.calendario).sort();
+  stackedBarChart(div2, {
+    categories: dias, seriesKeys: AVANCES, dataByCategory: DATA.agosto.calendario,
+    colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
+    xFmt: (c) => c.slice(8, 10), catLabel: (c) => (c <= DATA.agosto.corte_real ? "Vence " + c + " (exacto)" : "Vence " + c + " (proxy)"),
+    keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 190, gap: 3,
+  });
+
+  // walkthrough table
+  const tblDiv = document.getElementById("tabla-agosto");
+  clear(tblDiv);
+  let rows = "";
+  let totalAsignado = 0, totalAportado = 0;
+  TRAMOS.forEach((t) => {
+    AVANCES.forEach((a) => {
+      const saldo = DATA.agosto[stockKey][t][a];
+      const curva = curvas.stock[t][a];
+      const pct = lastPoint(curva)[1];
+      const aporta = saldo * pct / 100;
+      totalAsignado += saldo; totalAportado += aporta;
+      rows += `<tr><td class="seg-name"><span class="dot" style="background:${resolveColor(AVANCE_COLOR[a])}"></span>${TRAMO_LABEL[t].replace("Tramo ","")} · ${AVANCE_LABEL[a]}</td>
+        <td>${fmtS(saldo)}</td><td>${pct.toFixed(1)}%</td><td>${fmtS(aporta)}</td></tr>`;
+    });
+  });
+  const calTotal = dias.reduce((acc, d) => acc + AVANCES.reduce((b, av) => b + (DATA.agosto.calendario[d][av] || 0), 0), 0);
+  const entraEnMora = calTotal * tasa / 100;
+  const nuevosAportado = DATA.agosto.proyeccion_diaria[state.enfoque][30].nuevos;
+  tblDiv.innerHTML = `
+    <p style="font-size:13px;color:var(--ink-2);margin:0 0 10px;"><b>Stock</b> — cada segmento aporta su saldo × el valor de su curva a día 31 (de la sección 1):</p>
+    <table class="datatable">
+      <thead><tr><th>Segmento (tramo · avance)</th><th>Saldo asignado</th><th>Curva a día 31</th><th>Aporta a la meta</th></tr></thead>
+      <tbody>${rows}<tr><td>Subtotal stock</td><td>${fmtS(totalAsignado)}</td><td>—</td><td>${fmtS(totalAportado)}</td></tr></tbody>
+    </table>
+    <p style="font-size:13px;color:var(--ink-2);margin:18px 0 10px;"><b>Nuevos</b> — el calendario completo se reduce a 2 pasos (no se desglosa por segmento aquí porque cada día-avance madura por separado; el detalle está en el gráfico de trayectoria de abajo):</p>
+    <table class="datatable">
+      <thead><tr><th></th><th>Saldo en riesgo (calendario)</th><th>× tasa histórica</th><th>Aporta a la meta</th></tr></thead>
+      <tbody><tr><td>Subtotal nuevos</td><td>${fmtS(calTotal)}</td><td>${tasa}% → ${fmtS(entraEnMora)} entra en mora</td><td>${fmtS(nuevosAportado)}</td></tr></tbody>
+    </table>
+    <table class="datatable" style="margin-top:14px;">
+      <tbody><tr><td>TOTAL — meta de agosto proyectada</td><td></td><td></td><td style="font-size:16px;">${fmtS(totalAportado + nuevosAportado)}</td></tr></tbody>
+    </table>`;
+
+  // trajectory chart
+  const trajDiv = document.getElementById("chart-trayectoria");
+  clear(trajDiv);
+  const proy = DATA.agosto.proyeccion_diaria[state.enfoque];
+  const real = DATA.agosto.real_a_hoy[state.enfoque];
+  const corteDay = 18;
+  const proySeries = { label: "Proyectado (mes completo)", color: "var(--blue)", points: proy.map((r) => [r.dia, r.total]) };
+  // approximate real trajectory as a straight share of proyectado shape scaled to match real total at day18 (only 2 real points known: 0 and day18)
+  const realSeries = { label: "Real (hasta el corte)", color: "var(--orange)", points: [[0, 0], [corteDay, real.total]], markLast: true, width: 3 };
+  const yMax = Math.max(proy[30].total, real.total) * 1.08;
+  lineChart(trajDiv, {
+    series: [proySeries, realSeries], xMax: 31, yMax, height: 260,
+    xTicks: [1, 8, 15, 18, 22, 31], yFmt: (v) => "S/" + (v / 1e6).toFixed(0) + "M",
+    xTooltipLabel: (d) => "Día " + d + " de agosto",
+    tooltipFmt: (v) => fmtS(v),
+    markX: corteDay, markLabel: "hoy (18-ago)",
+  });
+  legendFor(trajDiv, [
+    { label: "Proyectado (mes completo)", color: "var(--blue)", line: true },
+    { label: "Real (solo hasta el 18-ago — línea recta entre 0 y el corte, no un dato diario)", color: "var(--orange)", line: true },
+  ]);
+
+  const proyTotal = proy[30].total;
+  const proyMismoDia = proy[corteDay - 1].total;
+  const errMismoDia = (real.total - proyMismoDia) / proyMismoDia * 100;
+  const avancePct = real.total / proyTotal * 100;
+  const resumen = document.getElementById("agosto-resumen");
+  resumen.innerHTML = `
+    <div class="stat"><div class="k">Meta proyectada (cierre de agosto)</div><div class="v">${fmtS(proyTotal)}</div>
+      <div class="d" style="color:var(--ink-muted);">stock ${fmtS(proy[30].stock)} + nuevos ${fmtS(proy[30].nuevos)}</div></div>
+    <div class="stat"><div class="k">Real al 18-ago (${avancePct.toFixed(0)}% del mes)</div><div class="v">${fmtS(real.total)}</div>
+      <div class="d" style="color:var(--ink-muted);">stock ${fmtS(real.stock)} + nuevos ${fmtS(real.nuevos)}</div></div>
+    <div class="stat"><div class="k">Real vs. proyectado al mismo día</div><div class="v">${fmtPctSigned(errMismoDia)}</div>
+      <div class="d ${errMismoDia >= 0 ? "up" : "down"}">${errMismoDia >= 0 ? "por encima" : "por debajo"} de lo esperado a esta altura del mes</div></div>`;
+}
+
+function render() {
+  renderCurvas();
+  renderJulio();
+  renderAgosto();
+}
+
+document.getElementById("toggle").addEventListener("click", (ev) => {
+  const btn = ev.target.closest("button[data-enfoque]");
+  if (!btn) return;
+  state.enfoque = btn.dataset.enfoque;
+  document.querySelectorAll("#toggle button").forEach((b) => b.classList.toggle("active", b === btn));
+  renderCurvas(); renderAgosto();
+});
+
+render();
+window.addEventListener("resize", () => { render(); });
+</script>
+</body>
+</html>

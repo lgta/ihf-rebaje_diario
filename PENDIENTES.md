@@ -121,6 +121,14 @@ Podría precisar el punto ciego de ~1 día de `dayslate` (bug 9 en `BUGS.md`: un
 pagada 1 día tarde casi nunca hace que `dayslate` llegue a mostrar 1) cruzándolo contra la
 fecha exacta en que `dayslate` pasa a 1 para el mismo crédito.
 
+**Prioridad elevada 2026-08-19 (bug 14 en `BUGS.md`):** la reconciliación contra
+`vw_seguimiento_diario_cohorte_tramo` (vista oficial externa) cuantificó este punto ciego
+en **~27% de la población real de mora 1-30/TEMPRANA** (3,210 de 3,449 créditos "solo
+oficiales"), no el ~4% que sugería la muestra anterior — ya no es un caso de borde. Plan
+de trabajo completo (qué investigar, opciones de corrección, backtest obligatorio antes
+de adoptar cualquiera) en `reconciliacion_vw_seguimiento_temprana.md` — **empezar ahí,
+no repetir el diagnóstico.**
+
 ### Tarea 8 — ~~Cerrar la fila de julio en `SEGUIMIENTO.md` (recupero oficial)~~ hecho 2026-08-18
 Julio cerró con **+17.6% de error** (stock +2.0%, nuevos +22.5%) — el más alto medido hasta
 ahora en este enfoque. Ver `SEGUIMIENTO.md` y `cierre_julio.sql`. Meta de agosto ya armada

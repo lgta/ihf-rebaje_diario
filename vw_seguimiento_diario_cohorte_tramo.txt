@@ -1,0 +1,247 @@
+CREATE OR REPLACE VIEW "vw_seguimiento_diario_cohorte_tramo" AS 
+WITH
+  fecha_inicio_recovery AS (
+   SELECT *
+   FROM
+     (
+ VALUES 
+        ROW ('202607', DATE '2026-07-03')
+      , ROW ('202608', DATE '2026-08-05')
+   )  t (periodo, fecha_inicio_recovery)
+) 
+, base_gestion AS (
+   SELECT
+     a.aux02 id_ihfintech_loan
+   , CAST(a.fecha_base AS date) fecha_base
+   , date_format(CAST(a.fecha_base AS date), '%Y%m') periodo_calendario_gestiones
+   , a.fase_estrategia
+   , a.subsegmento_fase_estrategia
+   , (CASE WHEN (a.fase_estrategia = 'RECOVERY') THEN a.canal_recovery_principal WHEN (a.fase_estrategia = 'ESPECIALIZADA') THEN 'Call' ELSE a.canal_asignado END) canal
+   , a.tipo_mora
+   , a.monto_capital_pendiente
+   , a.grupo_control
+   , a.dias_mora
+   , a.max_dias_mora_dni
+   , a.riesgo_mora_gestion
+   , a.capital_pagar capital_pagar_descuento
+   , a.rango_saldo_fisica
+   , a.canal_fisica
+   , a.fecha_de_vencimiento_cuota
+   FROM
+     (dts_asignaciones_gestiones_cobranza a
+   LEFT JOIN fecha_inicio_recovery r ON (r.periodo = date_format(CAST(a.fecha_base AS date), '%Y%m')))
+   WHERE ((a.fase_estrategia <> 'RECOVERY') OR (CAST(a.fecha_base AS date) = r.fecha_inicio_recovery))
+) 
+, primer_dia_mes AS (
+   SELECT
+     id_ihfintech_loan
+   , periodo_calendario_gestiones
+   , MIN(fecha_base) fecha_ancla
+   FROM
+     base_gestion
+   GROUP BY id_ihfintech_loan, periodo_calendario_gestiones
+) 
+, cohorte_anclaje AS (
+   SELECT
+     p.id_ihfintech_loan
+   , p.periodo_calendario_gestiones mes_asignacion
+   , p.fecha_ancla
+   , MAX(b.fase_estrategia) fase_estrategia
+   , MAX(b.subsegmento_fase_estrategia) subsegmento_fase_estrategia
+   , MAX(b.canal) canal
+   , MAX(b.tipo_mora) tipo_mora
+   , MAX(b.monto_capital_pendiente) saldo_capital_ancla
+   , MAX(b.dias_mora) dias_mora_ancla
+   , MAX(b.max_dias_mora_dni) max_dias_mora_dni_ancla
+   , MAX(b.grupo_control) grupo_control
+   , MAX(b.riesgo_mora_gestion) riesgo_mora_gestion
+   , MAX(b.capital_pagar_descuento) capital_pagar_descuento
+   , MAX(c.rango_saldo_fisica) rango_saldo_fisica
+   , MAX(c.canal_fisica) canal_fisica
+   , MAX(b.fecha_de_vencimiento_cuota) fecha_de_vencimiento_cuota
+   FROM
+     ((primer_dia_mes p
+   INNER JOIN base_gestion b ON ((b.id_ihfintech_loan = p.id_ihfintech_loan) AND (b.fecha_base = p.fecha_ancla) AND (b.periodo_calendario_gestiones = p.periodo_calendario_gestiones)))
+   LEFT JOIN (
+      SELECT DISTINCT
+        fecha_base
+      , aux02 id_ihfintech_loan
+      , date_format(fecha_base, '%Y%m') periodo
+      , rango_saldo_fisica
+      , canal_fisica
+      FROM
+        dts_konecta_gestiones_cobranza_fisica
+   )  c ON ((c.id_ihfintech_loan = p.id_ihfintech_loan) AND (c.periodo = p.periodo_calendario_gestiones)))
+   GROUP BY p.id_ihfintech_loan, p.periodo_calendario_gestiones, p.fecha_ancla
+) 
+, mambu_con_fecha AS (
+   SELECT
+     *
+   , date_parse(CAST(fechaproceso AS VARCHAR), '%Y%m%d') fecha_efectiva
+   , ROW_NUMBER() OVER (PARTITION BY _datos_adicionales_loan_accounts_id_ihfintech, date_parse(CAST(fechaproceso AS VARCHAR), '%Y%m%d') ORDER BY fechaactualizaciontabla DESC) rn
+   FROM
+     dts_mambu_loans_hist
+) 
+, ancla_valor_correcto AS (
+   SELECT
+     coh.id_ihfintech_loan
+   , coh.mes_asignacion
+   , coh.saldo_capital_ancla monto_asignado_fix
+   , m.accountstate accountstate_ancla
+   , m.accountsubstate accountsubstate_ancla
+   , COALESCE(m.balances_principalbalance, 0) saldo_capital_mambu_ancla
+   FROM
+     (cohorte_anclaje coh
+   LEFT JOIN mambu_con_fecha m ON ((m._datos_adicionales_loan_accounts_id_ihfintech = coh.id_ihfintech_loan) AND (m.fecha_efectiva = coh.fecha_ancla) AND (m.rn = 1)))
+) 
+, ancla AS (
+   SELECT
+     coh.id_ihfintech_loan
+   , coh.mes_asignacion
+   , coh.fecha_ancla
+   , coh.fase_estrategia
+   , coh.subsegmento_fase_estrategia
+   , coh.canal
+   , coh.tipo_mora
+   , coh.fecha_ancla fecha
+   , coh.grupo_control
+   , coh.riesgo_mora_gestion
+   , coh.capital_pagar_descuento
+   , coh.rango_saldo_fisica
+   , coh.canal_fisica
+   , coh.fecha_de_vencimiento_cuota
+   , avc.saldo_capital_mambu_ancla saldo_capital
+   , avc.monto_asignado_fix monto_asignado
+   , COALESCE(coh.dias_mora_ancla, 0) dias_mora
+   , COALESCE(coh.dias_mora_ancla, 0) dias_mora_inicio
+   , coh.max_dias_mora_dni_ancla max_dias_mora_dni
+   , avc.accountstate_ancla accountstate
+   , avc.accountsubstate_ancla accountsubstate
+   FROM
+     (cohorte_anclaje coh
+   INNER JOIN ancla_valor_correcto avc ON ((avc.id_ihfintech_loan = coh.id_ihfintech_loan) AND (avc.mes_asignacion = coh.mes_asignacion)))
+) 
+, posteriores AS (
+   SELECT
+     coh.id_ihfintech_loan
+   , coh.mes_asignacion
+   , coh.fecha_ancla
+   , coh.fase_estrategia
+   , coh.subsegmento_fase_estrategia
+   , coh.canal
+   , coh.tipo_mora
+   , m.fecha_efectiva fecha
+   , coh.grupo_control
+   , coh.riesgo_mora_gestion
+   , coh.capital_pagar_descuento
+   , coh.rango_saldo_fisica
+   , coh.canal_fisica
+   , coh.fecha_de_vencimiento_cuota
+   , m.balances_principalbalance saldo_capital
+   , avc.monto_asignado_fix monto_asignado
+   , COALESCE(m.dayslate, 0) dias_mora
+   , COALESCE(coh.dias_mora_ancla, 0) dias_mora_inicio
+   , coh.max_dias_mora_dni_ancla max_dias_mora_dni
+   , m.accountstate
+   , m.accountsubstate
+   FROM
+     ((cohorte_anclaje coh
+   INNER JOIN ancla_valor_correcto avc ON ((avc.id_ihfintech_loan = coh.id_ihfintech_loan) AND (avc.mes_asignacion = coh.mes_asignacion)))
+   LEFT JOIN mambu_con_fecha m ON ((m._datos_adicionales_loan_accounts_id_ihfintech = coh.id_ihfintech_loan) AND (m.fecha_efectiva > coh.fecha_ancla) AND (m.fecha_efectiva <= last_day_of_month(date_parse(concat(coh.mes_asignacion, '01'), '%Y%m%d'))) AND (m.rn = 1)))
+) 
+, combinado AS (
+   SELECT *
+   FROM
+     ancla
+UNION ALL    SELECT *
+   FROM
+     posteriores
+) 
+, con_flg_pago AS (
+   SELECT
+     c.*
+   , (CASE WHEN (cal.fecha_pago = c.fecha) THEN 1 ELSE 0 END) flg_pago
+   FROM
+     (combinado c
+   LEFT JOIN (
+      SELECT
+        id_ihfintech_loan
+      , fecha_calendario
+      , fecha_pago
+      FROM
+        dts_cobranza_creditos_calendario_diario
+      WHERE (fecha_calendario >= DATE '2026-07-01')
+   )  cal ON ((cal.id_ihfintech_loan = c.id_ihfintech_loan) AND (cal.fecha_calendario = c.fecha)))
+) 
+, primer_pago_credito AS (
+   SELECT
+     id_ihfintech_loan
+   , mes_asignacion
+   , MIN(fecha) fecha_primer_pago
+   FROM
+     con_flg_pago
+   WHERE (flg_pago = 1)
+   GROUP BY id_ihfintech_loan, mes_asignacion
+) 
+, base_refinanciado AS (
+   SELECT
+     _datos_adicionales_loan_accounts_id_ihfintech id_ihfintech_loan
+   , (loanamount + balances_feespaid) capital_desembolsado
+   , (CASE WHEN (CAST(_motivo_apertura__motivo_apertura AS integer) = 1) THEN 'REFINANCIADO' ELSE null END) motivo_apertura
+   , date(creationdate) fecha_desembolso
+   FROM
+     dts_mambu_loans
+   WHERE ((CAST(_motivo_apertura__motivo_apertura AS integer) = 1) AND (_datos_adicionales_loan_accounts_id_ihfintech IS NOT NULL) AND (date_format(date(creationdate), '%Y%m') = date_format(current_date, '%Y%m')))
+) 
+, Pagos_ajustados AS (
+   SELECT
+     a.encodedkey
+   , a.creationdate
+   , a.type
+   , c.type tipo_ajustado
+   , a.amount
+   , a.adjustmenttransactionkey
+   FROM
+     ((dts_mambu_loanstransactions a
+   LEFT JOIN dts_mambu_loans b ON (b.encodedkey = a.parentaccountkey))
+   LEFT JOIN dts_mambu_loanstransactions c ON (a.adjustmenttransactionkey = c.encodedkey))
+   WHERE ((a.adjustmenttransactionkey IS NOT NULL) AND (a.type = 'REPAYMENT') AND (c.type = 'REPAYMENT_ADJUSTMENT'))
+) 
+, pagos_transacciones AS (
+   SELECT
+     b._datos_adicionales_loan_accounts_id_ihfintech id_ihfintech_loan
+   , date(a.creationdate) fecha_pago
+   , date(a.valuedate) fecha_aplicacion
+   , a.amount monto_pago
+   , a.affectedamounts_principalamount capital_pagado
+   FROM
+     ((dts_mambu_loanstransactions a
+   LEFT JOIN dts_mambu_loans b ON (a.parentaccountkey = b.encodedkey))
+   LEFT JOIN Pagos_ajustados c ON (a.adjustmenttransactionkey = c.adjustmenttransactionkey))
+   WHERE (((a.transactiondetails_transactionchannelid LIKE '_dph_%') OR (a.transactiondetails_transactionchannelid IN ('_pnw_ihf', '_pld_niubiz', '_pnc_ihf')) OR (a.transactiondetails_transactionchannelid LIKE '_pth_ihf%') OR (a.transactiondetails_transactionchannelid IN ('_pld_hiraoka')) OR (a.transactiondetails_transactionchannelid IN ('_pld_lima', '_pld_san_miguel', '_pld_independencia', '_pld_miraflores', '_pld_sjl')) OR (a.transactiondetails_transactionchannelid LIKE 'perd_redond%') OR (a.transactiondetails_transactionchannelid IN ('_Pago_Interbank_Agente', '_Pago_Interbank_LD_Agente')) OR (a.transactiondetails_transactionchannelid IN ('Pago_ibk', '_pld_interbank')) OR (a.transactiondetails_transactionchannelid IN ('pbcp_digital_bnpl')) OR (a.transactiondetails_transactionchannelid IN ('pbcp_digital_ld')) OR (UPPER(a.transactiondetails_transactionchannelid) LIKE '%PAGO_POS%') OR (UPPER(a.transactiondetails_transactionchannelid) LIKE '%DEBITO_AUTOM%') OR (a.transactiondetails_transactionchannelid = '_pch_ihf') OR (a.transactiondetails_transactionchannelid = '_pco_ihf') OR (a.transactiondetails_transactionchannelid LIKE 'pbcp_yape%') OR (a.transactiondetails_transactionchannelid LIKE 'pbcp_agente%') OR (a.transactiondetails_transactionchannelid LIKE 'pbcp_app%') OR (a.transactiondetails_transactionchannelid LIKE 'pbcp_banca%')) AND (a.type = 'REPAYMENT') AND (c.adjustmenttransactionkey IS NULL))
+) 
+, base_pagos AS (
+   SELECT
+     id_ihfintech_loan
+   , sum(monto_pago) monto_pago
+   , sum(capital_pagado) capital_pagado
+   , fecha_aplicacion fecha_pago
+   FROM
+     pagos_transacciones
+   GROUP BY id_ihfintech_loan, fecha_aplicacion
+) 
+SELECT
+  c.*
+, refin.capital_desembolsado capital_desembolsado_refinanciado
+, refin.fecha_desembolso fecha_desembolso_refinanciado
+, refin.motivo_apertura
+, pagos.monto_pago
+, pagos.capital_pagado
+, (CASE WHEN (refin.fecha_desembolso = c.fecha) THEN 1 ELSE 0 END) flg_dia_refinanciado
+, (CASE WHEN (pp.fecha_primer_pago = c.fecha) THEN 1 ELSE 0 END) flg_primer_pago
+, (CASE WHEN ((pp.fecha_primer_pago IS NOT NULL) AND (c.fecha >= pp.fecha_primer_pago)) THEN 1 ELSE 0 END) flg_pagado_en_el_mes
+FROM
+  (((con_flg_pago c
+LEFT JOIN primer_pago_credito pp ON ((pp.id_ihfintech_loan = c.id_ihfintech_loan) AND (pp.mes_asignacion = c.mes_asignacion)))
+LEFT JOIN base_refinanciado refin ON (refin.id_ihfintech_loan = c.id_ihfintech_loan))
+LEFT JOIN base_pagos pagos ON ((pagos.id_ihfintech_loan = c.id_ihfintech_loan) AND (pagos.fecha_pago = c.fecha)))

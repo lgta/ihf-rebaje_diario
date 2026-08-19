@@ -224,3 +224,39 @@ documentado) — se deja como diferencia conocida entre ambos proyectos, no como
 (ver bug 9) a nivel cuota vs. crédito. No investigado a fondo (fuera del alcance pedido por
 el usuario, que priorizó solo la homologación antiguo/nuevo) — candidato para
 `installmentlastpaiddate` (pendiente #7 de `PENDIENTES.md`) si se retoma.
+
+### 14. El punto ciego de `dayslate` (bug 9) es ~27% de la población real de mora 1-30, no un caso de borde — reconciliación contra `vw_seguimiento_diario_cohorte_tramo`
+**Contexto (2026-08-19):** el usuario compartió una vista externa "oficial" con detalle a
+nivel crédito (`vw_seguimiento_diario_cohorte_tramo.txt`, definición en la raíz del repo,
+mantenida fuera de este proyecto) y pidió reconciliar nuestro `capital_asignado` (mora
+1-30, Enfoque alfa) contra ella para la fase `TEMPRANA`, identificando motivos si no
+cuadraba. Plan de cierre completo, con las queries y el desglose, en
+`reconciliacion_vw_seguimiento_temprana.md` — **este bug es el resumen corto, no
+repetir el diagnóstico ahí ya hecho.**
+
+**Resultado:** para los 8,269 créditos que ambas fuentes coinciden en incluir (julio
+2026), el saldo cuadra casi exacto (nuestro S/13,301,944 vs. oficial `monto_asignado`
+S/13,321,309 — 0.15% de diferencia). El mecanismo de fondo (saldo Mambu, `dayslate`
+1-30) está bien — el problema es de **cobertura de población**, no de cálculo.
+
+**La diferencia restante (oficial S/18,736,321 vs. nuestro S/15,376,876, ambos ya
+deduplicados a 1 fila por crédito) se explica así:**
+- **Solo nuestro (S/2.07M) — no requiere acción:** 998 de 1,224 créditos (82%) son
+  `grupo_control='CONTROL'` en `dts_asignaciones_gestiones_cobranza` (grupo de control,
+  deliberadamente no gestionado — confirmado con el usuario). El resto (119 escalados a
+  Especializada/Recovery por arrastre de DNI + 186 sin fase clara + 116 sin match) es
+  menor y ya está explicado.
+- **Solo oficial (S/5.4M) — sí hay que resolverlo:** **3,210 de 3,449 créditos (93%,
+  S/5.02M) tienen `dayslate`=0 para nosotros pero la vista oficial sí los marca en mora
+  1-30.** Esto es el **27% de TODA la población TEMPRANA oficial** — mucho más grande que
+  el ~3.7% que sugería la muestra genérica de la homologación de `tipo_mora` (bug 13,
+  arriba). El punto ciego de `dayslate` (bug 9) no es un caso de borde, es sistemático y
+  material. El resto (313 créditos excluidos por nuestro filtro `flg_last_loan_in_chain`,
+  que la vista oficial no aplica) es una diferencia de alcance deliberada, no un bug.
+
+**Impacto:** nuestro `capital_asignado` subestima la cartera real de mora 1-30 en ~18%
+(15.38M vs. 18.74M) principalmente por este punto ciego, no por un error en las queries.
+**Pendiente, con plan de trabajo detallado en `reconciliacion_vw_seguimiento_temprana.md`:**
+investigar el mecanismo exacto vía `installmentlastpaiddate` (tarea 7 de `PENDIENTES.md`),
+decidir una corrección (con backtest obligatorio antes de adoptarla — no repetir el error
+de bug 10, tasa y curva deben calibrarse sobre la misma definición).
