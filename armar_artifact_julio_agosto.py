@@ -21,6 +21,7 @@ AVANCE_LABEL = {
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 TRAMO_LABEL = {"a. 1-8": "1-8 días", "b. 9-15": "9-15 días", "c. 16-30": "16-30 días"}
 P_NO_PAGA = 47966 / 358580  # 13.38%, ver DECISIONES.md / BUGS.md bug 6
+P_FANTASMA = 29845 / 353054  # 8.4534%, capa fantasma (bug 14, 2026-08-20) -- solo enfoque asegurado
 
 
 def load_curva_stock(path, pct_col):
@@ -75,7 +76,7 @@ def lookup(curva, d):
     return curva_d[max(keys)] if keys else 0.0
 
 
-def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, n_dias):
+def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, n_dias, con_fantasma=False):
     filas = []
     for d in range(1, n_dias + 1):
         fecha = inicio + timedelta(days=d - 1)
@@ -84,6 +85,7 @@ def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, 
             for t in TRAMOS for a in AVANCES
         )
         proy_nuevos = 0.0
+        proy_fantasma = 0.0
         for dd in range(1, d + 1):
             fecha_venc = (inicio + timedelta(days=dd - 1)).isoformat()
             riesgo = calendario.get(fecha_venc, {})
@@ -93,11 +95,19 @@ def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, 
             for avance, saldo_riesgo in riesgo.items():
                 pct = lookup(curva_nuevos[avance], dias_desde_entrada)
                 proy_nuevos += saldo_riesgo * P_NO_PAGA * pct / 100.0
-        filas.append({
+            # capa fantasma (bug 14): 100% activado el dia siguiente al vencimiento, sin curva
+            if con_fantasma:
+                proy_fantasma += sum(riesgo.values()) * P_FANTASMA
+        fila = {
             "dia": d, "fecha": fecha.isoformat(),
             "stock": round(proy_stock, 2), "nuevos": round(proy_nuevos, 2),
-            "total": round(proy_stock + proy_nuevos, 2),
-        })
+        }
+        if con_fantasma:
+            fila["fantasma"] = round(proy_fantasma, 2)
+            fila["total"] = round(proy_stock + proy_nuevos + proy_fantasma, 2)
+        else:
+            fila["total"] = round(proy_stock + proy_nuevos, 2)
+        filas.append(fila)
     return filas
 
 
@@ -130,6 +140,18 @@ def total_saldo(stock_seg):
 NUEVOS_ASIGNADO_ASEG = 9567714.05
 NUEVOS_ASIGNADO_RECUP = 13116158.27
 
+# Capa fantasma julio (bug 14, 2026-08-20) -- solo enfoque asegurado. Proyectado =
+# P_FANTASMA x calendario total (vencimientos 1-jul a 30-jul, excluyendo stock);
+# real = creditos que pagaron 1 dia tarde sin que dayslate los viera, mismo criterio.
+# Ver investigacion_capa_fantasma.sql Q3/Q4 y reconciliacion_vw_seguimiento_temprana.md.
+PROY_FANTASMA_JULIO = 6226704.0
+REAL_FANTASMA_JULIO = 5742740.84
+# Real stock+nuevos verificado independientemente 2026-08-20 (cierre_julio.sql J1/J2
+# re-corrido) -- reemplaza el valor anterior (10,789,362.19, con signo de error mal
+# calculado en SEGUIMIENTO.md, ver bug 14).
+REAL_STOCK_ASEG_JULIO = 3137199.21
+REAL_NUEVOS_ASEG_JULIO = 7633719.13
+
 stock_asignado_aseg = total_saldo(stock_julio_aseg)
 stock_asignado_recup = total_saldo(stock_julio_recup)
 
@@ -143,8 +165,15 @@ data["julio"] = {
                 "stock": round(stock_asignado_aseg, 2), "nuevos": NUEVOS_ASIGNADO_ASEG,
                 "total": round(stock_asignado_aseg + NUEVOS_ASIGNADO_ASEG, 2),
             },
-            "proyectado": {"stock": 3105418, "nuevos": 7200813, "total": 10306231},
-            "real": {"stock": 3137199.21, "nuevos": 7652162.98, "total": 10789362.19},
+            "proyectado": {
+                "stock": 3105418, "nuevos": 7200813, "fantasma": PROY_FANTASMA_JULIO,
+                "total": round(3105418 + 7200813 + PROY_FANTASMA_JULIO, 2),
+            },
+            "real": {
+                "stock": REAL_STOCK_ASEG_JULIO, "nuevos": REAL_NUEVOS_ASEG_JULIO,
+                "fantasma": REAL_FANTASMA_JULIO,
+                "total": round(REAL_STOCK_ASEG_JULIO + REAL_NUEVOS_ASEG_JULIO + REAL_FANTASMA_JULIO, 2),
+            },
         },
         "recupero": {
             "asignado": {
@@ -173,8 +202,12 @@ proy_recup = proyeccion_diaria(
 proy_aseg = proyeccion_diaria(
     stock_agosto_aseg, calendario_agosto,
     data["curvas"]["asegurado"]["stock"], data["curvas"]["asegurado"]["nuevos"],
-    INICIO_AGO, 31,
+    INICIO_AGO, 31, con_fantasma=True,
 )
+
+# Real fantasma agosto a la fecha (1-18 ago, query 2026-08-20, mismo patron que julio) --
+# ver meta_agosto_capital_asegurado.py v2 y reconciliacion_vw_seguimiento_temprana.md.
+REAL_FANTASMA_AGO_A_HOY = 2827691.80
 
 data["agosto"] = {
     "stock_recup": stock_agosto_recup,
@@ -182,9 +215,13 @@ data["agosto"] = {
     "calendario": calendario_agosto,
     "corte_real": "2026-08-18",
     "tasa_no_paga": round(P_NO_PAGA * 100, 2),
+    "tasa_fantasma": round(P_FANTASMA * 100, 4),
     "proyeccion_diaria": {"recupero": proy_recup, "asegurado": proy_aseg},
     "real_a_hoy": {
-        "asegurado": {"stock": 2605896.73, "nuevos": 4189176.85, "total": 6795073.58},
+        "asegurado": {
+            "stock": 2605896.73, "nuevos": 4189176.85, "fantasma": REAL_FANTASMA_AGO_A_HOY,
+            "total": round(2605896.73 + 4189176.85 + REAL_FANTASMA_AGO_A_HOY, 2),
+        },
         "recupero": {"stock": 447341.09, "nuevos": 699769.22, "total": 1147110.31},
     },
 }
@@ -193,6 +230,8 @@ with open("datos_artifact_julio_agosto.json", "w", encoding="utf-8") as f:
     json.dump(data, f, ensure_ascii=False, separators=(",", ":"))
 
 print("OK -- datos_artifact_julio_agosto.json escrito")
-print(f"Julio asegurado total real: {data['julio']['comparacion']['asegurado']['real']['total']:,.0f}")
-print(f"Agosto asegurado proyectado dia31: {proy_aseg[-1]['total']:,.0f}")
+print(f"Julio asegurado total proyectado (con fantasma): {data['julio']['comparacion']['asegurado']['proyectado']['total']:,.0f}")
+print(f"Julio asegurado total real (con fantasma): {data['julio']['comparacion']['asegurado']['real']['total']:,.0f}")
+print(f"Agosto asegurado proyectado dia31 (con fantasma): {proy_aseg[-1]['total']:,.0f}")
+print(f"Agosto asegurado real a hoy (con fantasma): {data['agosto']['real_a_hoy']['asegurado']['total']:,.0f}")
 print(f"Agosto recupero proyectado dia31: {proy_recup[-1]['total']:,.0f}")

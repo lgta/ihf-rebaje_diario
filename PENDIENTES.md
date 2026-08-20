@@ -70,11 +70,18 @@ id_loan order by fechaproceso)` si no hay desempate. Ya se corrigió en
 `enfoque_salida_mora.sql` (eliminado junto con ese enfoque) pero **nunca se aplicó a
 `enfoque_capital_asegurado.sql`**, que usa el mismo patrón sin desempate.
 
-**Qué hacer:** agregar el dedup determinista (`row_number() over (partition by id_loan,
-fechaproceso order by lastmodifieddate desc, id desc)` antes de calcular `rn`/`grp`) y
-re-correr el backtest de junio para confirmar que el error no cambia materialmente
-(se espera bajo impacto — es sobre agregados de saldo, no conteo de episodios discretos,
-a diferencia de `enfoque_salida_mora.sql` donde sí cambió 513→376 episodios).
+**Actualización 2026-08-20:** el desempate original (`lastmodifieddate desc, id desc`)
+elige mal en ~31% de los casos conflictivos revisados (muestra may-jul, ver bug 11 en
+`BUGS.md`) — el patrón dominante es reenganche (cuenta vieja en S/0 vs. cuenta nueva con
+saldo real), y "más reciente" no es "correcto". Regla mejorada propuesta: preferir
+saldo≠0 antes de mirar `lastmodifieddate`. **No aplicada todavía** — falta validar contra
+los ~691 casos conflictivos completos (la muestra de 16 es acotada).
+
+**Qué hacer:** agregar el dedup con la regla mejorada (saldo≠0 primero, luego
+`lastmodifieddate desc, id desc`) antes de calcular `rn`/`grp`, y re-correr el backtest de
+junio para confirmar que el error no cambia materialmente (se espera bajo impacto — es
+sobre agregados de saldo, no conteo de episodios discretos, a diferencia de
+`enfoque_salida_mora.sql` donde sí cambió 513→376 episodios).
 
 **Criterio de terminado:** backtest re-corrido, diferencia documentada en `BUGS.md` (aunque
 sea "no cambió", para cerrar el pendiente del punto 11 de `IDEAS.md`).
@@ -110,24 +117,32 @@ refrescarlos.
 ### Tarea 6 — Aplicar el fix de bug 11 a los 3 archivos del motor oficial
 **Archivos:** `fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`.
 
-Mismo dedup que la Tarea 3, aplicado al motor de recupero oficial. Re-correr el backtest
-de junio (+5.4% de error hoy) y confirmar que no cambia materialmente.
+Mismo dedup que la Tarea 3 (con la regla mejorada — saldo≠0 antes de `lastmodifieddate`,
+ver actualización 2026-08-20 de esa tarea y bug 11 en `BUGS.md`), aplicado al motor de
+recupero oficial. Re-correr el backtest de junio (+5.4% de error hoy) y confirmar que no
+cambia materialmente.
 
-### Tarea 7 — Investigar `installmentlastpaiddate`
-**Tabla:** `dts_cobranza_creditos_cuotas` (nivel cuota), campo aportado por el usuario,
-todavía sin explotar.
+### Tarea 7 — ~~Investigar `installmentlastpaiddate`~~ hecho 2026-08-20, capa fantasma adoptada
+**Tabla:** `dts_cobranza_creditos_cuotas` (nivel cuota), campo aportado por el usuario.
 
-Podría precisar el punto ciego de ~1 día de `dayslate` (bug 9 en `BUGS.md`: una cuota
-pagada 1 día tarde casi nunca hace que `dayslate` llegue a mostrar 1) cruzándolo contra la
-fecha exacta en que `dayslate` pasa a 1 para el mismo crédito.
+Se cruzó contra los créditos específicos que la reconciliación de bug 14 marcaba como
+punto ciego: **99.5% resultó ser el mismo mecanismo de bug 9** (pago exactamente 1 día
+tarde, `dayslate` nunca lo ve). Se diseñó y adoptó en producción una "capa fantasma"
+(tasa nueva e independiente `P_FANTASMA=8.4534%`, no mezclada con `13.38%` ni la curva
+existente) — backtest en 2 meses cerrados: junio -4.4%→+0.7%, julio -4.31%→+0.12%. Ver
+`reconciliacion_vw_seguimiento_temprana.md` (pasos 1/2/3), `BUGS.md` bug 14,
+`enfoque_capital_asegurado.md` sección "Capa fantasma".
 
-**Prioridad elevada 2026-08-19 (bug 14 en `BUGS.md`):** la reconciliación contra
-`vw_seguimiento_diario_cohorte_tramo` (vista oficial externa) cuantificó este punto ciego
-en **~27% de la población real de mora 1-30/TEMPRANA** (3,210 de 3,449 créditos "solo
-oficiales"), no el ~4% que sugería la muestra anterior — ya no es un caso de borde. Plan
-de trabajo completo (qué investigar, opciones de corrección, backtest obligatorio antes
-de adoptar cualquiera) en `reconciliacion_vw_seguimiento_temprana.md` — **empezar ahí,
-no repetir el diagnóstico.**
+**Nuevos pendientes que deja esto:**
+- Extender el backtest de la capa fantasma a más meses cerrados (solo junio/julio
+  disponibles hasta ahora) antes de tratar ±1% como error típico.
+- Refrescar `capital_asegurado.html` (tarea 2 abajo) también incluye ahora la capa
+  fantasma, no solo el fix de bug 12.
+- Decidir si en algún momento se extiende la capa fantasma al Enfoque acumulado
+  (recupero oficial) — deliberadamente fuera de alcance en esta pasada (13.38% de ese
+  enfoque no se tocó).
+- Extender la reconciliación de población (no la capa fantasma) a agosto para confirmar
+  que el ~27% de punto ciego original se repite — todavía no se hizo.
 
 ### Tarea 8 — ~~Cerrar la fila de julio en `SEGUIMIENTO.md` (recupero oficial)~~ hecho 2026-08-18
 Julio cerró con **+17.6% de error** (stock +2.0%, nuevos +22.5%) — el más alto medido hasta

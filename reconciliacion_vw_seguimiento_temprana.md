@@ -1,8 +1,11 @@
 # Reconciliación contra `vw_seguimiento_diario_cohorte_tramo` (TEMPRANA) — plan de cierre
 
-> **Estado: hallazgo cuantificado, sin resolver.** Este documento es el punto de
-> retomo para la próxima sesión que trabaje esto — no repetir el diagnóstico desde
-> cero, ya está hecho. Ver bug 14 en `BUGS.md` para el resumen corto.
+> **Estado (2026-08-20): paso 1 del plan completado — mecanismo identificado.**
+> El punto ciego de `dayslate` (bug 9) explica **99.5%** de los 3,135 créditos de
+> esta muestra (julio 2026), no un patrón nuevo. Ver sección "Paso 1 — resultado"
+> más abajo y bug 14 en `BUGS.md`. **Sigue pendiente el paso 2** (decidir
+> corrección, con el usuario) y el paso 3 (backtest antes de adoptar nada) — no
+> se aplicó ningún cambio al modelo todavía.
 
 ## Contexto y por qué existe este documento
 
@@ -85,49 +88,175 @@ lado) es menor y queda documentado, no priorizado.
 la población TEMPRANA oficial**, no el ~4% que sugería la muestra anterior (homologación
 `tipo_mora`, 2026-08-18, bug 13). Es sistemático, no un caso de borde.
 
-## Plan de trabajo — próxima sesión
+## Paso 1 — resultado (2026-08-20)
 
-**No repetir el diagnóstico — ya está hecho arriba. Empezar directamente en el paso 1.**
+**Nota metodológica primero:** los archivos de la sesión del 2026-08-19 solo quedaron en
+el scratchpad (nunca se copiaron al repo — ver sección "Archivos" abajo, ya actualizada).
+Esta sesión reconstruyó la query de reconciliación desde cero siguiendo el patrón
+documentado arriba. Al hacerlo, **se encontró un bug de no-determinismo propio (mismo
+patrón que bug 11: `row_number() over (partition by id_loan order by periodo desc)`
+con `periodo` constante dentro del CTE — sin desempate, Presto no garantiza orden
+estable)**. Corregido con el mismo dedup de bug 11 (`lastmodifieddate desc, id desc`)
+y ordenando `cierre_junio` por `dia` real, no por `periodo`. Con el fix, la
+reconstrucción es determinista (verificado corriendo 2 veces, mismo resultado) y da
+**3,135 créditos / S/4,924,248** en el bucket "dayslate=0 para nosotros" (vs. 3,210 /
+S/5,018,712 de la sesión anterior — 2.3% de diferencia en créditos, esperable al
+reconstruir sin el SQL original; **misma escala, mismo hallazgo**: 3,135/11,718 =
+26.8% de la población oficial TEMPRANA, coincide con el ~27% ya reportado). Query
+completa: `reconciliacion_temprana.sql`.
 
-1. **Investigar el mecanismo exacto de los 3,210 créditos.** Usar
-   `installmentlastpaiddate` (`dts_cobranza_creditos_cuotas`, IDEAS.md punto 4 /
-   PENDIENTES.md tarea 7, nunca explotado) cruzado específicamente contra estos IDs (no
-   una muestra genérica): ¿cuánto tiempo pasa entre vencimiento de cuota y pago real?
-   ¿Es 100% el punto ciego de 1 día (bug 9), o hay un patrón adicional (producto BNPL
-   vs. LD, cuota 1 vs. posteriores, algún tipo de crédito específico)?
-2. **Decidir la corrección — NO elegir de antemano, evaluar con datos:**
-   - (a) Sustituir/complementar `dayslate` por una señal a nivel cuota para detectar
-     "entrada en mora". **Riesgo ya documentado (bug 10):** la tasa `P(no paga a
-     tiempo)=13.38%` está calibrada sobre `dayslate` — no es intercambiable con una
-     tasa a nivel cuota sin recalibrar (mezclar sobreestimó 66-81% en el pasado).
-   - (b) Usar `dts_asignaciones_gestiones_cobranza`/`tipo_mora` como población base de
-     "mora 1-30" (ya sabemos que captura estos 3,210 créditos). Requiere validar si la
-     curva de maduración actual (`curva_stock_seg.csv` / `curva_asegurado_stock_seg.csv`)
-     sigue aplicando a esta población ampliada, o si hay que recalibrarla.
-   - (c) Dejarlo documentado como limitación conocida, si el costo de recalibrar supera
-     el beneficio (a valorar junto con el usuario).
-3. **Backtest obligatorio antes de adoptar cualquier cambio** (principio de modelado no
-   negociable, `CLAUDE.md`/`DECISIONES.md`): correr la opción elegida contra un mes
-   cerrado (junio y/o julio) y comparar el error contra el modelo actual (capital
-   asegurado +4.7%, recupero oficial +17.6% en julio) antes de reemplazar nada.
-4. **Menor prioridad:** decidir si excluir reenganches (313 créditos) de esta
-   comparación puntual, o dejarlo documentado como diferencia de alcance deliberada (nunca
-   fue lo mismo — la vista oficial no filtra `flg_last_loan_in_chain`).
-5. **Extender la reconciliación a agosto** (la vista ya tiene datos: 8,941 créditos /
-   S/14,169,688 para 202608) para confirmar que el ~27% de punto ciego se repite y no es
-   un artefacto puntual de julio.
+**Hallazgo principal: NO es un patrón nuevo — es 99.5% el mismo mecanismo de bug 9,
+solo que a mucha mayor escala de la estimada.** Cruce contra `installmentlastpaiddate`
+(`dts_cobranza_creditos_cuotas`) de los 3,135 créditos específicos:
 
-## Archivos de esta investigación (2026-08-19, en scratchpad de la sesión — no copiados
-al repo todavía; si se retoma, recrearlos con este mismo patrón)
+| Sub-bucket | Créditos | % | Mecanismo |
+|---|---:|---:|---|
+| `fecha_de_vencimiento_cuota` (vista oficial) poblada, cuota pagada exactamente 1 día tarde | 546 | 17.4% | Bug 9 clásico — coincide con la cuota que la propia vista oficial ya señalaba |
+| `fecha_de_vencimiento_cuota` **NULA** en la vista oficial (campo sin poblar en la asignación), pero al buscar directamente en `dts_cobranza_creditos_cuotas` la cuota vencida más reciente (`fechavencimiento<=fecha_ancla`): pagada 1 día tarde, **el pago cae el MISMO día que `fecha_ancla`** | 2,573 | 82.1% | Bug 9 — mismo mecanismo, solo que la vista oficial no traía el campo para cruzarlo directo |
+| Casos aislados (gap≠1, sin cuota vencida, otros) | 16 | 0.5% | Sin patrón sistemático — outliers |
 
-- Query de cruce a nivel crédito: CTEs `nuestro` (stock+nuevos deduplicado) vs. `oficial`
-  (`vw_seguimiento_diario_cohorte_tramo` filtrado a TEMPRANA + `fecha=fecha_ancla`),
-  `full outer join` por `id_ihfintech_loan`.
-- Diagnóstico "solo nuestro": cruce contra `dts_asignaciones_gestiones_cobranza` por
-  `dni`+`producto` para revisar `grupo_control`.
-- Diagnóstico "solo oficial": cruce contra el último snapshot de julio en
-  `dts_mambu_loans_hist` para clasificar por `mora=0` / `mora>30` / `status` /
-  `flg_last_loan_in_chain`.
+**Total: 3,119 de 3,135 (99.5%) es el punto ciego de 1 día de `dayslate` (bug 9),
+no un fenómeno distinto.** Verificado además:
+- **Sin arrastre por DNI:** en 2,581/2,588 casos del sub-bucket de la fecha nula,
+  `max_dias_mora_dni` = `dias_mora` (no es un crédito "sano" arrastrado por la mora de
+  otro crédito del mismo cliente — la mora es del crédito mismo).
+- **Sin sesgo de producto:** BNPL y LD aparecen en ambos sub-buckets en proporciones
+  similares al mix general de la cartera (BNPL 2,358 / LD 770 combinado) — no hay un
+  producto o tipo de crédito específico concentrando el problema.
+- El campo `fecha_de_vencimiento_cuota` de `dts_asignaciones_gestiones_cobranza` está
+  **sin poblar en el 82% de estos casos** — es un gap de instrumentación de esa tabla
+  (columna nueva, ya marcada "sin explotar" en `FUENTES_DATOS.md`), no evidencia de
+  una causa distinta; al buscar la cuota directamente sin depender de ese campo,
+  aparece el mismo patrón de bug 9.
+
+**Implicación para el paso 2:** como es el mismo mecanismo ya conocido (no dos
+problemas distintos), una corrección quirúrgica —detectar "pagó 1 día tarde" desde
+`dias_vencimiento_a_pago`/`installmentlastpaiddate` a nivel cuota y sumarlo como
+"entrada en mora de 1 día" sin tocar el resto del cálculo de `dayslate`— es más
+acotada que lo que bug 10 advierte (ese caso era reemplazar tasa+curva completas por
+una definición de cuota distinta; acá se trata de rellenar un hueco puntual, con
+`dayslate` siguiendo como fuente para todo lo demás). Sigue aplicando el principio no
+negociable: cualquier opción se valida con el backtest existente antes de adoptarla,
+no en abstracto.
+
+**Archivo de esta corrida:** `reconciliacion_temprana.sql` (nuevo, en el repo — a
+diferencia de la sesión anterior, esta vez sí se copió).
+
+## Paso 2/3 — resultado (2026-08-20): diseño + backtest en 2 meses cerrados
+
+**Decisión con el usuario:** opción (a) completa — retrospectivo (curva) + prospectivo
+(tasa), **solo Enfoque alfa** (capital asegurado; el recupero oficial, que también usa
+`P(no paga a tiempo)=13.38%`, queda fuera de esta pasada — 13.38% NO se toca).
+
+**Diseño ("capa fantasma"):** una capa INDEPENDIENTE de `dayslate`/13.38%/la curva
+existente, sin mezclarlas (evita repetir bug 10):
+- Detecta un crédito que paga una cuota exactamente 1 día tarde (`dias_vencimiento_a_
+  pago=1`) sin que `dayslate` lo haya registrado nunca ese mes (mutuamente excluyente de
+  la detección real vía `dayslate`, para no duplicar).
+- Se activa **100% del saldo, el día siguiente al vencimiento** — no necesita curva de
+  maduración propia: por definición, si se detecta el evento es porque ya se pagó.
+- Nueva tasa **`P_FANTASMA` = 8.4534%** (29,845/353,054, mismo criterio y ventana fuera de
+  muestra que 13.38% — ago-2025 a may-2026, sin junio). Por mes: 7.35%-9.53%, **casi tan
+  grande como el propio 13.38%** — no es un ajuste marginal.
+
+**Backtest — junio 2026 (mes calibración/backtest oficial):**
+
+| | Proyectado | Real | Error |
+|---|---:|---:|---:|
+| Stock (sin cambios) | S/2,611,863 | S/2,436,287 | +7.2% |
+| Nuevos (sin cambios) | S/6,206,338 | S/6,789,236 | -8.6% |
+| **Fantasma (nuevo)** | S/5,106,866 | S/4,598,430 | +11.1% |
+| **Total** | **S/13,925,067** | **S/13,823,953** | **+0.7%** (antes: **-4.4%**) |
+
+**Backtest — julio 2026 (segundo mes cerrado, validación independiente):**
+
+| | Proyectado | Real | Error |
+|---|---:|---:|---:|
+| Stock+Nuevos (sin cambios) | S/10,306,231 | S/10,770,918 (recalculado esta sesión) | -4.31% |
+| **Fantasma (nuevo)** | S/6,226,704 | S/5,742,741 | +8.43% |
+| **Total** | **S/16,532,935** | **S/16,513,659** | **+0.12%** |
+
+**El error total baja de forma consistente en los 2 meses cerrados disponibles**
+(|-4.4%|→|+0.7%| en junio, |-4.31%|→|+0.12%| en julio) — no es un mes con suerte. La
+capa fantasma tiene su propio error (+11.1%/+8.43%, sobreestima) pero va en dirección
+OPUESTA al error base (que subestimaba), y el neto mejora en ambos casos.
+
+**Hallazgo colateral — `SEGUIMIENTO.md` tiene el signo de julio (capital asegurado)
+invertido:** al recalcular el real de julio de forma independiente (S/3,137,199 stock +
+S/7,633,719 nuevos = S/10,770,918, muy cerca del S/10,789,362 ya documentado), el error
+correcto es **-4.31%/-1.01%/-5.67%** (subestima, MISMO signo que junio), no
+"+4.7%/+1.0%/+6.3%" como dice la tabla hoy — la nota de "signo invertido, sin sesgo
+direccional estable" está basada en un error de signo, no en un hallazgo real. **No se
+corrigió `SEGUIMIENTO.md` todavía** — queda para que el usuario lo confirme antes de
+tocar un registro de mes ya cerrado.
+
+**Archivos de esta corrida:** `investigacion_capa_fantasma.sql` (tasa `P_FANTASMA` +
+validación julio). El backtest quedó fusionado directamente en
+`backtest_capital_asegurado_junio.py` (producción, v3) +
+`datos_backtest_junio/bt_real_fantasma_nuevos_junio.csv` — ya no existe un script
+paralelo separado.
+
+**2026-08-20 (mismo día) — adoptado en producción, a pedido explícito del usuario:**
+- `enfoque_capital_asegurado.sql` Q3 (tasa `P_FANTASMA`) y `enfoque_capital_asegurado_
+  backtest.sql` BT-ASEG-3 (real fantasma junio) — nuevas queries de producción.
+- `backtest_capital_asegurado_junio.py` v3 — capa fantasma fusionada (ya no hay script
+  paralelo).
+- Meta de agosto recalculada — ver `ESTADO.md`/`SEGUIMIENTO.md` para los números vigentes.
+- Signo de julio corregido en `SEGUIMIENTO.md` (ver detalle de este documento arriba).
+
+## Pendientes para cerrar TEMPRANA por completo (2026-08-20, revisado con el usuario)
+
+**Bug 11 (filas duplicadas, ver `BUGS.md`) queda descartado como causa de esta
+diferencia** — verificado: de los 3,130 créditos "fantasma", solo 1 tiene alguna fila
+duplicada en julio y ninguno tiene `dayslate` conflictivo. No bloquea nada de lo de abajo,
+pero sigue como pendiente aparte (Tareas 3/6 de `PENDIENTES.md`).
+
+Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
+
+1. **Verificar la capa fantasma a nivel crédito, no solo agregado.** El backtest
+   monetario mejoró (+0.7%/+0.1%), pero nunca se volvió a correr la reconciliación
+   crédito-por-crédito para confirmar que el bucket "solo oficial, `dayslate`=0" (3,210/
+   3,135 créditos) efectivamente se explica 1:1 por la capa fantasma. Esperable que sí
+   (99.5% ya matcheaba el mecanismo), pero no verificado explícitamente.
+2. **Extender la reconciliación de población a agosto** (la vista ya tiene datos: 8,941
+   créditos / S/14,169,688) para confirmar que el ~27% de punto ciego original se repite
+   y no fue un artefacto puntual de julio.
+3. **Decidir si excluir reenganches (313 créditos) de esta comparación puntual** — la
+   vista oficial no filtra `flg_last_loan_in_chain` y nosotros sí. Es una diferencia de
+   alcance deliberada, no un bug — este gap **no se va a cerrar** a menos que se decida
+   cambiar el filtro, así que es más una decisión de producto que una tarea técnica.
+4. **Revisar una inconsistencia numérica menor en el desglose "solo nuestro" original**
+   (sesión 2026-08-19): la tabla de motivos suma 998+119+186+116=1,419, pero el total
+   reportado de "solo nuestro" es 1,224 (diferencia de 195, nunca explicada). Bajo
+   impacto (~S/300K estimado), pero vale la pena revisar antes de cerrar el documento.
+5. **Auditar el propio dedup de la vista oficial** (`fechaactualizaciontabla desc`, sin
+   `id` como desempate final) — nunca se verificó si le genera a `vw_seguimiento_diario_
+   cohorte_tramo` el mismo problema de no-reproducibilidad que bug 11 encontró en
+   `dts_mambu_loans_hist`. Menor prioridad, fuera de nuestro control (es de otro proyecto).
+6. Aplicar la misma capa fantasma al Enfoque acumulado (recupero oficial) si en el futuro
+   se decide ampliar el alcance más allá de Enfoque alfa (fuera de esta pasada, ver
+   "Alcance tasa 13.38%" — se optó por no tocar `fase1_stock.sql`/`fase2_nuevos.sql`/
+   `fase3_backtest.sql`).
+
+## Archivos de esta investigación
+
+- **`reconciliacion_temprana.sql`** (2026-08-20, en el repo): reconstrucción
+  determinista de la reconciliación de julio (con el fix de no-determinismo del
+  paso 1) + el cruce contra `installmentlastpaiddate`. Reemplaza la corrida
+  2026-08-19 (esa quedó solo en scratchpad, nunca se copió al repo, y su SQL exacto
+  ya no es recuperable — esta versión es la que hay que usar de acá en adelante).
+- Query de cruce a nivel crédito: CTEs `nuestro` (stock+nuevos deduplicado, con el
+  dedup de bug 11 aplicado en `fotos`) vs. `oficial` (`vw_seguimiento_diario_cohorte_
+  tramo` filtrado a TEMPRANA + `fecha=fecha_ancla`), `left join` por `id_ihfintech_loan`
+  para aislar "solo oficial".
+- Cruce mecanismo (paso 1): `clasificado` (solo oficial, status activo, sin excluir por
+  chain) contra `dts_cobranza_creditos_cuotas` — primero por `fecha_de_vencimiento_cuota`
+  exacta (vista oficial), luego, para los que no tienen ese campo poblado, por la cuota
+  vencida más reciente (`fechavencimiento<=fecha_ancla`, `installmentstate='PAID'`).
+- **Diagnósticos de la sesión 2026-08-19 (solo nuestro / solo oficial por status/chain)
+  no se re-verificaron esta sesión** — se asume que siguen vigentes (la reconstrucción
+  determinista dio números en la misma escala), pero si se necesita el detalle exacto,
+  recrearlos con el patrón de `reconciliacion_temprana.sql`.
 
 ## Referencias
 

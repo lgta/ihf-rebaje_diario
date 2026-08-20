@@ -27,11 +27,20 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 > `enfoque_capital_asegurado.md`). El recupero se sigue trackeando en paralelo en la tabla
 > de arriba.
 
-| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Notas |
-|---|---:|---:|---:|---:|---:|---|
-| Junio 2026 | S/8,771,300 | S/9,202,188 | **-4.7%** | +5.6% | -8.4% | Primer backtest, 2026-07-13. Reutiliza población/calendario de `datos_backtest_junio/` y curvas de `datos_capital_asegurado/`. Ver `enfoque_capital_asegurado.md`, `backtest_capital_asegurado_junio.py`. |
-| Julio 2026 | S/10,306,231 | S/10,789,362 | **+4.7%** | +1.0% | +6.3% | Cerrado 2026-08-18 (mes completo). Mismo orden de magnitud que junio, pero signo invertido (subestima en vez de sobreestimar) — consistente con que el error del modelo todavía no muestra un sesgo direccional estable en 2 meses de dato. Ver `cierre_julio.sql` (bloques J1/J2). |
-| Agosto 2026 | S/10,245,695 | *(mes en curso, corte 18-ago: S/6,795,074, +8.7% vs. proyectado al mismo día)* | — | — | — | Meta principal vigente. Stock S/2,956,828 + nuevos S/7,288,868. Ver `meta_agosto_capital_asegurado.py` + `datos_avance_capital_asegurado_agosto/`. Cerrar esta fila cuando termine agosto. |
+> **2026-08-20 — capa "fantasma" adoptada (bug 14, ver `BUGS.md` y `reconciliacion_
+> vw_seguimiento_temprana.md`):** créditos que pagan una cuota exactamente 1 día tarde y
+> que `dayslate` nunca ve (punto ciego de bug 9). Tasa nueva e independiente `P_FANTASMA
+> =8.4534%` (no reemplaza ni se mezcla con `13.38%`), activada 100% el día siguiente al
+> vencimiento. Las filas de junio/julio de abajo ya están recalculadas con esta capa —
+> **al recalcular julio también se corrigió un error de signo** que tenía esta tabla
+> (decía "+4.7%/+1.0%/+6.3%", sobreestimando; el número correcto —incluso antes de
+> agregar la capa fantasma— es que julio SUBESTIMA, igual que junio, no al revés).
+
+| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Error fantasma | Notas |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Junio 2026 | S/13,925,067 | S/13,823,953 | **+0.7%** | +7.2% | -8.6% | +11.1% | Con capa fantasma (2026-08-20). Sin ella: -4.4% (stock +7.2%, nuevos -8.6%, sin fantasma). Ver `backtest_capital_asegurado_junio.py` v3. |
+| Julio 2026 | S/16,532,935 | S/16,513,659 | **+0.1%** | -1.0% | -5.7% | +8.4% | Cerrado 2026-08-18, capa fantasma agregada 2026-08-20. Sin ella: **-4.3%** (stock -1.0%, nuevos -5.7%) — signo corregido, antes decía +4.7% por error. Ver `reconciliacion_vw_seguimiento_temprana.md` paso 2/3 e `investigacion_capa_fantasma.sql` Q3/Q4. |
+| Agosto 2026 | S/16,351,397 | *(mes en curso, corte 18-ago: S/9,622,765, -1.8% vs. proyectado al mismo día)* | — | — | — | — | Meta con capa fantasma: stock S/2,956,828 + nuevos S/7,288,868 + fantasma S/6,105,701. Antes de la capa fantasma el avance parecía +8.7% adelantado; con la capa completa va -1.8% (ligeramente atrás). Ver `meta_agosto_capital_asegurado.py` v2 + `datos_avance_capital_asegurado_agosto/`. Cerrar esta fila cuando termine agosto. |
 
 ## Qué mirar si el error crece
 

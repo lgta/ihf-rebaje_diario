@@ -226,3 +226,106 @@ from activado_por_dia a
 join base_total b on b.avance_band = a.avance_band
 order by 1, 2
 ;
+
+-- ---------------------------------------------------------------------
+-- Q3. CAPA "FANTASMA" -- tasa P_FANTASMA, adoptada en produccion 2026-08-20
+-- (bug 9/14: punto ciego de dayslate, ver reconciliacion_vw_seguimiento_
+-- temprana.md paso 2/3 y BUGS.md bug 14). Un credito que paga una cuota
+-- EXACTAMENTE 1 dia tarde nunca hace que dayslate muestre mora -- no cuenta
+-- ni en Q2 (curva de nuevos, no tiene bucket dia-0) ni en P_NO_PAGA_DIA0=
+-- 13.38% (tambien mide transiciones dayslate). Capa INDEPENDIENTE, no
+-- mezclada con 13.38% ni con la curva de Q2 (evita bug 10): se activa 100%
+-- el dia siguiente al vencimiento, sin curva propia -- por definicion, si
+-- se detecta el evento es porque ya se pago. Solo Enfoque alfa (alcance
+-- decidido con el usuario 2026-08-20) -- NO se aplica a fase1_stock.sql/
+-- fase2_nuevos.sql/fase3_backtest.sql del recupero oficial.
+--
+-- Mismo denominador que 3H de fase3_backtest.sql (calendario_mes: creditos
+-- elegibles con cuota venciendo ese mes, excluyendo stock ya en mora),
+-- fuera de muestra (ago-2025 a may-2026, sin junio). Numerador: al menos 1
+-- cuota vencida ese mes pagada EXACTAMENTE 1 dia tarde, Y el credito no
+-- esta ya en "entradas_reales" (dayslate) ese mes (mutuamente excluyente,
+-- para no duplicar en la proyeccion combinada).
+--
+-- Resultado (2026-08-20): 29,845 entradas fantasma / 353,054 elegibles =
+-- P_FANTASMA = 8.4534% (por mes: 7.35%-9.53% -- casi tan grande como el
+-- propio 13.38%, no es un ajuste marginal). Validado con backtest en 2
+-- meses cerrados (junio: -4.4%->+0.7%; julio: -4.31%->+0.12%), ver
+-- backtest_capital_asegurado_junio.py e investigacion_capa_fantasma.sql.
+-- ---------------------------------------------------------------------
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, fotos as (
+  select
+    substr(a.fechaproceso,1,6) as periodo
+  , a.fechaproceso
+  , a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , coalesce(a.dayslate, 0) as mora
+  , lag(coalesce(a.dayslate, 0)) over (
+      partition by a._datos_adicionales_loan_accounts_id_ihfintech order by a.fechaproceso) as mora_ant
+  from dts_mambu_loans_hist a
+  join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+  left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+  where b.status in ('ACTIVE','COMPLETED')
+    and coalesce(lc.last_in_chain,1) = 1
+    and a.fechaproceso >= '20250201'
+)
+, cierre_mes as (
+  select periodo, id_loan, mora, row_number() over (partition by id_loan, periodo order by fechaproceso desc) as rn
+  from fotos
+)
+, stock_ids as (
+  select
+    date_format(date_add('month',1,date_parse(periodo,'%Y%m')), '%Y%m') as periodo_target
+  , id_loan
+  from cierre_mes
+  where rn = 1 and mora between 1 and 30
+)
+, entradas_reales as (
+  select distinct periodo, id_loan
+  from fotos
+  where mora_ant = 0 and mora = 1
+)
+, calendario as (
+  select
+    substr(cast(c.fechavencimiento as varchar),1,7) as periodo_venc
+  , c.id_ihfintech_loan as id_loan
+  , c.fechavencimiento
+  , c.installmentstate
+  , c.dias_vencimiento_a_pago
+  from dts_cobranza_creditos_cuotas c
+  where c.status in ('ACTIVE','COMPLETED')
+    and c.flg_last_loan_in_chain = 1
+    and c.fechavencimiento >= date('2025-08-01')
+    and c.fechavencimiento <= date('2026-05-31')
+)
+, calendario_mes as (
+  select replace(periodo_venc,'-','') as periodo, id_loan
+  from calendario cal
+  where not exists (
+      select 1 from stock_ids s
+      where s.periodo_target = replace(cal.periodo_venc,'-','') and s.id_loan = cal.id_loan
+    )
+  group by 1, 2
+)
+, entradas_fantasma as (
+  select distinct replace(cal.periodo_venc,'-','') as periodo, cal.id_loan
+  from calendario cal
+  where cal.installmentstate = 'PAID' and cal.dias_vencimiento_a_pago = 1
+    and not exists (
+      select 1 from entradas_reales er
+      where er.periodo = replace(cal.periodo_venc,'-','') and er.id_loan = cal.id_loan
+    )
+)
+select
+  cm.periodo
+, count(distinct cm.id_loan) as elegibles
+, count(distinct ef.id_loan) as entradas_fantasma
+, round(100.0*count(distinct ef.id_loan)/count(distinct cm.id_loan), 2) as pct_entrada_fantasma
+from calendario_mes cm
+left join entradas_fantasma ef on ef.periodo = cm.periodo and ef.id_loan = cm.id_loan
+group by 1
+order by 1
+;

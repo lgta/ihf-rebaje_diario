@@ -1,12 +1,31 @@
 # Enfoque alfa: capital asegurado
 
-> **Estado: meta principal de julio 2026 (desde 2026-07-13, a pedido explícito del
-> usuario).** Backtest superado contra junio 2026 (-4.7% de error). El recupero oficial
-> (`meta_julio.py`) se sigue calculando y trackeando en paralelo, pero ya no es el número
-> que lidera `ESTADO.md`. Propuesta original por el usuario el 2026-07-10. Un solo mes de
-> backtest no basta para confirmar el error típico (mismo caveat que el modelo de
-> recupero, ver `IDEAS.md` punto 1) — vale lo mismo ahora que es la métrica principal:
-> seguir extendiendo el backtest a más meses antes de tratar -4.7% como error típico.
+> **Estado: meta principal desde 2026-07-13, a pedido explícito del usuario.** Backtest en
+> 2 meses cerrados (junio +0.7%, julio +0.1%, ambos con la "capa fantasma" adoptada
+> 2026-08-20 — ver sección "Capa fantasma" abajo y bug 14 en `BUGS.md`). El recupero
+> oficial (`meta_julio.py`) se sigue calculando y trackeando en paralelo, pero ya no es el
+> número que lidera `ESTADO.md`. Propuesta original por el usuario el 2026-07-10. Solo 2
+> meses de backtest — seguir extendiendo antes de tratar ±1% como error típico (`IDEAS.md`
+> punto 1).
+
+## Capa "fantasma" (adoptada 2026-08-20, bug 14)
+
+Un crédito que paga una cuota **exactamente 1 día tarde** nunca hace que `dayslate`
+muestre mora — la foto nocturna ya ve el pago (bug 9). Esto quedó invisible tanto para la
+curva de "nuevos" (no tenía bucket día-0) como para la tasa `P(no paga a tiempo)=13.38%`
+(también mide transiciones `dayslate`, ciega al mismo fenómeno). Al reconciliar contra una
+vista externa oficial se cuantificó en **~27% de toda la población real de mora 1-30/
+TEMPRANA** — no es un caso de borde (ver `reconciliacion_vw_seguimiento_temprana.md`).
+
+Se agregó una capa **independiente** (no reemplaza ni mezcla `13.38%` ni la curva de Q2 —
+evita repetir bug 10): detecta el pago-1-día-tarde no visto por `dayslate`, y se activa
+**100% del saldo el día siguiente al vencimiento** (sin curva propia — por definición, si
+se detecta el evento es porque ya se pagó). Tasa nueva `P_FANTASMA=8.4534%` (29,845/353,054,
+mismo criterio y ventana fuera de muestra que `13.38%` — ver `enfoque_capital_asegurado.sql`
+Q3). Por mes: 7.35%-9.53%, casi tan grande como el propio `13.38%`.
+
+**Alcance:** solo este enfoque (Enfoque alfa) — el recupero oficial (`fase1_stock.sql`/
+`fase2_nuevos.sql`/`fase3_backtest.sql`) no se tocó, decisión explícita con el usuario.
 
 ## El concepto
 
@@ -143,14 +162,17 @@ cierre de mayo) — usa `bt_stock_junio_aseg.csv`, propio de este enfoque
 
 | | Proyectado | Real | Error |
 |---|---:|---:|---:|
-| Total | S/8,818,202 | S/9,225,523 | **-4.4%** |
+| Total (sin fantasma) | S/8,818,202 | S/9,225,523 | -4.4% |
 | Stock | S/2,611,863 | S/2,436,287 | +7.2% |
 | Nuevos | S/6,206,338 | S/6,789,236 | -8.6% |
+| **Fantasma (2026-08-20)** | S/5,106,866 | S/4,598,430 | +11.1% |
+| **Total con capa fantasma** | **S/13,925,067** | **S/13,823,953** | **+0.7%** |
 
-(Antes de la corrección: -4.7% total, stock +5.6%, nuevos -8.4% — la corrección deja el
-error total prácticamente igual, incluso una pizca mejor. La tasa `P(no paga a
-tiempo)=13.38%` no se recalibró: mide si la entrada a mora ocurre, no en qué día del mes
-cae, así que sigue siendo válida sin cambios.)
+(Antes de la corrección de bug 12: -4.7% total, stock +5.6%, nuevos -8.4% — esa corrección
+dejó el error total prácticamente igual. La capa fantasma, 2026-08-20, es la que mueve el
+error de forma material: -4.4%→+0.7%. La tasa `P(no paga a tiempo)=13.38%` no se
+recalibró — sigue midiendo si la entrada a mora ocurre vía `dayslate`; `P_FANTASMA` es
+una tasa nueva e independiente, no una recalibración de 13.38%.)
 
 **El error total (-4.4%) es del mismo orden de magnitud que el backtest del modelo oficial
 de recupero (+5.4%)** — buena señal de que la curva de capital asegurado no está sesgada
@@ -198,5 +220,9 @@ y `datos_avance_capital_asegurado_julio/tabla_diaria_alfa.csv`.
    2026-07-13** (a pedido explícito del usuario), reemplazando al recupero como el número
    que lidera `ESTADO.md`. El recupero oficial se sigue calculando y trackeando en
    paralelo, no se descontinuó.
-3. Cerrar la fila de julio en `SEGUIMIENTO.md` cuando termine el mes (real final vs.
-   proyectado), igual que se hace con el recupero.
+3. ~~Cerrar la fila de julio en `SEGUIMIENTO.md`~~ — hecho 2026-08-18, y recalculada con
+   la capa fantasma + signo corregido el 2026-08-20 (ver arriba).
+4. Cerrar la fila de agosto en `SEGUIMIENTO.md` cuando termine el mes — meta vigente
+   S/16,351,397 (con capa fantasma), ver `ESTADO.md`.
+5. Extender el backtest a 3-6 meses más (junio/julio son los únicos 2 disponibles) antes
+   de tratar ±1% como error típico con la capa fantasma.

@@ -5,13 +5,26 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-08-19.
+Última actualización: 2026-08-20.
+
+> **2026-08-20 — "capa fantasma" diseñada, validada con backtest en 2 meses cerrados, y
+> ADOPTADA en producción (a pedido explícito del usuario):** el punto ciego de `dayslate`
+> (bug 9) es 99.5% el mecanismo ya conocido, no uno nuevo (paso 1). Se diseñó una
+> corrección quirúrgica (opción (a) completa, solo Enfoque alfa, no toca `13.38%` ni la
+> curva existente — tasa nueva e independiente `P_FANTASMA=8.4534%`) y el backtest mostró
+> mejora consistente en los 2 meses cerrados disponibles: **error total -4.4%→+0.7% en
+> junio, -4.31%→+0.12% en julio** (esto último con un signo que estaba mal en
+> `SEGUIMIENTO.md`, ya corregido). Aplicado a `enfoque_capital_asegurado.sql`/
+> `_backtest.sql`, `backtest_capital_asegurado_junio.py`, `meta_agosto_capital_asegurado.py`
+> y `SEGUIMIENTO.md` — ver bug 14 en `BUGS.md` y `reconciliacion_vw_seguimiento_
+> temprana.md` ("Paso 2/3 — resultado") para el detalle completo. La meta de agosto
+> cambia de forma material — ver "La meta vigente" abajo.
 
 > **2026-08-19 — reconciliación contra vista oficial externa, punto ciego de `dayslate`
 > cuantificado en ~27%:** ver bug 14 en `BUGS.md` y el plan de trabajo en
 > `reconciliacion_vw_seguimiento_temprana.md`. Nuestra población de mora 1-30 cuadra casi
 > exacto con la oficial (`vw_seguimiento_diario_cohorte_tramo`) donde ambas coinciden — el
-> gap es de cobertura, no de cálculo. **Pendiente activo, prioridad elevada.**
+> gap es de cobertura, no de cálculo.
 
 > **2026-08-18 — homologación con `gestiones_cobranzas` + julio cerrado + meta de agosto:**
 > ver bug 13 en `BUGS.md` (homologación de `tipo_mora`) y `SEGUIMIENTO.md` (cierre de julio,
@@ -48,19 +61,27 @@
 > error más alto medido hasta ahora en este enfoque, ver nota de cautela abajo). Fuente:
 > `cierre_julio.sql`.
 
-**Agosto 2026, corte 18-ago — Capital asegurado:** meta proyectada **S/10,245,695** (stock
-S/2,956,828 + nuevos S/7,288,868). Real asegurado a la fecha: **S/6,795,074** (66.3% de
-avance del total del mes) — **+8.7% por encima de lo proyectado para el mismo día**
-(proyección al día 18: S/6,254,010). Resta: S/3,450,622 (días 19-31). Fuente:
-`meta_agosto_capital_asegurado.py` + `datos_avance_capital_asegurado_agosto/`. Curvas
-calibradas y ya validadas con backtest de junio (-4.4% de error) y ahora también con el
-cierre real de julio (+4.7%), ver `enfoque_capital_asegurado.md`.
+**Agosto 2026, corte 18-ago — Capital asegurado (con capa fantasma, ver bug 14 en
+`BUGS.md`):** meta proyectada **S/16,351,397** (stock S/2,956,828 + nuevos S/7,288,868 +
+fantasma S/6,105,701). Real asegurado a la fecha: **S/9,622,765** (58.8% de avance del
+total del mes) — **-1.8% por debajo de lo proyectado para el mismo día** (proyección al
+día 18: S/9,795,613). Resta: S/6,728,632 (días 19-31). Fuente:
+`meta_agosto_capital_asegurado.py` (v2) + `datos_avance_capital_asegurado_agosto/`. Curvas
+calibradas y validadas con backtest de junio (**+0.7%** con capa fantasma, antes -4.4%) y
+del cierre real de julio (**+0.1%** con capa fantasma, antes -4.3% — signo corregido, ver
+`SEGUIMIENTO.md`), ver `enfoque_capital_asegurado.md`.
 
-**Nota de cautela:** el +8.7% de adelanto es la lectura de un solo mes a mitad de camino
-(día 18 de 31) — julio cerró con +4.7%, en la misma dirección pero de menor magnitud. Con
-solo 2 meses de cierre real, todavía no hay base para saber si el error tiende a crecer o
-es varianza normal (ver tarea 9, `PENDIENTES.md`, extender el backtest a más meses). Seguir
-el avance semana a semana antes de sacar conclusiones.
+**2026-08-20 — cambio de metodología, no un cambio de tendencia:** la lectura de "+8.7%
+adelantado" que se reportaba hasta hoy no incluía la capa fantasma (créditos que pagan 1
+día tarde sin que `dayslate` los vea — bug 9/14). Al agregarla, tanto la meta como el real
+crecen, pero la meta crece más (el calendario de vencimientos completo de agosto es mayor
+que lo ya observado a la fecha) — el avance pasa a **-1.8%**, prácticamente en línea con lo
+proyectado. Esto no es una señal nueva de deterioro: junio y julio (backtest en 2 meses
+cerrados) muestran que con la capa fantasma el error total baja a ±1% en vez de ±4.4%, así
+que la meta corregida es más confiable, no menos. Con solo 2 meses de cierre real (ambos
+ahora con la misma metodología), todavía no hay base para saber si un futuro error tiende a
+crecer o es varianza normal (ver tarea 9, `PENDIENTES.md`, extender el backtest a más
+meses). Seguir el avance semana a semana antes de sacar conclusiones.
 
 Metodología: modelo evento × magnitud, dos motores (stock anclado al cierre del mes
 anterior UNION entrantes del día 1, nuevos vía calendario de vencimientos × P(no paga a
@@ -91,7 +112,7 @@ artifact interactivo de abajo.
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
 | [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado (números pre-bug 12) | Enfoque alfa, **meta principal de julio** — explicado con 5 créditos reales, curvas por segmento, backtest de junio y avance en vivo de julio. Números vigentes en `enfoque_capital_asegurado.md`/`ESTADO.md`, el artifact todavía tiene los de antes del fix del 2026-07-14 (bug 12). **Pendiente en `PENDIENTES.md` tarea 2.** |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) | ✓ vigente (2026-07-15) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, ya con la definición corregida (bug 12). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
-| De julio a agosto — cómo se arma la meta | ⚠ solo local, sin publicar | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto con datos reales al 18-ago), ambos enfoques con toggle. **Sin URL de claude.ai** — esta sesión no tuvo la herramienta Artifact disponible para publicarlo; abrir directo `resumen_julio_agosto.html` en un navegador, o publicarlo desde una sesión que sí tenga esa herramienta. Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` |
+| De julio a agosto — cómo se arma la meta | ⚠ solo local, sin publicar | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto), ambos enfoques con toggle. **Actualizado 2026-08-20** con la capa fantasma (bug 14) — julio ahora +0.1% de error (antes +4.7% con signo mal), agosto sube a meta S/16,351,397 y avance -1.8% al 18-ago. **Sin URL de claude.ai** — esta sesión tampoco tuvo la herramienta Artifact disponible para publicarlo; abrir directo `resumen_julio_agosto.html` en un navegador, o publicarlo desde una sesión que sí tenga esa herramienta. Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
@@ -113,7 +134,7 @@ siguen existiendo en claude.ai, solo dejaron de mantenerse.)*
 
 | Enfoque | Archivo | Qué mide | Estado |
 |---|---|---|---|
-| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest -4.4% (jun-2026, definición corregida — bug 12), tracking en vivo de julio. Pendientes en `PENDIENTES.md` |
+| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest +0.7% (jun) / +0.1% (jul) con capa fantasma (bug 14, 2026-08-20). Pendientes en `PENDIENTES.md` |
 | Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4%. Pendientes en `PENDIENTES.md` |
 | Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` (respaldo de una decisión del enfoque acumulado, no es un enfoque propio) | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
 
@@ -140,12 +161,16 @@ Detalle del último:
   (muestra 10-ago). El 1.5% de diferencia es un comportamiento esperado (créditos que curan
   y recaen dentro del mes; este proyecto fija "stock" todo el mes por diseño). No requiere
   cambios al modelo.
-- **Reconciliación contra `vw_seguimiento_diario_cohorte_tramo`** (2026-08-19, vista
+- **Reconciliación contra `vw_seguimiento_diario_cohorte_tramo`** (2026-08-19/20, vista
   externa "oficial" aportada por el usuario, bug 14 en `BUGS.md`): nuestra población de
   mora 1-30 cuadra casi exacto (0.15%) con la oficial en los créditos que ambas comparten,
   pero el punto ciego de `dayslate` (bug 9) explica ~27% de TODA la población TEMPRANA
-  oficial que no estamos capturando — mucho más grande de lo estimado antes. **⚠
-  Pendiente activo, con plan de trabajo:** `reconciliacion_vw_seguimiento_temprana.md`.
+  oficial que no estábamos capturando. **✅ Resuelto 2026-08-20:** 99.5% es el mismo
+  mecanismo de bug 9 (no un patrón nuevo) — corrección ("capa fantasma") diseñada,
+  validada con backtest en 2 meses cerrados (+0.7%/+0.1%) y adoptada en producción. Ver
+  `reconciliacion_vw_seguimiento_temprana.md` y "La meta vigente" arriba. Pendiente menor:
+  extender la reconciliación de población a agosto, y decidir si aplica también al
+  Enfoque acumulado (fuera de alcance por ahora).
 
 ## Pendiente de copiar al repo desde scratchpad
 
@@ -157,10 +182,17 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Pendiente de git
 
-**2026-08-19:** documentación de la reconciliación contra `vw_seguimiento_diario_cohorte_
-tramo` (`reconciliacion_vw_seguimiento_temprana.md`, bug 14 en `BUGS.md`, actualizaciones
-en `PENDIENTES.md`/`FUENTES_DATOS.md`/`README.md`/este archivo). Pendiente de que el
-usuario pida commitear.
+**2026-08-20:** cierre completo de la reconciliación (pasos 1/2/3), adopción en
+producción de la capa fantasma, y refresco del artifact local julio-agosto. Archivos
+nuevos: `reconciliacion_temprana.sql`, `investigacion_capa_fantasma.sql`,
+`datos_backtest_junio/bt_real_fantasma_nuevos_junio.csv`. Archivos modificados:
+`enfoque_capital_asegurado.sql` (Q3), `enfoque_capital_asegurado_backtest.sql`
+(BT-ASEG-3), `backtest_capital_asegurado_junio.py` (v3), `meta_agosto_capital_
+asegurado.py` (v2), `armar_artifact_julio_agosto.py`, `datos_artifact_julio_agosto.json`,
+`resumen_julio_agosto.html`, `SEGUIMIENTO.md`, `enfoque_capital_asegurado.md`,
+`reconciliacion_vw_seguimiento_temprana.md`, `BUGS.md`, `PENDIENTES.md`, este archivo.
+Pendiente de que el usuario pida commitear (junto con lo del 2026-08-19, todavía sin
+commitear: actualizaciones en `FUENTES_DATOS.md`/`README.md`).
 
 ## Índice de los demás documentos
 

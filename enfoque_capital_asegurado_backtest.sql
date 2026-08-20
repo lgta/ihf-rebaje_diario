@@ -209,3 +209,93 @@ from primer_pago
 group by 1
 order by 1
 ;
+
+-- ---------------------------------------------------------------------
+-- BT-ASEG-3. CAPA FANTASMA -- real por dia, junio 2026 (adoptada en
+-- produccion 2026-08-20, ver Q3 de enfoque_capital_asegurado.sql y
+-- reconciliacion_vw_seguimiento_temprana.md paso 2/3). Creditos con cuota
+-- vencida en junio pagada exactamente 1 dia tarde, dayslate nunca la vio,
+-- no en stock (BT-ASEG-0) ni en entradas reales (BT-ASEG-2). Saldo =
+-- balance del credito el dia de vencimiento (antes del pago), atribuido
+-- al dia de pago (vencimiento+1). Resultado en
+-- datos_backtest_junio/bt_real_fantasma_nuevos_junio.csv.
+-- ---------------------------------------------------------------------
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso between '20260501' and '20260630'
+)
+, dedup as (
+  select *, row_number() over (
+      partition by id_loan, fechaproceso order by lastmodifieddate desc, id desc) as rn_dedup
+  from raw
+)
+, fotos as (
+  select
+    d.fechaproceso, d.id_loan, d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , b.status
+  , coalesce(lc.last_in_chain,1) as last_in_chain
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+    and b.status in ('ACTIVE','COMPLETED')
+    and coalesce(lc.last_in_chain,1) = 1
+)
+, fotos_con_lag as (
+  select id_loan, fechaproceso, saldo, mora,
+    lag(mora) over (partition by id_loan order by fechaproceso) as mora_ant
+  from fotos
+  where fechaproceso between '20260601' and '20260630'
+)
+, dia1_junio as (
+  select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso asc) as rn
+  from fotos
+  where fechaproceso between '20260601' and '20260630'
+)
+, stock_junio_ids as (
+  select id_loan from dia1_junio where rn = 1 and mora between 1 and 30 and saldo > 0
+)
+, entradas_reales_junio as (
+  select distinct id_loan
+  from fotos_con_lag
+  where mora_ant = 0 and mora = 1
+)
+, cuotas_1dia_tarde_junio as (
+  select
+    c.id_ihfintech_loan as id_loan
+  , c.fechavencimiento
+  , date_add('day', 1, c.fechavencimiento) as fecha_pago
+  from dts_cobranza_creditos_cuotas c
+  where c.status in ('ACTIVE','COMPLETED')
+    and c.flg_last_loan_in_chain = 1
+    and c.fechavencimiento >= date('2026-06-01') and c.fechavencimiento <= date('2026-06-30')
+    and c.installmentstate = 'PAID'
+    and c.dias_vencimiento_a_pago = 1
+)
+, fantasma_junio as (
+  select cu.id_loan, cu.fechavencimiento, cu.fecha_pago
+  from cuotas_1dia_tarde_junio cu
+  where cu.id_loan not in (select id_loan from stock_junio_ids)
+    and cu.id_loan not in (select id_loan from entradas_reales_junio)
+)
+, con_saldo as (
+  select f.id_loan, f.fecha_pago, fo.saldo as saldo_al_vencimiento
+  from fantasma_junio f
+  join fotos fo on fo.id_loan = f.id_loan
+   and fo.fechaproceso = replace(cast(f.fechavencimiento as varchar),'-','')
+)
+select date_format(fecha_pago,'%Y%m%d') as fechaproceso
+, round(sum(saldo_al_vencimiento),2) as saldo_activado_dia
+, count(*) as creditos
+from con_saldo
+group by 1
+order by 1
+;

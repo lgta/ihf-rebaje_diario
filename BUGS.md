@@ -147,6 +147,32 @@ re-corrieron porque el impacto ahí es sobre agregados de saldo/curvas (mucho me
 sensibles a un desempate de un día que un contador de episodios discretos), pero si algún
 resultado de esos archivos se ve raro o no reproducible, este es el primer sospechoso.
 
+**Actualización 2026-08-20 — el desempate `lastmodifieddate desc` elige mal en ~1 de cada
+3 casos conflictivos, hay una regla mejor:** ejemplo real encontrado (crédito
+`5a2e85db-199d-45ca-97e2-761f0c5af13c`, 17 al 21 de junio 2026): dos filas por día, una de
+una cuenta Mambu vieja cerrándose a S/0 (`id` `028...`) y otra de la cuenta nueva del
+reenganche con saldo S/1,662.18 (`id` `029...`) — confirmado por 10 días de saldo estable
+después (17-jun a 26-jun) y porque `dts_cobranza_creditos_cuotas` solo tiene el cronograma
+de la cuenta nueva. La regla `lastmodifieddate desc` elige la fila de S/0 (LATER
+timestamp, pero el estado STALE) — equivocada en este caso.
+
+Perfil rápido (muestra may-jul 2026, no la historia completa, para no escanear 46.7M
+filas): **16 grupos duplicados con saldo conflictivo, 100% del mismo patrón "cero vs.
+no-cero"** (reenganche) — ningún otro patrón de conflicto apareció en la muestra. La
+regla actual elige el candidato en S/0 en **5 de 16 (31%)**.
+
+**Regla propuesta (no aplicada todavía):** preferir el candidato con saldo≠0 antes que
+`lastmodifieddate`; usar `lastmodifieddate desc, id desc` solo como desempate final si
+ambos son cero o ambos son no-cero. Resuelve 16/16 de la muestra. **Cruce con bug 14:**
+verificado que esto NO afecta la reconciliación de la capa fantasma — de los 3,130
+créditos "fantasma" de julio, solo 1 tiene alguna fila duplicada en julio y ninguno tiene
+`dayslate` conflictivo (bug 11 y bug 14 son independientes, no se solapan).
+
+**Pendiente:** validar la regla propuesta contra los ~691 casos conflictivos de la
+historia completa (esta muestra de 16 es acotada, no exhaustiva) antes de aplicarla a
+`enfoque_capital_asegurado.sql`/`_backtest.sql` (Tarea 3) ni a `fase1_stock.sql`/
+`fase2_nuevos.sql`/`fase3_backtest.sql` (Tarea 6) de `PENDIENTES.md`.
+
 ### 12. Antiguos/nuevos mal cortados en el límite de mes — el día 1 de cada mes se clasificaba como "nuevo" siendo "antiguo" (solo Enfoque alfa)
 **Síntoma:** ninguno visible en los agregados (el error total del backtest no se movía
 mucho), lo encontró el usuario con un ejemplo conceptual, no un número raro. **Causa:**
@@ -260,3 +286,46 @@ deduplicados a 1 fila por crédito) se explica así:**
 investigar el mecanismo exacto vía `installmentlastpaiddate` (tarea 7 de `PENDIENTES.md`),
 decidir una corrección (con backtest obligatorio antes de adoptarla — no repetir el error
 de bug 10, tasa y curva deben calibrarse sobre la misma definición).
+
+**Actualización 2026-08-20 — paso 1 del plan resuelto, no es un patrón nuevo:** al
+reconstruir la reconciliación (los archivos de la sesión 2026-08-19 solo quedaron en
+scratchpad, nunca se copiaron al repo — ver nota de no-determinismo abajo) y cruzar los
+créditos "dayslate=0/oficial mora 1-30" contra `installmentlastpaiddate`
+(`dts_cobranza_creditos_cuotas`), **99.5% de los 3,135 créditos de esta muestra
+resultó ser exactamente el mismo mecanismo de bug 9** (cuota pagada 1 día tarde, la foto
+diaria captura el estado ya resuelto): 546 con `fecha_de_vencimiento_cuota` poblada en
+la vista oficial y match directo (gap=1 día exacto); 2,573 más con ese campo NULO
+(gap de instrumentación de `dts_asignaciones_gestiones_cobranza`, no causa distinta) pero
+con el mismo patrón al buscar la cuota vencida más reciente directamente — pagada 1 día
+tarde, el pago cae el MISMO día que `fecha_ancla`. Sin arrastre por DNI (`max_dias_mora_
+dni`=`dias_mora` en 2,581/2,588 casos) ni sesgo de producto (BNPL/LD proporcional al mix
+general). Detalle completo y query en `reconciliacion_vw_seguimiento_temprana.md` /
+`reconciliacion_temprana.sql`. **Bug propio encontrado en el camino:** la primera
+reconstrucción de esta sesión tenía el mismo patrón de no-determinismo que bug 11
+(`row_number() order by` una columna constante) — corregido con el mismo dedup de bug 11
+antes de sacar conclusiones; los dos números (con/sin fix) diferían ~15% en el bucket
+final, así que el fix importó. **Sigue pendiente:** paso 2 (decidir corrección, con el
+usuario — no elegida de antemano) y paso 3 (backtest obligatorio antes de adoptar nada).
+
+**Actualización 2026-08-20 (continuación, mismo día) — paso 2/3 resueltos, backtest en
+2 meses cerrados confirma mejora:** con el usuario, se eligió opción (a) completa
+(retrospectivo + prospectivo, solo Enfoque alfa) — diseño "capa fantasma": detecta pago
+1 día tarde no visto por `dayslate`, se activa 100% al día siguiente del vencimiento (sin
+curva propia), con una tasa nueva e independiente `P_FANTASMA=8.4534%` (no se tocó
+`13.38%` ni la curva existente — evita repetir bug 10). **Backtest (sin tocar producción,
+`backtest_capital_asegurado_junio_con_fantasma.py` corre en paralelo):** error total baja
+de -4.4% a **+0.7% en junio** y de -4.31% a **+0.12% en julio** (segundo mes cerrado,
+verificado independientemente) — mejora consistente en los 2 meses disponibles, no un mes
+con suerte. Detalle completo, tablas, y el hallazgo colateral de que `SEGUIMIENTO.md`
+tenía el signo de julio invertido (decía +4.7%, correcto es -4.31% — mismo signo que
+junio) en `reconciliacion_vw_seguimiento_temprana.md`, sección "Paso 2/3 — resultado".
+
+**Adoptado en producción el mismo día, a pedido explícito del usuario:**
+`enfoque_capital_asegurado.sql` (Q3, tasa `P_FANTASMA`), `enfoque_capital_asegurado_
+backtest.sql` (BT-ASEG-3), `backtest_capital_asegurado_junio.py` (v3, fusionado — ya no
+hay script paralelo), `meta_agosto_capital_asegurado.py` (v2) y `SEGUIMIENTO.md` (signo
+de julio corregido, filas de junio/julio/agosto actualizadas con la capa fantasma). La
+meta de agosto sube de S/10,245,695 a S/16,351,397 y el avance al 18-ago pasa de "+8.7%
+adelantado" a "-1.8%" (prácticamente en línea) — ver `ESTADO.md` "La meta vigente" para
+el detalle y la nota de que esto es un cambio de metodología, no una señal de deterioro
+(el backtest mejora, no empeora, con la capa fantasma).
