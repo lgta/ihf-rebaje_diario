@@ -207,6 +207,16 @@ Detalle del último:
   (313 créditos) quedan documentados como diferencia de alcance deliberada, decidido con
   el usuario. Aplicar la capa fantasma al Enfoque acumulado sigue fuera de alcance.
 
+  **2026-08-21 — dataset filtrable por crédito + corrección verificada:** se generaron
+  `datos_reconciliacion_temprana/solo_oficial_motivo_julio.csv` y
+  `solo_nuestro_motivo_julio.csv` (1 fila por crédito, columna `motivo`, vía Q7/Q8 de
+  `reconciliacion_temprana.sql`) para poder filtrar los motivos de diferencia en vez de
+  solo ver el agregado. Al verificar el motivo "escalado a Especializada/Recovery" se
+  encontró que la hipótesis de "arrastre de DNI" era **falsa** (94/94 son el único
+  crédito de su `dni`+`producto`, sin hermano) — el motivo real es una **fase fija/
+  "pegajosa"** en `gestiones_cobranza` que no baja aunque `dayslate` muestre mora fresca.
+  Ver bug 13 en `BUGS.md` para el detalle.
+
 ## Pendiente de copiar al repo desde scratchpad
 
 Nada por ahora — todo lo generado hasta el 2026-07-13 (backtest de capital asegurado,

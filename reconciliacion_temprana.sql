@@ -746,3 +746,70 @@ order by 2 desc
 -- fase_estrategia='TEMPRANA' (query vacia), asi que esta comparacion solo
 -- fue posible en agosto (que si tiene julio como referencia).
 
+-- ---------------------------------------------------------------------
+-- Q7. SOLO OFICIAL, por credito (no agregado) -- mismas CTEs que Q1, sin el
+-- group by final, para exportar un dataset filtrable (2026-08-21, a pedido
+-- del usuario). Resultado en datos_reconciliacion_temprana/solo_oficial_
+-- motivo_julio.csv (3,265 filas: 3,128 dayslate_cero_bug9 + 137
+-- excluido_chain + 0 status_no_activo + 0 sin_match_mambu -- ligeramente
+-- distinto a los 3,210/313/1 de la sesion 2026-08-19, misma causa que Q1:
+-- reconstruccion sin el SQL original, misma escala).
+-- ---------------------------------------------------------------------
+-- (mismas CTEs loan_chain/raw/dedup/fotos/cierre_junio/stock_previo/
+-- primer_dia_julio/dia1_entrantes/fotos_julio_lag/nuevos_julio/nuestro_
+-- bruto/nuestro/oficial/solo_oficial/mambu_flags de Q1 -- ver ese bloque)
+-- select
+--   so.id_loan, so.monto_asignado
+-- , case
+--     when m.id_loan is null then 'Sin match en Mambu'
+--     when m.status not in ('ACTIVE','COMPLETED') then 'Status no activo'
+--     when m.last_in_chain <> 1 then 'Reenganche (excluido por flg_last_loan_in_chain)'
+--     else 'Punto ciego dayslate (bug 9)'
+--   end as motivo
+-- from solo_oficial so
+-- left join mambu_flags m on m.id_loan = so.id_loan
+-- ;
+
+-- ---------------------------------------------------------------------
+-- Q8. SOLO NUESTRO, por credito (no agregado) -- mismas CTEs que Q6, sin el
+-- group by final (2026-08-21, a pedido del usuario). Resultado en
+-- datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv (1,246 filas:
+-- 779 grupo_control + 94 escalado_sin_temprana + 6 aparece_temprana_pero_no_
+-- en_oficial + 367 no_aparece_en_asignaciones -- misma escala que la
+-- reconstruccion agregada de Q6, dentro del margen esperado).
+--
+-- VERIFICADO 2026-08-21 (el usuario pidio confirmar, no asumir): la
+-- hipotesis original de "escalado por arrastre de DNI" (otro credito del
+-- mismo dni+producto en ESPECIALIZADA/RECOVERY) es FALSA -- se corrio una
+-- query de verificacion (ver scratchpad de la sesion) cruzando los 94
+-- creditos contra TODOS los id_loan del mismo dni+producto: **94/94 (100%)
+-- son el UNICO credito de su dni+producto** -- no hay hermano que arrastre.
+-- Lo que si se confirmo con datos: los 94 mantienen la MISMA fase_estrategia
+-- (ESPECIALIZADA o RECOVERY) los 31 dias de julio sin cambiar nunca (0 de 94
+-- cambia de fase), mientras que 60 de 94 (64%) tienen en algun momento del
+-- mes una mora dayslate <=5 dias (promedio mora_min=8.6, mora_max=9.5) --
+-- es decir, nuestra medicion ve una mora fresca/baja, pero la asignacion los
+-- mantiene fijos en Especializada/Recovery. Lectura: es una fase "pegajosa"
+-- (probablemente por historia de mora anterior a julio o un criterio
+-- acumulado de riesgo en gestiones_cobranza, no re-evaluado a la baja cada
+-- cuota), no un arrastre de otro credito del cliente. Mecanismo exacto de
+-- por que la fase no baja: NO investigado a fondo (fuera de lo pedido),
+-- queda como hallazgo, no como pendiente bloqueante.
+-- ---------------------------------------------------------------------
+-- (mismas CTEs de Q6 -- loan_chain/raw/dedup/fotos/.../dni_producto/
+-- asig_julio -- ver ese bloque)
+-- select
+--   sn.id_loan, sn.saldo
+-- , case
+--     when aj.id_loan is null then 'Sin asignar'
+--     when aj.alguna_vez_control = 1 then 'Grupo de control'
+--     when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
+--       then 'Escalado a Especializada/Recovery (fase fija, no baja aunque dayslate muestre mora baja)'
+--     when aj.alguna_vez_temprana = 1
+--       then 'Temprana en asignacion, sin match en vista oficial'
+--     else 'Otro / sin clasificar'
+--   end as motivo
+-- from solo_nuestro sn
+-- left join asig_julio aj on aj.id_loan = sn.id_loan
+-- ;
+

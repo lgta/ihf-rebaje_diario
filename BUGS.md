@@ -308,6 +308,21 @@ documentado) — se deja como diferencia conocida entre ambos proyectos, no como
 el usuario, que priorizó solo la homologación antiguo/nuevo) — candidato para
 `installmentlastpaiddate` (pendiente #7 de `PENDIENTES.md`) si se retoma.
 
+**Actualización 2026-08-21 — "escalado" a Especializada/Recovery NO es arrastre de DNI,
+es fase pegajosa (hallazgo de la reconciliación bug 14, categoría `escalado_sin_temprana`
+de `reconciliacion_temprana.sql` Q6/Q8):** al desglosar "solo nuestro" en un dataset
+filtrable por crédito (`datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv`), la
+hipótesis inicial para esos 94 créditos era que **otro crédito del mismo DNI** ya estaba
+en `ESPECIALIZADA`/`RECOVERY` y arrastraba la clasificación. **Verificado y descartado:**
+94/94 (100%) son el ÚNICO crédito de su combinación `dni`+`producto` — no hay ningún
+hermano. Lo que sí se confirmó con datos: los 94 mantienen la **misma `fase_estrategia`
+fija los 31 días de julio** (0/94 cambia de fase en el mes) mientras que 60/94 (64%)
+tienen en algún momento una mora `dayslate` baja (≤5 días, promedio mora_min=8.6). Es
+decir, `gestiones_cobranza` no vuelve a bajar de fase a un crédito ya escalado (por
+historia previa a julio, probablemente) aunque `dayslate` muestre mora fresca ese mes —
+"fase pegajosa", no arrastre. Mecanismo exacto de por qué no baja: no investigado (bajo
+volumen, S/199,604). Ver `reconciliacion_vw_seguimiento_temprana.md` para el detalle.
+
 ### 14. El punto ciego de `dayslate` (bug 9) es ~27% de la población real de mora 1-30, no un caso de borde — reconciliación contra `vw_seguimiento_diario_cohorte_tramo`
 **Contexto (2026-08-19):** el usuario compartió una vista externa "oficial" con detalle a
 nivel crédito (`vw_seguimiento_diario_cohorte_tramo.txt`, definición en la raíz del repo,

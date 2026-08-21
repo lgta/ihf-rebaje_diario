@@ -97,6 +97,35 @@ lado) es menor y queda documentado, no priorizado.
 la población TEMPRANA oficial**, no el ~4% que sugería la muestra anterior (homologación
 `tipo_mora`, 2026-08-18, bug 13). Es sistemático, no un caso de borde.
 
+**Actualización 2026-08-21 — dataset filtrable por crédito, a pedido del usuario:** las
+tablas A/B de arriba vienen de la sesión 2026-08-19 (perdida, no reproducible exactamente
+— ver nota en "Archivos" abajo). Se generaron 2 CSV con **1 fila por crédito y una
+columna `motivo`** usando la reconstrucción reproducible (Q7/Q8 de
+`reconciliacion_temprana.sql`, misma lógica que la tabla del paso 1 arriba, categorías
+mutuamente excluyentes) — los números salen en la misma escala pero no calzan 1 a 1
+contra la sesión perdida (esperado, ver pendiente 4 abajo):
+
+- **`datos_reconciliacion_temprana/solo_oficial_motivo_julio.csv`** (3,265 filas):
+  `Punto ciego dayslate (bug 9)` 3,128 · `Reenganche (excluido por flg_last_loan_in_chain)`
+  137 · (0 `Status no activo` / `Sin match en Mambu` en esta corrida, vs. 1 de la sesión
+  perdida — diferencia irrelevante).
+- **`datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv`** (1,246 filas):
+  `Grupo de control` 779 · `Sin asignar` 367 · `Escalado a Especializada/Recovery
+  (arrastre de DNI)` 94 · `Temprana en asignación, sin match en vista oficial` 6.
+
+**Ojo con "Escalado a Especializada/Recovery" — corregido 2026-08-21 tras verificar con
+datos:** la hipótesis inicial ("arrastre de DNI", otro crédito del mismo cliente ya
+escalado) es **falsa** — se verificó cruzando los 94 créditos contra todos los `id_loan`
+del mismo `dni`+`producto`: **94/94 (100%) son el ÚNICO crédito de su combinación, no hay
+ningún hermano que arrastre.** Lo que sí se confirmó con datos: los 94 mantienen la
+**misma `fase_estrategia` (Especializada o Recovery) fija los 31 días de julio**, sin
+cambiar nunca, mientras que 60 de 94 (64%) tienen en algún momento del mes una mora
+`dayslate` baja (≤5 días) — es decir, es una **fase "pegajosa"**: una vez escalado (por
+historia previa a julio o un criterio acumulado de riesgo), `gestiones_cobranza` no lo
+baja de fase aunque la mora del crédito, vista por `dayslate`, se vea fresca/baja ese
+mes. El mecanismo exacto de por qué no baja no se investigó a fondo (bajo volumen, 94
+créditos / S/199,604) — queda como hallazgo, no como pendiente bloqueante.
+
 ## Paso 1 — resultado (2026-08-20)
 
 **Nota metodológica primero:** los archivos de la sesión del 2026-08-19 solo quedaron en
@@ -357,6 +386,11 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
   reconciliación de población a agosto (pendiente 2) — agregado parcial (Q1) y
   descomposición por cohorte estaba-desde-julio vs. nuevo-en-agosto (Q2), que explica
   por qué el ~27% no se ve igual todavía en un mes a medio cerrar.
+- **`reconciliacion_temprana.sql` Q7/Q8** (2026-08-21, nuevo): mismas CTEs de Q1/Q6, sin
+  el `group by` final — exportan 1 fila por crédito con columna `motivo` (etiquetas
+  legibles) a `datos_reconciliacion_temprana/solo_oficial_motivo_julio.csv` y
+  `solo_nuestro_motivo_julio.csv`, para poder filtrar por motivo en Excel/BI en vez de
+  solo ver el agregado.
 
 ## Referencias
 
