@@ -772,44 +772,58 @@ order by 2 desc
 
 -- ---------------------------------------------------------------------
 -- Q8. SOLO NUESTRO, por credito (no agregado) -- mismas CTEs que Q6, sin el
--- group by final (2026-08-21, a pedido del usuario). Resultado en
+-- group by final (2026-08-21, a pedido del usuario). Resultado FINAL en
 -- datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv (1,246 filas:
--- 779 grupo_control + 94 escalado_sin_temprana + 6 aparece_temprana_pero_no_
--- en_oficial + 367 no_aparece_en_asignaciones -- misma escala que la
--- reconstruccion agregada de Q6, dentro del margen esperado).
+-- 779 Grupo de control + 367 Sin asignar + 58 Doble producto en otra fase +
+-- 36 Escalado fase fija (sin otro credito) + 6 Revisar).
 --
--- VERIFICADO 2026-08-21 (el usuario pidio confirmar, no asumir): la
--- hipotesis original de "escalado por arrastre de DNI" (otro credito del
--- mismo dni+producto en ESPECIALIZADA/RECOVERY) es FALSA -- se corrio una
--- query de verificacion (ver scratchpad de la sesion) cruzando los 94
--- creditos contra TODOS los id_loan del mismo dni+producto: **94/94 (100%)
--- son el UNICO credito de su dni+producto** -- no hay hermano que arrastre.
--- Lo que si se confirmo con datos: los 94 mantienen la MISMA fase_estrategia
--- (ESPECIALIZADA o RECOVERY) los 31 dias de julio sin cambiar nunca (0 de 94
--- cambia de fase), mientras que 60 de 94 (64%) tienen en algun momento del
--- mes una mora dayslate <=5 dias (promedio mora_min=8.6, mora_max=9.5) --
--- es decir, nuestra medicion ve una mora fresca/baja, pero la asignacion los
--- mantiene fijos en Especializada/Recovery. Lectura: es una fase "pegajosa"
--- (probablemente por historia de mora anterior a julio o un criterio
--- acumulado de riesgo en gestiones_cobranza, no re-evaluado a la baja cada
--- cuota), no un arrastre de otro credito del cliente. Mecanismo exacto de
--- por que la fase no baja: NO investigado a fondo (fuera de lo pedido),
--- queda como hallazgo, no como pendiente bloqueante.
+-- VERIFICADO 2026-08-21 (2 rondas -- el usuario pidio confirmar, no asumir,
+-- y luego corrigio mi primera verificacion):
+-- Ronda 1: la hipotesis de "arrastre de DNI" dentro del MISMO producto es
+-- FALSA -- 94/94 (100%) de los "escalado_sin_temprana" son el UNICO credito
+-- de su dni+producto, no hay hermano del mismo producto.
+-- Ronda 2 (a pedido del usuario, hipotesis "doble producto en otra fase"):
+-- SI existe arrastre, pero por OTRO PRODUCTO del mismo dni -- 58/94 (62%)
+-- tienen un credito hermano de PRODUCTO DISTINTO que esta en ESPECIALIZADA/
+-- RECOVERY (confirma la hipotesis del usuario para esa mayoria). Los 36/94
+-- (38%) restantes no tienen NINGUN otro credito (ni mismo ni distinto
+-- producto) -- para esos sigue aplicando el hallazgo de la ronda 1: fase
+-- fija/pegajosa en el credito mismo (probablemente por historia previa a
+-- julio), sin ningun arrastre de por medio. Por eso el motivo quedo
+-- DIVIDIDO en 2 categorias, no una sola -- aplicar un solo label a los 94
+-- habria sido igual de impreciso que la hipotesis original descartada.
 -- ---------------------------------------------------------------------
 -- (mismas CTEs de Q6 -- loan_chain/raw/dedup/fotos/.../dni_producto/
--- asig_julio -- ver ese bloque)
+-- asig_julio -- ver ese bloque, mas 2 CTEs nuevas)
+-- , otros_productos_dni as (
+--   select distinct dp2.id_loan as id_loan_hermano, dp2.dni, dp2.producto
+--   from dni_producto dp2
+-- )
+-- , hermano_otro_producto_escalado as (
+--   select distinct sn.id_loan
+--   from solo_nuestro sn
+--   join dni_producto dp on dp.id_loan = sn.id_loan
+--   join otros_productos_dni op on op.dni = dp.dni and op.producto <> dp.producto
+--   join dts_asignaciones_gestiones_cobranza a
+--     on a.dni_ce = op.dni and a.producto = op.producto
+--    and a.fecha_base between '2026-07-01' and '2026-07-31'
+--    and a.fase_estrategia in ('ESPECIALIZADA','RECOVERY')
+-- )
 -- select
 --   sn.id_loan, sn.saldo
 -- , case
 --     when aj.id_loan is null then 'Sin asignar'
 --     when aj.alguna_vez_control = 1 then 'Grupo de control'
+--     when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0 and hop.id_loan is not null
+--       then 'Doble producto en otra fase'
 --     when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
---       then 'Escalado a Especializada/Recovery (fase fija, no baja aunque dayslate muestre mora baja)'
+--       then 'Escalado, fase fija (sin otro credito del cliente)'
 --     when aj.alguna_vez_temprana = 1
---       then 'Temprana en asignacion, sin match en vista oficial'
+--       then 'Revisar'
 --     else 'Otro / sin clasificar'
 --   end as motivo
 -- from solo_nuestro sn
 -- left join asig_julio aj on aj.id_loan = sn.id_loan
+-- left join hermano_otro_producto_escalado hop on hop.id_loan = sn.id_loan
 -- ;
 

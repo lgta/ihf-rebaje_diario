@@ -113,18 +113,21 @@ contra la sesión perdida (esperado, ver pendiente 4 abajo):
   `Grupo de control` 779 · `Sin asignar` 367 · `Escalado a Especializada/Recovery
   (arrastre de DNI)` 94 · `Temprana en asignación, sin match en vista oficial` 6.
 
-**Ojo con "Escalado a Especializada/Recovery" — corregido 2026-08-21 tras verificar con
-datos:** la hipótesis inicial ("arrastre de DNI", otro crédito del mismo cliente ya
-escalado) es **falsa** — se verificó cruzando los 94 créditos contra todos los `id_loan`
-del mismo `dni`+`producto`: **94/94 (100%) son el ÚNICO crédito de su combinación, no hay
-ningún hermano que arrastre.** Lo que sí se confirmó con datos: los 94 mantienen la
-**misma `fase_estrategia` (Especializada o Recovery) fija los 31 días de julio**, sin
-cambiar nunca, mientras que 60 de 94 (64%) tienen en algún momento del mes una mora
-`dayslate` baja (≤5 días) — es decir, es una **fase "pegajosa"**: una vez escalado (por
-historia previa a julio o un criterio acumulado de riesgo), `gestiones_cobranza` no lo
-baja de fase aunque la mora del crédito, vista por `dayslate`, se vea fresca/baja ese
-mes. El mecanismo exacto de por qué no baja no se investigó a fondo (bajo volumen, 94
-créditos / S/199,604) — queda como hallazgo, no como pendiente bloqueante.
+**Ojo con "Escalado a Especializada/Recovery" — 2 rondas de verificación, terminó
+dividido en 2 motivos (2026-08-21):**
+- **Ronda 1:** la hipótesis inicial ("arrastre de DNI" dentro del MISMO producto) es
+  **falsa** — 94/94 (100%) son el ÚNICO crédito de su `dni`+`producto`, no hay ningún
+  hermano del mismo producto que arrastre.
+- **Ronda 2 (a pedido del usuario, hipótesis "doble producto en otra fase"):** SÍ hay
+  arrastre, pero por **OTRO producto** del mismo cliente — **58 de 94 (62%)** tienen un
+  crédito hermano de producto DISTINTO que está en `ESPECIALIZADA`/`RECOVERY`, confirmado
+  con datos. Motivo final: **"Doble producto en otra fase"** (58 créditos / S/108,737).
+- **Los 36 restantes (38%) no tienen ningún otro crédito** (ni del mismo ni de otro
+  producto) — para esos sigue aplicando el hallazgo de la ronda 1: mantienen la misma
+  `fase_estrategia` fija los 31 días de julio sin ningún hermano de por medio. Motivo:
+  **"Escalado, fase fija (sin otro crédito del cliente)"** (36 créditos / S/90,868). El
+  mecanismo exacto de por qué la fase no baja en estos 36 no se investigó a fondo (bajo
+  volumen) — queda como hallazgo, no como pendiente bloqueante.
 
 ## Paso 1 — resultado (2026-08-20)
 
@@ -297,7 +300,18 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
    **S/16,410,194**. Detalle completo en bug 14 de `BUGS.md`.
 2. **~~Extender la reconciliación de población a agosto~~ Hecho 2026-08-20 — no repite
    igual en el agregado, pero sí por cohorte; el motivo es que agosto está a mitad de
-   mes.** Al corte de hoy (20-ago, vista con datos hasta esa fecha: 9,274 créditos /
+   mes.** **Continuación 2026-08-21 — EN PROGRESO, sesión cortada por presupuesto de
+   tokens:** se corrió la verificación a nivel crédito de la capa fantasma para agosto
+   (mismo chequeo que cerró julio en 90.7%→99.7%, ver `reconciliacion_agosto.sql` Q3,
+   ya con el fix de frontera de mes aplicado) — resultado: **solo 81.8% de cobertura**
+   (1,850/2,262 créditos, S/2,561,175 de S/3,118,728), más bajo que julio. **Motivo NO
+   confirmado todavía** — hipótesis más probable: agosto está a mitad de mes (corte
+   20-ago), así que parte de los 412 no cubiertos puede ser cuotas que TODAVÍA no se
+   pagaron (no un hueco del mecanismo) — julio es mes cerrado, todos los desenlaces ya
+   se conocen, por eso no es comparable directo. **Pendiente exacto para la siguiente
+   sesión:** desagregar los 412 no_cubiertos por `installmentstate` (¿cuántos ya son
+   `PAID` con `dias_vencimiento_a_pago<>1` vs. cuántos todavía no se pagan?) antes de
+   concluir si hay un hueco real o es solo timing de mitad de mes. Al corte de hoy (20-ago, vista con datos hasta esa fecha: 9,274 créditos /
    S/14,621,415), el bucket `dayslate_cero_bug9` da **1,772 créditos (19.1% de oficial,
    S/2,453,492)** — más chico que el 26.8% de julio, no una repetición directa. Al
    descomponer por cohorte (créditos que ya estaban en la vista oficial en julio, análogo a
@@ -354,7 +368,24 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
    la vista (es de otro proyecto, fuera de nuestro control) — queda documentado como
    hallazgo para comunicar al equipo que mantiene la vista, no como algo que este proyecto
    pueda corregir.
-6. Aplicar la misma capa fantasma al Enfoque acumulado (recupero oficial) si en el futuro
+6a. **Aclaración metodológica 2026-08-21 (importante para no confundir de nuevo):** hay 3
+   usos DISTINTOS de datos históricos/tablas en este proyecto, cada uno con su propia
+   fuente correcta:
+   - **Calibración de tasas/curvas** (necesita histórico profundo, ago-2025+): solo
+     `dts_cobranza_creditos_cuotas` (`dias_vencimiento_a_pago`) — `dts_asignaciones_
+     gestiones_cobranza` NO alcanza, solo tiene datos desde julio 2026.
+   - **Meta del mes** (se fija UNA VEZ al inicio del mes, tasa/curva calibrada ×
+     calendario de vencimientos del mes): tampoco necesita `dts_asignaciones_gestiones_
+     cobranza`.
+   - **Medir el avance REAL del mes en curso** (solo días ya transcurridos, no
+     proyección): aquí `dts_asignaciones_gestiones_cobranza` SÍ es válida como fuente
+     de validación independiente — no necesita profundidad histórica, solo cobertura
+     del mes actual (que sí tiene). Nota: el `REAL_FANTASMA_A_HOY` de `meta_agosto_
+     capital_asegurado.py` YA es determinístico (no usa `P_FANTASMA`) — sale de
+     `dts_cobranza_creditos_cuotas` filtrado a días ya pasados. `P_FANTASMA` (la tasa)
+     solo se usa para los días FUTUROS del mes en curso, donde el pago todavía no
+     ocurrió y no hay dato que consultar.
+6b. Aplicar la misma capa fantasma al Enfoque acumulado (recupero oficial) si en el futuro
    se decide ampliar el alcance más allá de Enfoque alfa (fuera de esta pasada, ver
    "Alcance tasa 13.38%" — se optó por no tocar `fase1_stock.sql`/`fase2_nuevos.sql`/
    `fase3_backtest.sql`).

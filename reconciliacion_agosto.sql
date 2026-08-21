@@ -226,3 +226,50 @@ left join oficial_julio oj on oj.id_loan = b.id_loan
 group by 1
 order by 2, 1
 ;
+
+-- ---------------------------------------------------------------------
+-- Q3. VERIFICACION A NIVEL CREDITO de la capa fantasma para agosto (corte
+-- 20-ago) -- mismo tipo de chequeo que reconciliacion_temprana.sql Q5 para
+-- julio (90.7%->99.7% con el fix de frontera). Ejecutado 2026-08-21.
+--
+-- Resultado: SOLO 81.8% de cobertura (1,850/2,262 creditos, S/2,561,175 de
+-- S/3,118,728) -- mas bajo que julio (99.7%), y el fix de frontera de mes
+-- YA esta aplicado en esta query (fecha_pago, no fechavencimiento). Motivo
+-- probable, NO CONFIRMADO todavia: agosto esta a mitad de mes (corte 20 de
+-- 31) -- una parte de los 412 no_cubiertos puede ser cuotas que TODAVIA NO
+-- se pagaron (installmentstate<>'PAID' aun, no que el mecanismo falle),
+-- a diferencia de julio que es mes cerrado con todos los desenlaces ya
+-- resueltos. NO SE VERIFICO esta hipotesis -- pendiente para la siguiente
+-- sesion: desagregar los 412 no_cubiertos por installmentstate (PAID con
+-- dias_vencimiento_a_pago<>1 vs. todavia no pagada) antes de asumir que es
+-- lo mismo que el hueco de frontera de mes de julio.
+-- ---------------------------------------------------------------------
+-- (mismas CTEs de Q1 -- loan_chain/raw/dedup/fotos/.../stock_previo/
+-- fotos_agosto_lag/dia1_entrantes/bug9_bucket_agosto (=clasificado, sin
+-- agrupar por motivo) -- ver ese bloque, mas 2 CTEs nuevas)
+-- , entradas_reales_agosto as (
+--   select distinct id_loan from fotos_agosto_lag
+--   where mora_ant = 0 and mora = 1 and dia <> 1
+-- )
+-- , cuotas_fantasma_agosto as (
+--   select c.id_ihfintech_loan as id_loan, c.installmentstate, c.dias_vencimiento_a_pago
+--   from dts_cobranza_creditos_cuotas c
+--   where c.status in ('ACTIVE','COMPLETED') and c.flg_last_loan_in_chain = 1
+--     and date_add('day', 1, c.fechavencimiento) >= date('2026-08-01')
+--     and date_add('day', 1, c.fechavencimiento) <= date('2026-08-20')
+--     and c.id_ihfintech_loan not in (select id_loan from stock_previo)
+-- )
+-- , entradas_fantasma_agosto as (
+--   select distinct cu.id_loan from cuotas_fantasma_agosto cu
+--   where cu.installmentstate = 'PAID' and cu.dias_vencimiento_a_pago = 1
+--     and cu.id_loan not in (select id_loan from entradas_reales_agosto)
+--     and cu.id_loan not in (select id_loan from dia1_entrantes)
+-- )
+-- select count(*) as bug9_bucket_total, round(sum(b.monto_asignado),0) as bug9_bucket_monto,
+--   sum(case when ef.id_loan is not null then 1 else 0 end) as cubiertos_por_fantasma,
+--   round(sum(case when ef.id_loan is not null then b.monto_asignado else 0 end),0) as monto_cubierto,
+--   sum(case when ef.id_loan is null then 1 else 0 end) as no_cubiertos,
+--   round(sum(case when ef.id_loan is null then b.monto_asignado else 0 end),0) as monto_no_cubierto
+-- from bug9_bucket_agosto b
+-- left join entradas_fantasma_agosto ef on ef.id_loan = b.id_loan
+-- ;
