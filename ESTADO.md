@@ -235,14 +235,58 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Prompt de continuación
 
-> Sesión 2026-08-21 completada — ya no hay pendiente bloqueante de continuar en frío.
-> Único ítem abierto: presentar/confirmar con el usuario la tabla comparativa de motivos
-> de julio (armada abajo, en el mensaje de la sesión — reconstruible desde
-> `datos_reconciliacion_temprana/*.csv` si hace falta repetirla). El resto de "Qué falta"
-> del prompt anterior ya se resolvió: (1) desagregación de agosto por `installmentstate`
-> hecha — timing de mitad de mes confirmado, no hay hueco nuevo (ver bug 14 en `BUGS.md`);
-> (3) aclaración metodológica de `dts_asignaciones_gestiones_cobranza` ya estaba cerrada
-> desde antes, no repetir; (4) nada de esto cambia la meta vigente (S/16,410,194).
+> Copiar/pegar esto al abrir la siguiente sesión para retomar sin releer todo:
+
+```
+Lee ESTADO.md (esta sección), reconciliacion_vw_seguimiento_temprana.md (pendiente 2 y
+pendiente 4) y BUGS.md bug 13/14, más reconciliacion_temprana.sql (Q1, Q6, Q7, Q8).
+
+Contexto en una línea: el cuadre comparativo de motivos de julio (datos_reconciliacion_
+temprana/solo_oficial_motivo_julio.csv y solo_nuestro_motivo_julio.csv, ya commiteados y
+ya presentado al usuario: 3,265 filas solo-oficial = 3,128 "Punto ciego dayslate (bug 9)"
++ 137 "Reenganche excluido por chain"; 1,246 filas solo-nuestro = 779 "Grupo de control" +
+367 "Sin asignar" + 58 "Doble producto en otra fase" + 36 "Escalado, fase fija" + 6
+"Revisar") se generó con las queries Q7/Q8 de reconciliacion_temprana.sql, pero esas
+queries NUNCA quedaron como SQL ejecutable en el repo -- están solo como comentario/
+pseudocódigo (mismo patrón que tenía Q3 de reconciliacion_agosto.sql antes de la sesión
+2026-08-21, ya corregido ahí -- ver commit ac58eec). El usuario pidió explícitamente para
+esta sesión: relanzar el cálculo desde cero contra Athena (NO confiar en el CSV guardado),
+verificar que reproduce los mismos números, y solo después abordar los huecos que quedan
+sin explicar.
+
+Tareas en orden:
+1. Reconstruir Q7 y Q8 como SQL ejecutable real -- igual que se hizo con Q3/Q4 de
+   reconciliacion_agosto.sql: tomar las CTEs completas de Q1 (para Q7, categorías
+   sin_match_mambu/status_no_activo/excluido_chain/dayslate_cero_bug9) y de Q6 (para Q8,
+   categorías no_aparece_en_asignaciones/grupo_control/escalado_sin_temprana/
+   aparece_temprana_pero_no_en_oficial), descomentar/completar la parte final que exporta
+   1 fila por crédito, correr con scripts/run_athena.sh, y dejar la query REAL en
+   reconciliacion_temprana.sql (no en comentario).
+2. Comparar el resultado recién corrido contra los CSV ya commiteados -- a nivel crédito
+   (id_loan), no solo el agregado por motivo. Si NO cuadra exacto, investigar por qué antes
+   de seguir (candidato principal: el mismo problema de no-determinismo de bug 11 si algún
+   row_number() quedó sin desempate completo, o datos que cambiaron desde el 21-ago).
+3. Una vez verificado (o corregido y re-verificado), atacar los 2 huecos de "solo nuestro"
+   que quedan SIN investigar (a diferencia de "Doble producto en otra fase"/"Escalado fase
+   fija", que ya se investigaron y explicaron el 2026-08-21 -- no repetir esa parte):
+   - "Sin asignar" (367 créditos / S/322,602, 29.5% de solo_nuestro) -- créditos que
+     tenemos en Temprana pero que NO aparecen en absoluto en dts_asignaciones_gestiones_
+     cobranza para julio (ni como control, ni escalado, ni temprana). Hipótesis a probar:
+     ¿son créditos fuera de la asignación real del negocio ese mes (nunca se les hizo
+     gestión), o un problema de cruce dni+producto (bug de matching, ver el ~96.5% de
+     match que documenta FUENTES_DATOS.md)?
+   - "Revisar" (6 créditos / S/6,663) -- aparecen con fase_estrategia=TEMPRANA en las
+     asignaciones de julio, pero la vista oficial vw_seguimiento_diario_cohorte_tramo NO
+     los incluye ese mes. Volumen chico, pero sin explicación -- mirar caso por caso (solo
+     6 créditos, factible a mano).
+4. Reglas de datos que aplican siempre (CLAUDE.md): status IN ('ACTIVE','COMPLETED') para
+   histórico, excluir reenganches vía flg_last_loan_in_chain, dedup de bug 11 (saldo<>0
+   antes de lastmodifieddate) en cualquier row_number() nuevo sobre dts_mambu_loans_hist,
+   coalesce(dayslate,0) siempre.
+5. Esto es una validación de una comparación puntual (reconciliación TEMPRANA, ya cerrada
+   como tema principal, ver bug 14) -- no toca la meta vigente de agosto (S/16,410,194), no
+   es bloqueante.
+```
 
 ## Pendiente de git
 
