@@ -24,6 +24,21 @@ Resultado: error total -4.4% -> +0.7% (segunda validacion en julio 2026,
 mes cerrado independiente: -4.31% -> +0.12%, ver reconciliacion_vw_
 seguimiento_temprana.md paso 2/3 e investigacion_capa_fantasma.sql).
 
+v4 (2026-08-20, continuacion, bug 14): la verificacion a nivel credito
+encontro que la capa fantasma solo cubria 90.7% del bucket bug9 (hueco de
+frontera de mes: cuota vencida el ULTIMO DIA de un mes, pagada 1 dia tarde,
+"ocurre" el mes siguiente). Fix: enfoque_capital_asegurado.sql Q3 ahora
+determina el "periodo" de cada cuota por fecha_pago (fechavencimiento+1), no
+por fechavencimiento directo -- cierra la cobertura a 99.7%. Como el
+principio de CLAUDE.md exige que tasa y curva compartan la misma definicion,
+la tasa se recalibro junto con el fix (no solo el calendario): P_FANTASMA
+sube de 8.4534% a **8.5524%**. Backtest re-corrido con la tasa consistente:
+error total +2.2% -> **+2.65%** (fantasma +11.1%->+12.4%); junio no tiene
+cuotas vencidas el 31-may, asi que el efecto es 100% de la tasa, no del
+calendario. Julio (segundo mes, recalculado a mano fuera de este script):
++0.12% -> **+2.17%** (fantasma +8.4%->+13.0%) -- ver BUGS.md bug 14 y
+SEGUIMIENTO.md para el detalle completo. Ambos siguen siendo buenos numeros.
+
 Insumos:
   datos_backtest_junio/bt_stock_junio_aseg.csv : stock (BT-ASEG-0, solo de este enfoque)
   datos_backtest_junio/bt_calendario_junio.csv : calendario real de junio (fase3_backtest.sql 3G-2,
@@ -97,7 +112,8 @@ def lookup(curva, d):
 # Tasa fuera de muestra (ago-2025 a may-2026, SIN junio) -- misma que el modelo
 # oficial (fase3_backtest.sql 3H) y que meta_julio_capital_asegurado.py.
 P_NO_PAGA_DIA0 = 47966 / 358580  # 13.38%
-P_FANTASMA = 29845 / 353054      # 8.4534% -- capa fantasma, ver enfoque_capital_asegurado.sql Q3
+P_FANTASMA = 29625 / 346396      # 8.5524% -- capa fantasma con fix de frontera de mes (bug14 v4),
+                                  # ver enfoque_capital_asegurado.sql Q3. Antes 29845/353054=8.4534%.
 AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 70%+"]
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 

@@ -168,10 +168,67 @@ verificado que esto NO afecta la reconciliación de la capa fantasma — de los 
 créditos "fantasma" de julio, solo 1 tiene alguna fila duplicada en julio y ninguno tiene
 `dayslate` conflictivo (bug 11 y bug 14 son independientes, no se solapan).
 
-**Pendiente:** validar la regla propuesta contra los ~691 casos conflictivos de la
-historia completa (esta muestra de 16 es acotada, no exhaustiva) antes de aplicarla a
-`enfoque_capital_asegurado.sql`/`_backtest.sql` (Tarea 3) ni a `fase1_stock.sql`/
-`fase2_nuevos.sql`/`fase3_backtest.sql` (Tarea 6) de `PENDIENTES.md`.
+**Actualización 2026-08-20 (continuación) — regla validada contra la historia completa y
+aplicada a Enfoque alfa (Tarea 3 de `PENDIENTES.md`):** se reprodujo el universo exacto de
+bug 11 (`status IN ('ACTIVE','COMPLETED')`, `last_in_chain=1`, `fechaproceso BETWEEN
+'20250301' AND '20260630'` — el mismo filtro que usaba `enfoque_salida_mora.sql`) y dio
+**1,312 grupos duplicados / 687 conflictivos** (vs. 1,316/691 originales — diferencia de
+~4 casos, esperable por datos que llegaron tarde desde la sesión original, no un error de
+reconstrucción). **100% de los 687 casos conflictivos son el patrón "cero vs. no-cero"**
+(no solo el 16/16 de la muestra acotada) — no aparece ningún otro patrón de conflicto en
+la historia completa.
+
+Aplicando la regla propuesta (saldo≠0 antes de `lastmodifieddate`) contra la regla vieja:
+**145 de 687 (21.1%) cambian de pick** — la regla vieja elegía el candidato en S/0 en esos
+145 casos (cifra en la misma escala que el 31% de la muestra de 16, dentro del margen de
+una muestra tan chica). Validación contra evidencia independiente (saldo del mismo crédito
+en días adyacentes sin ambigüedad propia, ventana ±10 días): de los 145 casos, **116
+tienen alguna referencia no-ambigua disponible — 100% de esas 116 confirman el saldo
+no-cero** (46 con match exacto, 70 más cercanas al no-cero que al cero) y **0 confirman el
+cero**. Sin contradicciones. Detalle de las queries de validación: sesión 2026-08-20,
+scratchpad (no copiado al repo — ver "Pendiente de copiar" en `ESTADO.md` si se necesita
+reconstruir).
+
+**Aplicado a producción:** dedup con la regla validada agregado a `enfoque_capital_
+asegurado.sql` (Q1, Q2, Q3 — Q3 ya tenía dedup pero con la regla vieja, actualizada),
+`enfoque_capital_asegurado_backtest.sql` (BT-ASEG-0 a BT-ASEG-3, mismo caso que Q3 para
+BT-ASEG-3), `cierre_julio.sql` (J1/J2) e `investigacion_capa_fantasma.sql` (Q3, validación
+de julio) — estos 2 últimos no estaban en el pedido original pero alimentan el backtest de
+julio con la misma regla, para no comparar una proyección corregida contra un real sin
+corregir. `fase1_stock.sql`/`fase2_nuevos.sql`/`fase3_backtest.sql` (recupero oficial,
+Tarea 6) **no se tocaron** — fuera de alcance de esta pasada, igual que bug 12/14 (afecta
+únicamente Enfoque alfa).
+
+**Impacto medido (re-corrida completa, junio y julio, principio de modelado de
+`CLAUDE.md`):**
+- **Curvas de calibración (14 meses, `enfoque_capital_asegurado.sql` Q1/Q2):** bajo
+  impacto confirmado — el segmento más afectado (tramo 1-8 / avance <10%) pasó de
+  9,806,903 a 9,726,381 de saldo total (-0.8%), 3,673→3,648 créditos (-0.7%); el resto de
+  segmentos con cambios de magnitud similar o menor. `pct_capital_asegurado_acum` día 31
+  se movió <0.2pp en todos los segmentos.
+- **`P_FANTASMA` (Q3, tasa prospectiva):** sin cambio de fondo — 29,845/353,054 antes,
+  29,845/353,053 después (diferencia de redondeo de 1 unidad en el denominador, no en el
+  numerador).
+- **Backtest de junio (mes de calibración):** el error total **sube de +0.7% a +2.2%**
+  (stock +7.2%→+7.3%, fantasma +11.1% sin cambio, **nuevos -8.6%→-5.8%** — el componente
+  que más se mueve, porque el fix elimina "pagos" espurios que el patrón viejo detectaba
+  al comparar el saldo real de un crédito contra la fila duplicada en S/0 de un reenganche
+  del mismo día). Diff día a día de `bt_real_aseg_nuevos.csv` confirma que el efecto es
+  sistemático y pequeño (cada día de junio baja consistentemente 2-5%, no un salto puntual
+  en 1-2 días) — consistente con una corrección real, no un artefacto de la query.
+- **Backtest de julio (segundo mes cerrado, validación independiente): sin cambio, ni un
+  centavo.** `cierre_julio.sql` J1/J2 e `investigacion_capa_fantasma.sql` Q3 dieron
+  exactamente los mismos números antes y después del fix (S/3,137,199.21 / S/7,633,719.13
+  / S/73,659,266.44 / S/5,742,740.84) — no hay filas conflictivas relevantes en la
+  ventana de julio para esta población. El error de julio se mantiene en **+0.1%**.
+
+**Conclusión:** el fix es real y de bajo impacto en el agregado (como se esperaba para un
+enfoque basado en saldos/curvas, no en conteo de episodios discretos como
+`enfoque_salida_mora.sql`), pero no despreciable — mueve el backtest de junio 1.5pp. Se
+documenta en `SEGUIMIENTO.md`/`ESTADO.md`/`enfoque_capital_asegurado.md`. Las curvas
+Q1/Q2 y `meta_agosto_capital_asegurado.py` no se recalcularon con este fix (impacto <1pp
+en las curvas, no se justifica rehacer la meta de agosto por esto) — **pendiente** si en
+el futuro se quiere una meta 100% consistente con el fix.
 
 ### 12. Antiguos/nuevos mal cortados en el límite de mes — el día 1 de cada mes se clasificaba como "nuevo" siendo "antiguo" (solo Enfoque alfa)
 **Síntoma:** ninguno visible en los agregados (el error total del backtest no se movía
@@ -329,3 +386,96 @@ meta de agosto sube de S/10,245,695 a S/16,351,397 y el avance al 18-ago pasa de
 adelantado" a "-1.8%" (prácticamente en línea) — ver `ESTADO.md` "La meta vigente" para
 el detalle y la nota de que esto es un cambio de metodología, no una señal de deterioro
 (el backtest mejora, no empeora, con la capa fantasma).
+
+**Actualización 2026-08-20 (continuación) — hueco de frontera de mes encontrado y
+CORREGIDO en producción:** al verificar la capa fantasma a nivel crédito (ver bloque más
+abajo, "verificación a nivel crédito") se encontró un hueco de frontera de mes: una cuota
+vencida el ÚLTIMO DÍA de un mes de 30 días (ej. 30-jun), pagada 1 día tarde
+(fecha_pago=1-jul), queda fuera del filtro `fechavencimiento` de la capa fantasma (que
+solo mira dentro del mes objetivo). Confirmado con datos: el 31 de mayo (frontera hacia
+junio) tiene **0 cuotas vencidas** — sin impacto ahí — pero el 30 de junio (frontera hacia
+julio) tiene **9,115 cuotas** — impacto real. **Fix:** filtrar por `fecha_pago`
+(`fechavencimiento+1`) cayendo dentro del mes objetivo, en vez de por `fechavencimiento`
+directo — simétrico, sin doble conteo. Aplicado en `enfoque_capital_asegurado_
+backtest.sql` (BT-ASEG-3), `investigacion_capa_fantasma.sql` (Q1/Q2/Q3) y
+`reconciliacion_temprana.sql` (Q5). **Backtest re-corrido (primera pasada, con la tasa
+`P_FANTASMA` VIEJA sin recalibrar):**
+- **Junio: sin cambio** (+2.2%, idéntico) — el 31-may no tiene cuotas, no hay nada que
+  agregar. Verificado re-corriendo BT-ASEG-3 y comparando: el único diff es que el output
+  ya no incluye la fila `20260701` (créditos del 30-jun, que ahora correctamente se
+  atribuyen a julio) — esa fila nunca se leía en la suma de junio de todos modos.
+- **Julio: el error EMPEORA, de +0.12% a +1.68%** (fantasma +8.4%→+11.7%). Calendario
+  fantasma proyectado sube de S/73,659,266 a S/85,280,364 (+7,468 elegibles); real sube de
+  S/5,742,741 a S/6,454,260 (+450 créditos netos). Sigue siendo un buen backtest (mucho
+  mejor que el -4.31% sin capa fantasma), pero NO es una mejora — a diferencia de todos
+  los demás fixes de esta sesión.
+
+**Hallazgo adicional al implementar (mismo día) — la primera pasada de arriba era
+INCONSISTENTE, no se debía adoptar tal cual:** el +1.68% de julio se calculó aplicando el
+calendario YA corregido (fecha_pago) contra la tasa `P_FANTASMA` VIEJA (8.4534%, calibrada
+SIN el fix — es decir, sobre una definición de "periodo" distinta a la que ahora usa el
+calendario). Es exactamente el tipo de mezcla que `CLAUDE.md` prohíbe de forma no
+negociable (tasa y curva deben calibrarse sobre la misma definición de entrada/cohorte —
+ver bug 10). Se recalibró `P_FANTASMA` con el mismo fix de frontera aplicado a su propio
+cálculo (`enfoque_capital_asegurado.sql` Q3 / `investigacion_capa_fantasma.sql` Q1):
+**8.4534% → 8.5524%** (346,396 elegibles / 29,625 entradas fantasma fuera de muestra,
+ago-2025 a may-2026, verificado contra Athena). **Backtest re-corrido con la tasa
+consistente (números finales, adoptados):**
+- **Junio: +2.2% → +2.65%** (fantasma +11.1%→+12.4%). Como el 31-may no tiene cuotas, el
+  movimiento es 100% por el cambio de tasa, no por el calendario.
+- **Julio: +1.68% → +2.17%** (fantasma +11.7%→+13.0%). Calendario fantasma proyectado
+  S/85,280,364 × 8.5524% = S/7,293,476 (antes S/7,209,074 con la tasa vieja); real sin
+  cambio (S/6,454,260, 4,224 créditos — la tasa no afecta lo observado).
+
+Ambos números finales siguen siendo buenos (lejos de bug 10), y el motivo de por qué julio
+sube más que junio (dilución por solapamiento con otros eventos de mora del mismo mes, ver
+más abajo) sigue aplicando igual — es una propiedad del hueco de cobertura que se cerró,
+no un error nuevo introducido por la recalibración de la tasa.
+
+**Adoptado en producción (2026-08-20, con el usuario, ver `SEGUIMIENTO.md` para las filas
+finales de junio/julio/agosto):** `enfoque_capital_asegurado.sql` Q3, `investigacion_
+capa_fantasma.sql` Q1, `backtest_capital_asegurado_junio.py` v4 (tasa 8.5524%) y
+`meta_agosto_capital_asegurado.py` v3 (tasa 8.5524% + cohorte 31-jul: 77 créditos /
+S/140,194 en riesgo, confirmado con Athena, no supuesto — real observado a la fecha: solo
+4 créditos / S/3,556.95 ya pagaron 1 día tarde). Meta de agosto sube de S/16,351,397 a
+**S/16,410,194** (+0.4%).
+
+**Investigación del motivo (por qué julio empeora) — no es un bug, es dilución por
+solapamiento:** de los 7,468 elegibles nuevos (cuotas del 30-jun), **600 (8.03%) pagan
+exactamente 1 día tarde** — tasa CASI IDÉNTICA al promedio histórico `P_FANTASMA`=8.45%,
+no es una población distinta ni un problema de composición de cartera. Pero de esos 600,
+**150 (25%) ya estaban contados** como entrada real de mora vía `dayslate` por OTRO
+evento en julio (mutuamente excluyente con la capa fantasma, para no duplicar) — dejando
+un neto de **450/7,468 = 6.03%**, por debajo del promedio. Es decir: el mecanismo de
+"paga 1 día tarde" ocurre a la tasa esperada, pero este cohorte específico tiene una
+proporción más alta de créditos que ADEMÁS tienen otro problema de mora ese mes (así que
+ya se cuentan por el canal normal) — dilución mecánica, no una señal de que el mecanismo
+esté mal. Con solo este mes de evidencia no se puede saber si esto es específico del
+30-jun o varianza normal de un cohorte grande y puntual.
+
+**RESUELTO 2026-08-20 — el usuario confirmó adoptar el fix** (con la explicación del
+motivo del empeoramiento de julio, ver abajo) y, al implementarlo, se encontró y corrigió
+también la inconsistencia tasa/calendario descrita arriba (recalibración de
+`P_FANTASMA`). Los números finales adoptados son +2.65%/junio y +2.17%/julio (no
++2.2%/+1.68% como se había estimado antes de recalibrar la tasa) — ver bloque de arriba y
+`SEGUIMIENTO.md`. El hueco real del 31-jul en `meta_agosto_capital_asegurado.py` resultó
+ser 77 créditos / S/140,194 (no ~101 cuotas como se estimaba antes de confirmarlo con
+Athena) — chico, como se esperaba, pero confirmado con datos, no supuesto.
+
+**Actualización 2026-08-20 (continuación) — verificación a nivel crédito: la capa
+fantasma NO cubre 1:1 el bucket bug9, encuentra un hueco de frontera de mes nuevo (no
+bloqueante):** al cruzar crédito-por-crédito (no solo el agregado monetario) los 3,130
+créditos del bucket "solo oficial, `dayslate`=0" contra la capa fantasma de producción,
+solo **2,839 (90.7%)** están cubiertos directamente. De los 291 restantes, **281 (96.6%
+del gap)** son el mismo mecanismo de bug 9 pero con la cuota disparadora vencida el
+**último día del mes ANTERIOR** (ej. 30-jun, pagada 1-jul) — la capa fantasma filtra
+`fechavencimiento` dentro del calendario del mes (`>= '2026-07-01'`), así que esta cohorte
+queda fuera de la ventana de julio (y tampoco cae en la de junio, porque el evento de pago
+es el 1-jul). Es el mismo tipo de problema que bug 12 (frontera de mes en antiguos/nuevos)
+pero aplicado a la capa fantasma, que no lo tenía resuelto desde su diseño original.
+Sumando ambos, **99.7% del bucket se explica por el mecanismo de bug 9** (consistente con
+el 99.5% del paso 1) — el diagnóstico se sostiene, y la implementación de la capa fantasma
+tenía un hueco real (~9% de sub-cobertura, ~S/400K/mes estimado). **Corregido 2026-08-20**
+(extendiendo la ventana por `fecha_pago` en vez de `fechavencimiento`, mismo patrón de fix
+que bug 12) — ver el bloque de arriba para el backtest final y la tasa recalibrada. Ver
+`reconciliacion_vw_seguimiento_temprana.md`, tarea 1 de "Pendientes para cerrar TEMPRANA".

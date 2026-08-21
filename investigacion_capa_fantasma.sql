@@ -24,6 +24,12 @@
 -- Resultado: 29,845 entradas fantasma / 353,054 elegibles = 8.4534%
 -- (vs. 47,459/353,054 = 13.44% de entradas reales -- reproduce el 13.38%
 -- oficial casi exacto, valida la reconstruccion). Por mes: 7.35%-9.53%.
+--
+-- FIX 2026-08-20 (continuacion, bug14 -- hueco de frontera de mes): mismo
+-- fix que enfoque_capital_asegurado.sql Q3 -- "periodo" por fecha_pago
+-- (fechavencimiento+1), no por fechavencimiento directo. Nueva tasa
+-- **P_FANTASMA = 8.5524%** (346,396 elegibles / 29,625 entradas fantasma,
+-- verificado 2026-08-20) -- reemplaza 8.4534%. Ver BUGS.md bug 14.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
@@ -62,47 +68,49 @@ with loan_chain as (
 )
 , calendario as (
   select
-    substr(cast(c.fechavencimiento as varchar),1,7) as periodo_venc
-  , c.id_ihfintech_loan as id_loan
+    c.id_ihfintech_loan as id_loan
   , c.fechavencimiento
+  , date_format(date_add('day',1,c.fechavencimiento), '%Y%m') as periodo_pago  -- FIX bug14: periodo por fecha_pago
   , c.installmentstate
   , c.dias_vencimiento_a_pago
   from dts_cobranza_creditos_cuotas c
   where c.status in ('ACTIVE','COMPLETED')
     and c.flg_last_loan_in_chain = 1
-    and c.fechavencimiento >= date('2025-08-01')
+    and c.fechavencimiento >= date('2025-07-31')
     and c.fechavencimiento <= date('2026-05-31')
 )
 , calendario_mes as (
-  select replace(periodo_venc,'-','') as periodo, id_loan
+  select periodo_pago as periodo, id_loan
   from calendario cal
-  where not exists (
+  where periodo_pago between '202508' and '202605'
+    and not exists (
       select 1 from stock_ids s
-      where s.periodo_target = replace(cal.periodo_venc,'-','') and s.id_loan = cal.id_loan
+      where s.periodo_target = cal.periodo_pago and s.id_loan = cal.id_loan
     )
   group by 1, 2
 )
 , entradas_fantasma as (
-  select distinct replace(cal.periodo_venc,'-','') as periodo, cal.id_loan
+  select distinct cal.periodo_pago as periodo, cal.id_loan
   from calendario cal
   where cal.installmentstate = 'PAID' and cal.dias_vencimiento_a_pago = 1
+    and cal.periodo_pago between '202508' and '202605'
     and not exists (
       select 1 from entradas_reales er
-      where er.periodo = replace(cal.periodo_venc,'-','') and er.id_loan = cal.id_loan
+      where er.periodo = cal.periodo_pago and er.id_loan = cal.id_loan
     )
 )
 select
   cm.periodo
-, count(distinct cm.id_loan) as elegibles
-, count(distinct er.id_loan) as entradas_reales
-, count(distinct ef.id_loan) as entradas_fantasma
-, round(100.0*count(distinct er.id_loan)/count(distinct cm.id_loan), 2) as pct_entrada_real
-, round(100.0*count(distinct ef.id_loan)/count(distinct cm.id_loan), 2) as pct_entrada_fantasma
+, count(*) as elegibles  -- calendario_mes ya es 1 fila por (periodo,id_loan)
+, count(er.id_loan) as entradas_reales
+, count(ef.id_loan) as entradas_fantasma
+, round(100.0*count(er.id_loan)/count(*), 2) as pct_entrada_real
+, round(100.0*count(ef.id_loan)/count(*), 2) as pct_entrada_fantasma
 from calendario_mes cm
 left join entradas_reales er on er.periodo = cm.periodo and er.id_loan = cm.id_loan
 left join entradas_fantasma ef on ef.periodo = cm.periodo and ef.id_loan = cm.id_loan
-group by 1
-order by 1
+group by cm.periodo
+order by cm.periodo
 ;
 
 -- ---------------------------------------------------------------------
@@ -162,6 +170,11 @@ with loan_chain as (
   where mora_ant = 0 and mora = 1
 )
 , cuotas_1dia_tarde_junio as (
+  -- FIX 2026-08-20 (continuacion, hueco de frontera de mes): filtrar por
+  -- fecha_pago (no fechavencimiento) cayendo dentro de junio -- incluye la
+  -- cuota vencida el 31-mayo (fecha_pago=1-jun) que el filtro original
+  -- excluia. Ver el mismo fix en BT-ASEG-3 (enfoque_capital_asegurado_
+  -- backtest.sql) y reconciliacion_temprana.sql Q5/Q5b para el hallazgo.
   select
     c.id_ihfintech_loan as id_loan
   , c.fechavencimiento
@@ -169,7 +182,8 @@ with loan_chain as (
   from dts_cobranza_creditos_cuotas c
   where c.status in ('ACTIVE','COMPLETED')
     and c.flg_last_loan_in_chain = 1
-    and c.fechavencimiento >= date('2026-06-01') and c.fechavencimiento <= date('2026-06-30')
+    and date_add('day', 1, c.fechavencimiento) >= date('2026-06-01')
+    and date_add('day', 1, c.fechavencimiento) <= date('2026-06-30')
     and c.installmentstate = 'PAID'
     and c.dias_vencimiento_a_pago = 1
 )
@@ -195,12 +209,14 @@ order by 1
 
 -- ---------------------------------------------------------------------
 -- Q3. VALIDACION JULIO 2026 (segundo mes cerrado, independiente).
--- (a) calendario total "en riesgo" excluyendo stock, vencimientos
--- 1-jul a 30-jul (30 se excluye por consistencia: su "dia siguiente"
--- cae 1-ago, fuera de la ventana de julio, igual que se excluyo el
--- 30-jun en junio); (b) real fantasma con el mismo criterio que Q2.
--- Resultado: calendario S/73,659,266 (53,074 eventos); real fantasma
--- S/5,742,741 (3,774 creditos).
+-- (a) calendario total "en riesgo" excluyendo stock, con el FIX de
+-- frontera de mes (fecha_pago, no fechavencimiento -- incluye la cuota
+-- del 30-jun, excluye la del 31-jul, ambas por fecha_pago); (b) real
+-- fantasma con el mismo criterio. Resultado FINAL (con fix, 2026-08-20):
+-- calendario S/85,280,364.52 (60,542 filas); real fantasma S/6,454,259.84
+-- (4,224 creditos). Antes del fix: calendario S/73,659,266 (53,074
+-- eventos), real fantasma S/5,742,741 (3,774 creditos) -- ver BUGS.md
+-- bug 14 para el backtest completo con la tasa P_FANTASMA recalibrada.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
@@ -214,8 +230,12 @@ with loan_chain as (
   where a.fechaproceso between '20260601' and '20260731'
 )
 , dedup as (
+  -- bug 11 (BUGS.md): regla actualizada 2026-08-20, validada contra los 687
+  -- casos conflictivos completos de la historia (saldo<>0 antes de
+  -- lastmodifieddate).
   select *, row_number() over (
-      partition by id_loan, fechaproceso order by lastmodifieddate desc, id desc) as rn_dedup
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
   from raw
 )
 , fotos as (
@@ -251,6 +271,13 @@ with loan_chain as (
     and id_loan not in (select id_loan from stock_julio_ids)
 )
 , cuotas_julio as (
+  -- FIX 2026-08-20 (continuacion, hueco de frontera de mes): filtrar por
+  -- fecha_pago potencial (fechavencimiento+1) cayendo dentro de julio, no
+  -- por fechavencimiento directo -- incluye la cuota vencida el 30-jun
+  -- (fecha_pago=1-jul, antes excluida) y sigue excluyendo la del 31-jul
+  -- (fecha_pago=1-ago, pertenece a agosto). Antes solo se excluia el 31-jul
+  -- sin incluir el 30-jun -- asimetrico. Mismo hallazgo que
+  -- reconciliacion_temprana.sql Q5/Q5b (281/291 creditos no cubiertos).
   select
     c.id_ihfintech_loan as id_loan
   , c.fechavencimiento
@@ -259,7 +286,8 @@ with loan_chain as (
   from dts_cobranza_creditos_cuotas c
   where c.status in ('ACTIVE','COMPLETED')
     and c.flg_last_loan_in_chain = 1
-    and c.fechavencimiento >= date('2026-07-01') and c.fechavencimiento <= date('2026-07-30')
+    and date_add('day', 1, c.fechavencimiento) >= date('2026-07-01')
+    and date_add('day', 1, c.fechavencimiento) <= date('2026-07-31')
     and c.id_ihfintech_loan not in (select id_loan from stock_julio_ids)
 )
 , calendario_saldo as (

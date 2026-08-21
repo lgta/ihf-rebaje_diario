@@ -63,28 +63,24 @@ convención del proyecto, ver `CLAUDE.md`). Actualizar su estado de "⚠ desactu
 **Criterio de terminado:** el artifact muestra los mismos números que `ESTADO.md`; ambas
 tablas (README/ESTADO) dicen "✓ vigente".
 
-### Tarea 3 — Aplicar el fix de bug 11 (filas duplicadas) a `enfoque_capital_asegurado.sql`
+### Tarea 3 — ~~Aplicar el fix de bug 11 (filas duplicadas) a `enfoque_capital_asegurado.sql`~~ hecho 2026-08-20
 **Contexto:** bug 11 (`BUGS.md`) encontró 1,316 combinaciones (crédito, día) con filas
 duplicadas en `dts_mambu_loans_hist` que rompen el patrón `row_number() over (partition by
 id_loan order by fechaproceso)` si no hay desempate. Ya se corrigió en
 `enfoque_salida_mora.sql` (eliminado junto con ese enfoque) pero **nunca se aplicó a
 `enfoque_capital_asegurado.sql`**, que usa el mismo patrón sin desempate.
 
-**Actualización 2026-08-20:** el desempate original (`lastmodifieddate desc, id desc`)
-elige mal en ~31% de los casos conflictivos revisados (muestra may-jul, ver bug 11 en
-`BUGS.md`) — el patrón dominante es reenganche (cuenta vieja en S/0 vs. cuenta nueva con
-saldo real), y "más reciente" no es "correcto". Regla mejorada propuesta: preferir
-saldo≠0 antes de mirar `lastmodifieddate`. **No aplicada todavía** — falta validar contra
-los ~691 casos conflictivos completos (la muestra de 16 es acotada).
-
-**Qué hacer:** agregar el dedup con la regla mejorada (saldo≠0 primero, luego
-`lastmodifieddate desc, id desc`) antes de calcular `rn`/`grp`, y re-correr el backtest de
-junio para confirmar que el error no cambia materialmente (se espera bajo impacto — es
-sobre agregados de saldo, no conteo de episodios discretos, a diferencia de
-`enfoque_salida_mora.sql` donde sí cambió 513→376 episodios).
-
-**Criterio de terminado:** backtest re-corrido, diferencia documentada en `BUGS.md` (aunque
-sea "no cambió", para cerrar el pendiente del punto 11 de `IDEAS.md`).
+**Hecho 2026-08-20:** la regla mejorada (saldo≠0 antes de `lastmodifieddate`) se validó
+contra los 687 casos conflictivos completos de la historia (no solo la muestra de 16) —
+100% del mismo patrón "cero vs. no-cero", y 100% de las referencias no-ambiguas
+disponibles (116/145 casos donde la regla cambia el pick) confirman el saldo no-cero, 0
+confirman el cero. Aplicada a `enfoque_capital_asegurado.sql` (Q1/Q2/Q3), `_backtest.sql`
+(BT-ASEG-0 a 3), `cierre_julio.sql` (J1/J2) e `investigacion_capa_fantasma.sql` (Q3).
+Backtest re-corrido: junio sube de +0.7% a **+2.2%** (nuevos -8.6%→-5.8%, el resto casi sin
+cambio); julio **no se movió** (0 filas duplicadas relevantes en su ventana). Ver bug 11 en
+`BUGS.md` para el detalle completo y `SEGUIMIENTO.md`/`ESTADO.md`/`enfoque_capital_
+asegurado.md` para los números actualizados. Las curvas Q1/Q2 y `meta_agosto_capital_
+asegurado.py` no se recalcularon (impacto <1pp en curvas, no se justificó rehacer agosto).
 
 ### Tarea 4 — ~~Seguir el tracking en vivo de julio y cerrar la fila de `SEGUIMIENTO.md`~~ hecho 2026-08-18
 Julio cerró con **+4.7% de error** (stock +1.0%, nuevos +6.3%) — ver `SEGUIMIENTO.md` y
@@ -117,10 +113,12 @@ refrescarlos.
 ### Tarea 6 — Aplicar el fix de bug 11 a los 3 archivos del motor oficial
 **Archivos:** `fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`.
 
-Mismo dedup que la Tarea 3 (con la regla mejorada — saldo≠0 antes de `lastmodifieddate`,
-ver actualización 2026-08-20 de esa tarea y bug 11 en `BUGS.md`), aplicado al motor de
-recupero oficial. Re-correr el backtest de junio (+5.4% de error hoy) y confirmar que no
-cambia materialmente.
+Mismo dedup ya validado y aplicado a Enfoque alfa en la Tarea 3 (saldo≠0 antes de
+`lastmodifieddate`, validado contra los 687 casos conflictivos completos de la historia —
+ver bug 11 en `BUGS.md`), pendiente de aplicar al motor de recupero oficial. Re-correr el
+backtest de junio (+5.4% de error hoy) y confirmar el impacto — en Enfoque alfa movió el
+backtest de junio +0.7%→+2.2% pero julio no se movió nada, así que no asumir que el
+impacto acá será igual de chico o grande sin correrlo.
 
 ### Tarea 7 — ~~Investigar `installmentlastpaiddate`~~ hecho 2026-08-20, capa fantasma adoptada
 **Tabla:** `dts_cobranza_creditos_cuotas` (nivel cuota), campo aportado por el usuario.
@@ -128,21 +126,24 @@ cambia materialmente.
 Se cruzó contra los créditos específicos que la reconciliación de bug 14 marcaba como
 punto ciego: **99.5% resultó ser el mismo mecanismo de bug 9** (pago exactamente 1 día
 tarde, `dayslate` nunca lo ve). Se diseñó y adoptó en producción una "capa fantasma"
-(tasa nueva e independiente `P_FANTASMA=8.4534%`, no mezclada con `13.38%` ni la curva
+(tasa nueva e independiente `P_FANTASMA`, no mezclada con `13.38%` ni la curva
 existente) — backtest en 2 meses cerrados: junio -4.4%→+0.7%, julio -4.31%→+0.12%. Ver
 `reconciliacion_vw_seguimiento_temprana.md` (pasos 1/2/3), `BUGS.md` bug 14,
 `enfoque_capital_asegurado.md` sección "Capa fantasma".
 
+**Continuación 2026-08-20, mismo día, también cerrada:** la verificación a nivel crédito
+encontró un hueco de frontera de mes (cobertura 90.7%, no 100%) — corregido, junto con la
+tasa recalibrada de forma consistente (`P_FANTASMA=8.4534%→8.5524%`). Backtest final:
+junio +2.2%→+2.65%, julio +0.12%→+2.17%. Ver bug 14 en `BUGS.md` para el detalle completo.
+
 **Nuevos pendientes que deja esto:**
 - Extender el backtest de la capa fantasma a más meses cerrados (solo junio/julio
-  disponibles hasta ahora) antes de tratar ±1% como error típico.
+  disponibles hasta ahora) antes de tratar ±2-3% como error típico.
 - Refrescar `capital_asegurado.html` (tarea 2 abajo) también incluye ahora la capa
-  fantasma, no solo el fix de bug 12.
+  fantasma completa (tasa recalibrada + fix de frontera), no solo el fix de bug 12.
 - Decidir si en algún momento se extiende la capa fantasma al Enfoque acumulado
   (recupero oficial) — deliberadamente fuera de alcance en esta pasada (13.38% de ese
   enfoque no se tocó).
-- Extender la reconciliación de población (no la capa fantasma) a agosto para confirmar
-  que el ~27% de punto ciego original se repite — todavía no se hizo.
 
 ### Tarea 8 — ~~Cerrar la fila de julio en `SEGUIMIENTO.md` (recupero oficial)~~ hecho 2026-08-18
 Julio cerró con **+17.6% de error** (stock +2.0%, nuevos +22.5%) — el más alto medido hasta

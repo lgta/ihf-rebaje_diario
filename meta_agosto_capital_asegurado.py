@@ -12,6 +12,17 @@ vencimiento. Corte mantenido al 18-ago (mismo dia ya reportado en ESTADO.md
 antes de este cambio) para que la comparacion sea antes/despues, no una
 actualizacion de fecha -- un refresco a la fecha de hoy es una tarea aparte.
 
+v3 (2026-08-20, continuacion, bug 14): fix de frontera de mes -- la
+verificacion a nivel credito encontro que la capa fantasma no cubria el caso
+de una cuota vencida el ULTIMO DIA de un mes (aqui: 31-jul), pagada 1 dia
+tarde el 1-ago -- fuera de ago_calendario.csv (que arranca en 2026-08-01).
+Impacto confirmado con Athena (no supuesto): 77 creditos / S/140,194 en
+riesgo (chico, ver CUOTAS_31JUL_FANTASMA abajo). Ademas, como tasa y
+calendario deben compartir la misma definicion (principio de CLAUDE.md), se
+recalibro P_FANTASMA junto con el fix: 8.4534% -> 8.5524% (ver
+enfoque_capital_asegurado.sql Q3, backtest re-corrido: junio +2.2%->+2.65%,
+julio +0.12%->+2.17%, ver BUGS.md bug 14).
+
 Insumos:
   datos_avance_capital_asegurado_agosto/stock_agosto_aseg_seg.csv : stock (K1, 2026-08-18)
   datos_meta_agosto/ago_calendario.csv : calendario (K3, reutilizado -- igual que en julio,
@@ -22,7 +33,10 @@ Real a la fecha (1-18 ago), query K4 (2026-08-18): ASEG_STOCK saldo_asegurado_re
 (1,678/2,696 creditos activados), ASEG_NUEVOS saldo_asegurado_real=4,189,176.85
 (2,773/4,141 creditos activados) -- hardcodeado abajo, no hay CSV diario.
 Real fantasma a la fecha (1-18 ago, query 2026-08-20, investigacion_capa_fantasma.sql
-patron): S/2,827,691.80 (1,997 creditos) -- hardcodeado abajo, no hay CSV diario.
+patron): S/2,827,691.80 (1,997 creditos) + S/3,556.95 (4 creditos) de la
+cohorte 31-jul (bug14 v3, ya resuelta -- el desenlace de "pago 1 dia tarde"
+se conoce el 1-ago, no cambia entre el 18-ago y el 20-ago) = S/2,831,248.75
+-- hardcodeado abajo, no hay CSV diario.
 """
 import csv
 from datetime import date, timedelta
@@ -62,9 +76,24 @@ def lookup(curva, d):
     return curva[max(keys)] if keys else 0.0
 
 P_NO_PAGA_DIA0 = 47966 / 358580  # 13.38%
-P_FANTASMA = 29845 / 353054      # 8.4534% -- capa fantasma, ver enfoque_capital_asegurado.sql Q3
+P_FANTASMA = 29625 / 346396      # 8.5524% -- capa fantasma con fix de frontera de mes (bug14 v3),
+                                  # ver enfoque_capital_asegurado.sql Q3. Antes 29845/353054=8.4534%.
 AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 70%+"]
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
+
+# bug14 v3 (2026-08-20): cuota vencida 31-jul-2026, fecha_pago=1-ago -- fuera
+# de ago_calendario.csv (arranca 2026-08-01). 77 creditos / S/140,194 en
+# riesgo, confirmado con Athena. Solo aplica a fantasma (NO a nuevos/13.38%
+# -- los que entran en mora REAL el dia 1 de agosto ya estan cubiertos por
+# el stock de agosto via el mismo mecanismo de bug 12, no por el calendario
+# de "nuevos").
+CUOTAS_31JUL_FANTASMA = {
+    "a. avance <10%": 52928.0,
+    "b. avance 10-40%": 56252.0,
+    "c. avance 40-70%": 23453.0,
+    "d. avance 70%+": 7561.0,
+}
+SALDO_31JUL_FANTASMA = sum(CUOTAS_31JUL_FANTASMA.values())  # 140,194
 
 INICIO = date(2026, 8, 1)
 HOY = date(2026, 8, 18)
@@ -73,7 +102,7 @@ saldo_stock_inicial = sum(stock_agosto.values())
 
 REAL_STOCK_A_HOY = 2605896.73
 REAL_NUEVOS_A_HOY = 4189176.85
-REAL_FANTASMA_A_HOY = 2827691.80
+REAL_FANTASMA_A_HOY = 2827691.80 + 3556.95  # + cohorte 31-jul (bug14 v3), ver docstring
 
 filas = []
 for d in range(1, N_DIAS + 1):
@@ -84,7 +113,8 @@ for d in range(1, N_DIAS + 1):
         for t in TRAMOS for a in AVANCES
     )
     aseg_nuevos = 0.0
-    aseg_fantasma = 0.0
+    # bug14 v3: cohorte 31-jul, activa 100% desde el dia 1 de agosto (fecha_pago=1-ago).
+    aseg_fantasma = SALDO_31JUL_FANTASMA * P_FANTASMA
     for dd in range(1, d + 1):
         fecha_venc = (INICIO + timedelta(days=dd - 1)).isoformat()
         riesgo_por_avance = calendario_agosto.get(fecha_venc, {})

@@ -38,25 +38,44 @@ with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
   from dts_cobranza_creditos_cuotas group by 1
 )
+, raw_mambu as (
+  select
+    a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.fechaproceso, a.balances_principalbalance as saldo, a.dayslate
+  , a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso >= '20250301'
+)
+, dedup as (
+  -- bug 11 (BUGS.md): dedup determinista por (id_loan,fechaproceso). Regla
+  -- validada 2026-08-20 contra los 687 casos conflictivos completos de la
+  -- historia (no solo la muestra de 16): preferir saldo<>0 antes que
+  -- lastmodifieddate -- 100% de las referencias no-ambiguas disponibles
+  -- (116/145 casos donde esto cambia el pick) confirman el saldo no-cero,
+  -- 0 confirman el cero.
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw_mambu
+)
 , fotos as (
   select
-    substr(a.fechaproceso, 1, 6)                       as periodo
-  , a.fechaproceso
-  , cast(substr(a.fechaproceso, 7, 2) as int)          as dia
-  , a._datos_adicionales_loan_accounts_id_ihfintech    as id_loan
-  , a.balances_principalbalance                        as saldo
-  , coalesce(a.dayslate, 0)                            as mora
+    substr(d.fechaproceso, 1, 6)                       as periodo
+  , d.fechaproceso
+  , cast(substr(d.fechaproceso, 7, 2) as int)          as dia
+  , d.id_loan
+  , d.saldo
+  , coalesce(d.dayslate, 0)                            as mora
   , b.amountfinanced
-  , lag(a.balances_principalbalance) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech
-      order by a.fechaproceso)                         as saldo_ant
-  from dts_mambu_loans_hist a
+  , lag(d.saldo) over (
+      partition by d.id_loan order by d.fechaproceso)  as saldo_ant
+  from dedup d
   join dts_okaapi_loans b
-    on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+    on b.id_ihfintech_loan = d.id_loan
   left join loan_chain lc
-    on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  where b.status in ('ACTIVE','COMPLETED')
-    and a.fechaproceso >= '20250301'
+    on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+    and b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain, 1) = 1
 )
 , cierre_mes as (
@@ -155,29 +174,41 @@ with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
   from dts_cobranza_creditos_cuotas group by 1
 )
+, raw_mambu as (
+  select
+    a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.fechaproceso, a.balances_principalbalance as saldo, a.dayslate
+  , a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso >= '20250301'
+)
+, dedup as (
+  -- bug 11 (BUGS.md), misma regla validada que Q1 (saldo<>0 antes de lastmodifieddate).
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw_mambu
+)
 , fotos as (
   select
-    a._datos_adicionales_loan_accounts_id_ihfintech    as id_loan
-  , a.fechaproceso
-  , a.balances_principalbalance                        as saldo
-  , coalesce(a.dayslate,0)                              as mora
-  , lag(coalesce(a.dayslate,0)) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech
-      order by a.fechaproceso)                         as mora_ant
-  , lag(a.balances_principalbalance) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech
-      order by a.fechaproceso)                         as saldo_ant
+    d.id_loan
+  , d.fechaproceso
+  , d.saldo
+  , coalesce(d.dayslate,0)                              as mora
+  , lag(coalesce(d.dayslate,0)) over (
+      partition by d.id_loan order by d.fechaproceso)  as mora_ant
+  , lag(d.saldo) over (
+      partition by d.id_loan order by d.fechaproceso)  as saldo_ant
   , row_number() over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech
-      order by a.fechaproceso)                         as nro_foto
+      partition by d.id_loan order by d.fechaproceso)  as nro_foto
   , b.amountfinanced
-  from dts_mambu_loans_hist a
+  from dedup d
   join dts_okaapi_loans b
-    on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+    on b.id_ihfintech_loan = d.id_loan
   left join loan_chain lc
-    on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  where b.status in ('ACTIVE','COMPLETED')
-    and a.fechaproceso >= '20250301'
+    on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+    and b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain, 1) = 1
 )
 , entradas as (
@@ -252,25 +283,59 @@ order by 1, 2
 -- propio 13.38%, no es un ajuste marginal). Validado con backtest en 2
 -- meses cerrados (junio: -4.4%->+0.7%; julio: -4.31%->+0.12%), ver
 -- backtest_capital_asegurado_junio.py e investigacion_capa_fantasma.sql.
+--
+-- FIX 2026-08-20 (continuacion, bug14 -- hueco de frontera de mes): el
+-- "periodo" de cada cuota ahora se determina por fecha_pago potencial
+-- (fechavencimiento+1), no por fechavencimiento directo -- una cuota
+-- vencida el ULTIMO DIA de un mes (ej. 30-jun) que se paga 1 dia tarde
+-- "ocurre" el 1 del mes siguiente, no el mes de vencimiento. Mismo fix que
+-- investigacion_capa_fantasma.sql/enfoque_capital_asegurado_backtest.sql
+-- BT-ASEG-3 -- ver BUGS.md bug 14 y reconciliacion_vw_seguimiento_
+-- temprana.md pendiente 1 para el detalle completo (verificacion a nivel
+-- credito: 90.7%->99.7% de cobertura del bucket bug9). La tasa Y el
+-- calendario deben compartir la misma definicion de "periodo" (principio
+-- de CLAUDE.md) -- por eso el fix toca esta query, no solo el calendario
+-- prospectivo. Nueva tasa: **P_FANTASMA = 8.5524%** (346,396 elegibles /
+-- 29,625 entradas fantasma, verificado contra Athena 2026-08-20) --
+-- reemplaza 8.4534%. Backtest re-corrido con la tasa consistente: junio
+-- +2.2%->+2.65%, julio +0.12%->+2.17% (ambos siguen siendo buenos numeros,
+-- lejos de bug 10). Ver SEGUIMIENTO.md/BUGS.md bug 14 para el detalle.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
   from dts_cobranza_creditos_cuotas group by 1
 )
+, raw_mambu as (
+  select
+    a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.fechaproceso, a.balances_principalbalance as saldo, a.dayslate
+  , a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso >= '20250201'
+)
+, dedup as (
+  -- bug 11 (BUGS.md), misma regla validada que Q1/Q2 (saldo<>0 antes de
+  -- lastmodifieddate) -- reemplaza el dedup original de esta Q3 (2026-08-20,
+  -- lastmodifieddate desc/id desc sin preferencia de saldo).
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw_mambu
+)
 , fotos as (
   select
-    substr(a.fechaproceso,1,6) as periodo
-  , a.fechaproceso
-  , a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
-  , coalesce(a.dayslate, 0) as mora
-  , lag(coalesce(a.dayslate, 0)) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech order by a.fechaproceso) as mora_ant
-  from dts_mambu_loans_hist a
-  join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  where b.status in ('ACTIVE','COMPLETED')
+    substr(d.fechaproceso,1,6) as periodo
+  , d.fechaproceso
+  , d.id_loan
+  , coalesce(d.dayslate, 0) as mora
+  , lag(coalesce(d.dayslate, 0)) over (
+      partition by d.id_loan order by d.fechaproceso) as mora_ant
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+    and b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain,1) = 1
-    and a.fechaproceso >= '20250201'
 )
 , cierre_mes as (
   select periodo, id_loan, mora, row_number() over (partition by id_loan, periodo order by fechaproceso desc) as rn
@@ -290,42 +355,44 @@ with loan_chain as (
 )
 , calendario as (
   select
-    substr(cast(c.fechavencimiento as varchar),1,7) as periodo_venc
-  , c.id_ihfintech_loan as id_loan
+    c.id_ihfintech_loan as id_loan
   , c.fechavencimiento
+  , date_format(date_add('day',1,c.fechavencimiento), '%Y%m') as periodo_pago  -- FIX bug14: periodo por fecha_pago
   , c.installmentstate
   , c.dias_vencimiento_a_pago
   from dts_cobranza_creditos_cuotas c
   where c.status in ('ACTIVE','COMPLETED')
     and c.flg_last_loan_in_chain = 1
-    and c.fechavencimiento >= date('2025-08-01')
+    and c.fechavencimiento >= date('2025-07-31')
     and c.fechavencimiento <= date('2026-05-31')
 )
 , calendario_mes as (
-  select replace(periodo_venc,'-','') as periodo, id_loan
+  select periodo_pago as periodo, id_loan
   from calendario cal
-  where not exists (
+  where periodo_pago between '202508' and '202605'
+    and not exists (
       select 1 from stock_ids s
-      where s.periodo_target = replace(cal.periodo_venc,'-','') and s.id_loan = cal.id_loan
+      where s.periodo_target = cal.periodo_pago and s.id_loan = cal.id_loan
     )
   group by 1, 2
 )
 , entradas_fantasma as (
-  select distinct replace(cal.periodo_venc,'-','') as periodo, cal.id_loan
+  select distinct cal.periodo_pago as periodo, cal.id_loan
   from calendario cal
   where cal.installmentstate = 'PAID' and cal.dias_vencimiento_a_pago = 1
+    and cal.periodo_pago between '202508' and '202605'
     and not exists (
       select 1 from entradas_reales er
-      where er.periodo = replace(cal.periodo_venc,'-','') and er.id_loan = cal.id_loan
+      where er.periodo = cal.periodo_pago and er.id_loan = cal.id_loan
     )
 )
 select
   cm.periodo
-, count(distinct cm.id_loan) as elegibles
-, count(distinct ef.id_loan) as entradas_fantasma
-, round(100.0*count(distinct ef.id_loan)/count(distinct cm.id_loan), 2) as pct_entrada_fantasma
+, count(*) as elegibles  -- calendario_mes ya es 1 fila por (periodo,id_loan)
+, count(ef.id_loan) as entradas_fantasma
+, round(100.0*count(ef.id_loan)/count(*), 2) as pct_entrada_fantasma
 from calendario_mes cm
 left join entradas_fantasma ef on ef.periodo = cm.periodo and ef.id_loan = cm.id_loan
-group by 1
-order by 1
+group by cm.periodo
+order by cm.periodo
 ;

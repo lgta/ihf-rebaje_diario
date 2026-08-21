@@ -21,7 +21,14 @@ AVANCE_LABEL = {
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 TRAMO_LABEL = {"a. 1-8": "1-8 días", "b. 9-15": "9-15 días", "c. 16-30": "16-30 días"}
 P_NO_PAGA = 47966 / 358580  # 13.38%, ver DECISIONES.md / BUGS.md bug 6
-P_FANTASMA = 29845 / 353054  # 8.4534%, capa fantasma (bug 14, 2026-08-20) -- solo enfoque asegurado
+P_FANTASMA = 29625 / 346396  # 8.5524%, capa fantasma con fix de frontera de mes (bug 14,
+                              # 2026-08-20) -- solo enfoque asegurado. Antes 29845/353054=8.4534%.
+
+# Cohorte 31-jul (bug 14, fix de frontera de mes): cuota vencida el ULTIMO DIA de julio,
+# fecha_pago=1-ago, fuera del calendario de agosto (que arranca 1-ago). 77 creditos /
+# S/140,194 en riesgo, confirmado con Athena -- ver meta_agosto_capital_asegurado.py v3.
+SALDO_31JUL_FANTASMA = 140194.0
+REAL_31JUL_FANTASMA = 3556.95  # ya resuelto: solo 4 de los 77 creditos pagaron 1 dia tarde
 
 
 def load_curva_stock(path, pct_col):
@@ -76,7 +83,7 @@ def lookup(curva, d):
     return curva_d[max(keys)] if keys else 0.0
 
 
-def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, n_dias, con_fantasma=False):
+def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, n_dias, con_fantasma=False, fantasma_extra=0.0):
     filas = []
     for d in range(1, n_dias + 1):
         fecha = inicio + timedelta(days=d - 1)
@@ -85,7 +92,9 @@ def proyeccion_diaria(stock_seg, calendario, curva_stock, curva_nuevos, inicio, 
             for t in TRAMOS for a in AVANCES
         )
         proy_nuevos = 0.0
-        proy_fantasma = 0.0
+        # bug 14 (fix de frontera de mes): cohorte del ultimo dia del mes anterior, activa
+        # 100% desde el dia 1 (solo fantasma, no nuevos -- ver meta_agosto_capital_asegurado.py v3).
+        proy_fantasma = fantasma_extra * P_FANTASMA if con_fantasma else 0.0
         for dd in range(1, d + 1):
             fecha_venc = (inicio + timedelta(days=dd - 1)).isoformat()
             riesgo = calendario.get(fecha_venc, {})
@@ -140,12 +149,15 @@ def total_saldo(stock_seg):
 NUEVOS_ASIGNADO_ASEG = 9567714.05
 NUEVOS_ASIGNADO_RECUP = 13116158.27
 
-# Capa fantasma julio (bug 14, 2026-08-20) -- solo enfoque asegurado. Proyectado =
-# P_FANTASMA x calendario total (vencimientos 1-jul a 30-jul, excluyendo stock);
-# real = creditos que pagaron 1 dia tarde sin que dayslate los viera, mismo criterio.
-# Ver investigacion_capa_fantasma.sql Q3/Q4 y reconciliacion_vw_seguimiento_temprana.md.
-PROY_FANTASMA_JULIO = 6226704.0
-REAL_FANTASMA_JULIO = 5742740.84
+# Capa fantasma julio (bug 14, 2026-08-20, con fix de frontera de mes + tasa recalibrada)
+# -- solo enfoque asegurado. Proyectado = P_FANTASMA x calendario total (vencimientos por
+# fecha_pago 1-jul a 31-jul -- incluye la cohorte del 30-jun, excluye la del 31-jul que
+# pasa a agosto -- S/85,280,364.52); real = creditos que pagaron 1 dia tarde sin que
+# dayslate los viera, mismo criterio (4,224 creditos). Antes del fix: proyectado
+# S/6,226,704, real S/5,742,740.84. Ver investigacion_capa_fantasma.sql Q3/Q4,
+# investigacion_frontera_mes_fantasma.sql y BUGS.md bug 14.
+PROY_FANTASMA_JULIO = 85280364.52 * P_FANTASMA  # = 7,293,475.67
+REAL_FANTASMA_JULIO = 6454259.84
 # Real stock+nuevos verificado independientemente 2026-08-20 (cierre_julio.sql J1/J2
 # re-corrido) -- reemplaza el valor anterior (10,789,362.19, con signo de error mal
 # calculado en SEGUIMIENTO.md, ver bug 14).
@@ -202,12 +214,13 @@ proy_recup = proyeccion_diaria(
 proy_aseg = proyeccion_diaria(
     stock_agosto_aseg, calendario_agosto,
     data["curvas"]["asegurado"]["stock"], data["curvas"]["asegurado"]["nuevos"],
-    INICIO_AGO, 31, con_fantasma=True,
+    INICIO_AGO, 31, con_fantasma=True, fantasma_extra=SALDO_31JUL_FANTASMA,
 )
 
 # Real fantasma agosto a la fecha (1-18 ago, query 2026-08-20, mismo patron que julio) --
-# ver meta_agosto_capital_asegurado.py v2 y reconciliacion_vw_seguimiento_temprana.md.
-REAL_FANTASMA_AGO_A_HOY = 2827691.80
+# ver meta_agosto_capital_asegurado.py v3 y reconciliacion_vw_seguimiento_temprana.md.
+# Incluye la cohorte 31-jul ya resuelta (REAL_31JUL_FANTASMA, S/3,556.95 de 4 creditos).
+REAL_FANTASMA_AGO_A_HOY = 2827691.80 + REAL_31JUL_FANTASMA
 
 data["agosto"] = {
     "stock_recup": stock_agosto_recup,

@@ -1,11 +1,20 @@
 # Reconciliación contra `vw_seguimiento_diario_cohorte_tramo` (TEMPRANA) — plan de cierre
 
-> **Estado (2026-08-20): paso 1 del plan completado — mecanismo identificado.**
-> El punto ciego de `dayslate` (bug 9) explica **99.5%** de los 3,135 créditos de
-> esta muestra (julio 2026), no un patrón nuevo. Ver sección "Paso 1 — resultado"
-> más abajo y bug 14 en `BUGS.md`. **Sigue pendiente el paso 2** (decidir
-> corrección, con el usuario) y el paso 3 (backtest antes de adoptar nada) — no
-> se aplicó ningún cambio al modelo todavía.
+> **Estado (2026-08-20): TEMPRANA CERRADA — los 5 pendientes resueltos.** Pasos 1/2/3
+> (mecanismo, diseño, backtest de la capa fantasma) completados y adoptados en producción
+> el mismo día — ver bug 14 en `BUGS.md`. La verificación a nivel crédito (pendiente 1)
+> encontró un hueco de frontera de mes en la capa fantasma (90.7% de cobertura directa, no
+> 100%) — el usuario confirmó adoptar el fix, y al implementarlo se encontró además que la
+> tasa `P_FANTASMA` debía recalibrarse junto con el fix (misma definición de "periodo" en
+> tasa y calendario, principio de `CLAUDE.md`): **8.4534% → 8.5524%**. Backtest final
+> (consistente): junio +2.2%→+2.65%, julio +0.12%→+2.17% — ambos buenos números, el motivo
+> del alza (dilución por solapamiento con otros eventos de mora) sigue aplicando. Aplicado
+> a `enfoque_capital_asegurado.sql` Q3, `investigacion_capa_fantasma.sql` Q1,
+> `backtest_capital_asegurado_junio.py` v4 y `meta_agosto_capital_asegurado.py` v3 (hueco
+> del 31-jul: 77 créditos/S/140,194, confirmado con Athena). Meta de agosto sube a
+> S/16,410,194. La extensión a agosto (pendiente 2) no repite el ~27% en el agregado
+> parcial (mes a mitad de camino), pero sí por cohorte una vez descompuesto — hay que
+> re-medir cuando agosto cierre. Los pendientes 3/4/5 quedaron documentados/decididos.
 
 ## Contexto y por qué existe este documento
 
@@ -213,26 +222,109 @@ pero sigue como pendiente aparte (Tareas 3/6 de `PENDIENTES.md`).
 
 Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
 
-1. **Verificar la capa fantasma a nivel crédito, no solo agregado.** El backtest
-   monetario mejoró (+0.7%/+0.1%), pero nunca se volvió a correr la reconciliación
-   crédito-por-crédito para confirmar que el bucket "solo oficial, `dayslate`=0" (3,210/
-   3,135 créditos) efectivamente se explica 1:1 por la capa fantasma. Esperable que sí
-   (99.5% ya matcheaba el mecanismo), pero no verificado explícitamente.
-2. **Extender la reconciliación de población a agosto** (la vista ya tiene datos: 8,941
-   créditos / S/14,169,688) para confirmar que el ~27% de punto ciego original se repite
-   y no fue un artefacto puntual de julio.
-3. **Decidir si excluir reenganches (313 créditos) de esta comparación puntual** — la
-   vista oficial no filtra `flg_last_loan_in_chain` y nosotros sí. Es una diferencia de
-   alcance deliberada, no un bug — este gap **no se va a cerrar** a menos que se decida
-   cambiar el filtro, así que es más una decisión de producto que una tarea técnica.
-4. **Revisar una inconsistencia numérica menor en el desglose "solo nuestro" original**
-   (sesión 2026-08-19): la tabla de motivos suma 998+119+186+116=1,419, pero el total
-   reportado de "solo nuestro" es 1,224 (diferencia de 195, nunca explicada). Bajo
-   impacto (~S/300K estimado), pero vale la pena revisar antes de cerrar el documento.
-5. **Auditar el propio dedup de la vista oficial** (`fechaactualizaciontabla desc`, sin
-   `id` como desempate final) — nunca se verificó si le genera a `vw_seguimiento_diario_
-   cohorte_tramo` el mismo problema de no-reproducibilidad que bug 11 encontró en
-   `dts_mambu_loans_hist`. Menor prioridad, fuera de nuestro control (es de otro proyecto).
+1. **~~Verificar la capa fantasma a nivel crédito, no solo agregado.~~ Hecho 2026-08-20 —
+   NO es 1:1 directo, pero se explica 99.7% al considerar un hueco nuevo encontrado.**
+   Cruce credito-por-crédito (con el dedup de bug 11 ya aplicado): de los **3,130** créditos
+   del bucket "solo oficial, `dayslate`=0" (bug9), la capa fantasma tal como está
+   implementada en producción (`enfoque_capital_asegurado.sql` Q3) cubre directamente
+   **2,839 (90.7%, S/4,479,727 de S/4,915,990)** — no el 100% esperado. Al investigar los
+   **291 no cubiertos**, **281 de ellos (96.6% del gap, S/421,046)** resultan ser un patrón
+   sistemático nuevo: la cuota que dispara el evento **venció el 30 de junio** (último día
+   del mes ANTERIOR), pagada 1 día tarde (1-jul) — el mismo mecanismo de bug 9, pero la capa
+   fantasma filtra `fechavencimiento >= '2026-07-01'` (ventana calendario del mes), así que
+   una cuota vencida el último día del mes anterior queda fuera de la ventana de julio (y
+   tampoco la agarra la ventana de junio, porque el evento — pago 1 día tarde — cae el 1 de
+   julio, fuera del rango `20260601`-`20260630` de ese mes). **Es un hueco de frontera de
+   mes en la capa fantasma, análogo al bug 12 (antiguos/nuevos) pero para esta capa nueva
+   — no estaba cubierto por el diseño original.** Sumando ambos (2,839+281=3,120/3,130 =
+   **99.7%**), el mecanismo de bug 9 sigue explicando casi todo — consistente con el 99.5%
+   ya reportado en el paso 1 — pero el 9.3% restante (291 créditos) es una brecha real de
+   *implementación* de la capa fantasma, no del diagnóstico. Los 10 créditos restantes
+   (0.3%) son outliers sin patrón, igual que el 0.5% ya documentado en el paso 1.
+
+   **Continuación 2026-08-20 (mismo día) — CERRADO, fix adoptado en producción con la tasa
+   recalibrada.** Se cambió el filtro de la capa fantasma de `fechavencimiento` directo a
+   `fecha_pago` (`fechavencimiento+1`) cayendo dentro del mes objetivo — simétrico, sin
+   doble conteo. Primera pasada del backtest (con la tasa `P_FANTASMA` vieja, 8.4534%, sin
+   recalibrar): junio sin cambio (+2.2%), julio empeora de +0.12% a +1.68%. Investigado el
+   motivo: de los 7,468 créditos nuevos que entran al cálculo (cuotas vencidas 30-jun), 600
+   (8.03%) pagan 1 día tarde — tasa casi igual al promedio histórico (8.45%) — pero 150 de
+   esos 600 (25%) ya estaban contados por otro evento de mora real en julio y se excluyen
+   para no duplicar, dejando un neto de 450/7,468=6.03%, por debajo del promedio. Es
+   dilución por solapamiento, no un error de cálculo.
+
+   **Hallazgo al implementar: esa primera pasada mezclaba una tasa calibrada SIN el fix
+   con un calendario YA corregido — inconsistencia del tipo que bug 10/`CLAUDE.md`
+   prohíben.** Se recalibró `P_FANTASMA` con el mismo fix aplicado a su propio cálculo:
+   **8.4534% → 8.5524%** (346,396 elegibles / 29,625 entradas, verificado con Athena).
+   Backtest final, consistente: **junio +2.2%→+2.65%, julio +0.12%→+2.17%** — ambos siguen
+   siendo buenos números. El usuario confirmó adoptar el fix (con la explicación del motivo
+   de julio) y luego confirmó también adoptar la tasa recalibrada al encontrarse la
+   inconsistencia. **Aplicado a `enfoque_capital_asegurado.sql` Q3, `investigacion_capa_
+   fantasma.sql` Q1, `backtest_capital_asegurado_junio.py` v4 y `meta_agosto_capital_
+   asegurado.py` v3** — este último con el hueco del 31-jul confirmado con Athena (77
+   créditos / S/140,194 en riesgo, no ~101 cuotas como se estimaba antes de medirlo; real
+   observado a la fecha: 4 créditos / S/3,556.95). Meta de agosto sube de S/16,351,397 a
+   **S/16,410,194**. Detalle completo en bug 14 de `BUGS.md`.
+2. **~~Extender la reconciliación de población a agosto~~ Hecho 2026-08-20 — no repite
+   igual en el agregado, pero sí por cohorte; el motivo es que agosto está a mitad de
+   mes.** Al corte de hoy (20-ago, vista con datos hasta esa fecha: 9,274 créditos /
+   S/14,621,415), el bucket `dayslate_cero_bug9` da **1,772 créditos (19.1% de oficial,
+   S/2,453,492)** — más chico que el 26.8% de julio, no una repetición directa. Al
+   descomponer por cohorte (créditos que ya estaban en la vista oficial en julio, análogo a
+   "stock", vs. créditos nuevos en la vista en agosto, análogo a "nuevos"): **"nuevos"
+   tiene 30.0% de tasa bug9 (1,374/4,581) — mayor que el 26.8% agregado de julio —
+   mientras "stock" tiene solo 8.5% (398/4,693).** Como agosto está solo al día 20 de 31,
+   "nuevos" (que crece día a día, tasa bug9 alta) todavía no terminó de acumularse,
+   mientras "stock" (tamaño fijo desde el cierre de julio, tasa bug9 baja) ya pesa su
+   proporción completa — esto diluye el agregado hacia abajo en un corte parcial. **El
+   mecanismo no se debilitó — si algo, el sub-grupo "nuevos" salió más alto que julio** —
+   pero la comparación agregado-vs-agregado solo es limpia mes-cerrado-vs-mes-cerrado.
+   **Pendiente real:** re-medir cuando agosto cierre (día 31) para una comparación
+   apples-to-apples con julio.
+3. **~~Decidir si excluir reenganches (313 créditos) de esta comparación puntual~~ Decidido
+   con el usuario 2026-08-20: dejarlo documentado, no tocar el filtro.** La vista oficial
+   no filtra `flg_last_loan_in_chain` y nosotros sí (regla del proyecto desde bug 3, evita
+   sesgar curvas con cuotas `LATE` colgadas de créditos refinanciados que nunca se marcan
+   `PAID`). Es una diferencia de alcance deliberada — el gap de 313 créditos / S/488,060 en
+   julio **queda documentado como brecha permanente, no se va a cerrar**. Alternativa
+   descartada: quitar el filtro de `flg_last_loan_in_chain` para igualar la población a la
+   vista oficial — reabriría el problema que el bug 3 resolvió y exigiría recalibrar
+   curvas + re-correr el backtest, sin beneficio claro.
+4. **~~Revisar la inconsistencia numérica menor en "solo nuestro"~~ Hecho 2026-08-20 — no
+   reproducible exactamente, pero el total queda validado de forma independiente.** La
+   query exacta de la sesión 2026-08-19 que produjo 998/119/186/116=1,419 (vs. 1,224
+   reportado) no está en el repo (mismo problema de no-determinismo/no-reproducibilidad ya
+   señalado para esa sesión — ver "Archivos" abajo). Se reconstruyó desde cero (dedup de
+   bug 11 aplicado, categorías mutuamente excluyentes por construcción: control primero,
+   luego escalado, luego "aparece en Temprana pero no está en la vista oficial", luego
+   "no aparece en la tabla de asignaciones"): **783 control + 362 no aparece en
+   asignaciones + 95 escalado + 6 aparece en Temprana sin match = 1,246 créditos** — **muy
+   cerca del 1,224 original (diferencia de 22, 1.8%)**, aunque las categorías individuales
+   NO calzan 1 a 1 contra las originales (783 vs. 998 en "control", 362 vs. 116 en "no
+   aparece", etc. — la lógica exacta de clasificación de la sesión perdida no es la misma
+   que esta reconstrucción). **Conclusión:** el total original (1,224) queda razonablemente
+   validado por una reconstrucción independiente; la inconsistencia de 195 en el desglose
+   de motivos de esa sesión es casi seguro un problema de categorías no mutuamente
+   excluyentes en esa query puntual (un crédito contado en más de un motivo), no evidencia
+   de que el total esté mal. No vale la pena seguir persiguiendo el desglose exacto de una
+   query que no existe — la reconstrucción de arriba es la referencia a usar de acá en
+   adelante si se necesita el detalle.
+5. **~~Auditar el propio dedup de la vista oficial~~ Hecho 2026-08-20 — sí, muy probable
+   que tenga el mismo problema, y sin ningún desempate de respaldo.** Confirmado leyendo
+   la definición de la vista (`vw_seguimiento_diario_cohorte_tramo.txt` línea 81):
+   `ROW_NUMBER() OVER (PARTITION BY id_loan, fecha ORDER BY fechaactualizaciontabla DESC)`
+   **sin ningún criterio de desempate adicional** (ni `id`, ni ningún otro campo). Bug 11
+   (`BUGS.md`) ya documentó que `fechaactualizaciontabla` es **idéntico entre filas
+   duplicadas en 1,314 de 1,316 casos** (vienen del mismo batch de carga ETL) — es decir,
+   para prácticamente TODOS los grupos conflictivos, el `ORDER BY` de la vista oficial no
+   tiene ningún efecto real, y Presto no garantiza un orden estable ante un empate total.
+   Esto es potencialmente **peor** que lo que tenía este proyecto antes del fix (que al
+   menos usaba `lastmodifieddate desc, id desc`, con `id` como desempate 100% determinista
+   al final). No se puede verificar el impacto real sin acceso de escritura/re-ejecución de
+   la vista (es de otro proyecto, fuera de nuestro control) — queda documentado como
+   hallazgo para comunicar al equipo que mantiene la vista, no como algo que este proyecto
+   pueda corregir.
 6. Aplicar la misma capa fantasma al Enfoque acumulado (recupero oficial) si en el futuro
    se decide ampliar el alcance más allá de Enfoque alfa (fuera de esta pasada, ver
    "Alcance tasa 13.38%" — se optó por no tocar `fase1_stock.sql`/`fase2_nuevos.sql`/
@@ -257,6 +349,14 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
   no se re-verificaron esta sesión** — se asume que siguen vigentes (la reconstrucción
   determinista dio números en la misma escala), pero si se necesita el detalle exacto,
   recrearlos con el patrón de `reconciliacion_temprana.sql`.
+- **`reconciliacion_temprana.sql` Q5-Q7`** (2026-08-20, continuación, en el repo):
+  verificación de la capa fantasma a nivel crédito (pendiente 1 — resultado: 90.7%
+  directo, 99.7% incluyendo el hueco de frontera de mes) y reconstrucción de "solo
+  nuestro" categorizado contra `dts_asignaciones_gestiones_cobranza` (pendiente 4).
+- **`reconciliacion_agosto.sql`** (2026-08-20, nuevo, en el repo): extensión de la
+  reconciliación de población a agosto (pendiente 2) — agregado parcial (Q1) y
+  descomposición por cohorte estaba-desde-julio vs. nuevo-en-agosto (Q2), que explica
+  por qué el ~27% no se ve igual todavía en un mes a medio cerrar.
 
 ## Referencias
 

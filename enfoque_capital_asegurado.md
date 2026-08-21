@@ -1,12 +1,13 @@
 # Enfoque alfa: capital asegurado
 
 > **Estado: meta principal desde 2026-07-13, a pedido explícito del usuario.** Backtest en
-> 2 meses cerrados (junio +0.7%, julio +0.1%, ambos con la "capa fantasma" adoptada
-> 2026-08-20 — ver sección "Capa fantasma" abajo y bug 14 en `BUGS.md`). El recupero
-> oficial (`meta_julio.py`) se sigue calculando y trackeando en paralelo, pero ya no es el
-> número que lidera `ESTADO.md`. Propuesta original por el usuario el 2026-07-10. Solo 2
-> meses de backtest — seguir extendiendo antes de tratar ±1% como error típico (`IDEAS.md`
-> punto 1).
+> 2 meses cerrados (junio +2.65%, julio +2.17%, ambos con la "capa fantasma" completa —
+> tasa recalibrada + fix de frontera de mes, adoptada 2026-08-20 — ver sección "Capa
+> fantasma" abajo y bug 14 en `BUGS.md`) **y con el dedup de bug 11 aplicado (2026-08-20,
+> ver `BUGS.md`)**. El recupero oficial (`meta_julio.py`) se sigue calculando y trackeando
+> en paralelo, pero ya no es el número que lidera `ESTADO.md`. Propuesta original por el
+> usuario el 2026-07-10. Solo 2 meses de backtest — seguir extendiendo antes de tratar
+> ±2-3% como error típico (`IDEAS.md` punto 1).
 
 ## Capa "fantasma" (adoptada 2026-08-20, bug 14)
 
@@ -20,9 +21,21 @@ TEMPRANA** — no es un caso de borde (ver `reconciliacion_vw_seguimiento_tempra
 Se agregó una capa **independiente** (no reemplaza ni mezcla `13.38%` ni la curva de Q2 —
 evita repetir bug 10): detecta el pago-1-día-tarde no visto por `dayslate`, y se activa
 **100% del saldo el día siguiente al vencimiento** (sin curva propia — por definición, si
-se detecta el evento es porque ya se pagó). Tasa nueva `P_FANTASMA=8.4534%` (29,845/353,054,
+se detecta el evento es porque ya se pagó). Tasa `P_FANTASMA=8.5524%` (346,396/29,625,
 mismo criterio y ventana fuera de muestra que `13.38%` — ver `enfoque_capital_asegurado.sql`
-Q3). Por mes: 7.35%-9.53%, casi tan grande como el propio `13.38%`.
+Q3). Por mes: ~7-10%, casi tan grande como el propio `13.38%`.
+
+**Fix de frontera de mes (2026-08-20, mismo día):** la verificación a nivel crédito
+encontró que la capa fantasma original (basada en `fechavencimiento` directo) solo cubría
+90.7% del bucket de bug 9 — una cuota vencida el ÚLTIMO DÍA de un mes, pagada 1 día tarde,
+"ocurre" el mes siguiente, análogo a bug 12. Fix: el "periodo" de cada cuota se determina
+por `fecha_pago` (`fechavencimiento+1`), no por `fechavencimiento` directo — cierra la
+cobertura a 99.7%. Como tasa y calendario deben compartir la misma definición (principio de
+`CLAUDE.md`), `P_FANTASMA` se recalibró junto con el fix (antes 8.4534%, sobre
+353,054/29,845). Backtest re-corrido con la tasa consistente: junio +2.2%→+2.65%, julio
++0.12%→+2.17% — ambos siguen siendo buenos números. Ver bug 14 en `BUGS.md` para el
+detalle completo, incluyendo el hallazgo de que aplicar el fix de frontera SIN recalibrar
+la tasa (calendario nuevo + tasa vieja) es una inconsistencia del tipo que bug 10 prohíbe.
 
 **Alcance:** solo este enfoque (Enfoque alfa) — el recupero oficial (`fase1_stock.sql`/
 `fase2_nuevos.sql`/`fase3_backtest.sql`) no se tocó, decisión explícita con el usuario.
@@ -162,25 +175,33 @@ cierre de mayo) — usa `bt_stock_junio_aseg.csv`, propio de este enfoque
 
 | | Proyectado | Real | Error |
 |---|---:|---:|---:|
-| Total (sin fantasma) | S/8,818,202 | S/9,225,523 | -4.4% |
-| Stock | S/2,611,863 | S/2,436,287 | +7.2% |
-| Nuevos | S/6,206,338 | S/6,789,236 | -8.6% |
-| **Fantasma (2026-08-20)** | S/5,106,866 | S/4,598,430 | +11.1% |
-| **Total con capa fantasma** | **S/13,925,067** | **S/13,823,953** | **+0.7%** |
+| Total (sin fantasma) | S/8,781,121 | S/8,989,398 | -2.3% |
+| Stock | S/2,590,436 | S/2,414,649 | +7.3% |
+| Nuevos | S/6,190,685 | S/6,574,749 | -5.8% |
+| **Fantasma (2026-08-20, tasa recalibrada + fix de frontera)** | S/5,166,655 | S/4,598,430 | +12.4% |
+| **Total con capa fantasma** | **S/13,947,775** | **S/13,587,829** | **+2.65%** |
 
 (Antes de la corrección de bug 12: -4.7% total, stock +5.6%, nuevos -8.4% — esa corrección
-dejó el error total prácticamente igual. La capa fantasma, 2026-08-20, es la que mueve el
-error de forma material: -4.4%→+0.7%. La tasa `P(no paga a tiempo)=13.38%` no se
-recalibró — sigue midiendo si la entrada a mora ocurre vía `dayslate`; `P_FANTASMA` es
-una tasa nueva e independiente, no una recalibración de 13.38%.)
+dejó el error total prácticamente igual. La capa fantasma, 2026-08-20, movió el error de
+-4.4% a +0.7%. **El mismo día, el dedup de bug 11 (`BUGS.md`) se aplicó a este backtest
+— el error subió de +0.7% a +2.2%** (stock +7.2%→+7.3%, fantasma +11.1% sin cambio,
+nuevos -8.6%→-5.8% — el componente que más se movió, porque el fix elimina "pagos"
+espurios detectados al comparar contra una fila duplicada en S/0 de un reenganche).
+**Más tarde el mismo día, el fix de frontera de mes + la tasa `P_FANTASMA` recalibrada
+(8.4534%→8.5524%) subieron el error de +2.2% a +2.65%** (fantasma +11.1%→+12.4%, stock/
+nuevos sin cambio — el 31-may no tiene cuotas vencidas). Julio (segundo mes cerrado) no se
+movió con el dedup de bug 11, pero sí con el fix de frontera+tasa (+0.12%→+2.17%) — ver
+tabla de `SEGUIMIENTO.md` y bug 14 en `BUGS.md`. La tasa `P(no paga a tiempo)=13.38%` no se
+tocó — sigue midiendo si la entrada a mora ocurre vía `dayslate`; `P_FANTASMA` es una tasa
+nueva e independiente, recalibrada solo sobre su propia definición (nunca mezclada con
+13.38%).
 
-**El error total (-4.4%) es del mismo orden de magnitud que el backtest del modelo oficial
-de recupero (+5.4%)** — buena señal de que la curva de capital asegurado no está sesgada
-de forma grosera, aunque va en la dirección opuesta (oficial sobreestima, este subestima) y
-el desglose stock/nuevos también se invierte (acá el stock sobreestima y nuevos
-subestima, al revés que en recupero). No se tocó la tasa `P(no paga a tiempo)=13.38%` ni la
-curva por separado más allá del fix de bucketing — el error no es lo bastante grande como
-para justificar tocar la tasa, y el principio de modelado de `CLAUDE.md` aplica igual acá.
+**El error total final (+2.65% junio, +2.17% julio) sigue siendo del mismo orden de
+magnitud que el backtest del modelo oficial de recupero (+5.4%)** — buena señal de que la
+curva de capital asegurado no está sesgada de forma grosera. No se tocó la tasa
+`P(no paga a tiempo)=13.38%` ni la curva de nuevos/stock — el error no es lo bastante
+grande como para justificar tocarlas, y el principio de modelado de `CLAUDE.md` aplica
+igual acá.
 
 ## Tracking en vivo — julio 2026 (meta principal)
 
@@ -223,6 +244,7 @@ y `datos_avance_capital_asegurado_julio/tabla_diaria_alfa.csv`.
 3. ~~Cerrar la fila de julio en `SEGUIMIENTO.md`~~ — hecho 2026-08-18, y recalculada con
    la capa fantasma + signo corregido el 2026-08-20 (ver arriba).
 4. Cerrar la fila de agosto en `SEGUIMIENTO.md` cuando termine el mes — meta vigente
-   S/16,351,397 (con capa fantasma), ver `ESTADO.md`.
+   S/16,410,194 (con capa fantasma completa: tasa recalibrada + fix de frontera de mes),
+   ver `ESTADO.md`.
 5. Extender el backtest a 3-6 meses más (junio/julio son los únicos 2 disponibles) antes
-   de tratar ±1% como error típico con la capa fantasma.
+   de tratar ±2-3% como error típico con la capa fantasma.

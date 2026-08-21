@@ -13,11 +13,11 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 > Desde 2026-07-13 esta ya no es la meta principal reportada en `ESTADO.md` (ver sección
 > de capital asegurado abajo) — sigue siendo un modelo validado y se sigue calculando.
 
-| Mes | Meta proyectada | Real | Error total | Error stock | Error nuevos | Notas |
-|---|---:|---:|---:|---:|---:|---|
-| Junio 2026 | S/1,806,299 | S/1,713,815 | **+5.4%** | +16.2% | +0.7% | Primer backtest. Curvas calibradas sobre 14 meses (incluyen junio, peso ~1/14 — no es estrictamente fuera de muestra, solo la tasa de entrada lo es). Ver `fase3_backtest.sql`, `backtest_junio.py`. |
-| Julio 2026 | S/1,776,174 | S/2,088,911 | **+17.6%** | +2.0% | +22.5% | Cerrado 2026-08-18 (mes completo). El error es notablemente mayor que junio, y va en dirección opuesta al de capital asegurado del mismo mes (abajo) — "nuevos" es la fuente principal (+22.5%), no "stock" como en junio. Un solo mes adicional todavía no alcanza para saber si es varianza normal o degradación — ver tarea 9 de `PENDIENTES.md`. Ver `cierre_julio.sql` (bloques J3/J4). |
-| Agosto 2026 | S/2,108,435 | *(mes en curso, corte 18-ago: S/1,147,110, -1.5% vs. proyectado al mismo día)* | — | — | — | Stock S/711,160 + nuevos S/1,397,275. Ver `meta_agosto.py`. Cerrar esta fila cuando termine agosto. |
+| Mes | Meta proyectada | Real | Error total | Error stock | Error nuevos | Motivo principal | Notas |
+|---|---:|---:|---:|---:|---:|---|---|
+| Junio 2026 | S/1,806,299 | S/1,713,815 | **+5.4%** | +16.2% | +0.7% | Stock sobreestimado — la curva de maduración de stock corre por encima de lo real ese mes; nuevos casi exacto. | Primer backtest. Curvas calibradas sobre 14 meses (incluyen junio, peso ~1/14 — no es estrictamente fuera de muestra, solo la tasa de entrada lo es). Ver `fase3_backtest.sql`, `backtest_junio.py`. |
+| Julio 2026 | S/1,776,174 | S/2,088,911 | **+17.6%** | +2.0% | +22.5% | Nuevos sobreestimado — la tasa/curva de nuevos corre muy por encima de lo real ese mes (fuente principal del error, no el stock). No es el mismo mecanismo que bug 14 (esa reconciliación es solo del enfoque alfa, no de este). | Cerrado 2026-08-18 (mes completo). Un solo mes adicional todavía no alcanza para saber si es varianza normal o degradación — ver tarea 9 de `PENDIENTES.md`. Ver `cierre_julio.sql` (bloques J3/J4). |
+| Agosto 2026 | S/2,108,435 | *(mes en curso, corte 18-ago: S/1,147,110, -1.5% vs. proyectado al mismo día)* | — | — | — | — (mes en curso) | Stock S/711,160 + nuevos S/1,397,275. Ver `meta_agosto.py`. Cerrar esta fila cuando termine agosto. |
 
 ## Capital asegurado (enfoque alfa) — meta principal desde 2026-07-13
 
@@ -29,18 +29,38 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 
 > **2026-08-20 — capa "fantasma" adoptada (bug 14, ver `BUGS.md` y `reconciliacion_
 > vw_seguimiento_temprana.md`):** créditos que pagan una cuota exactamente 1 día tarde y
-> que `dayslate` nunca ve (punto ciego de bug 9). Tasa nueva e independiente `P_FANTASMA
-> =8.4534%` (no reemplaza ni se mezcla con `13.38%`), activada 100% el día siguiente al
-> vencimiento. Las filas de junio/julio de abajo ya están recalculadas con esta capa —
-> **al recalcular julio también se corrigió un error de signo** que tenía esta tabla
-> (decía "+4.7%/+1.0%/+6.3%", sobreestimando; el número correcto —incluso antes de
-> agregar la capa fantasma— es que julio SUBESTIMA, igual que junio, no al revés).
+> que `dayslate` nunca ve (punto ciego de bug 9). Tasa nueva e independiente `P_FANTASMA`
+> (no reemplaza ni se mezcla con `13.38%`), activada 100% el día siguiente al vencimiento.
+> Las filas de junio/julio de abajo ya están recalculadas con esta capa — **al recalcular
+> julio también se corrigió un error de signo** que tenía esta tabla (decía
+> "+4.7%/+1.0%/+6.3%", sobreestimando; el número correcto —incluso antes de agregar la
+> capa fantasma— es que julio SUBESTIMA, igual que junio, no al revés).
 
-| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Error fantasma | Notas |
-|---|---:|---:|---:|---:|---:|---:|---|
-| Junio 2026 | S/13,925,067 | S/13,823,953 | **+0.7%** | +7.2% | -8.6% | +11.1% | Con capa fantasma (2026-08-20). Sin ella: -4.4% (stock +7.2%, nuevos -8.6%, sin fantasma). Ver `backtest_capital_asegurado_junio.py` v3. |
-| Julio 2026 | S/16,532,935 | S/16,513,659 | **+0.1%** | -1.0% | -5.7% | +8.4% | Cerrado 2026-08-18, capa fantasma agregada 2026-08-20. Sin ella: **-4.3%** (stock -1.0%, nuevos -5.7%) — signo corregido, antes decía +4.7% por error. Ver `reconciliacion_vw_seguimiento_temprana.md` paso 2/3 e `investigacion_capa_fantasma.sql` Q3/Q4. |
-| Agosto 2026 | S/16,351,397 | *(mes en curso, corte 18-ago: S/9,622,765, -1.8% vs. proyectado al mismo día)* | — | — | — | — | Meta con capa fantasma: stock S/2,956,828 + nuevos S/7,288,868 + fantasma S/6,105,701. Antes de la capa fantasma el avance parecía +8.7% adelantado; con la capa completa va -1.8% (ligeramente atrás). Ver `meta_agosto_capital_asegurado.py` v2 + `datos_avance_capital_asegurado_agosto/`. Cerrar esta fila cuando termine agosto. |
+> **2026-08-20 (mismo día) — dedup de bug 11 aplicado (ver `BUGS.md`):** regla validada
+> contra los 687 casos conflictivos completos de la historia (antes solo una muestra de
+> 16) y aplicada a `enfoque_capital_asegurado.sql`/`_backtest.sql`/`cierre_julio.sql`. Junio
+> subió de +0.7% a +2.2% (el componente "nuevos" pasó de -8.6% a -5.8% — el fix elimina
+> "pagos" espurios detectados contra una fila duplicada en S/0 de un reenganche). Julio no
+> se movió (0 filas duplicadas relevantes en su ventana, verificado con los mismos números
+> exactos antes/después del fix).
+
+> **2026-08-20 (continuación) — fix de frontera de mes en la capa fantasma + tasa
+> `P_FANTASMA` recalibrada (bug 14, ver `BUGS.md`):** la verificación a nivel crédito
+> encontró que la capa fantasma no cubría una cuota vencida el ÚLTIMO DÍA de un mes,
+> pagada 1 día tarde el mes siguiente (cobertura 90.7%→99.7% al incluirla). Como tasa y
+> calendario deben compartir la misma definición de "periodo" (principio no negociable de
+> `CLAUDE.md`), `P_FANTASMA` se recalibró junto con el fix: **8.4534% → 8.5524%**. Junio
+> sube de +2.2% a **+2.65%** (el 31-may no tiene cuotas, así que el movimiento es 100% de
+> la tasa); julio sube de +0.12% a **+2.17%** (el 30-jun sí tiene 9,115 cuotas — el motivo
+> del alza en julio está en la sección de bug 14). Ambos siguen siendo buenos números,
+> lejos de bug 10. Meta de agosto sube de S/16,351,397 a S/16,410,194 (+0.4%, chico —
+> incluye el mismo hueco para el 31-jul, solo 77 créditos/S/140,194).
+
+| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Error fantasma | Motivo de diferencia (vs. reconciliación bug 14) | Notas |
+|---|---:|---:|---:|---:|---:|---:|---|---|
+| Junio 2026 | S/13,947,775 | S/13,587,829 | **+2.65%** | +7.3% | -5.8% | +12.4% | Fantasma sobreestima (+12.4%) más de lo que nuevos subestima (-5.8%) — la tasa `P_FANTASMA=8.5524%` (calibrada fuera de muestra, ago25-may26) no calza exacto con junio específico. El 31-may no tiene cuotas vencidas, así que nada del error de este mes viene del hueco de frontera de mes en sí — es 100% el efecto de subir la tasa. | Con capa fantasma (tasa recalibrada 8.5524%, fix de frontera de mes) y dedup de bug 11, ambos 2026-08-20. Sin el fix de frontera (tasa 8.4534%): +2.2% (fantasma +11.1%, idéntico en stock/nuevos). Sin fantasma ni dedup: -4.4%. Ver `backtest_capital_asegurado_junio.py` v4. |
+| Julio 2026 | S/17,599,707 | S/17,225,178 | **+2.17%** | -1.0% | -5.7% | +13.0% | Fantasma sobreestima (+13.0%) por **dilución de solapamiento**: de los 7,468 créditos del cohorte 30-jun (el hueco de frontera que cierra la reconciliación bug 14 a 99.7%), solo 8.03% paga 1 día tarde (≈ tasa histórica 8.55%), pero 25% de esos ya estaban contados por otro evento real de mora en julio y se excluyen para no duplicar — el neto (6.03%) queda por debajo del promedio, así que la tasa global sobreproyecta esta cohorte puntual. No es un error de cálculo, ver `BUGS.md` bug 14. | Cerrado 2026-08-18. Con capa fantasma con tasa recalibrada (8.5524%) y fix de frontera de mes (2026-08-20) — cobertura del bucket bug9 90.7%→99.7%. Sin el fix de frontera (tasa 8.4534% sobre el mismo calendario corregido, inconsistente — no usar): +1.68% (fantasma +11.7%). Sin fix de frontera ni tasa recalibrada: +0.12% (fantasma +8.4%). Ver `investigacion_frontera_mes_fantasma.sql`. |
+| Agosto 2026 | S/16,410,194 | *(mes en curso, corte 18-ago: S/9,626,322, -2.1% vs. proyectado al mismo día)* | — | — | — | — | — (mes en curso, sin cerrar) | Meta con capa fantasma (tasa recalibrada + fix de frontera 2026-08-20): stock S/2,951,390 + nuevos S/7,269,629 + fantasma S/6,189,175 (incluye 77 créditos/S/140,194 del 31-jul). Ver `meta_agosto_capital_asegurado.py` v3 + `datos_avance_capital_asegurado_agosto/`. Cerrar esta fila cuando termine agosto. |
 
 ## Qué mirar si el error crece
 

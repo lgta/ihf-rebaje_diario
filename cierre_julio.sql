@@ -24,20 +24,34 @@ with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
   from dts_cobranza_creditos_cuotas group by 1
 )
-, fotos as (
+, raw_mambu as (
   select
     a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
-  , a.fechaproceso
-  , a.balances_principalbalance as saldo
-  , coalesce(a.dayslate,0) as mora
-  , lag(a.balances_principalbalance) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech order by a.fechaproceso) as saldo_ant
+  , a.fechaproceso, a.balances_principalbalance as saldo, a.dayslate
+  , a.lastmodifieddate, a.id
   from dts_mambu_loans_hist a
-  join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  where b.status in ('ACTIVE','COMPLETED')
+  where a.fechaproceso between '20260625' and '20260731'
+)
+, dedup as (
+  -- bug 11 (BUGS.md): regla validada 2026-08-20 (saldo<>0 antes de lastmodifieddate).
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw_mambu
+)
+, fotos as (
+  select
+    d.id_loan
+  , d.fechaproceso
+  , d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , lag(d.saldo) over (partition by d.id_loan order by d.fechaproceso) as saldo_ant
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+    and b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain,1) = 1
-    and a.fechaproceso between '20260625' and '20260731'
 )
 , cierre_junio as (
   select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso desc) as rn
@@ -79,22 +93,37 @@ with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
   from dts_cobranza_creditos_cuotas group by 1
 )
-, fotos as (
+, raw_mambu as (
   select
     a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
-  , a.fechaproceso
-  , a.balances_principalbalance as saldo
-  , coalesce(a.dayslate,0) as mora
-  , lag(coalesce(a.dayslate,0)) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech order by a.fechaproceso) as mora_ant
-  , lag(a.balances_principalbalance) over (
-      partition by a._datos_adicionales_loan_accounts_id_ihfintech order by a.fechaproceso) as saldo_ant
+  , a.fechaproceso, a.balances_principalbalance as saldo, a.dayslate
+  , a.lastmodifieddate, a.id
   from dts_mambu_loans_hist a
-  join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  where b.status in ('ACTIVE','COMPLETED')
+  where a.fechaproceso between '20260601' and '20260731'
+)
+, dedup as (
+  -- bug 11 (BUGS.md): regla validada 2026-08-20 (saldo<>0 antes de lastmodifieddate).
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw_mambu
+)
+, fotos as (
+  select
+    d.id_loan
+  , d.fechaproceso
+  , d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , lag(coalesce(d.dayslate,0)) over (
+      partition by d.id_loan order by d.fechaproceso) as mora_ant
+  , lag(d.saldo) over (
+      partition by d.id_loan order by d.fechaproceso) as saldo_ant
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+    and b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain,1) = 1
-    and a.fechaproceso between '20260601' and '20260731'
 )
 , cierre_junio as (
   select id_loan, mora, saldo, row_number() over (partition by id_loan order by fechaproceso desc) as rn
