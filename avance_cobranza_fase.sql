@@ -5,12 +5,7 @@
 --
 -- Fuente: dts_asignaciones_gestiones_cobranza -- asignacion REAL dia a dia
 -- del negocio (no la poblacion inferida via dayslate que usa el resto
--- del proyecto). Grano: (dni_ce, producto) por fecha_base -- NO trae
--- id_ihfintech_loan directo, hay que cruzar via dni+producto contra
--- dts_cobranza_creditos_cuotas (dni, producto, status='ACTIVE',
--- flg_last_loan_in_chain=1) -- ese cruce es 1:1 y matchea ~96.5% de las
--- filas asignadas (el resto probablemente ya se cancelo/pago entre la
--- asignacion y la corrida de esta query).
+-- del proyecto). Grano: (dni_ce, producto) por fecha_base.
 --
 -- CAMBIO 2026-08-18: esta query originalmente usaba dts_asignaciones_
 -- cobranza (sin "gestiones"), que quedo congelada el 2026-07-10 -- ver
@@ -18,13 +13,38 @@
 -- (mismo grano, tabla viva). OJO: fecha_base ahi es varchar, no date --
 -- comparar con literal string ('2026-07-02'), no date('2026-07-02').
 --
+-- CAMBIO 2026-08-21 (continuacion) -- 3 fixes aplicados en esta re-corrida:
+-- (1) bug 15 (BUGS.md): la tabla SI tiene id_ihfintech_loan directo, columna
+--     "aux02" (99.97% de match, sin nombre descriptivo) -- reemplaza el
+--     crosswalk dni+producto contra dts_cobranza_creditos_cuotas (CTEs
+--     "cuotas_activos"/"asignados_dia1" eliminadas, "cohorte" ahora es un
+--     select directo con aux02). Cohorte crece de 8,303 a 8,614 creditos
+--     (+3.7%), concentrado en TEMPRANA (+249, antes perdidos por el filtro
+--     status='ACTIVE' del crosswalk viejo -- mismo mecanismo que bug 13/
+--     "Sin asignar" de la reconciliacion TEMPRANA).
+-- (2) bug 12 (antiguo/nuevo, dia 1 del mes): un credito con mora=1 el DIA 1
+--     de julio (mora=0 el 30-jun) viene de una cuota vencida el ULTIMO DIA
+--     DE JUNIO -- es "antiguo"/stock, no "nuevo" (mismo patron que
+--     enfoque_capital_asegurado.sql, tramo fijo 'a. 1-8' para estos
+--     entrantes). Nunca se habia aplicado a este archivo -- "nuevo" baja de
+--     1,397 a 628 creditos (-55%, la mayoria del bucket viejo eran entrantes
+--     de dia 1 mal clasificados), "stock" sube de 1,414 a 2,473 (+75%). El
+--     impacto es proporcionalmente mucho mayor que en la calibracion de 14
+--     meses porque esta cohorte es una ventana de solo 11 dias (dia1=2-jul
+--     a dia11=12-jul) -- un solo dia (el 1-jul) pesa mucho mas aqui.
+-- (3) bug 11 (dedup, BUGS.md): este archivo nunca tuvo el dedup de filas
+--     duplicadas (id_loan, fechaproceso) de dts_mambu_loans_hist -- CLAUDE.md
+--     lo exige para cualquier row_number()/lag() nuevo sobre esa tabla.
+--     Agregado (regla saldo<>0 antes de lastmodifieddate).
+--
 -- OJO: la corrida original (12-jul) uso 2-jul como "dia 1" de julio
 -- porque dts_asignaciones_cobranza no tenia el 1-jul (decision
 -- confirmada con el usuario 2026-07-13, ver avance_cobranza_fase.md).
 -- dts_asignaciones_gestiones_cobranza SI tiene 1-jul -- si se re-corre
 -- este analisis desde cero, evaluar si conviene usar 1-jul en vez de
 -- 2-jul (no cambiado aca para no alterar la corrida historica sin
--- pedido explicito).
+-- pedido explicito -- esta pasada solo corrige bugs 11/12/15, no cambia
+-- el ancla de la cohorte).
 --
 -- "Rebaje" en este cuadro = capital ASEGURADO (enfoque alfa: saldo
 -- COMPLETO del credito si mostro >=1 dia de pago, no soles cobrados) --
@@ -43,40 +63,39 @@
 -- dts_mambu_loans_hist a la fecha de esta corrida).
 -- Resultado usado por avance_cobranza_fase.py (agregacion + curvas).
 -- ---------------------------------------------------------------------
-with loan_chain as (
-  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
-  from dts_cobranza_creditos_cuotas group by 1
-)
-, cuotas_activos as (
-  select distinct dni, producto, id_ihfintech_loan
-  from dts_cobranza_creditos_cuotas
-  where flg_last_loan_in_chain = 1 and status = 'ACTIVE'
-)
-, asignados_dia1 as (
-  select dni_ce, producto, fase_estrategia, subsegmento_fase_estrategia
+with cohorte as (
+  -- FIX bug 15: join directo via aux02 (=id_ihfintech_loan), reemplaza el
+  -- crosswalk dni+producto contra dts_cobranza_creditos_cuotas.
+  select distinct fase_estrategia, subsegmento_fase_estrategia, aux02 as id_ihfintech_loan
   from dts_asignaciones_gestiones_cobranza
-  where fecha_base = '2026-07-02'
+  where fecha_base = '2026-07-02' and aux02 is not null
 )
-, cohorte as (
-  select a.fase_estrategia, a.subsegmento_fase_estrategia, c.id_ihfintech_loan
-  from asignados_dia1 a
-  join cuotas_activos c on c.dni = a.dni_ce and c.producto = a.producto
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  , b.amountfinanced
+  from dts_mambu_loans_hist a
+  join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
+  where a._datos_adicionales_loan_accounts_id_ihfintech in (select id_ihfintech_loan from cohorte)
+    and a.fechaproceso between '20260601' and '20260712'
+)
+, dedup as (
+  -- FIX bug 11: dedup determinista de filas duplicadas (id_loan, fechaproceso).
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw
 )
 , fotos as (
   select
-    f._datos_adicionales_loan_accounts_id_ihfintech as id_loan
-  , f.fechaproceso
-  , f.balances_principalbalance as saldo
-  , coalesce(f.dayslate,0) as mora
-  , lag(coalesce(f.dayslate,0)) over (
-      partition by f._datos_adicionales_loan_accounts_id_ihfintech order by f.fechaproceso) as mora_ant
-  , lag(f.balances_principalbalance) over (
-      partition by f._datos_adicionales_loan_accounts_id_ihfintech order by f.fechaproceso) as saldo_ant
-  , b.amountfinanced
-  from dts_mambu_loans_hist f
-  join dts_okaapi_loans b on b.id_ihfintech_loan = f._datos_adicionales_loan_accounts_id_ihfintech
-  where f._datos_adicionales_loan_accounts_id_ihfintech in (select id_ihfintech_loan from cohorte)
-    and f.fechaproceso between '20260601' and '20260712'
+    id_loan, fechaproceso, saldo
+  , coalesce(dayslate,0) as mora
+  , lag(coalesce(dayslate,0)) over (partition by id_loan order by fechaproceso) as mora_ant
+  , lag(saldo) over (partition by id_loan order by fechaproceso) as saldo_ant
+  , amountfinanced
+  from dedup
+  where rn_dedup = 1
 )
 , cierre_junio as (
   select id_loan, mora as mora_jun, row_number() over (partition by id_loan order by fechaproceso desc) as rn
@@ -112,11 +131,13 @@ select
 , d.saldo_dia1, d.avance_band
 , cj.mora_jun
 , case when coalesce(cj.mora_jun,0) between 1 and 30 then 'stock'
+       when coalesce(cj.mora_jun,0) = 0 and e.fecha_entrada = '20260701' then 'stock'  -- FIX bug 12
        when coalesce(cj.mora_jun,0) = 0 then 'nuevo'
        else 'preexistente_31+' end as segmento
 , case when cj.mora_jun between 1 and 8 then 'a. 1-8'
        when cj.mora_jun between 9 and 15 then 'b. 9-15'
        when cj.mora_jun between 16 and 30 then 'c. 16-30'
+       when coalesce(cj.mora_jun,0) = 0 and e.fecha_entrada = '20260701' then 'a. 1-8'  -- FIX bug 12
        else null end as tramo_jun
 , e.fecha_entrada
 , pp.fecha_primer_pago

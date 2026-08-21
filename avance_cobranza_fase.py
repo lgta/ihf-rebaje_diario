@@ -1,13 +1,20 @@
 """
 Avance de julio 2026 por fase de cobranza (Temprana/Especializada/Recovery),
-usando la asignacion REAL del negocio (dts_asignaciones_cobranza) en vez de
-la poblacion inferida via dayslate. "Rebaje" = capital ASEGURADO (enfoque
-alfa: saldo completo del credito si mostro >=1 dia de pago), no el recupero
-oficial -- ver avance_cobranza_fase.md para la explicacion completa.
+usando la asignacion REAL del negocio (dts_asignaciones_gestiones_cobranza)
+en vez de la poblacion inferida via dayslate. "Rebaje" = capital ASEGURADO
+(enfoque alfa: saldo completo del credito si mostro >=1 dia de pago), no el
+recupero oficial -- ver avance_cobranza_fase.md para la explicacion completa.
 
-Dia 1 = 2026-07-02 (la tabla de asignaciones no tiene 1-jul, ver el .md).
+Dia 1 = 2026-07-02 (la corrida original no tenia 1-jul, ver el .md; se
+mantiene igual en la re-corrida 2026-08-21 para no alterar la ventana).
 Dia objetivo = 2026-07-12 (dia 11 desde la asignacion, ultima fecha con
-datos en dts_mambu_loans_hist a la fecha de esta corrida).
+datos en dts_mambu_loans_hist a la fecha de la corrida original).
+
+Este script NO cambio con la re-corrida 2026-08-21 (bugs 11/12/15, ver
+avance_cobranza_fase.sql/BUGS.md) -- la logica de segmento/tramo ya estaba
+preparada para consumir la clasificacion correcta directo del SQL (seg =
+"stock" si segmento<>'nuevo', subtramo = tramo_jun si esta poblado), asi
+que el fix completo vivio en el SQL, no aca.
 
 Insumos:
   avance_cobranza_fase.sql -> datos_avance_fase/avance_fase_extraccion.csv

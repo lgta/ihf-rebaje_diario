@@ -25,7 +25,7 @@ pendientes de esos 2 enfoques en este documento** — si algo de abajo te hace p
 
 ## Enfoque Alfa — Capital asegurado (meta principal)
 
-### Tarea 1 — Re-correr `avance_cobranza_fase` con la definición corregida (bug 12)
+### Tarea 1 — ~~Re-correr `avance_cobranza_fase` con la definición corregida (bug 12)~~ CERRADA 2026-08-21
 **Archivos:** `avance_cobranza_fase.sql`, `avance_cobranza_fase.py`, `avance_cobranza_fase.md`.
 
 **Contexto:** el 2026-07-14 se corrigió un bug (bug 12 en `BUGS.md`) en la clasificación
@@ -43,9 +43,33 @@ en `avance_cobranza_fase.md`. **Ya aplicado (2026-08-18):** el SQL se repuntó a
 congelada el 2026-07-10 — ver bug 13 en `BUGS.md`); falta todavía el fix de bug 12 en sí y
 re-correr/actualizar `.py`/`.md`.
 
+**Agregado 2026-08-21 — aplicar TAMBIÉN el fix de bug 15 (`aux02`) en esta misma pasada:**
+`avance_cobranza_fase.sql` cruza `dts_asignaciones_gestiones_cobranza` contra
+`dts_cobranza_creditos_cuotas` vía `dni`+`producto` (CTE `cuotas_activos`, filtro
+`status='ACTIVE'`) — el mismo patrón que resultó impreciso en la reconciliación TEMPRANA
+(ver bug 15 en `BUGS.md`): la tabla SÍ tiene `id_ihfintech_loan` directo en la columna
+`aux02` (99.97% de match verificado, vs. ~96.5% del crosswalk, y sin el problema de
+excluir créditos ya `COMPLETED`). Reemplazar el join `c.dni = a.dni_ce and c.producto =
+a.producto` por un join directo `c.id_ihfintech_loan = a.aux02` (o usar `a.aux02`
+directamente como `id_ihfintech_loan`, sin pasar por `dts_cobranza_creditos_cuotas` en
+absoluto, salvo que se necesite algún otro campo de esa tabla).
+
 **Criterio de terminado:** los números de avance por fase (Temprana/Especializada/
 Recovery × nuevo/stock) en `avance_cobranza_fase.md` reflejan la definición corregida;
 la nota "⚠ Pendiente" de `ESTADO.md` sección "Análisis puntuales" se puede quitar.
+
+**CERRADA 2026-08-21 — los 3 fixes aplicados (bug 12 + bug 15 + bug 11, este último
+agregado en el camino por ser exigido por `CLAUDE.md` para cualquier `row_number()`/`lag()`
+nuevo sobre `dts_mambu_loans_hist`, y este archivo nunca lo había tenido):**
+- La cohorte creció de 8,303 a 8,614 créditos (bug 15, +3.7%, concentrado en TEMPRANA).
+- "nuevo" bajó de 1,258 a 571 créditos, "stock" subió correspondientemente (bug 12 — el
+  1-jul solo representaba 60-70% del bucket "nuevo" viejo, un impacto mucho mayor que en
+  la calibración de 14 meses porque esta cohorte es una ventana de solo 11 días).
+- Query verificada tal como quedó en el repo (re-ejecutada, reproduce los mismos números).
+- `avance_cobranza_fase.py` no necesitó cambios de código — ya estaba preparado para
+  consumir la clasificación correcta directo del SQL.
+- Resultados actualizados en `avance_cobranza_fase.md` (tabla + lectura de resultados). La
+  nota "⚠ Pendiente" en `ESTADO.md` "Análisis puntuales" — quitada.
 
 ### Tarea 2 — Refrescar el artifact `capital_asegurado.html`
 **Archivo:** `capital_asegurado.html` (ya reescrito con 5 créditos reales + curvas +

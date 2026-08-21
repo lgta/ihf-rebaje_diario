@@ -635,6 +635,15 @@ left join entradas_fantasma_julio ef on ef.id_loan = cl.id_loan
 -- reconstruccion (categorias mutuamente excluyentes) da 1,246 -- 1.8% del
 -- 1,224 original, valida el total de forma razonable aunque el desglose por
 -- motivo no calce 1 a 1 contra la sesion perdida.
+--
+-- **SUPERADA 2026-08-21 (continuacion) -- ver bug 15 en BUGS.md.** El cruce
+-- dni+producto de abajo (CTE "dni_producto", filtro status='ACTIVE') resulto
+-- ser innecesario e impreciso: dts_asignaciones_gestiones_cobranza SI tiene
+-- id_ihfintech_loan directo, en la columna "aux02" (99.97% de match real
+-- contra dts_okaapi_loans, sin nombre descriptivo, por eso paso desapercibida
+-- hasta que el usuario la senalo). Query corregida (mismo resultado que
+-- produjo el CSV final commiteado): Q11 mas abajo. Se deja esta version
+-- como historial de la investigacion, no usar para nada nuevo.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
@@ -754,21 +763,103 @@ order by 2 desc
 -- excluido_chain + 0 status_no_activo + 0 sin_match_mambu -- ligeramente
 -- distinto a los 3,210/313/1 de la sesion 2026-08-19, misma causa que Q1:
 -- reconstruccion sin el SQL original, misma escala).
+--
+-- RE-VERIFICADO 2026-08-21 (continuacion): quedaba solo como comentario/
+-- pseudocodigo, nunca se habia corrido como SQL ejecutable real -- pedido
+-- explicito del usuario esta sesion (no confiar en el CSV guardado).
+-- Re-corrida completa desde cero contra Athena: **reproduce EXACTO** el CSV
+-- ya commiteado a nivel credito (id_loan, monto, motivo) -- 3,265/3,265
+-- filas identicas, mismos 3,128/137 por motivo. La unica diferencia
+-- encontrada al diffear fue CRLF (CSV viejo) vs LF (export nuevo), no datos
+-- -- sin no-determinismo de bug 11, sin drift de datos desde el 21-ago.
 -- ---------------------------------------------------------------------
--- (mismas CTEs loan_chain/raw/dedup/fotos/cierre_junio/stock_previo/
--- primer_dia_julio/dia1_entrantes/fotos_julio_lag/nuevos_julio/nuestro_
--- bruto/nuestro/oficial/solo_oficial/mambu_flags de Q1 -- ver ese bloque)
--- select
---   so.id_loan, so.monto_asignado
--- , case
---     when m.id_loan is null then 'Sin match en Mambu'
---     when m.status not in ('ACTIVE','COMPLETED') then 'Status no activo'
---     when m.last_in_chain <> 1 then 'Reenganche (excluido por flg_last_loan_in_chain)'
---     else 'Punto ciego dayslate (bug 9)'
---   end as motivo
--- from solo_oficial so
--- left join mambu_flags m on m.id_loan = so.id_loan
--- ;
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso between '20260601' and '20260731'
+)
+, dedup as (
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw
+)
+, fotos as (
+  select
+    substr(d.fechaproceso,1,6) as periodo
+  , cast(substr(d.fechaproceso,7,2) as int) as dia
+  , d.id_loan, d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , b.status
+  , coalesce(lc.last_in_chain,1) as last_in_chain
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+)
+, cierre_junio as (
+  select *, row_number() over (partition by id_loan order by dia desc) as rn
+  from fotos where periodo = '202606'
+)
+, stock_previo as (
+  select id_loan, saldo from cierre_junio where rn=1 and mora between 1 and 30
+)
+, primer_dia_julio as (
+  select *, row_number() over (partition by id_loan order by dia asc) as rn
+  from fotos where periodo='202607'
+)
+, dia1_entrantes as (
+  select id_loan, saldo from primer_dia_julio where rn=1 and mora=1
+)
+, fotos_julio_lag as (
+  select id_loan, dia, saldo, mora,
+    lag(mora) over (partition by id_loan order by dia) as mora_ant
+  from fotos where periodo='202607'
+)
+, nuevos_julio as (
+  select id_loan, saldo from fotos_julio_lag where mora_ant=0 and mora=1 and dia<>1
+)
+, nuestro_bruto as (
+  select id_loan, saldo from stock_previo
+  union all select id_loan, saldo from dia1_entrantes
+  union all select id_loan, saldo from nuevos_julio
+)
+, nuestro as (
+  select id_loan, max(saldo) as saldo from nuestro_bruto group by 1
+)
+, oficial as (
+  select id_ihfintech_loan as id_loan, monto_asignado, fecha_de_vencimiento_cuota
+  from vw_seguimiento_diario_cohorte_tramo
+  where fase_estrategia='TEMPRANA' and mes_asignacion='202607' and fecha=fecha_ancla
+)
+, solo_oficial as (
+  select o.*
+  from oficial o
+  left join nuestro n on n.id_loan = o.id_loan
+  where n.id_loan is null
+)
+, mambu_flags as (
+  select id_loan, max(status) as status, max(last_in_chain) as last_in_chain
+  from fotos
+  group by 1
+)
+select
+  so.id_loan, so.monto_asignado
+, case
+    when m.id_loan is null then 'Sin match en Mambu'
+    when m.status not in ('ACTIVE','COMPLETED') then 'Status no activo'
+    when m.last_in_chain <> 1 then 'Reenganche (excluido por flg_last_loan_in_chain)'
+    else 'Punto ciego dayslate (bug 9)'
+  end as motivo
+from solo_oficial so
+left join mambu_flags m on m.id_loan = so.id_loan
+;
 
 -- ---------------------------------------------------------------------
 -- Q8. SOLO NUESTRO, por credito (no agregado) -- mismas CTEs que Q6, sin el
@@ -792,38 +883,719 @@ order by 2 desc
 -- julio), sin ningun arrastre de por medio. Por eso el motivo quedo
 -- DIVIDIDO en 2 categorias, no una sola -- aplicar un solo label a los 94
 -- habria sido igual de impreciso que la hipotesis original descartada.
+--
+-- RE-VERIFICADO 2026-08-21 (continuacion): igual que Q7, quedaba solo como
+-- pseudocodigo. Re-corrida completa desde cero: **reproduce EXACTO** el CSV
+-- ya commiteado a nivel credito -- 1,246/1,246 filas identicas, mismos
+-- 779/367/58/36/6 por motivo. Misma conclusion que Q7: sin no-determinismo,
+-- sin drift de datos.
+--
+-- **SUPERADA 2026-08-21 (continuacion, mismo dia) -- ver bug 15 en BUGS.md.**
+-- El crosswalk dni+producto (CTE "dni_producto", filtro status='ACTIVE') que
+-- generaba estos 779/367/58/36/6 resulto impreciso -- dts_asignaciones_
+-- gestiones_cobranza tiene id_ihfintech_loan directo en "aux02". El CSV
+-- solo_nuestro_motivo_julio.csv YA FUE REGENERADO con el metodo corregido
+-- (Q12 mas abajo) -- los numeros de este bloque (779/367/58/36/6) ya NO
+-- coinciden con el CSV actual del repo (ahora 1017/120/65/36/8). Se deja
+-- esta version como historial de la investigacion que llevo al hallazgo de
+-- aux02, no usar para nada nuevo.
 -- ---------------------------------------------------------------------
--- (mismas CTEs de Q6 -- loan_chain/raw/dedup/fotos/.../dni_producto/
--- asig_julio -- ver ese bloque, mas 2 CTEs nuevas)
--- , otros_productos_dni as (
---   select distinct dp2.id_loan as id_loan_hermano, dp2.dni, dp2.producto
---   from dni_producto dp2
--- )
--- , hermano_otro_producto_escalado as (
---   select distinct sn.id_loan
---   from solo_nuestro sn
---   join dni_producto dp on dp.id_loan = sn.id_loan
---   join otros_productos_dni op on op.dni = dp.dni and op.producto <> dp.producto
---   join dts_asignaciones_gestiones_cobranza a
---     on a.dni_ce = op.dni and a.producto = op.producto
---    and a.fecha_base between '2026-07-01' and '2026-07-31'
---    and a.fase_estrategia in ('ESPECIALIZADA','RECOVERY')
--- )
--- select
---   sn.id_loan, sn.saldo
--- , case
---     when aj.id_loan is null then 'Sin asignar'
---     when aj.alguna_vez_control = 1 then 'Grupo de control'
---     when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0 and hop.id_loan is not null
---       then 'Doble producto en otra fase'
---     when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
---       then 'Escalado, fase fija (sin otro credito del cliente)'
---     when aj.alguna_vez_temprana = 1
---       then 'Revisar'
---     else 'Otro / sin clasificar'
---   end as motivo
--- from solo_nuestro sn
--- left join asig_julio aj on aj.id_loan = sn.id_loan
--- left join hermano_otro_producto_escalado hop on hop.id_loan = sn.id_loan
--- ;
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso between '20260601' and '20260731'
+)
+, dedup as (
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw
+)
+, fotos as (
+  select
+    substr(d.fechaproceso,1,6) as periodo
+  , cast(substr(d.fechaproceso,7,2) as int) as dia
+  , d.id_loan, d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , b.status
+  , coalesce(lc.last_in_chain,1) as last_in_chain
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+)
+, cierre_junio as (
+  select *, row_number() over (partition by id_loan order by dia desc) as rn
+  from fotos where periodo = '202606'
+)
+, stock_previo as (
+  select id_loan, saldo from cierre_junio where rn=1 and mora between 1 and 30
+)
+, primer_dia_julio as (
+  select *, row_number() over (partition by id_loan order by dia asc) as rn
+  from fotos where periodo='202607'
+)
+, dia1_entrantes as (
+  select id_loan, saldo from primer_dia_julio where rn=1 and mora=1
+)
+, fotos_julio_lag as (
+  select id_loan, dia, saldo, mora,
+    lag(mora) over (partition by id_loan order by dia) as mora_ant
+  from fotos where periodo='202607'
+)
+, nuevos_julio as (
+  select id_loan, saldo from fotos_julio_lag where mora_ant=0 and mora=1 and dia<>1
+)
+, nuestro_bruto as (
+  select id_loan, saldo from stock_previo
+  union all select id_loan, saldo from dia1_entrantes
+  union all select id_loan, saldo from nuevos_julio
+)
+, nuestro as (
+  select id_loan, max(saldo) as saldo from nuestro_bruto group by 1
+)
+, oficial as (
+  select distinct id_ihfintech_loan as id_loan
+  from vw_seguimiento_diario_cohorte_tramo
+  where fase_estrategia='TEMPRANA' and mes_asignacion='202607' and fecha=fecha_ancla
+)
+, solo_nuestro as (
+  select n.id_loan, n.saldo
+  from nuestro n
+  left join oficial o on o.id_loan = n.id_loan
+  where o.id_loan is null
+)
+, dni_producto as (
+  select distinct id_ihfintech_loan as id_loan, dni, producto
+  from dts_cobranza_creditos_cuotas
+  where status='ACTIVE' and flg_last_loan_in_chain=1
+)
+, asig_julio as (
+  select
+    dp.id_loan,
+    max(case when a.grupo_control = 'CONTROL' then 1 else 0 end) as alguna_vez_control,
+    max(case when a.fase_estrategia = 'TEMPRANA' then 1 else 0 end) as alguna_vez_temprana,
+    max(case when a.fase_estrategia in ('ESPECIALIZADA','RECOVERY') then 1 else 0 end) as alguna_vez_escalado
+  from dni_producto dp
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = dp.dni and a.producto = dp.producto
+   and a.fecha_base between '2026-07-01' and '2026-07-31'
+  group by 1
+)
+, otros_productos_dni as (
+  select distinct dp2.id_loan as id_loan_hermano, dp2.dni, dp2.producto
+  from dni_producto dp2
+)
+, hermano_otro_producto_escalado as (
+  select distinct sn.id_loan
+  from solo_nuestro sn
+  join dni_producto dp on dp.id_loan = sn.id_loan
+  join otros_productos_dni op on op.dni = dp.dni and op.producto <> dp.producto
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = op.dni and a.producto = op.producto
+   and a.fecha_base between '2026-07-01' and '2026-07-31'
+   and a.fase_estrategia in ('ESPECIALIZADA','RECOVERY')
+)
+select
+  sn.id_loan, sn.saldo
+, case
+    when aj.id_loan is null then 'Sin asignar'
+    when aj.alguna_vez_control = 1 then 'Grupo de control'
+    when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0 and hop.id_loan is not null
+      then 'Doble producto en otra fase'
+    when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
+      then 'Escalado, fase fija (sin otro credito del cliente)'
+    when aj.alguna_vez_temprana = 1
+      then 'Revisar'
+    else 'Otro / sin clasificar'
+  end as motivo
+from solo_nuestro sn
+left join asig_julio aj on aj.id_loan = sn.id_loan
+left join hermano_otro_producto_escalado hop on hop.id_loan = sn.id_loan
+;
+
+-- =====================================================================
+-- Q9-Q10: sesion 2026-08-21 (continuacion) -- investigacion de los 2 huecos
+-- de "solo nuestro" que quedaban sin explicar (tarea 3 del prompt de
+-- continuacion de ESTADO.md). "Doble producto en otra fase"/"Escalado, fase
+-- fija" ya se habian investigado antes (ver arriba) -- estos son los 2 que
+-- faltaban: "Sin asignar" (367 creditos) y "Revisar" (6 creditos).
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- Q9. "Sin asignar" (367 creditos / S/322,602 en el CSV) -- HALLAZGO: la
+-- MAYORIA (228/367, 62.1%) es un bug de matching en el crosswalk de Q6/Q8,
+-- no ausencia real de gestion. La CTE "dni_producto" de Q6/Q8 filtra
+-- status='ACTIVE' -- un credito que en dts_cobranza_creditos_cuotas hoy
+-- muestra status='COMPLETED' (ya termino de pagar, aunque en julio tenia
+-- mora) queda FUERA del crosswalk por construccion, sin importar si el
+-- negocio si lo asigno ese mes -- el join a asig_julio siempre da null y
+-- cae en "Sin asignar" sin importar la realidad.
+--
+-- Verificado: de los 367, 269 (73.3%) tienen status='COMPLETED' hoy. Al
+-- reconstruir el crosswalk SIN el filtro de status (cualquier status,
+-- last_in_chain=1) y re-clasificar solo estos 367:
+--   - 218 (59.4%, ~S/120,503) en realidad SI tienen match -> son Grupo de
+--     control (mismo patron que el 62.9% ya explicado del resto de "solo
+--     nuestro").
+--   - 7 (1.9%) en realidad estan Escalado.
+--   - 3 (0.8%) en realidad aparecen en TEMPRANA julio -> "Revisar" (ver Q10,
+--     ese motivo tambien resulta ser un artefacto, no un hueco real).
+--   - 106 (28.9%, ~S/160,237) SI son genuinamente "sin gestion en julio" --
+--     su dni NO aparece en dts_asignaciones_gestiones_cobranza en NINGUN
+--     dia de julio, con NINGUN producto. Esto es el hallazgo real: creditos
+--     fuera de la asignacion operativa real del negocio ese mes.
+--   - 10 (2.7%, ~S/12,150) tienen su dni SI presente en julio pero con un
+--     producto DISTINTO al que muestra dts_cobranza_creditos_cuotas --
+--     consistente con el ~3.5% de calidad de cruce dni+producto ya
+--     documentado en FUENTES_DATOS.md (match ~96.5%), no un hallazgo nuevo.
+--   - 23 (6.3%, ~S/26,481) no tienen NINGUNA fila en dts_cobranza_creditos_
+--     cuotas para ese id_loan con flg_last_loan_in_chain=1 -- problema de
+--     datos mas profundo, bajo volumen, no investigado a fondo.
+--
+-- CONCLUSION: "Sin asignar" como motivo unico sobreestima el hueco real --
+-- el hueco genuino (creditos fuera de la operacion real de julio) es ~106
+-- creditos, no 367. El resto (261) es ruido de la propia query de
+-- reconciliacion (filtro de status en el crosswalk demasiado estricto +
+-- calidad de cruce dni+producto ya conocida). PENDIENTE si se quiere
+-- corregir en produccion: usar el crosswalk sin filtro de status en Q6/Q8 --
+-- bajo impacto en el resto de motivos (no se re-corrio el CSV completo con
+-- el fix, solo se aislo el sub-bucket "Sin asignar" para esta investigacion).
+-- ---------------------------------------------------------------------
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso between '20260601' and '20260731'
+)
+, dedup as (
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw
+)
+, fotos as (
+  select
+    substr(d.fechaproceso,1,6) as periodo
+  , cast(substr(d.fechaproceso,7,2) as int) as dia
+  , d.id_loan, d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , b.status
+  , coalesce(lc.last_in_chain,1) as last_in_chain
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+)
+, cierre_junio as (
+  select *, row_number() over (partition by id_loan order by dia desc) as rn
+  from fotos where periodo = '202606'
+)
+, stock_previo as (
+  select id_loan, saldo from cierre_junio where rn=1 and mora between 1 and 30
+)
+, primer_dia_julio as (
+  select *, row_number() over (partition by id_loan order by dia asc) as rn
+  from fotos where periodo='202607'
+)
+, dia1_entrantes as (
+  select id_loan, saldo from primer_dia_julio where rn=1 and mora=1
+)
+, fotos_julio_lag as (
+  select id_loan, dia, saldo, mora,
+    lag(mora) over (partition by id_loan order by dia) as mora_ant
+  from fotos where periodo='202607'
+)
+, nuevos_julio as (
+  select id_loan, saldo from fotos_julio_lag where mora_ant=0 and mora=1 and dia<>1
+)
+, nuestro_bruto as (
+  select id_loan, saldo from stock_previo
+  union all select id_loan, saldo from dia1_entrantes
+  union all select id_loan, saldo from nuevos_julio
+)
+, nuestro as (
+  select id_loan, max(saldo) as saldo from nuestro_bruto group by 1
+)
+, oficial as (
+  select distinct id_ihfintech_loan as id_loan
+  from vw_seguimiento_diario_cohorte_tramo
+  where fase_estrategia='TEMPRANA' and mes_asignacion='202607' and fecha=fecha_ancla
+)
+, solo_nuestro as (
+  select n.id_loan, n.saldo
+  from nuestro n
+  left join oficial o on o.id_loan = n.id_loan
+  where o.id_loan is null
+)
+, dni_producto_active_only as (
+  select distinct id_ihfintech_loan as id_loan, dni, producto
+  from dts_cobranza_creditos_cuotas
+  where status='ACTIVE' and flg_last_loan_in_chain=1
+)
+, asig_julio_original as (
+  select
+    dp.id_loan,
+    max(case when a.grupo_control = 'CONTROL' then 1 else 0 end) as alguna_vez_control,
+    max(case when a.fase_estrategia = 'TEMPRANA' then 1 else 0 end) as alguna_vez_temprana,
+    max(case when a.fase_estrategia in ('ESPECIALIZADA','RECOVERY') then 1 else 0 end) as alguna_vez_escalado
+  from dni_producto_active_only dp
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = dp.dni and a.producto = dp.producto
+   and a.fecha_base between '2026-07-01' and '2026-07-31'
+  group by 1
+)
+, otros_productos_dni as (
+  select distinct dp2.id_loan as id_loan_hermano, dp2.dni, dp2.producto
+  from dni_producto_active_only dp2
+)
+, hermano_otro_producto_escalado as (
+  select distinct sn.id_loan
+  from solo_nuestro sn
+  join dni_producto_active_only dp on dp.id_loan = sn.id_loan
+  join otros_productos_dni op on op.dni = dp.dni and op.producto <> dp.producto
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = op.dni and a.producto = op.producto
+   and a.fecha_base between '2026-07-01' and '2026-07-31'
+   and a.fase_estrategia in ('ESPECIALIZADA','RECOVERY')
+)
+, clasificado_solo_nuestro as (
+  select
+    sn.id_loan, sn.saldo
+  , case
+      when aj.id_loan is null then 'Sin asignar'
+      when aj.alguna_vez_control = 1 then 'Grupo de control'
+      when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0 and hop.id_loan is not null
+        then 'Doble producto en otra fase'
+      when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
+        then 'Escalado, fase fija (sin otro credito del cliente)'
+      when aj.alguna_vez_temprana = 1
+        then 'Revisar'
+      else 'Otro / sin clasificar'
+    end as motivo
+  from solo_nuestro sn
+  left join asig_julio_original aj on aj.id_loan = sn.id_loan
+  left join hermano_otro_producto_escalado hop on hop.id_loan = sn.id_loan
+)
+-- crosswalk SIN filtro de status (cualquier status, last_in_chain=1) para
+-- probar si el filtro status='ACTIVE' de arriba causa el falso "Sin asignar"
+, dni_producto_all_status as (
+  select distinct id_ihfintech_loan as id_loan, dni, producto
+  from dts_cobranza_creditos_cuotas
+  where flg_last_loan_in_chain=1
+)
+, asig_julio_fix as (
+  select
+    dp.id_loan,
+    max(case when a.grupo_control = 'CONTROL' then 1 else 0 end) as alguna_vez_control,
+    max(case when a.fase_estrategia = 'TEMPRANA' then 1 else 0 end) as alguna_vez_temprana,
+    max(case when a.fase_estrategia in ('ESPECIALIZADA','RECOVERY') then 1 else 0 end) as alguna_vez_escalado
+  from dni_producto_all_status dp
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = dp.dni and a.producto = dp.producto
+   and a.fecha_base between '2026-07-01' and '2026-07-31'
+  group by 1
+)
+, dni_julio_cualquier_producto as (
+  select distinct dni_ce from dts_asignaciones_gestiones_cobranza
+  where fecha_base between '2026-07-01' and '2026-07-31'
+)
+select
+  case
+    when ajf.id_loan is not null and ajf.alguna_vez_control = 1 then 'BUG: en realidad es Grupo de control'
+    when ajf.id_loan is not null and ajf.alguna_vez_temprana = 1 then 'BUG: en realidad aparece en TEMPRANA julio (ver Q10)'
+    when ajf.id_loan is not null and ajf.alguna_vez_escalado = 1 then 'BUG: en realidad esta Escalado'
+    when dpas.id_loan is null then 'Sin fila en dts_cobranza_creditos_cuotas (problema de datos, no investigado)'
+    when djcp.dni_ce is not null then 'Dni aparece en julio con OTRO producto (calidad de cruce ~96.5%, ya conocido)'
+    else 'Real: dni NUNCA aparece en asignaciones de julio (fuera de la operacion real ese mes)'
+  end as diagnostico
+, count(*) as creditos
+, round(sum(csn.saldo),0) as saldo
+from clasificado_solo_nuestro csn
+left join dni_producto_all_status dpas on dpas.id_loan = csn.id_loan
+left join asig_julio_fix ajf on ajf.id_loan = csn.id_loan
+left join dni_julio_cualquier_producto djcp on djcp.dni_ce = dpas.dni
+where csn.motivo = 'Sin asignar'
+group by 1
+order by 3 desc
+;
+
+-- NOTA 2026-08-21 (mismo dia, continuacion): esta investigacion (Q9) fue la
+-- que llevo al usuario a senalar que dts_asignaciones_gestiones_cobranza SI
+-- tiene id_ihfintech_loan directo -- columna "aux02", ver bug 15 en BUGS.md.
+-- Con aux02, el "Sin asignar" REAL termino siendo 120 creditos (no ~106 como
+-- estimaba Q9 con el metodo del filtro de status, ni 367 con el metodo
+-- original) -- ver Q11/Q12 mas abajo para la version final corregida. Q9 se
+-- deja como historial de la investigacion, no como el numero de referencia.
+
+-- ---------------------------------------------------------------------
+-- Q10. "Revisar" (6 creditos / S/6,663) -- caso por caso, factible a mano.
+-- HALLAZGO: NO es un hueco real -- es un artefacto de la propia query de
+-- reconciliacion. Los 6 tienen fase_estrategia='ESPECIALIZADA' exactamente
+-- el 2026-07-01 (su fecha_ancla, el primer dia que aparecen en julio en
+-- dts_asignaciones_gestiones_cobranza) -- la vista oficial ANCLA
+-- fase_estrategia a fecha_ancla y la deja fija todo el mes, asi que
+-- correctamente los reporta como ESPECIALIZADA los 31 dias (verificado:
+-- fases_oficial_vistas='ESPECIALIZADA' para los 6, filas_oficial_
+-- julio=31). Pero la CTE "asig_julio" de Q6/Q8 usa "alguna_vez_temprana"
+-- = maximo sobre TODOS los dias de julio del feed CRUDO (no anclado) -- y
+-- el feed crudo SI les muestra fase_estrategia='TEMPRANA' en algun otro dia
+-- del mes (la fase fluctua dia a dia en la fuente cruda, a diferencia del
+-- anclaje de la vista oficial). Por eso "alguna_vez_temprana=1" dispara el
+-- motivo "Revisar", aunque la vista oficial nunca los tuvo en TEMPRANA ese
+-- mes. Mismo tipo de hallazgo que bug 13 (fase fija/pegajosa) pero en la
+-- direccion contraria: aca el problema es que NUESTRA query no replica el
+-- anclaje a fecha_ancla que si usa la vista oficial. CONCLUSION: los 6 no
+-- son un hueco -- estan correctamente excluidos de TEMPRANA oficial. Ver
+-- reconciliacion_vw_seguimiento_temprana.md para el detalle completo.
+-- ---------------------------------------------------------------------
+with dni_producto_active_only as (
+  select distinct id_ihfintech_loan as id_loan, dni, producto
+  from dts_cobranza_creditos_cuotas
+  where status='ACTIVE' and flg_last_loan_in_chain=1
+)
+, ids_revisar as (
+  -- los 6 id_loan de motivo='Revisar' en el CSV solo_nuestro_motivo_julio.csv
+  select * from (values
+    ('981b9371-f3e1-4239-9798-122bca23332d'),
+    ('1b5300a3-c75f-4b90-b993-611c035bd314'),
+    ('fa6e1966-89bf-497c-b31a-7ce5f1086f3c'),
+    ('dba528d0-0560-43d6-a29d-3b448d5ae5dc'),
+    ('bf11815b-5eb9-4055-a214-8331caff785e'),
+    ('15c17f8c-ba21-48e5-b2e1-56f0d31ba89d')
+  ) as t(id_loan)
+)
+, dp as (
+  select ir.id_loan, dp.dni, dp.producto
+  from ids_revisar ir
+  left join dni_producto_active_only dp on dp.id_loan = ir.id_loan
+)
+, asignacion_resumen as (
+  select
+    dp.id_loan
+  , min(a.fecha_base) as primera_fecha, max(a.fecha_base) as ultima_fecha
+  , array_join(array_agg(distinct a.fase_estrategia), '|') as fases_vistas_feed_crudo
+  from dp
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = dp.dni and a.producto = dp.producto
+   and a.fecha_base between '2026-07-01' and '2026-07-31'
+  group by dp.id_loan
+)
+, fase_en_ancla as (
+  select dp.id_loan, a.fase_estrategia as fase_en_fecha_ancla
+  from dp
+  join dts_asignaciones_gestiones_cobranza a
+    on a.dni_ce = dp.dni and a.producto = dp.producto
+   and a.fecha_base = '2026-07-01'
+)
+, oficial_julio as (
+  select
+    id_ihfintech_loan as id_loan
+  , array_join(array_agg(distinct fase_estrategia), '|') as fases_oficial_vistas
+  , count(*) as filas_oficial_julio
+  from vw_seguimiento_diario_cohorte_tramo
+  where id_ihfintech_loan in (select id_loan from ids_revisar)
+    and fecha between date('2026-07-01') and date('2026-07-31')
+  group by 1
+)
+select
+  ir.id_loan, ar.fases_vistas_feed_crudo, fea.fase_en_fecha_ancla,
+  oc.fases_oficial_vistas, oc.filas_oficial_julio
+from ids_revisar ir
+left join asignacion_resumen ar on ar.id_loan = ir.id_loan
+left join fase_en_ancla fea on fea.id_loan = ir.id_loan
+left join oficial_julio oc on oc.id_loan = ir.id_loan
+order by ir.id_loan
+;
+
+-- NOTA 2026-08-21 (mismo dia, continuacion): con el fix de aux02 (bug 15),
+-- "Revisar" paso de 6 a 8 creditos (ver Q11/Q12) -- el mecanismo explicado
+-- arriba (anclaje a fecha_ancla que la query propia no replicaba) sigue
+-- aplicando igual, es independiente del fix de aux02; no se re-verificaron
+-- los 2 creditos nuevos caso por caso, pero misma escala y mismo patron
+-- esperado (ambos son fenomenos de anclaje/fase, no de matching).
+
+-- =====================================================================
+-- Q11-Q12: sesion 2026-08-21 (continuacion, mismo dia) -- FIX de bug 15:
+-- dts_asignaciones_gestiones_cobranza SI tiene id_ihfintech_loan directo
+-- (columna "aux02", sin nombre descriptivo, senalada por el usuario -- ver
+-- bug 15 en BUGS.md). Reemplaza el crosswalk dni+producto (CTE "dni_producto",
+-- filtro status='ACTIVE') usado en Q6/Q8 -- ese filtro excluia por
+-- construccion cualquier credito ya COMPLETED del cruce, sin importar si el
+-- negocio si lo habia gestionado, y ademas heredaba el ~3.5% de error de
+-- cruce dni+producto documentado en FUENTES_DATOS.md. Con aux02 el join es
+-- directo id_loan=id_loan, sin crosswalk -- inclusive el chequeo de "hermano
+-- de otro producto" (antes via dni_producto contra dts_cobranza_creditos_
+-- cuotas) ahora se resuelve con el propio dni_ce/producto que trae la fila
+-- de asignacion de ESTE credito (via aux02), sin tocar dts_cobranza_
+-- creditos_cuotas para nada.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- Q11. Version CORREGIDA de Q6 (agregado) -- reemplaza el crosswalk
+-- dni+producto por aux02. Resultado (verificado contra Athena, coincide con
+-- el CSV final regenerado en datos_reconciliacion_temprana/solo_nuestro_
+-- motivo_julio.csv): 1,017 Grupo de control (antes 779) + 120 Sin asignar
+-- (antes 367) + 65 Doble producto en otra fase (antes 58) + 36 Escalado,
+-- fase fija (identico, antes y despues -- consistente, ver nota abajo) + 8
+-- Revisar (antes 6) = 1,246 total (identico al total viejo). El total no
+-- cambia porque "solo_nuestro" (poblacion base, antes de clasificar motivo)
+-- no depende del crosswalk -- solo cambia COMO se reparte entre motivos.
+-- "Escalado, fase fija" no se mueve porque, por definicion, esos creditos
+-- no tienen ningun otro credito del cliente -- no hay hermano que un
+-- crosswalk mejor pudiera encontrar de mas.
+-- ---------------------------------------------------------------------
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso between '20260601' and '20260731'
+)
+, dedup as (
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw
+)
+, fotos as (
+  select
+    substr(d.fechaproceso,1,6) as periodo
+  , cast(substr(d.fechaproceso,7,2) as int) as dia
+  , d.id_loan, d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , b.status
+  , coalesce(lc.last_in_chain,1) as last_in_chain
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+)
+, cierre_junio as (
+  select *, row_number() over (partition by id_loan order by dia desc) as rn
+  from fotos where periodo = '202606'
+)
+, stock_previo as (
+  select id_loan, saldo from cierre_junio where rn=1 and mora between 1 and 30
+)
+, primer_dia_julio as (
+  select *, row_number() over (partition by id_loan order by dia asc) as rn
+  from fotos where periodo='202607'
+)
+, dia1_entrantes as (
+  select id_loan, saldo from primer_dia_julio where rn=1 and mora=1
+)
+, fotos_julio_lag as (
+  select id_loan, dia, saldo, mora,
+    lag(mora) over (partition by id_loan order by dia) as mora_ant
+  from fotos where periodo='202607'
+)
+, nuevos_julio as (
+  select id_loan, saldo from fotos_julio_lag where mora_ant=0 and mora=1 and dia<>1
+)
+, nuestro_bruto as (
+  select id_loan, saldo from stock_previo
+  union all select id_loan, saldo from dia1_entrantes
+  union all select id_loan, saldo from nuevos_julio
+)
+, nuestro as (
+  select id_loan, max(saldo) as saldo from nuestro_bruto group by 1
+)
+, oficial as (
+  select distinct id_ihfintech_loan as id_loan
+  from vw_seguimiento_diario_cohorte_tramo
+  where fase_estrategia='TEMPRANA' and mes_asignacion='202607' and fecha=fecha_ancla
+)
+, solo_nuestro as (
+  select n.id_loan, n.saldo
+  from nuestro n
+  left join oficial o on o.id_loan = n.id_loan
+  where o.id_loan is null
+)
+, mis_asignaciones as (
+  select
+    a.aux02 as id_loan, a.dni_ce, a.producto, a.fase_estrategia, a.grupo_control
+  from dts_asignaciones_gestiones_cobranza a
+  where a.fecha_base between '2026-07-01' and '2026-07-31'
+)
+, asig_julio as (
+  select
+    id_loan,
+    max(dni_ce) as dni_ce,
+    max(producto) as producto,
+    max(case when grupo_control = 'CONTROL' then 1 else 0 end) as alguna_vez_control,
+    max(case when fase_estrategia = 'TEMPRANA' then 1 else 0 end) as alguna_vez_temprana,
+    max(case when fase_estrategia in ('ESPECIALIZADA','RECOVERY') then 1 else 0 end) as alguna_vez_escalado
+  from mis_asignaciones
+  group by id_loan
+)
+, dni_producto_escalados as (
+  select distinct dni_ce, producto
+  from mis_asignaciones
+  where fase_estrategia in ('ESPECIALIZADA','RECOVERY')
+)
+, hermano_otro_producto_escalado as (
+  select distinct aj.id_loan
+  from asig_julio aj
+  join dni_producto_escalados dpe
+    on dpe.dni_ce = aj.dni_ce and dpe.producto <> aj.producto
+)
+select
+  case
+    when aj.id_loan is null then 'Sin asignar'
+    when aj.alguna_vez_control = 1 then 'Grupo de control'
+    when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0 and hop.id_loan is not null
+      then 'Doble producto en otra fase'
+    when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
+      then 'Escalado, fase fija (sin otro credito del cliente)'
+    when aj.alguna_vez_temprana = 1
+      then 'Revisar'
+    else 'Otro / sin clasificar'
+  end as motivo
+, count(*) as creditos
+, round(sum(sn.saldo),0) as saldo
+from solo_nuestro sn
+left join asig_julio aj on aj.id_loan = sn.id_loan
+left join hermano_otro_producto_escalado hop on hop.id_loan = sn.id_loan
+group by 1
+order by 2 desc
+;
+
+-- ---------------------------------------------------------------------
+-- Q12. Version CORREGIDA de Q8 (por credito, export) -- mismas CTEs de Q11,
+-- sin el group by final. Esta es la query que efectivamente regenero
+-- datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv (2026-08-21,
+-- continuacion) -- reemplaza a Q8 como la version vigente del CSV.
+-- ---------------------------------------------------------------------
+with loan_chain as (
+  select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain
+  from dts_cobranza_creditos_cuotas group by 1
+)
+, raw as (
+  select
+    a.fechaproceso, a._datos_adicionales_loan_accounts_id_ihfintech as id_loan
+  , a.balances_principalbalance as saldo, a.dayslate, a.lastmodifieddate, a.id
+  from dts_mambu_loans_hist a
+  where a.fechaproceso between '20260601' and '20260731'
+)
+, dedup as (
+  select *, row_number() over (
+      partition by id_loan, fechaproceso
+      order by (case when saldo <> 0 then 0 else 1 end), lastmodifieddate desc, id desc) as rn_dedup
+  from raw
+)
+, fotos as (
+  select
+    substr(d.fechaproceso,1,6) as periodo
+  , cast(substr(d.fechaproceso,7,2) as int) as dia
+  , d.id_loan, d.saldo
+  , coalesce(d.dayslate,0) as mora
+  , b.status
+  , coalesce(lc.last_in_chain,1) as last_in_chain
+  from dedup d
+  join dts_okaapi_loans b on b.id_ihfintech_loan = d.id_loan
+  left join loan_chain lc on lc.id_ihfintech_loan = d.id_loan
+  where d.rn_dedup = 1
+)
+, cierre_junio as (
+  select *, row_number() over (partition by id_loan order by dia desc) as rn
+  from fotos where periodo = '202606'
+)
+, stock_previo as (
+  select id_loan, saldo from cierre_junio where rn=1 and mora between 1 and 30
+)
+, primer_dia_julio as (
+  select *, row_number() over (partition by id_loan order by dia asc) as rn
+  from fotos where periodo='202607'
+)
+, dia1_entrantes as (
+  select id_loan, saldo from primer_dia_julio where rn=1 and mora=1
+)
+, fotos_julio_lag as (
+  select id_loan, dia, saldo, mora,
+    lag(mora) over (partition by id_loan order by dia) as mora_ant
+  from fotos where periodo='202607'
+)
+, nuevos_julio as (
+  select id_loan, saldo from fotos_julio_lag where mora_ant=0 and mora=1 and dia<>1
+)
+, nuestro_bruto as (
+  select id_loan, saldo from stock_previo
+  union all select id_loan, saldo from dia1_entrantes
+  union all select id_loan, saldo from nuevos_julio
+)
+, nuestro as (
+  select id_loan, max(saldo) as saldo from nuestro_bruto group by 1
+)
+, oficial as (
+  select distinct id_ihfintech_loan as id_loan
+  from vw_seguimiento_diario_cohorte_tramo
+  where fase_estrategia='TEMPRANA' and mes_asignacion='202607' and fecha=fecha_ancla
+)
+, solo_nuestro as (
+  select n.id_loan, n.saldo
+  from nuestro n
+  left join oficial o on o.id_loan = n.id_loan
+  where o.id_loan is null
+)
+, mis_asignaciones as (
+  select
+    a.aux02 as id_loan, a.dni_ce, a.producto, a.fase_estrategia, a.grupo_control
+  from dts_asignaciones_gestiones_cobranza a
+  where a.fecha_base between '2026-07-01' and '2026-07-31'
+)
+, asig_julio as (
+  select
+    id_loan,
+    max(dni_ce) as dni_ce,
+    max(producto) as producto,
+    max(case when grupo_control = 'CONTROL' then 1 else 0 end) as alguna_vez_control,
+    max(case when fase_estrategia = 'TEMPRANA' then 1 else 0 end) as alguna_vez_temprana,
+    max(case when fase_estrategia in ('ESPECIALIZADA','RECOVERY') then 1 else 0 end) as alguna_vez_escalado
+  from mis_asignaciones
+  group by id_loan
+)
+, dni_producto_escalados as (
+  select distinct dni_ce, producto
+  from mis_asignaciones
+  where fase_estrategia in ('ESPECIALIZADA','RECOVERY')
+)
+, hermano_otro_producto_escalado as (
+  select distinct aj.id_loan
+  from asig_julio aj
+  join dni_producto_escalados dpe
+    on dpe.dni_ce = aj.dni_ce and dpe.producto <> aj.producto
+)
+select
+  sn.id_loan, sn.saldo
+, case
+    when aj.id_loan is null then 'Sin asignar'
+    when aj.alguna_vez_control = 1 then 'Grupo de control'
+    when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0 and hop.id_loan is not null
+      then 'Doble producto en otra fase'
+    when aj.alguna_vez_escalado = 1 and aj.alguna_vez_temprana = 0
+      then 'Escalado, fase fija (sin otro credito del cliente)'
+    when aj.alguna_vez_temprana = 1
+      then 'Revisar'
+    else 'Otro / sin clasificar'
+  end as motivo
+from solo_nuestro sn
+left join asig_julio aj on aj.id_loan = sn.id_loan
+left join hermano_otro_producto_escalado hop on hop.id_loan = sn.id_loan
+;
 

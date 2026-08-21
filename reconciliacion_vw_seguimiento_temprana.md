@@ -1,8 +1,10 @@
 # Reconciliación contra `vw_seguimiento_diario_cohorte_tramo` (TEMPRANA) — plan de cierre
 
-> **Estado (2026-08-20): TEMPRANA CERRADA — los 5 pendientes resueltos.** Pasos 1/2/3
+> **Estado (2026-08-21, continuación): TEMPRANA CERRADA — los 5 pendientes resueltos, más
+> Q7/Q8 verificadas como SQL ejecutable real y los 2 huecos de "solo nuestro" que quedaban
+> sin explicar (367 "Sin asignar" + 6 "Revisar") investigados y cerrados.** Pasos 1/2/3
 > (mecanismo, diseño, backtest de la capa fantasma) completados y adoptados en producción
-> el mismo día — ver bug 14 en `BUGS.md`. La verificación a nivel crédito (pendiente 1)
+> el 2026-08-20 — ver bug 14 en `BUGS.md`. La verificación a nivel crédito (pendiente 1)
 > encontró un hueco de frontera de mes en la capa fantasma (90.7% de cobertura directa, no
 > 100%) — el usuario confirmó adoptar el fix, y al implementarlo se encontró además que la
 > tasa `P_FANTASMA` debía recalibrarse junto con el fix (misma definición de "periodo" en
@@ -15,6 +17,19 @@
 > S/16,410,194. La extensión a agosto (pendiente 2) no repite el ~27% en el agregado
 > parcial (mes a mitad de camino), pero sí por cohorte una vez descompuesto — hay que
 > re-medir cuando agosto cierre. Los pendientes 3/4/5 quedaron documentados/decididos.
+> **Continuación 2026-08-21:** Q7/Q8 (que generaron los CSV filtrables) nunca habían
+> quedado como SQL ejecutable real — re-corridas, reproducen exacto los CSV commiteados.
+> De los 2 huecos sin explicar en "solo nuestro": "Revisar" (originalmente 6) resultó ser
+> un artefacto de anclaje de fecha (la query no replica el `fecha_ancla` que usa la vista
+> oficial), no un hueco real. "Sin asignar" (originalmente 367) llevó a un hallazgo mayor:
+> el usuario señaló que `dts_asignaciones_gestiones_cobranza` SÍ tiene `id_ihfintech_loan`
+> directo (columna `aux02`, sin nombre descriptivo) — verificado (99.97% match), mejor que
+> el crosswalk `dni`+`producto` (~96.5%) que el proyecto venía usando. **Corregido y
+> aplicado**: Q11/Q12 reemplazan a Q6/Q8, el CSV se regeneró — números finales: Grupo de
+> control 1,017 (antes 779), Sin asignar 120 (antes 367), Doble producto en otra fase 65
+> (antes 58), Escalado fase fija 36 (igual), Revisar 8 (antes 6). Ver bug 15 en `BUGS.md`
+> para el detalle completo — este hallazgo también afecta a `avance_cobranza_fase.sql` y
+> `homologacion_tipo_mora_gestiones.sql` (pendiente aplicar ahí).
 
 ## Contexto y por qué existe este documento
 
@@ -112,6 +127,10 @@ contra la sesión perdida (esperado, ver pendiente 4 abajo):
 - **`datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv`** (1,246 filas):
   `Grupo de control` 779 · `Sin asignar` 367 · `Escalado a Especializada/Recovery
   (arrastre de DNI)` 94 · `Temprana en asignación, sin match en vista oficial` 6.
+  **Regenerado 2026-08-21 (continuación) con el fix de `aux02` (bug 15,
+  `BUGS.md`) — números vigentes: `Grupo de control` 1,017 · `Sin asignar` 120 ·
+  `Doble producto en otra fase` 65 · `Escalado, fase fija` 36 · `Revisar` 8.
+  Ver el bloque "Continuación 2026-08-21" más abajo.
 
 **Ojo con "Escalado a Especializada/Recovery" — 2 rondas de verificación, terminó
 dividido en 2 motivos (2026-08-21):**
@@ -356,6 +375,71 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
    de que el total esté mal. No vale la pena seguir persiguiendo el desglose exacto de una
    query que no existe — la reconstrucción de arriba es la referencia a usar de acá en
    adelante si se necesita el detalle.
+
+   **Continuación 2026-08-21 — Q7/Q8 verificadas como SQL ejecutable real (ya no
+   pseudocódigo) y CIERRE de los 2 huecos que quedaban sin explicar en el desglose de
+   "solo nuestro" (367 "Sin asignar" + 6 "Revisar"):**
+
+   **Paso 0 — re-verificación pedida por el usuario:** Q7/Q8 nunca habían quedado como SQL
+   ejecutable real en el repo (solo comentario/pseudocódigo, igual que le pasaba a Q3 de
+   `reconciliacion_agosto.sql` antes de corregirse). Re-corridas desde cero contra Athena:
+   **reproducen EXACTO** los 2 CSV ya commiteados a nivel crédito (`id_loan`+monto+motivo)
+   — 3,265/3,265 y 1,246/1,246 filas idénticas, la única diferencia al diffear fue CRLF vs.
+   LF (formato de línea), no datos. Sin no-determinismo de bug 11, sin drift de datos desde
+   el 21-ago. Query real ahora en `reconciliacion_temprana.sql` Q7/Q8.
+
+   **"Sin asignar" (367 créditos, S/322,602) — investigación inicial (Q9) encontró un
+   bug de matching, la mayoría era realmente Grupo de control:** la CTE `dni_producto` de
+   Q6/Q8 filtra `status='ACTIVE'` al construir el crosswalk `dni`+`producto` — 269/367
+   (73.3%) de estos créditos tienen hoy `status='COMPLETED'` (ya terminaron de pagar) y
+   por eso quedan FUERA del crosswalk por construcción, sin importar si el negocio sí los
+   gestionó en julio. Al reconstruir el crosswalk sin el filtro de status: 218 en realidad
+   son Grupo de control, 7 Escalado, 3 aparecen en TEMPRANA julio — dejando un hueco
+   genuino estimado en ~106 créditos.
+
+   **Hallazgo mayor, mismo día — la tabla SÍ tiene `id_ihfintech_loan` directo (columna
+   `aux02`), el usuario lo señaló y cambia el método de raíz (ver bug 15, `BUGS.md`):**
+   `dts_asignaciones_gestiones_cobranza` tiene una columna sin nombre descriptivo,
+   `aux02`, que resultó ser `id_ihfintech_loan` (verificado: 99.97% de match real contra
+   `dts_okaapi_loans`) — mejor que el ~96.5% del crosswalk `dni`+`producto`, y sin el
+   problema del filtro `status='ACTIVE'`. **Se corrigió Q6/Q8 con `aux02`** (nuevas Q11/Q12
+   en `reconciliacion_temprana.sql`) y se **regeneró el CSV** — números finales:
+
+   | Motivo | Antes (crosswalk `dni`+`producto`) | Ahora (`aux02`) |
+   |---|---:|---:|
+   | Grupo de control | 779 | **1,017** |
+   | Sin asignar | 367 | **120** |
+   | Doble producto en otra fase | 58 | **65** |
+   | Escalado, fase fija (sin otro crédito) | 36 | **36** (idéntico) |
+   | Revisar | 6 | **8** |
+
+   El total (1,246) no cambia — solo la forma en que se reparte entre motivos. La
+   conclusión cualitativa se **fortalece**: 81.6% es grupo de control deliberado (antes
+   62.5%). El hueco real de "Sin asignar" (120, S/176,383) confirma en magnitud la
+   estimación independiente de Q9 (~106 por el método del filtro de status) — dos caminos
+   distintos llegan al mismo orden de magnitud.
+
+   **"Revisar" (ahora 8 créditos, antes 6) — NO es un hueco, es un artefacto de la query
+   (Q10, caso por caso, verificado con los 6 originales — mecanismo independiente del fix
+   de `aux02`):** los 6 tienen `fase_estrategia='ESPECIALIZADA'` exactamente el 2026-07-01
+   (su `fecha_ancla`) — la vista oficial ancla la fase a `fecha_ancla` y la deja fija todo
+   el mes, así que correctamente los reporta `ESPECIALIZADA` los 31 días. Pero la CTE
+   `asig_julio` mide `alguna_vez_temprana` sobre el feed CRUDO sin anclar (que sí fluctúa
+   día a día), y estos créditos muestran `TEMPRANA` en algún otro día del mes en el feed
+   crudo — de ahí el falso positivo. **Están correctamente excluidos de TEMPRANA oficial,
+   no hay nada que corregir en el dato, solo en la lógica de clasificación de esta query
+   puntual de reconciliación** (no se justifica arreglarlo más — es un análisis puntual ya
+   cerrado, no una pieza de producción).
+
+   **Conclusión general:** con ambos huecos investigados y el fix de `aux02` aplicado,
+   **TEMPRANA queda completamente cerrada** — no quedan categorías de "solo nuestro" sin
+   explicar, y el CSV/SQL del repo reflejan el método correcto. Ningún hallazgo de esta
+   continuación afecta la meta vigente de agosto (capa fantasma, bug 14) — es una
+   validación de una comparación puntual ya cerrada como tema principal. **El hallazgo de
+   `aux02` sí queda pendiente de aplicar en otros archivos del proyecto** que usan el
+   mismo crosswalk `dni`+`producto` contra esta tabla — `avance_cobranza_fase.sql` (ya
+   pendiente por bug 12) y `homologacion_tipo_mora_gestiones.sql` (bug 13, bajo impacto
+   esperado, no reverificado) — ver bug 15 en `BUGS.md`.
 5. **~~Auditar el propio dedup de la vista oficial~~ Hecho 2026-08-20 — sí, muy probable
    que tenga el mismo problema, y sin ningún desempate de respaldo.** Confirmado leyendo
    la definición de la vista (`vw_seguimiento_diario_cohorte_tramo.txt` línea 81):
@@ -424,11 +508,19 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
   fantasma para agosto (81.8% de cobertura). Q4 (2026-08-21, nuevo): desagrega los
   412 no_cubiertos de Q3 por `installmentstate` — 98.3% todavía no pagan su cuota
   (timing de mitad de mes, hipótesis confirmada), solo 1.7% es un hueco real.
-- **`reconciliacion_temprana.sql` Q7/Q8** (2026-08-21, nuevo): mismas CTEs de Q1/Q6, sin
-  el `group by` final — exportan 1 fila por crédito con columna `motivo` (etiquetas
+- **`reconciliacion_temprana.sql` Q7/Q8** (2026-08-21, SQL ejecutable real desde la
+  continuación del 2026-08-21 — antes solo comentario/pseudocódigo): mismas CTEs de Q1/Q6,
+  sin el `group by` final — exportan 1 fila por crédito con columna `motivo` (etiquetas
   legibles) a `datos_reconciliacion_temprana/solo_oficial_motivo_julio.csv` y
   `solo_nuestro_motivo_julio.csv`, para poder filtrar por motivo en Excel/BI en vez de
-  solo ver el agregado.
+  solo ver el agregado. Re-verificadas 2026-08-21 (continuación): reproducen exacto los
+  CSV ya commiteados a nivel crédito.
+- **`reconciliacion_temprana.sql` Q9/Q10** (2026-08-21, continuación, nuevo): cierre de
+  los 2 huecos de "solo nuestro" que quedaban sin explicar. Q9 investiga "Sin asignar"
+  (367 créditos) — encuentra que la mayoría es un bug de matching en el crosswalk de
+  Q6/Q8 (filtro `status='ACTIVE'`), el hueco real es ~106 créditos. Q10 investiga
+  "Revisar" (6 créditos) caso por caso — encuentra que es un artefacto de anclaje
+  (`fecha_ancla`) de la propia query, no un hueco real.
 
 ## Referencias
 

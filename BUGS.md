@@ -337,6 +337,65 @@ historia previa a julio, probablemente) aunque `dayslate` muestre mora fresca es
 "fase pegajosa", no arrastre. Mecanismo exacto de por qué no baja: no investigado (bajo
 volumen, S/199,604). Ver `reconciliacion_vw_seguimiento_temprana.md` para el detalle.
 
+**Actualización 2026-08-21 (continuación) — Q7/Q8 reconstruidas como SQL ejecutable real
+y verificadas: reproducen EXACTO el CSV commiteado a nivel crédito.** Q7/Q8 habían
+quedado solo como comentario/pseudocódigo desde la sesión anterior (nunca se corrieron
+realmente contra Athena para producir el CSV final — mismo patrón de riesgo que tenía Q3
+de `reconciliacion_agosto.sql` antes de corregirse). Re-corridas desde cero esta sesión:
+**3,265/3,265 filas de `solo_oficial_motivo_julio.csv` y 1,246/1,246 de
+`solo_nuestro_motivo_julio.csv` son idénticas** a nivel `id_loan`+monto+motivo (la única
+diferencia al diffear fue CRLF vs LF, no datos) — sin no-determinismo de bug 11, sin
+drift de datos desde el 2026-08-21. Query real ya en `reconciliacion_temprana.sql` Q7/Q8
+(ya no como comentario).
+
+**Actualización 2026-08-21 (continuación) — "Sin asignar" (367 créditos): la MAYORÍA es
+un bug de matching en la propia query de reconciliación, no un hueco real de cobertura.**
+Investigado (`reconciliacion_temprana.sql` Q9): la CTE `dni_producto` de Q6/Q8 filtra
+`status='ACTIVE'` al construir el crosswalk `dni`+`producto` — un crédito que hoy muestra
+`status='COMPLETED'` (269/367, 73.3%, ya terminó de pagar) queda FUERA del crosswalk por
+construcción, así que el join contra `dts_asignaciones_gestiones_cobranza` siempre da
+`null` y cae en "Sin asignar" sin importar si el negocio sí lo gestionó ese mes. Al
+reconstruir el crosswalk SIN el filtro de status y re-clasificar los 367:
+- **218 (59.4%, S/120,503) en realidad SÍ tienen match — son Grupo de control** (mismo
+  patrón que el resto de "solo nuestro" ya explicado).
+- 7 (1.9%, S/2,412) en realidad están Escalado; 3 (0.8%, S/819) en realidad aparecen en
+  TEMPRANA julio → categoría "Revisar" (ver el hallazgo de "Revisar" abajo — ese motivo
+  también resultó ser un artefacto, no un hueco real).
+- **106 (28.9%, S/160,237) SÍ son un hueco genuino:** su `dni` no aparece en
+  `dts_asignaciones_gestiones_cobranza` en NINGÚN día de julio, con NINGÚN producto —
+  créditos verdaderamente fuera de la operación real de gestión ese mes.
+- 10 (2.7%, S/12,150) tienen el `dni` presente en julio pero con un producto DISTINTO —
+  consistente con el ~3.5% de calidad de cruce `dni`+`producto` ya documentado en
+  `FUENTES_DATOS.md` (match ~96.5%), no un hallazgo nuevo.
+- 23 (6.3%, S/26,481) no tienen ninguna fila en `dts_cobranza_creditos_cuotas` para ese
+  `id_loan` con `flg_last_loan_in_chain=1` — problema de datos más profundo, bajo
+  volumen, no investigado a fondo.
+
+**Conclusión:** el hueco real de cobertura es ~106 créditos (S/160,237), no 367
+(S/322,602) — el resto es ruido de la propia query (filtro de status demasiado
+restrictivo en el crosswalk + calidad de cruce ya conocida). **Pendiente, no aplicado en
+producción:** si se quiere un CSV corregido, rehacer el crosswalk de Q6/Q8 sin el filtro
+`status='ACTIVE'` — bajo impacto esperado en el resto de motivos (no verificado con una
+re-corrida completa, solo se aisló el sub-bucket "Sin asignar" para esta investigación).
+
+**Actualización 2026-08-21 (continuación) — "Revisar" (6 créditos): NO es un hueco real,
+es otro artefacto de la query, no del dato.** Investigado caso por caso
+(`reconciliacion_temprana.sql` Q10, factible a mano por el volumen bajo): los 6 créditos
+tienen `fase_estrategia='ESPECIALIZADA'` exactamente el `2026-07-01` (su `fecha_ancla`,
+el primer día que aparecen en julio en `dts_asignaciones_gestiones_cobranza`) — la vista
+oficial ancla `fase_estrategia` a `fecha_ancla` y la deja fija todo el mes, así que
+correctamente los reporta como `ESPECIALIZADA` los 31 días (verificado:
+`fases_oficial_vistas='ESPECIALIZADA'`, `filas_oficial_julio=31` para los 6). Pero la CTE
+`asig_julio` de Q6/Q8 usa `alguna_vez_temprana` = máximo sobre TODOS los días de julio
+del feed CRUDO (sin anclar) — y el feed crudo sí les muestra `fase_estrategia='TEMPRANA'`
+en algún otro día del mes (la fase fluctúa día a día en la fuente cruda, a diferencia del
+anclaje de la vista oficial). Por eso `alguna_vez_temprana=1` dispara el motivo
+"Revisar", aunque la vista oficial nunca los tuvo en TEMPRANA ese mes. Mismo tipo de
+hallazgo que la "fase pegajosa" de arriba, pero en la dirección contraria: acá el
+problema es que NUESTRA query de reconciliación no replica el anclaje a `fecha_ancla` que
+sí usa la vista oficial. **Los 6 están correctamente excluidos de TEMPRANA oficial — no
+hay hueco que resolver.**
+
 ### 14. El punto ciego de `dayslate` (bug 9) es ~27% de la población real de mora 1-30, no un caso de borde — reconciliación contra `vw_seguimiento_diario_cohorte_tramo`
 **Contexto (2026-08-19):** el usuario compartió una vista externa "oficial" con detalle a
 nivel crédito (`vw_seguimiento_diario_cohorte_tramo.txt`, definición en la raíz del repo,
@@ -508,3 +567,87 @@ tenía un hueco real (~9% de sub-cobertura, ~S/400K/mes estimado). **Corregido 2
 (extendiendo la ventana por `fecha_pago` en vez de `fechavencimiento`, mismo patrón de fix
 que bug 12) — ver el bloque de arriba para el backtest final y la tasa recalibrada. Ver
 `reconciliacion_vw_seguimiento_temprana.md`, tarea 1 de "Pendientes para cerrar TEMPRANA".
+
+### 15. `dts_asignaciones_gestiones_cobranza` SÍ tiene `id_ihfintech_loan` directo (columna `aux02`) — la documentación decía lo contrario, y el proyecto venía usando un cruce `dni`+`producto` innecesariamente ruidoso
+**Contexto (2026-08-21, continuación):** al presentar el hallazgo de "Sin asignar" (bug 13,
+arriba — 367 créditos de la reconciliación TEMPRANA, mayoría explicada por un filtro
+`status='ACTIVE'` demasiado estricto en el crosswalk `dni`+`producto`), el usuario señaló
+que la tabla `dts_asignaciones_gestiones_cobranza` tiene una columna `aux02` que ES
+`id_ihfintech_loan` — algo que `FUENTES_DATOS.md` documentaba como inexistente ("no hay
+`id_ihfintech_loan` directo").
+
+**Verificado con Athena, no solo aceptado de palabra:**
+- Sample de filas (`fecha_base='2026-07-15'`): `aux02` tiene formato UUID, consistente con
+  `id_ihfintech_loan`.
+- **99.97% de match real** (18,613/18,618 combinaciones `dni_ce`+`producto` distintas de
+  julio 2026): `aux02` resuelve contra un `id_ihfintech_loan` que SÍ existe en
+  `dts_okaapi_loans` — muy por encima del ~96.5% que documentaba (y seguía documentando
+  hasta esta corrección) el cruce `dni`+`producto`.
+- **Comparado contra el cruce `dni`+`producto` (`status='ACTIVE'`, `flg_last_loan_in_
+  chain=1`) fila por fila:** de 18,619 filas, 15,505 (83.3%) coinciden, **2,520 (13.5%)
+  son filas donde el cruce `dni`+`producto` NO encontraba NINGÚN crédito (típicamente
+  porque el crédito ya está `COMPLETED`, excluido del filtro `status='ACTIVE'`) pero
+  `aux02` sí resuelve correctamente**, y 594 (3.2%) son casos donde ambos métodos dan un
+  `id_loan` DISTINTO (no investigado a fondo — candidatos: múltiples créditos del mismo
+  `dni`+`producto`, reenganches).
+
+**Por qué no se había visto antes:** la columna se llama `aux02`, sin ningún nombre
+descriptivo — nada indicaba que fuera un ID de crédito. El proyecto adoptó el patrón
+`dni`+`producto` desde el primer uso de esta tabla (bug 13, 2026-08-18) y se replicó sin
+cuestionarlo en `reconciliacion_temprana.sql` (Q6/Q7/Q8/Q9), `avance_cobranza_fase.sql` y
+`homologacion_tipo_mora_gestiones.sql`.
+
+**Impacto medido — re-clasificación completa de "solo nuestro" (1,246 créditos de la
+reconciliación TEMPRANA) usando `aux02` en vez del crosswalk:**
+
+| Motivo | Vía `dni`+`producto` (método viejo) | Vía `aux02` (directo) |
+|---|---:|---:|
+| Grupo de control | 779 | **1,017** |
+| Sin asignar | 367 | **120** |
+| Escalado | 94 | **101** |
+| Revisar (aparece en TEMPRANA julio, sin match oficial) | 6 | **8** |
+| **Total** | 1,246 | 1,246 |
+
+**Lectura del impacto:** la conclusión CUALITATIVA de la reconciliación TEMPRANA no
+cambia — sigue siendo cierto que la gran mayoría de "solo nuestro" es grupo de control
+deliberado (81.6% vía `aux02`, incluso más alto que el 62.5% que daba el método viejo, así
+que el hallazgo se **fortalece**, no se debilita). El bucket "Sin asignar" SÍ cambia de
+magnitud de forma material (367→120, -67.3%) — consistente en orden de magnitud con la
+investigación de esa misma sesión que ya había estimado el hueco real en ~106 créditos por
+un camino distinto (desagregando manualmente el filtro de status), lo cual valida esa
+investigación cruzada. **Esto NO afecta la conclusión de bug 14** (el punto ciego de
+`dayslate`, ~27% de "solo oficial") — ese lado de la comparación nunca usó el crosswalk
+`dni`+`producto`, es un join directo `id_ihfintech_loan` contra la vista oficial.
+
+**Corregido y APLICADO 2026-08-21 (mismo día, a pedido explícito del usuario):**
+`FUENTES_DATOS.md` (documentación de `aux02`) + `reconciliacion_temprana.sql` Q11/Q12
+(reemplazan a Q6/Q8 — join directo vía `aux02`, sin crosswalk `dni`+`producto`; incluso el
+chequeo de "hermano de otro producto" para "Doble producto en otra fase" se resuelve ahora
+con el `dni_ce`/`producto` que trae la propia fila de asignación del crédito, sin tocar
+`dts_cobranza_creditos_cuotas`) + CSV `datos_reconciliacion_temprana/solo_nuestro_motivo_
+julio.csv` regenerado. **Verificado que Q11/Q12 tal como quedaron en el repo reproducen
+exacto el CSV regenerado** (0 diferencias a nivel `id_loan`+motivo).
+
+**Números finales (reemplazan a los de bug 13, arriba, para "solo nuestro"):**
+
+| Motivo | Antes (`dni`+`producto`) | Ahora (`aux02`) |
+|---|---:|---:|
+| Grupo de control | 779 | **1,017** |
+| Sin asignar | 367 | **120** |
+| Doble producto en otra fase | 58 | **65** |
+| Escalado, fase fija (sin otro crédito) | 36 | **36** (idéntico — por definición, estos créditos no tienen ningún otro crédito del cliente, así que un crosswalk mejor no puede encontrar un hermano de más) |
+| Revisar | 6 | **8** |
+| **Total** | 1,246 | 1,246 |
+
+El total no cambia (la población base "solo nuestro" no depende del crosswalk, solo la
+forma en que se reparte entre motivos). La conclusión cualitativa se **fortalece**: 81.6%
+es grupo de control deliberado (antes 62.5%). El hueco real de "Sin asignar" (120,
+S/176,383) es consistente en magnitud con la estimación independiente de la investigación
+de arriba (~106, por un camino distinto) — valida ambas.
+
+**Pendiente, sin aplicar todavía (fuera de alcance de esta pasada — es una corrección de
+metodología más amplia que la reconciliación TEMPRANA):** `avance_cobranza_fase.sql` (ya
+estaba pendiente de re-correrse por bug 12, ver tarea 1 de `PENDIENTES.md` — el fix de
+`aux02` debería aplicarse en la misma pasada) y `homologacion_tipo_mora_gestiones.sql`
+(bug 13, ya cerrado — bajo impacto esperado dado que esa homologación ya daba 98.5% de
+acuerdo con el método viejo, pero no reverificado).

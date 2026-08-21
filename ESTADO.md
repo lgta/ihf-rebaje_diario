@@ -7,6 +7,52 @@
 
 Última actualización: 2026-08-21.
 
+> **2026-08-21 (continuación, 3ra vuelta) — desplegado el fix de `aux02` (bug 15) a
+> `avance_cobranza_fase.sql`, tarea 1 de `PENDIENTES.md` CERRADA.** A pedido del usuario,
+> se re-corrió `avance_cobranza_fase.sql` con 3 fixes juntos: bug 15 (`aux02` en vez del
+> crosswalk `dni`+`producto` — cohorte crece de 8,303 a 8,614 créditos, +3.7%, concentrado
+> en TEMPRANA), bug 12 (día 1 de julio = antiguo/stock, no nuevo — nunca se había aplicado
+> a este archivo; "nuevo" baja de 1,258 a 571 créditos, la mayoría del bucket viejo eran
+> entrantes de día 1 mal clasificados) y bug 11 (dedup, exigido por `CLAUDE.md` para
+> cualquier `row_number()`/`lag()` nuevo sobre `dts_mambu_loans_hist`, este archivo tampoco
+> lo tenía). Verificado: la tasa `13.38%`/`P_FANTASMA` y las curvas de maduración **no se
+> ven afectadas** por ninguno de estos hallazgos — se calibran exclusivamente contra
+> `dts_mambu_loans_hist`/`dts_cobranza_creditos_cuotas`, sin ninguna dependencia de
+> `dts_asignaciones_gestiones_cobranza` (confirmado con grep en los archivos de
+> calibración/backtest/meta, 0 referencias). Con los 3 fixes, la lectura de avance de
+> Temprana cambia de "atrasada" a "adelantada" en el segmento nuevo (+6.6pp vs. -4.3pp
+> antes) — es un cambio de clasificación, no una señal nueva de que el ritmo de pago real
+> cambió. Especializada/Recovery casi no se movieron (tienen poco saldo dentro de mora
+> 1-30, donde pegan estos fixes). Sin impacto en la meta vigente de agosto. Ver
+> `avance_cobranza_fase.md` para el detalle completo y la tabla de resultados actualizada.
+> **Queda pendiente, menor prioridad:** revisar `homologacion_tipo_mora_gestiones.sql`
+> (bug 13) con el mismo fix — impacto esperado bajo (ya daba 98.5% de acuerdo).
+
+> **2026-08-21 (continuación, 2da vuelta) — Q7/Q8 de la reconciliación TEMPRANA
+> verificadas como SQL ejecutable real, los 2 huecos de "solo nuestro" investigados, y
+> hallazgo mayor de metodología: `dts_asignaciones_gestiones_cobranza` SÍ tiene
+> `id_ihfintech_loan` directo (columna `aux02`) — corregido y aplicado.** A pedido
+> explícito del usuario, se relanzó el cálculo desde cero contra Athena (sin confiar en el
+> CSV guardado): Q7/Q8 nunca habían quedado como SQL real en el repo (solo pseudocódigo) —
+> re-corridas, dan **3,265/3,265 y 1,246/1,246 filas idénticas** al CSV ya commiteado a
+> nivel crédito — sin no-determinismo de bug 11, sin drift de datos. Al investigar "Sin
+> asignar" (367 créditos), se encontró primero un bug de matching (crosswalk
+> `dni`+`producto` con filtro `status='ACTIVE'` demasiado estricto) y luego, señalado por
+> el usuario, algo más grande: la tabla **SÍ tiene el ID de crédito directo** en una
+> columna sin nombre descriptivo (`aux02`) — verificado con Athena (99.97% de match real,
+> mejor que el ~96.5% del crosswalk que el proyecto venía usando desde bug 13). **Corregido
+> y aplicado en el mismo día:** `FUENTES_DATOS.md`, `reconciliacion_temprana.sql` (Q11/Q12
+> reemplazan a Q6/Q8) y el CSV `solo_nuestro_motivo_julio.csv` regenerado — números
+> finales: Grupo de control 1,017 (antes 779), Sin asignar 120 (antes 367), Doble producto
+> en otra fase 65 (antes 58), Escalado fase fija 36 (igual), Revisar 8 (antes 6, ese motivo
+> resultó ser además un artefacto de anclaje de fecha, no un hueco real — no relacionado al
+> fix de `aux02`). Con esto, **TEMPRANA queda completamente cerrada**. **Pendiente, fuera
+> de esta pasada:** aplicar el mismo fix de `aux02` en `avance_cobranza_fase.sql` (ya
+> pendiente por bug 12) y revisar `homologacion_tipo_mora_gestiones.sql` (bug 13, bajo
+> impacto esperado). Sin cambios a producción de la meta vigente de agosto. Ver bug 15 en
+> `BUGS.md` y `reconciliacion_vw_seguimiento_temprana.md` pendiente 4 para el detalle
+> completo, y `reconciliacion_temprana.sql` Q7-Q12 para las queries reales.
+
 > **2026-08-21 (continuación) — cobertura de agosto de la capa fantasma: hipótesis de
 > timing confirmada, no hay hueco nuevo.** El 81.8% de cobertura (vs. 99.7% julio,
 > `reconciliacion_agosto.sql` Q3) se desagregó por `installmentstate` (Q4): **98.3% de
@@ -181,15 +227,20 @@ Detalle del último:
 
 ## Análisis puntuales (snapshots, no enfoques con curva propia)
 
-- **Avance de julio por fase de cobranza** (`avance_cobranza_fase.md`, 2026-07-13): cruza
-  la asignación REAL del negocio (tabla `dts_asignaciones_gestiones_cobranza` desde
-  2026-08-18 — la original, `dts_asignaciones_cobranza`, quedó congelada el 2026-07-10, ver
-  bug 13 en `BUGS.md` — contra capital asegurado (Enfoque alfa) por fase TEMPRANA /
-  ESPECIALIZADA / RECOVERY × nuevo/stock. Corte 2-jul a 12-jul. Hallazgo: Temprana va
-  ligeramente atrasada (-4 a -13pp según tramo, salvo 16-30 que va +2.7pp adelantado);
-  Especializada/Recovery no tienen curva calibrada (el modelo nunca cubrió mora 31+).
-  **⚠ Pendiente:** todavía usa la definición vieja de nuevo/stock (día 1 = nuevo, bug 12) —
-  no se re-corrió, los números de este análisis puntual pueden cambiar.
+- **Avance de julio por fase de cobranza** (`avance_cobranza_fase.md`, ejecutado
+  2026-07-13, **re-corrido 2026-08-21**): cruza la asignación REAL del negocio (tabla
+  `dts_asignaciones_gestiones_cobranza`) contra capital asegurado (Enfoque alfa) por fase
+  TEMPRANA / ESPECIALIZADA / RECOVERY × nuevo/stock. Corte 2-jul a 12-jul (misma ventana en
+  ambas corridas). **✅ Tarea 1 de `PENDIENTES.md` CERRADA** — re-corrido con 3 fixes: bug
+  12 (día 1 = antiguo/stock, no nuevo — nunca se había aplicado a este archivo, cohorte
+  "nuevo" bajó de 1,258 a 571 créditos), bug 15 (`aux02` en vez del crosswalk
+  `dni`+`producto`, cohorte total creció de 8,303 a 8,614 créditos) y bug 11 (dedup, este
+  archivo tampoco lo tenía). Con los fixes, Temprana pasa de verse uniformemente atrasada a
+  mostrar "nuevo" +6.6pp adelantado (antes -4.3pp) — la lectura cambió porque se redefinió
+  qué créditos caen en cada categoría, no porque el ritmo de pago real haya cambiado.
+  Especializada/Recovery siguen sin curva calibrada (el modelo nunca cubrió mora 31+), sin
+  cambio material ahí. Ver bug 15 en `BUGS.md` y `avance_cobranza_fase.md` para el detalle
+  completo.
 - **Homologación con `gestiones_cobranzas`** (2026-08-18, `homologacion_tipo_mora_gestiones.sql`,
   bug 13 en `BUGS.md`): el `tipo_mora` de ese proyecto hermano valida el fix de bug 12 —
   98.5% de acuerdo con nuestra clasificación antiguo/nuevo en la población mora 1-30
@@ -225,6 +276,22 @@ Detalle del último:
   "pegajosa"** en `gestiones_cobranza` que no baja aunque `dayslate` muestre mora fresca.
   Ver bug 13 en `BUGS.md` para el detalle.
 
+  **2026-08-21 (continuación) — Q7/Q8 verificadas como SQL real, los 2 huecos restantes
+  cerrados, y hallazgo mayor de metodología (`aux02`) corregido — TEMPRANA completamente
+  cerrada:** Q7/Q8 nunca habían quedado como SQL ejecutable en el repo — re-corridas
+  contra Athena, reproducen exacto los 2 CSV ya commiteados a nivel crédito. Al investigar
+  "Sin asignar" (367 créditos) se encontró primero un bug de matching (crosswalk
+  `dni`+`producto` con filtro `status='ACTIVE'` demasiado estricto) y luego, señalado por
+  el usuario, que `dts_asignaciones_gestiones_cobranza` **sí tiene `id_ihfintech_loan`
+  directo** en una columna sin nombre descriptivo (`aux02`, 99.97% de match verificado) —
+  mejor que el crosswalk `dni`+`producto` que el proyecto venía usando desde bug 13.
+  **Corregido y aplicado:** Q11/Q12 reemplazan a Q6/Q8, CSV regenerado — Grupo de control
+  1,017 (antes 779), Sin asignar 120 (antes 367), Doble producto en otra fase 65 (antes
+  58), Escalado fase fija 36 (igual), Revisar 8 (antes 6, artefacto de anclaje de fecha,
+  no relacionado al fix). Ver bug 15 en `BUGS.md` para el detalle completo y
+  `reconciliacion_temprana.sql` Q9-Q12 para las queries. **Pendiente:** aplicar el mismo
+  fix en `avance_cobranza_fase.sql` y revisar `homologacion_tipo_mora_gestiones.sql`.
+
 ## Pendiente de copiar al repo desde scratchpad
 
 Nada por ahora — todo lo generado hasta el 2026-07-13 (backtest de capital asegurado,
@@ -235,69 +302,35 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Prompt de continuación
 
-> Copiar/pegar esto al abrir la siguiente sesión para retomar sin releer todo:
-
-```
-Lee ESTADO.md (esta sección), reconciliacion_vw_seguimiento_temprana.md (pendiente 2 y
-pendiente 4) y BUGS.md bug 13/14, más reconciliacion_temprana.sql (Q1, Q6, Q7, Q8).
-
-Contexto en una línea: el cuadre comparativo de motivos de julio (datos_reconciliacion_
-temprana/solo_oficial_motivo_julio.csv y solo_nuestro_motivo_julio.csv, ya commiteados y
-ya presentado al usuario: 3,265 filas solo-oficial = 3,128 "Punto ciego dayslate (bug 9)"
-+ 137 "Reenganche excluido por chain"; 1,246 filas solo-nuestro = 779 "Grupo de control" +
-367 "Sin asignar" + 58 "Doble producto en otra fase" + 36 "Escalado, fase fija" + 6
-"Revisar") se generó con las queries Q7/Q8 de reconciliacion_temprana.sql, pero esas
-queries NUNCA quedaron como SQL ejecutable en el repo -- están solo como comentario/
-pseudocódigo (mismo patrón que tenía Q3 de reconciliacion_agosto.sql antes de la sesión
-2026-08-21, ya corregido ahí -- ver commit ac58eec). El usuario pidió explícitamente para
-esta sesión: relanzar el cálculo desde cero contra Athena (NO confiar en el CSV guardado),
-verificar que reproduce los mismos números, y solo después abordar los huecos que quedan
-sin explicar.
-
-Tareas en orden:
-1. Reconstruir Q7 y Q8 como SQL ejecutable real -- igual que se hizo con Q3/Q4 de
-   reconciliacion_agosto.sql: tomar las CTEs completas de Q1 (para Q7, categorías
-   sin_match_mambu/status_no_activo/excluido_chain/dayslate_cero_bug9) y de Q6 (para Q8,
-   categorías no_aparece_en_asignaciones/grupo_control/escalado_sin_temprana/
-   aparece_temprana_pero_no_en_oficial), descomentar/completar la parte final que exporta
-   1 fila por crédito, correr con scripts/run_athena.sh, y dejar la query REAL en
-   reconciliacion_temprana.sql (no en comentario).
-2. Comparar el resultado recién corrido contra los CSV ya commiteados -- a nivel crédito
-   (id_loan), no solo el agregado por motivo. Si NO cuadra exacto, investigar por qué antes
-   de seguir (candidato principal: el mismo problema de no-determinismo de bug 11 si algún
-   row_number() quedó sin desempate completo, o datos que cambiaron desde el 21-ago).
-3. Una vez verificado (o corregido y re-verificado), atacar los 2 huecos de "solo nuestro"
-   que quedan SIN investigar (a diferencia de "Doble producto en otra fase"/"Escalado fase
-   fija", que ya se investigaron y explicaron el 2026-08-21 -- no repetir esa parte):
-   - "Sin asignar" (367 créditos / S/322,602, 29.5% de solo_nuestro) -- créditos que
-     tenemos en Temprana pero que NO aparecen en absoluto en dts_asignaciones_gestiones_
-     cobranza para julio (ni como control, ni escalado, ni temprana). Hipótesis a probar:
-     ¿son créditos fuera de la asignación real del negocio ese mes (nunca se les hizo
-     gestión), o un problema de cruce dni+producto (bug de matching, ver el ~96.5% de
-     match que documenta FUENTES_DATOS.md)?
-   - "Revisar" (6 créditos / S/6,663) -- aparecen con fase_estrategia=TEMPRANA en las
-     asignaciones de julio, pero la vista oficial vw_seguimiento_diario_cohorte_tramo NO
-     los incluye ese mes. Volumen chico, pero sin explicación -- mirar caso por caso (solo
-     6 créditos, factible a mano).
-4. Reglas de datos que aplican siempre (CLAUDE.md): status IN ('ACTIVE','COMPLETED') para
-   histórico, excluir reenganches vía flg_last_loan_in_chain, dedup de bug 11 (saldo<>0
-   antes de lastmodifieddate) en cualquier row_number() nuevo sobre dts_mambu_loans_hist,
-   coalesce(dayslate,0) siempre.
-5. Esto es una validación de una comparación puntual (reconciliación TEMPRANA, ya cerrada
-   como tema principal, ver bug 14) -- no toca la meta vigente de agosto (S/16,410,194), no
-   es bloqueante.
-```
+> La reconciliación TEMPRANA (bug 14) y la tarea 1 de `PENDIENTES.md`
+> (`avance_cobranza_fase.sql`, bugs 11/12/15) quedan **completamente cerradas** con esta
+> continuación — no hay un prompt de retoma específico para ninguno de los 2 temas. **Sí
+> queda un pendiente de menor prioridad: reverificar `homologacion_tipo_mora_gestiones.sql`
+> con el mismo fix de `aux02`** (bug 13/15) — impacto esperado bajo, ya daba 98.5% de
+> acuerdo con el método viejo. Para el resto, ver `PENDIENTES.md` y la nota de re-medir la
+> cobertura de agosto de la capa fantasma cuando el mes cierre (día 31), ya anotada arriba
+> en "La meta vigente".
 
 ## Pendiente de git
 
-**Sí hay pendiente:** además de lo ya commiteado de la sesión 2026-08-21 anterior
-(commits `ce122e7`, `b49478e`), esta continuación agregó: Q3 de `reconciliacion_agosto.sql`
-pasó de comentario/pseudocódigo a query ejecutable real (verificada contra Athena,
-reproduce 81.8%) + Q4 nueva (desagregación por `installmentstate`, 98.3%/1.7%); y las
-actualizaciones de `BUGS.md` (bug 14) / `reconciliacion_vw_seguimiento_temprana.md`
-(pendiente 2) / `ESTADO.md` que cierran ese hallazgo. **Todo lo de 2026-08-20 y antes ya
-está commiteado y pusheado** (bug 11, TEMPRANA 5/5, capa fantasma con fix de frontera +
-tasa recalibrada, datasets filtrables por motivo).
+**Sí hay pendiente:** esta continuación (2026-08-21, tras la de `reconciliacion_agosto.sql`
+Q3/Q4) agregó: Q7/Q8 de `reconciliacion_temprana.sql` pasaron de comentario/pseudocódigo a
+queries ejecutables reales (verificadas contra Athena, reproducen exacto los 2 CSV ya
+commiteados a nivel crédito) + Q9/Q10 (investigación de "Sin asignar" y "Revisar", los 2
+huecos que quedaban sin explicar) + **Q11/Q12 (fix de metodología, bug 15 — reemplazan a
+Q6/Q8 usando `aux02` en vez del crosswalk `dni`+`producto`)**; el CSV
+`datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv` fue **regenerado** con los
+números corregidos; **`avance_cobranza_fase.sql` re-corrido con los fixes de bugs
+11/12/15** (tarea 1 de `PENDIENTES.md`, cerrada) — CSV `datos_avance_fase/avance_fase_
+extraccion.csv` regenerado, `avance_cobranza_fase.py` con docstring actualizado (sin
+cambios de lógica), `avance_cobranza_fase.md` con la tabla de resultados y lectura
+actualizadas; y las actualizaciones de `BUGS.md` (bug 13, bug 15) / `FUENTES_DATOS.md`
+(documentación de `aux02`) / `PENDIENTES.md` (tarea 1 cerrada) /
+`reconciliacion_vw_seguimiento_temprana.md` (pendiente 4) / `ESTADO.md` que cierran ambos
+hallazgos. **Todo lo de 2026-08-21 (sesión anterior) y antes ya está commiteado y
+pusheado** (bug 11, TEMPRANA 5/5, capa
+fantasma con fix de frontera + tasa recalibrada, datasets filtrables por motivo, cobertura
+de agosto Q3/Q4).
 
 ## Índice de los demás documentos
 
