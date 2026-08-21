@@ -7,6 +7,14 @@
 
 Última actualización: 2026-08-21.
 
+> **2026-08-21 (continuación) — cobertura de agosto de la capa fantasma: hipótesis de
+> timing confirmada, no hay hueco nuevo.** El 81.8% de cobertura (vs. 99.7% julio,
+> `reconciliacion_agosto.sql` Q3) se desagregó por `installmentstate` (Q4): **98.3% de
+> los 412 no cubiertos todavía no pagan su cuota** (timing de mitad de mes, julio ya
+> tiene todos los desenlaces resueltos y agosto no) — solo 1.7% (7 créditos, S/6,704) es
+> un hueco real, volumen despreciable. Sin cambios a producción (no bloqueante). Ver bug
+> 14 en `BUGS.md` y `reconciliacion_vw_seguimiento_temprana.md` pendiente 2.
+
 > **2026-08-20 — "capa fantasma" diseñada, validada con backtest en 2 meses cerrados, y
 > ADOPTADA en producción (a pedido explícito del usuario):** el punto ciego de `dayslate`
 > (bug 9) es 99.5% el mecanismo ya conocido, no uno nuevo (paso 1). Se diseñó una
@@ -225,48 +233,27 @@ investigación de reincidencia, avance por fase de cobranza) ya está en el repo
 **Cuando termines una sesión con hallazgos nuevos, revisa esta sección antes de cerrar** —
 si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perderlo.
 
-## Prompt de continuación (sesión cortada 2026-08-21 por presupuesto de tokens)
+## Prompt de continuación
 
-> Copiar/pegar esto al abrir la siguiente sesión para retomar sin releer todo:
-
-```
-Lee ESTADO.md (esta sección) y reconciliacion_vw_seguimiento_temprana.md (pendiente 2,
-bloque "Continuación 2026-08-21 -- EN PROGRESO") y BUGS.md bug 14 (misma fecha). Contexto
-en una línea: se armaron datasets filtrables por motivo para julio (datos_reconciliacion_
-temprana/*.csv, ya commiteados) y se corrigieron 2 hipótesis mediante verificación con
-datos reales (no había arrastre de DNI en "escalado" -- 62% es por OTRO producto del
-mismo cliente, 38% es fase fija sin ningún otro crédito). Luego se extendió el mismo
-chequeo de cobertura de la capa fantasma a agosto (reconciliacion_agosto.sql Q3) y dio
-solo 81.8% (vs. 99.7% en julio) -- SIN explicar todavía, hipótesis más probable es que
-agosto está a mitad de mes (algunos de los 412 no-cubiertos pueden ser cuotas que
-todavía no se pagan, no un hueco real).
-
-Qué falta, en orden:
-1. Desagregar los 412 créditos "no cubiertos" de agosto por `installmentstate` (PAID con
-   dias_vencimiento_a_pago<>1, vs. todavía sin pagar) -- confirmar o descartar la
-   hipótesis de "es solo timing de mitad de mes" antes de asumirlo.
-2. El usuario pidió armar un cuadro comparativo de motivos para JULIO (mes cerrado,
-   "solo diferencias ya definidas") -- solo_oficial_motivo_julio.csv / solo_nuestro_
-   motivo_julio.csv en datos_reconciliacion_temprana/ ya tienen el detalle a nivel
-   crédito; falta presentar/confirmar la tabla resumen final con el usuario (puede que
-   ya esté satisfecho con lo que se armó antes del corte -- confirmar, no asumir).
-3. Aclaración metodológica ya cerrada (no repetir la discusión): dts_asignaciones_
-   gestiones_cobranza es válida SOLO para medir avance real del mes en curso (no para
-   calibración, por historia insuficiente desde julio 2026) -- ver pendiente 6a de
-   reconciliacion_vw_seguimiento_temprana.md.
-4. Nada de esto es bloqueante para la meta ya publicada (agosto S/16,410,194) -- son
-   validaciones adicionales, no cambios al número vigente.
-```
+> Sesión 2026-08-21 completada — ya no hay pendiente bloqueante de continuar en frío.
+> Único ítem abierto: presentar/confirmar con el usuario la tabla comparativa de motivos
+> de julio (armada abajo, en el mensaje de la sesión — reconstruible desde
+> `datos_reconciliacion_temprana/*.csv` si hace falta repetirla). El resto de "Qué falta"
+> del prompt anterior ya se resolvió: (1) desagregación de agosto por `installmentstate`
+> hecha — timing de mitad de mes confirmado, no hay hueco nuevo (ver bug 14 en `BUGS.md`);
+> (3) aclaración metodológica de `dts_asignaciones_gestiones_cobranza` ya estaba cerrada
+> desde antes, no repetir; (4) nada de esto cambia la meta vigente (S/16,410,194).
 
 ## Pendiente de git
 
-**Sí hay pendiente:** lo de la sesión 2026-08-21 (continuación) — corrección de la
-hipótesis de "escalado" (arrastre de DNI descartado, dividido en "doble producto en otra
-fase"/"fase fija sin otro crédito") aplicada al CSV y a `reconciliacion_temprana.sql`, más
-Q3 nueva en `reconciliacion_agosto.sql` (cobertura de agosto, 81.8%, sin explicar) — ver
-prompt de continuación arriba. **Todo lo de 2026-08-20 y antes ya está commiteado y
-pusheado** (bug 11, TEMPRANA 5/5, capa fantasma con fix de frontera + tasa recalibrada,
-datasets filtrables por motivo — commits `ce122e7`, `b49478e` y anteriores).
+**Sí hay pendiente:** además de lo ya commiteado de la sesión 2026-08-21 anterior
+(commits `ce122e7`, `b49478e`), esta continuación agregó: Q3 de `reconciliacion_agosto.sql`
+pasó de comentario/pseudocódigo a query ejecutable real (verificada contra Athena,
+reproduce 81.8%) + Q4 nueva (desagregación por `installmentstate`, 98.3%/1.7%); y las
+actualizaciones de `BUGS.md` (bug 14) / `reconciliacion_vw_seguimiento_temprana.md`
+(pendiente 2) / `ESTADO.md` que cierran ese hallazgo. **Todo lo de 2026-08-20 y antes ya
+está commiteado y pusheado** (bug 11, TEMPRANA 5/5, capa fantasma con fix de frontera +
+tasa recalibrada, datasets filtrables por motivo).
 
 ## Índice de los demás documentos
 

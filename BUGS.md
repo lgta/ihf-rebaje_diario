@@ -308,14 +308,19 @@ documentado) — se deja como diferencia conocida entre ambos proyectos, no como
 el usuario, que priorizó solo la homologación antiguo/nuevo) — candidato para
 `installmentlastpaiddate` (pendiente #7 de `PENDIENTES.md`) si se retoma.
 
-**Actualización 2026-08-21 (continuación) — cobertura de agosto EN PROGRESO, sesión
-cortada por presupuesto de tokens:** verificación a nivel crédito de la capa fantasma
-para agosto (corte 20-ago, `reconciliacion_agosto.sql` Q3): **solo 81.8% de cobertura**
-(1,850/2,262 créditos), vs. 99.7% en julio. Motivo NO confirmado — hipótesis: agosto es
-mes a mitad de cerrar, parte del gap puede ser cuotas todavía sin pagar (no un hueco del
-mecanismo). Pendiente: desagregar los 412 no cubiertos por `installmentstate` antes de
-concluir. Ver `reconciliacion_vw_seguimiento_temprana.md` pendiente 2 para el detalle y
-el prompt de continuación en `ESTADO.md`.
+**Actualización 2026-08-21 (continuación) — cobertura de agosto CERRADA, hipótesis de
+timing confirmada con datos:** verificación a nivel crédito de la capa fantasma para
+agosto (corte 20-ago, `reconciliacion_agosto.sql` Q3): **81.8% de cobertura**
+(1,850/2,262 créditos), vs. 99.7% en julio. Se desagregaron los 412 no cubiertos por
+`installmentstate` de su cuota vencida más reciente (Q4): **405/412 (98.3%) todavía no
+pagan esa cuota** — timing de mitad de mes, no un hueco del mecanismo (julio ya tiene
+todos los desenlaces resueltos, agosto al corte 20-ago no). Solo **7/412 (1.7%,
+S/6,704) ya están `PAID` con `dias_vencimiento_a_pago<>1`** — un hueco real pero de
+volumen despreciable (0.2% del bucket bug9 total de agosto). **No hay evidencia de que
+la capa fantasma tenga un hueco nuevo distinto al ya conocido y corregido** (frontera de
+mes). Pendiente: re-medir cuando agosto cierre (día 31) para comparar apples-to-apples
+contra el 99.7% de julio — la expectativa es que suba a un nivel similar. Ver
+`reconciliacion_vw_seguimiento_temprana.md` pendiente 2 para el detalle.
 
 **Actualización 2026-08-21 — "escalado" a Especializada/Recovery NO es arrastre de DNI,
 es fase pegajosa (hallazgo de la reconciliación bug 14, categoría `escalado_sin_temprana`

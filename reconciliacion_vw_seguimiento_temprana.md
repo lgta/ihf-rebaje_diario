@@ -300,18 +300,21 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
    **S/16,410,194**. Detalle completo en bug 14 de `BUGS.md`.
 2. **~~Extender la reconciliación de población a agosto~~ Hecho 2026-08-20 — no repite
    igual en el agregado, pero sí por cohorte; el motivo es que agosto está a mitad de
-   mes.** **Continuación 2026-08-21 — EN PROGRESO, sesión cortada por presupuesto de
-   tokens:** se corrió la verificación a nivel crédito de la capa fantasma para agosto
-   (mismo chequeo que cerró julio en 90.7%→99.7%, ver `reconciliacion_agosto.sql` Q3,
-   ya con el fix de frontera de mes aplicado) — resultado: **solo 81.8% de cobertura**
-   (1,850/2,262 créditos, S/2,561,175 de S/3,118,728), más bajo que julio. **Motivo NO
-   confirmado todavía** — hipótesis más probable: agosto está a mitad de mes (corte
-   20-ago), así que parte de los 412 no cubiertos puede ser cuotas que TODAVÍA no se
-   pagaron (no un hueco del mecanismo) — julio es mes cerrado, todos los desenlaces ya
-   se conocen, por eso no es comparable directo. **Pendiente exacto para la siguiente
-   sesión:** desagregar los 412 no_cubiertos por `installmentstate` (¿cuántos ya son
-   `PAID` con `dias_vencimiento_a_pago<>1` vs. cuántos todavía no se pagan?) antes de
-   concluir si hay un hueco real o es solo timing de mitad de mes. Al corte de hoy (20-ago, vista con datos hasta esa fecha: 9,274 créditos /
+   mes.** **Continuación 2026-08-21 — CERRADO, hipótesis confirmada con datos:** se
+   corrió la verificación a nivel crédito de la capa fantasma para agosto (mismo chequeo
+   que cerró julio en 90.7%→99.7%, ver `reconciliacion_agosto.sql` Q3, ya con el fix de
+   frontera de mes aplicado) — resultado: **81.8% de cobertura** (1,850/2,262 créditos,
+   S/2,561,175 de S/3,118,728), más bajo que julio. Se desagregaron los 412 no_cubiertos
+   por `installmentstate` de su cuota vencida más reciente (`reconciliacion_agosto.sql`
+   Q4): **405/412 (98.3%, S/550,849) TODAVÍA NO PAGAN esa cuota** — es timing de mitad de
+   mes, no un hueco del mecanismo (julio es mes cerrado, todos los desenlaces ya se
+   conocían; agosto al corte 20-ago no). Solo **7/412 (1.7%, S/6,704) ya están `PAID` con
+   `dias_vencimiento_a_pago<>1`** — un hueco real, pero de volumen despreciable (0.2% del
+   bucket bug9 total). **Conclusión: la hipótesis de "es solo timing de mitad de mes" queda
+   confirmada, no hay evidencia de un hueco nuevo en el mecanismo de la capa fantasma.**
+   Pendiente: re-medir cuando agosto cierre (día 31) para una comparación apples-to-apples
+   con julio (99.7%) — la expectativa, dado este resultado, es que suba cerca de ese nivel.
+   Al corte de hoy (20-ago, vista con datos hasta esa fecha: 9,274 créditos /
    S/14,621,415), el bucket `dayslate_cero_bug9` da **1,772 créditos (19.1% de oficial,
    S/2,453,492)** — más chico que el 26.8% de julio, no una repetición directa. Al
    descomponer por cohorte (créditos que ya estaban en la vista oficial en julio, análogo a
@@ -413,10 +416,14 @@ Lo que sí falta para decir que la reconciliación TEMPRANA está cerrada:
   verificación de la capa fantasma a nivel crédito (pendiente 1 — resultado: 90.7%
   directo, 99.7% incluyendo el hueco de frontera de mes) y reconstrucción de "solo
   nuestro" categorizado contra `dts_asignaciones_gestiones_cobranza` (pendiente 4).
-- **`reconciliacion_agosto.sql`** (2026-08-20, nuevo, en el repo): extensión de la
+- **`reconciliacion_agosto.sql`** (2026-08-20/21, en el repo): extensión de la
   reconciliación de población a agosto (pendiente 2) — agregado parcial (Q1) y
   descomposición por cohorte estaba-desde-julio vs. nuevo-en-agosto (Q2), que explica
-  por qué el ~27% no se ve igual todavía en un mes a medio cerrar.
+  por qué el ~27% no se ve igual todavía en un mes a medio cerrar. Q3 (2026-08-21,
+  ahora ejecutable, antes solo comentario): verificación a nivel crédito de la capa
+  fantasma para agosto (81.8% de cobertura). Q4 (2026-08-21, nuevo): desagrega los
+  412 no_cubiertos de Q3 por `installmentstate` — 98.3% todavía no pagan su cuota
+  (timing de mitad de mes, hipótesis confirmada), solo 1.7% es un hueco real.
 - **`reconciliacion_temprana.sql` Q7/Q8** (2026-08-21, nuevo): mismas CTEs de Q1/Q6, sin
   el `group by` final — exportan 1 fila por crédito con columna `motivo` (etiquetas
   legibles) a `datos_reconciliacion_temprana/solo_oficial_motivo_julio.csv` y
