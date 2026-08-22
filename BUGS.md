@@ -645,9 +645,28 @@ es grupo de control deliberado (antes 62.5%). El hueco real de "Sin asignar" (12
 S/176,383) es consistente en magnitud con la estimación independiente de la investigación
 de arriba (~106, por un camino distinto) — valida ambas.
 
-**Pendiente, sin aplicar todavía (fuera de alcance de esta pasada — es una corrección de
-metodología más amplia que la reconciliación TEMPRANA):** `avance_cobranza_fase.sql` (ya
-estaba pendiente de re-correrse por bug 12, ver tarea 1 de `PENDIENTES.md` — el fix de
-`aux02` debería aplicarse en la misma pasada) y `homologacion_tipo_mora_gestiones.sql`
-(bug 13, ya cerrado — bajo impacto esperado dado que esa homologación ya daba 98.5% de
-acuerdo con el método viejo, pero no reverificado).
+**Actualización 2026-08-21 (continuación) — desplegado a los otros 2 archivos, los 3 usos
+del crosswalk en el proyecto quedan corregidos:**
+
+- **`avance_cobranza_fase.sql` (tarea 1 de `PENDIENTES.md`) — CERRADO.** Aplicado junto con
+  el fix de bug 12 (día 1 = antiguo, no nuevo — nunca se había aplicado a este archivo) y
+  el dedup de bug 11 (tampoco lo tenía). La cohorte creció de 8,303 a 8,614 créditos
+  (+3.7%, concentrado en TEMPRANA). El bucket "nuevo" bajó de 1,258 a 571 créditos —
+  la mayoría del bucket viejo eran entrantes del día 1 mal clasificados (bug 12), un
+  impacto mucho mayor que en la calibración de 14 meses porque esta cohorte es una ventana
+  de solo 11 días. Ver `avance_cobranza_fase.md` para la tabla de resultados completa.
+- **`homologacion_tipo_mora_gestiones.sql` (bug 13) — CERRADO, bajo impacto CONFIRMADO
+  (no solo esperado).** Re-verificado Q1/Q2/Q3 con `aux02`: el acuerdo Q2 (día
+  representativo, 10-ago) pasa de 98.52% (917+947=1,864/1,892) a **98.49%**
+  (897+929=1,826/1,854) — prácticamente idéntico, y **los mismos 28 casos exactos** de
+  desacuerdo `antiguo(propio)/nuevo(gestiones)` (0 en la dirección opuesta, igual que
+  antes). La población total matcheada baja levemente (1,892→1,854, -2%) — `aux02` a
+  veces referencia un `id_ihfintech_loan` de un eslabón ANTERIOR de una cadena de
+  reenganche (no el vigente, `last_in_chain=1`), mientras el crosswalk `dni`+`producto`
+  siempre resuelve al crédito vigente vía `dts_cobranza_creditos_cuotas` — diferencia
+  menor, no cambia ninguna conclusión de bug 13. Re-corrido Q3 (detalle de los 28 casos):
+  mismo patrón exacto (cura y recae dentro de agosto, `mora_jul31` 23-30).
+
+Con esto, **los 3 archivos del proyecto que cruzan contra `dts_asignaciones_gestiones_
+cobranza` usan `aux02` de forma consistente** — no queda ningún uso del crosswalk
+`dni`+`producto` viejo en el repo.

@@ -7,6 +7,17 @@
 
 Última actualización: 2026-08-21.
 
+> **2026-08-21 (continuación, 4ta vuelta) — `homologacion_tipo_mora_gestiones.sql` (bug
+> 13) re-verificado con `aux02`, bajo impacto CONFIRMADO (no solo esperado). Los 3 archivos
+> del proyecto que cruzan contra `dts_asignaciones_gestiones_cobranza` quedan corregidos —
+> no queda ningún uso del crosswalk `dni`+`producto` viejo en el repo.** Re-corrido Q1/Q2/Q3
+> con `aux02`: el acuerdo del día representativo (10-ago) pasa de 98.52% a **98.49%**
+> (897+929=1,826/1,854 vs. 917+947=1,864/1,892 antes) — prácticamente idéntico, y **los
+> mismos 28 casos exactos** de desacuerdo (0 en la dirección opuesta, igual que antes). La
+> población matcheada baja levemente (-2%) — `aux02` a veces referencia un eslabón anterior
+> de una cadena de reenganche en vez del vigente, diferencia menor que no cambia ninguna
+> conclusión de bug 13. Ver bug 15 en `BUGS.md` para el detalle completo.
+
 > **2026-08-21 (continuación, 3ra vuelta) — desplegado el fix de `aux02` (bug 15) a
 > `avance_cobranza_fase.sql`, tarea 1 de `PENDIENTES.md` CERRADA.** A pedido del usuario,
 > se re-corrió `avance_cobranza_fase.sql` con 3 fixes juntos: bug 15 (`aux02` en vez del
@@ -246,7 +257,9 @@ Detalle del último:
   98.5% de acuerdo con nuestra clasificación antiguo/nuevo en la población mora 1-30
   (muestra 10-ago). El 1.5% de diferencia es un comportamiento esperado (créditos que curan
   y recaen dentro del mes; este proyecto fija "stock" todo el mes por diseño). No requiere
-  cambios al modelo.
+  cambios al modelo. **Re-verificado 2026-08-21 con el fix de `aux02` (bug 15):** 98.49% de
+  acuerdo (prácticamente idéntico) y los mismos 28 casos exactos de desacuerdo — bajo
+  impacto confirmado, no solo esperado.
 - **Reconciliación contra `vw_seguimiento_diario_cohorte_tramo`** (2026-08-19/20, vista
   externa "oficial" aportada por el usuario, bug 14 en `BUGS.md`): nuestra población de
   mora 1-30 cuadra casi exacto (0.15%) con la oficial en los créditos que ambas comparten,
@@ -302,35 +315,26 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Prompt de continuación
 
-> La reconciliación TEMPRANA (bug 14) y la tarea 1 de `PENDIENTES.md`
-> (`avance_cobranza_fase.sql`, bugs 11/12/15) quedan **completamente cerradas** con esta
-> continuación — no hay un prompt de retoma específico para ninguno de los 2 temas. **Sí
-> queda un pendiente de menor prioridad: reverificar `homologacion_tipo_mora_gestiones.sql`
-> con el mismo fix de `aux02`** (bug 13/15) — impacto esperado bajo, ya daba 98.5% de
-> acuerdo con el método viejo. Para el resto, ver `PENDIENTES.md` y la nota de re-medir la
+> La reconciliación TEMPRANA (bug 14), la tarea 1 de `PENDIENTES.md`
+> (`avance_cobranza_fase.sql`, bugs 11/12/15) y la re-verificación de
+> `homologacion_tipo_mora_gestiones.sql` (bug 13/15) quedan **completamente cerradas** con
+> esta continuación — el hallazgo de `aux02` (bug 15) ya está desplegado en los 3 archivos
+> del proyecto que lo necesitaban, no queda ningún pendiente de este tema. No hay un prompt
+> de retoma específico. Para el resto, ver `PENDIENTES.md` y la nota de re-medir la
 > cobertura de agosto de la capa fantasma cuando el mes cierre (día 31), ya anotada arriba
 > en "La meta vigente".
 
 ## Pendiente de git
 
-**Sí hay pendiente:** esta continuación (2026-08-21, tras la de `reconciliacion_agosto.sql`
-Q3/Q4) agregó: Q7/Q8 de `reconciliacion_temprana.sql` pasaron de comentario/pseudocódigo a
-queries ejecutables reales (verificadas contra Athena, reproducen exacto los 2 CSV ya
-commiteados a nivel crédito) + Q9/Q10 (investigación de "Sin asignar" y "Revisar", los 2
-huecos que quedaban sin explicar) + **Q11/Q12 (fix de metodología, bug 15 — reemplazan a
-Q6/Q8 usando `aux02` en vez del crosswalk `dni`+`producto`)**; el CSV
-`datos_reconciliacion_temprana/solo_nuestro_motivo_julio.csv` fue **regenerado** con los
-números corregidos; **`avance_cobranza_fase.sql` re-corrido con los fixes de bugs
-11/12/15** (tarea 1 de `PENDIENTES.md`, cerrada) — CSV `datos_avance_fase/avance_fase_
-extraccion.csv` regenerado, `avance_cobranza_fase.py` con docstring actualizado (sin
-cambios de lógica), `avance_cobranza_fase.md` con la tabla de resultados y lectura
-actualizadas; y las actualizaciones de `BUGS.md` (bug 13, bug 15) / `FUENTES_DATOS.md`
-(documentación de `aux02`) / `PENDIENTES.md` (tarea 1 cerrada) /
-`reconciliacion_vw_seguimiento_temprana.md` (pendiente 4) / `ESTADO.md` que cierran ambos
-hallazgos. **Todo lo de 2026-08-21 (sesión anterior) y antes ya está commiteado y
-pusheado** (bug 11, TEMPRANA 5/5, capa
-fantasma con fix de frontera + tasa recalibrada, datasets filtrables por motivo, cobertura
-de agosto Q3/Q4).
+**Sí hay pendiente:** esta continuación (4ta vuelta, 2026-08-21) agregó:
+`homologacion_tipo_mora_gestiones.sql` (Q1/Q2/Q3) corregido con `aux02` (bug 15), cerrando
+el último de los 3 archivos que usaban el crosswalk `dni`+`producto` viejo — re-verificado
+que el 98.5% de acuerdo con `gestiones_cobranzas` (bug 13) se mantiene prácticamente
+idéntico (98.49%, mismos 28 casos de desacuerdo); y las actualizaciones de `BUGS.md`
+(bug 15) / `ESTADO.md` que cierran ese hallazgo. **Todo lo de la vuelta anterior de esta
+misma sesión (Q7-Q12 de `reconciliacion_temprana.sql`, fix de `avance_cobranza_fase.sql`,
+`FUENTES_DATOS.md`, `PENDIENTES.md` tarea 1) ya está commiteado y pusheado**
+(commit `ef5f717`).
 
 ## Índice de los demás documentos
 

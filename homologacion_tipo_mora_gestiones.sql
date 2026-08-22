@@ -62,13 +62,15 @@ with loan_chain as (
   left join ayer a on a.id_ihfintech_loan = h.id_ihfintech_loan
 )
 , gestiones as (
-  select dni_ce, producto, tipo_mora
+  -- FIX bug 15 (2026-08-21, ver BUGS.md): aux02 = id_ihfintech_loan directo,
+  -- reemplaza el crosswalk dni+producto (que quedaba mas abajo).
+  select aux02 as id_ihfintech_loan, tipo_mora
   from dts_asignaciones_gestiones_cobranza
-  where fecha_base = '2026-08-01'
+  where fecha_base = '2026-08-01' and aux02 is not null
 )
 select p.tipo_mora_propio, g.tipo_mora as tipo_mora_gestiones, count(*) as n
 from propio p
-join gestiones g on g.dni_ce = p.dni and g.producto = p.producto
+join gestiones g on g.id_ihfintech_loan = p.id_ihfintech_loan
 group by 1,2
 order by 1,2
 ;
@@ -81,6 +83,17 @@ order by 1,2
 -- Resultado real (2026-08-18): 917 antiguo/antiguo, 947 nuevo/nuevo,
 -- 28 antiguo(propio)/nuevo(gestiones), 0 nuevo(propio)/antiguo(gestiones).
 -- 98.5% de acuerdo (1864/1892) en la poblacion mora 1-30 compartida.
+--
+-- RE-VERIFICADO 2026-08-21 (bug 15, BUGS.md) con el join corregido via aux02
+-- (reemplaza el crosswalk dni+producto): 897 antiguo/antiguo, 929 nuevo/nuevo,
+-- 28 antiguo(propio)/nuevo(gestiones) -- MISMO numero exacto -- , 1
+-- fuera_de_alcance_mora_previa/nuevo (caso nuevo, marginal). 98.49% de
+-- acuerdo (1826/1854) -- practicamente identico al 98.52% original.
+-- Poblacion total matcheada baja levemente (1892->1854, -2%): aux02 a veces
+-- referencia un id_ihfintech_loan de un eslabon ANTERIOR de una cadena de
+-- reenganche (no el actual, last_in_chain=1) mientras el crosswalk
+-- dni+producto siempre resuelve al credito vigente -- diferencia menor, no
+-- afecta la conclusion (bajo impacto confirmado, como se esperaba).
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, dni, producto, max(flg_last_loan_in_chain) as last_in_chain
@@ -132,13 +145,14 @@ with loan_chain as (
   left join ago1 a on a.id_ihfintech_loan = d.id_ihfintech_loan
 )
 , gestiones as (
-  select dni_ce, producto, tipo_mora
+  -- FIX bug 15: aux02 = id_ihfintech_loan directo, reemplaza el crosswalk.
+  select aux02 as id_ihfintech_loan, tipo_mora
   from dts_asignaciones_gestiones_cobranza
-  where fecha_base = '2026-08-10'
+  where fecha_base = '2026-08-10' and aux02 is not null
 )
 select p.tipo_mora_propio, g.tipo_mora as tipo_mora_gestiones, count(*) as n
 from propio p
-join gestiones g on g.dni_ce = p.dni and g.producto = p.producto
+join gestiones g on g.id_ihfintech_loan = p.id_ihfintech_loan
 group by 1,2
 order by 1,2
 ;
@@ -209,14 +223,15 @@ with loan_chain as (
   left join ago1 a on a.id_ihfintech_loan = d.id_ihfintech_loan
 )
 , gestiones as (
-  select dni_ce, producto, tipo_mora, dias_mora, max_dias_mora_dni, nro_de_cuota, fase_estrategia
+  -- FIX bug 15: aux02 = id_ihfintech_loan directo, reemplaza el crosswalk.
+  select aux02 as id_ihfintech_loan, tipo_mora, dias_mora, max_dias_mora_dni, nro_de_cuota, fase_estrategia
   from dts_asignaciones_gestiones_cobranza
-  where fecha_base = '2026-08-10'
+  where fecha_base = '2026-08-10' and aux02 is not null
 )
 , casos as (
   select p.*, g.tipo_mora as tipo_mora_gestiones, g.dias_mora, g.max_dias_mora_dni, g.nro_de_cuota
   from propio p
-  join gestiones g on g.dni_ce = p.dni and g.producto = p.producto
+  join gestiones g on g.id_ihfintech_loan = p.id_ihfintech_loan
   where p.tipo_mora_propio = 'antiguo' and g.tipo_mora = 'nuevo'
 )
 , cuotas_credito as (
