@@ -39,6 +39,20 @@ constante del modelo (ej. `P(no paga a tiempo)`), la forma correcta de resolverl
 `DECISIONES.md` y bug 10 en `BUGS.md` para el caso real donde esto importó (swap a 25%
 sobreestimó +66%, la reconstrucción "consistente" subestimó -35.7% — ninguna ganó).
 
+## Principio de universo — no negociable
+
+**Las curvas del proyecto existen para poder estimar una meta al inicio del mes, antes de
+que ese mes ocurra.** Para que esa proyección sea confiable, el universo histórico sobre el
+que se calibran curvas y tasas debe **cuadrar exacto contra los puntos de referencia clave
+disponibles** — no basta con que la lógica interna (`dayslate`, etc.) "parezca" correcta.
+Para julio y agosto 2026 el punto de referencia es la vista formal de asignaciones
+(`vw_seguimiento_diario_cohorte_tramo` / `dts_asignaciones_gestiones_cobranza`). A partir de
+cuadrar contra esa fuente se han derivado las reglas que corrigen el universo en meses
+pasados (bug 9/14/15 en `BUGS.md`) — **siempre buscar cuadrar el universo contra alguna
+fuente formal disponible antes de confiar en curvas/tasas calibradas solo con la lógica
+propia**, y tratar cualquier diferencia como algo a explicar con datos (exclusión deliberada,
+diferencia de sistemas, hueco real), no a asumir.
+
 ## Ejecutar SQL contra Athena
 
 DB `dev_datalake_master`, workgroup `primary`, output

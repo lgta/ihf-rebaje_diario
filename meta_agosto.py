@@ -13,8 +13,15 @@ Insumos:
 
 Real a la fecha (1-18 ago) query K5 (avance_agosto_ad_hoc, ver mensaje de
 sesion 2026-08-18): RECUP_STOCK rebaje_real=447,341.09 (2,683 creditos),
-RECUP_NUEVOS rebaje_real=699,769.22 (4,686 creditos) -- hardcodeado abajo,
-no hay CSV diario (solo el acumulado al corte).
+RECUP_NUEVOS rebaje_real=699,769.22 (4,686 creditos).
+
+v2 (2026-08-21, a pedido del usuario, junto con el refresco de meta_agosto_
+capital_asegurado.py): corte movido a 20-ago -- no se espera al cierre de
+agosto. Mismo patron que cierre_julio.sql J3/J4 (rebaje real, sin el dedup
+de bug 11 -- tarea 6 de PENDIENTES.md, pendiente para el motor oficial,
+fuera de alcance de este refresco puntual), anclado a julio->agosto:
+  RECUP_STOCK  rebaje_real=473,452.25 (2,682 creditos)
+  RECUP_NUEVOS rebaje_real=859,026.81 (4,954 creditos)
 """
 import csv
 from datetime import date, timedelta
@@ -55,12 +62,12 @@ AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 
 INICIO = date(2026, 8, 1)
-HOY = date(2026, 8, 18)
+HOY = date(2026, 8, 20)
 N_DIAS = 31
 saldo_stock_inicial = sum(stock_agosto.values())
 
-REAL_STOCK_A_HOY = 447341.09
-REAL_NUEVOS_A_HOY = 699769.22
+REAL_STOCK_A_HOY = 473452.25
+REAL_NUEVOS_A_HOY = 859026.81
 
 filas = []
 for d in range(1, N_DIAS + 1):
@@ -99,11 +106,11 @@ if __name__ == "__main__":
     print(f"\n=== RESUMEN AL {HOY.isoformat()} -- RECUPERO OFICIAL, AGOSTO 2026 ===")
     print(f"Meta total de agosto (proyectada al cierre):     S/ {fin_row['proy_total']:,.0f}")
     print(f"  stock: S/ {fin_row['proy_stock']:,.0f}  |  nuevos: S/ {fin_row['proy_nuevos']:,.0f}")
-    print(f"Ya recuperado real (1-18 ago):                    S/ {real_total_hoy:,.0f}")
+    print(f"Ya recuperado real (1-{HOY.day} ago):                    S/ {real_total_hoy:,.0f}")
     print(f"  stock: S/ {REAL_STOCK_A_HOY:,.0f}  |  nuevos: S/ {REAL_NUEVOS_A_HOY:,.0f}")
-    print(f"Meta proyectada acumulada al mismo día (día 18):  S/ {hoy_row['proy_total']:,.0f}")
+    print(f"Meta proyectada acumulada al mismo día (día {HOY.day}):  S/ {hoy_row['proy_total']:,.0f}")
     avance_pct = 100 * real_total_hoy / fin_row['proy_total']
     print(f"Avance real vs meta total del mes: {avance_pct:.1f}%")
-    err_dia18 = real_total_hoy - hoy_row['proy_total']
-    print(f"Real vs. proyectado AL MISMO DIA (18): {100*err_dia18/hoy_row['proy_total']:+.1f}%")
-    print(f"\n>>> LO QUE RESTA DEL MES (día 19 al 31): S/ {fin_row['proy_total'] - real_total_hoy:,.0f} <<<")
+    err_hoy = real_total_hoy - hoy_row['proy_total']
+    print(f"Real vs. proyectado AL MISMO DIA ({HOY.day}): {100*err_hoy/hoy_row['proy_total']:+.1f}%")
+    print(f"\n>>> LO QUE RESTA DEL MES (día {HOY.day+1} al 31): S/ {fin_row['proy_total'] - real_total_hoy:,.0f} <<<")

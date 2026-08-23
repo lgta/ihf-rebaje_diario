@@ -217,25 +217,34 @@ proy_aseg = proyeccion_diaria(
     INICIO_AGO, 31, con_fantasma=True, fantasma_extra=SALDO_31JUL_FANTASMA,
 )
 
-# Real fantasma agosto a la fecha (1-18 ago, query 2026-08-20, mismo patron que julio) --
-# ver meta_agosto_capital_asegurado.py v3 y reconciliacion_vw_seguimiento_temprana.md.
-# Incluye la cohorte 31-jul ya resuelta (REAL_31JUL_FANTASMA, S/3,556.95 de 4 creditos).
-REAL_FANTASMA_AGO_A_HOY = 2827691.80 + REAL_31JUL_FANTASMA
+# Real a la fecha, refrescado 2026-08-21 a pedido del usuario (corte 20-ago, no se
+# espera al cierre de agosto) -- mismo patron que meta_agosto_capital_asegurado.py v4
+# / meta_agosto.py v2. K3 (fantasma) ya unifica la cohorte 31-jul en el mismo filtro
+# de fecha_pago (1-ago a 20-ago) -- ya no hace falta sumarla aparte.
+REAL_STOCK_ASEG_AGO_A_HOY = 2690562.16
+REAL_NUEVOS_ASEG_AGO_A_HOY = 5173860.76
+REAL_FANTASMA_AGO_A_HOY = 3134320.83
+REAL_STOCK_RECUP_AGO_A_HOY = 473452.25
+REAL_NUEVOS_RECUP_AGO_A_HOY = 859026.81
 
 data["agosto"] = {
     "stock_recup": stock_agosto_recup,
     "stock_aseg": stock_agosto_aseg,
     "calendario": calendario_agosto,
-    "corte_real": "2026-08-18",
+    "corte_real": "2026-08-20",
     "tasa_no_paga": round(P_NO_PAGA * 100, 2),
     "tasa_fantasma": round(P_FANTASMA * 100, 4),
     "proyeccion_diaria": {"recupero": proy_recup, "asegurado": proy_aseg},
     "real_a_hoy": {
         "asegurado": {
-            "stock": 2605896.73, "nuevos": 4189176.85, "fantasma": REAL_FANTASMA_AGO_A_HOY,
-            "total": round(2605896.73 + 4189176.85 + REAL_FANTASMA_AGO_A_HOY, 2),
+            "stock": REAL_STOCK_ASEG_AGO_A_HOY, "nuevos": REAL_NUEVOS_ASEG_AGO_A_HOY,
+            "fantasma": REAL_FANTASMA_AGO_A_HOY,
+            "total": round(REAL_STOCK_ASEG_AGO_A_HOY + REAL_NUEVOS_ASEG_AGO_A_HOY + REAL_FANTASMA_AGO_A_HOY, 2),
         },
-        "recupero": {"stock": 447341.09, "nuevos": 699769.22, "total": 1147110.31},
+        "recupero": {
+            "stock": REAL_STOCK_RECUP_AGO_A_HOY, "nuevos": REAL_NUEVOS_RECUP_AGO_A_HOY,
+            "total": round(REAL_STOCK_RECUP_AGO_A_HOY + REAL_NUEVOS_RECUP_AGO_A_HOY, 2),
+        },
     },
 }
 

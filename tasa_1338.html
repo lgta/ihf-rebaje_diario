@@ -1,0 +1,496 @@
+<title>13.38%</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F4F5F0;
+    --paper-raised:#FFFFFF;
+    --paper-sunken:#EAECE5;
+    --ink:#1A2420;
+    --ink-2:#4B5750;
+    --ink-3:#7C8880;
+    --line:#D8DCD3;
+    --teal:#049688;
+    --teal-soft:rgba(4,150,136,0.10);
+    --teal-line:rgba(4,150,136,0.35);
+    --rust:#A8432E;
+    --rust-soft:rgba(168,67,46,0.10);
+    --rust-line:rgba(168,67,46,0.35);
+    --font-display:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --font-body:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#121916;
+      --paper-raised:#1B2420;
+      --paper-sunken:#0D1210;
+      --ink:#E7ECE6;
+      --ink-2:#B9C2BB;
+      --ink-3:#8A948C;
+      --line:#2B332E;
+      --teal:#1CA898;
+      --teal-soft:rgba(28,168,152,0.14);
+      --teal-line:rgba(28,168,152,0.4);
+      --rust:#D46A45;
+      --rust-soft:rgba(212,106,69,0.14);
+      --rust-line:rgba(212,106,69,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#121916;
+    --paper-raised:#1B2420;
+    --paper-sunken:#0D1210;
+    --ink:#E7ECE6;
+    --ink-2:#B9C2BB;
+    --ink-3:#8A948C;
+    --line:#2B332E;
+    --teal:#1CA898;
+    --teal-soft:rgba(28,168,152,0.14);
+    --teal-line:rgba(28,168,152,0.4);
+    --rust:#D46A45;
+    --rust-soft:rgba(212,106,69,0.14);
+    --rust-line:rgba(212,106,69,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--rust-soft); }
+
+  .page{ max-width:1080px; margin:0 auto; padding:0 24px 120px; }
+
+  /* ---------- header / hero ---------- */
+  header.hero{
+    max-width:820px; margin:0 auto;
+    padding:76px 0 56px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-3); margin:0 0 22px;
+  }
+  .hero-number{
+    font-family:var(--font-display); font-weight:700; color:var(--rust);
+    font-size:clamp(72px,15vw,144px); line-height:.92; letter-spacing:-.02em; margin:0;
+    text-wrap:balance;
+  }
+  .hero-frac{
+    font-family:var(--font-mono); font-size:15px; color:var(--ink-3); margin-top:14px;
+    font-variant-numeric:tabular-nums;
+  }
+  .hero-frac b{ color:var(--ink-2); font-weight:600; }
+  h1.hero-title{
+    font-family:var(--font-display); font-weight:600; font-size:clamp(22px,3vw,30px);
+    margin:30px 0 12px; text-wrap:balance;
+  }
+  .hero-sub{
+    font-size:17px; color:var(--ink-2); max-width:600px; margin:0 auto; text-wrap:balance;
+  }
+
+  /* ---------- sections ---------- */
+  section{ max-width:760px; margin:0 auto; padding:64px 0; border-top:1px solid var(--line); }
+  section.wide{ max-width:980px; }
+  .sec-label{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--rust); margin:0 0 14px; display:flex; align-items:baseline; gap:10px;
+  }
+  .sec-label .num{ color:var(--ink-3); }
+  h2{ font-family:var(--font-display); font-weight:600; font-size:clamp(24px,3.4vw,32px); margin:0 0 18px; text-wrap:balance; }
+  h3{ font-family:var(--font-display); font-weight:600; font-size:19px; margin:32px 0 10px; }
+  p{ margin:0 0 16px; color:var(--ink-2); max-width:66ch; }
+  p.lead{ font-size:18px; color:var(--ink); }
+  strong{ color:var(--ink); font-weight:600; }
+  code{ font-family:var(--font-mono); font-size:.92em; background:var(--paper-sunken); padding:.15em .4em; border-radius:4px; color:var(--ink); }
+  a{ color:var(--teal); }
+  .cap{ font-size:13px; color:var(--ink-3); margin-top:10px; }
+
+  /* ---------- wrong-vs-right callout ---------- */
+  .duel{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:26px 0 8px;
+  }
+  @media (max-width:640px){ .duel{ grid-template-columns:1fr; } }
+  .duel-card{
+    border-radius:12px; padding:20px 22px; border:1px solid var(--line);
+  }
+  .duel-card.no{ background:var(--rust-soft); border-color:var(--rust-line); }
+  .duel-card.yes{ background:var(--teal-soft); border-color:var(--teal-line); }
+  .duel-tag{ font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:600; }
+  .duel-card.no .duel-tag{ color:var(--rust); }
+  .duel-card.yes .duel-tag{ color:var(--teal); }
+  .duel-num{ font-family:var(--font-display); font-weight:700; font-size:34px; margin:6px 0 8px; }
+  .duel-card.no .duel-num{ color:var(--rust); }
+  .duel-card.yes .duel-num{ color:var(--teal); }
+  .duel-desc{ font-size:14.5px; color:var(--ink-2); }
+  .duel-desc b{ color:var(--ink); }
+
+  table.compare{ width:100%; border-collapse:collapse; margin:22px 0; font-size:14.5px; }
+  table.compare th, table.compare td{ padding:10px 14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+  table.compare th{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600; }
+  table.compare td.yes{ color:var(--teal); font-weight:600; }
+  table.compare td.no{ color:var(--rust); font-weight:600; }
+  .scroller{ overflow-x:auto; }
+
+  /* ---------- funnel ---------- */
+  .funnel{ display:flex; flex-direction:column; align-items:center; gap:0; margin:36px auto 8px; max-width:520px; }
+  .f-stage{
+    width:100%; background:var(--paper-raised); border:1px solid var(--line); border-radius:10px;
+    padding:16px 20px; text-align:center;
+  }
+  .f-stage .f-title{ font-weight:600; font-size:15px; }
+  .f-stage .f-note{ font-size:13px; color:var(--ink-3); margin-top:3px; }
+  .f-stage.base{ border-color:var(--ink-3); }
+  .f-stage.base .f-title{ font-family:var(--font-display); font-size:18px; }
+  .f-num{ font-family:var(--font-mono); font-weight:600; font-variant-numeric:tabular-nums; }
+  .f-arrow{ font-size:15px; color:var(--ink-3); padding:6px 0; line-height:1; }
+  .f-minus{
+    font-family:var(--font-mono); font-size:12.5px; color:var(--ink-3); padding:8px 14px;
+    border-left:2px dashed var(--line); margin-left:18px; align-self:flex-start; text-align:left;
+  }
+  .f-split{ display:flex; gap:14px; width:100%; margin-top:14px; flex-wrap:wrap; }
+  .f-split > div{ flex:1 1 200px; }
+  .f-card{ border-radius:10px; padding:18px 18px; text-align:center; }
+  .f-card.yes{ background:var(--teal-soft); border:1px solid var(--teal-line); }
+  .f-card.no{ background:var(--rust-soft); border:1px solid var(--rust-line); }
+  .f-card .f-tag{ font-family:var(--font-mono); font-size:11px; letter-spacing:.07em; text-transform:uppercase; font-weight:600; }
+  .f-card.yes .f-tag{ color:var(--teal); }
+  .f-card.no .f-tag{ color:var(--rust); }
+  .f-card .f-count{ font-family:var(--font-display); font-weight:700; font-size:26px; margin:6px 0 2px; }
+  .f-card.yes .f-count{ color:var(--teal); }
+  .f-card.no .f-count{ color:var(--rust); }
+  .f-card .f-sub{ font-size:12.5px; color:var(--ink-3); }
+  .f-result{
+    margin-top:22px; font-family:var(--font-mono); font-size:15px; text-align:center; color:var(--ink-2);
+  }
+  .f-result b{ color:var(--rust); font-size:20px; }
+
+  /* ---------- credit timelines ---------- */
+  .timeline-block{ margin:30px 0; }
+  .tl-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+  .tl-name{ font-weight:600; font-size:14.5px; }
+  .tl-name .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; }
+  .tl-name.entrada .dot{ background:var(--rust); }
+  .tl-name.aldia .dot{ background:var(--teal); }
+  .tl-id{ font-family:var(--font-mono); font-size:12px; color:var(--ink-3); }
+  .tl-row{ display:flex; gap:6px; }
+  .tl-cell{
+    flex:1 1 0; min-width:66px; border-radius:8px; padding:9px 7px; text-align:center;
+    background:var(--paper-sunken); border:1px solid var(--line);
+  }
+  .tl-cell.on{ background:var(--rust-soft); border-color:var(--rust-line); }
+  .tl-cell .tl-date{ font-family:var(--font-mono); font-size:10.5px; color:var(--ink-3); }
+  .tl-cell .tl-mora{ font-family:var(--font-mono); font-weight:700; font-size:16px; margin:3px 0; font-variant-numeric:tabular-nums; }
+  .tl-cell.on .tl-mora{ color:var(--rust); }
+  .tl-cell:not(.on) .tl-mora{ color:var(--teal); }
+  .tl-cell .tl-saldo{ font-family:var(--font-mono); font-size:10px; color:var(--ink-3); font-variant-numeric:tabular-nums; }
+  .tl-flag{ font-size:9.5px; color:var(--ink-3); margin-top:3px; visibility:hidden; }
+  .tl-cell.flagged .tl-flag{ visibility:visible; }
+
+  /* ---------- bar charts ---------- */
+  .chart{ margin:30px 0 6px; }
+  .bars{ display:flex; align-items:flex-end; gap:10px; height:220px; padding:0 4px; min-width:560px; position:relative; }
+  .bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative; }
+  .bar-val{ font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--ink-2); margin-bottom:6px; font-variant-numeric:tabular-nums; }
+  .bar{ width:100%; max-width:38px; background:var(--rust); border-radius:5px 5px 3px 3px; position:relative; cursor:default; }
+  .bar-col .bar-label{ font-family:var(--font-mono); font-size:11px; color:var(--ink-3); margin-top:8px; text-align:center; }
+  .avg-line{ position:absolute; left:0; right:0; border-top:2px dashed var(--ink-3); }
+  .avg-line span{
+    position:absolute; right:0; top:-19px; font-family:var(--font-mono); font-size:10.5px; color:var(--ink-3);
+    background:var(--paper); padding:0 4px;
+  }
+  .bar[data-tip]{ }
+  .bar[data-tip]::after{
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); font-family:var(--font-mono); font-size:11px; white-space:nowrap;
+    padding:6px 9px; border-radius:6px; opacity:0; pointer-events:none; transition:opacity .12s ease; z-index:5;
+  }
+  .bar[data-tip]:hover::after, .bar[data-tip]:focus::after{ opacity:1; }
+  .bar:hover, .bar:focus{ filter:brightness(1.08); outline:none; }
+
+  .win-bars{ display:flex; gap:28px; align-items:flex-end; height:180px; min-width:420px; justify-content:center; }
+  .win-col{ display:flex; flex-direction:column; align-items:center; width:110px; height:100%; justify-content:flex-end; }
+  .win-bar{ width:64px; border-radius:6px 6px 3px 3px; position:relative; }
+  .win-bar.current{ background:var(--rust); }
+  .win-bar.other{ background:var(--ink-3); opacity:.55; }
+  .win-val{ font-family:var(--font-mono); font-weight:700; font-size:15px; margin-bottom:8px; }
+  .win-col.iscur .win-val{ color:var(--rust); }
+  .win-label{ font-family:var(--font-mono); font-size:11.5px; color:var(--ink-3); margin-top:9px; text-align:center; line-height:1.4; }
+  .win-tag{ font-size:10px; color:var(--rust); font-weight:600; letter-spacing:.04em; text-transform:uppercase; margin-top:2px; }
+
+  /* ---------- daily line chart ---------- */
+  .daily-chart-wrap{ position:relative; width:100%; min-width:760px; height:286px; margin-top:8px; }
+  .daily-svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .daily-svg .gridline{ stroke:var(--line); stroke-width:1; }
+  .daily-svg .axis-label{ font-family:var(--font-mono); font-size:10.5px; fill:var(--ink-3); text-anchor:start; }
+  .daily-svg .refline{ stroke:var(--ink-3); stroke-width:1.5; stroke-dasharray:4 4; opacity:.7; }
+  .daily-svg .daily-area{ fill:var(--rust); opacity:.08; stroke:none; }
+  .daily-svg .daily-line{ fill:none; stroke:var(--rust); stroke-width:1.6; vector-effect:non-scaling-stroke; }
+  .daily-svg .pt-min{ fill:var(--teal); }
+  .daily-svg .pt-max{ fill:var(--rust); }
+  .dstrips{ position:absolute; inset:0; bottom:26px; display:block; }
+  .dstrip{ position:absolute; top:0; bottom:0; cursor:default; }
+  .dstrip:hover{ background:var(--rust-soft); }
+  .dstrip::after{
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); font-family:var(--font-mono); font-size:11px; white-space:nowrap;
+    padding:6px 9px; border-radius:6px; opacity:0; pointer-events:none; transition:opacity .1s ease; z-index:6;
+  }
+  .dstrip:hover::after{ opacity:1; }
+  .daily-legend{ display:flex; gap:20px; font-size:12.5px; color:var(--ink-2); margin-top:10px; flex-wrap:wrap; }
+  .daily-legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .daily-legend .sw{ width:14px; height:2px; background:var(--rust); display:inline-block; }
+  .daily-legend .sw.ref{ background:none; border-top:2px dashed var(--ink-3); }
+  .daily-legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .daily-legend .dot.min{ background:var(--teal); }
+  .daily-legend .dot.max{ background:var(--rust); }
+
+  /* ---------- table ---------- */
+  table.data{ width:100%; border-collapse:collapse; font-size:13.5px; font-family:var(--font-mono); min-width:560px; }
+  table.data th, table.data td{ padding:8px 12px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  table.data th:first-child, table.data td:first-child{ text-align:left; }
+  table.data th{ color:var(--ink-3); font-weight:500; text-transform:uppercase; font-size:10.5px; letter-spacing:.05em; }
+  table.data tr.total td{ border-top:2px solid var(--ink-3); font-weight:700; color:var(--ink); }
+
+  .callout{
+    background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--teal);
+    border-radius:0 10px 10px 0; padding:18px 22px; margin:22px 0; font-size:14.5px; color:var(--ink-2);
+  }
+  .callout b{ color:var(--ink); }
+  .callout.warn{ border-left-color:var(--rust); }
+
+  footer{
+    max-width:760px; margin:64px auto 0; padding-top:28px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--ink-3); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  footer .src{ font-family:var(--font-mono); }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">OKA · Cobranza · Enfoque alfa</p>
+    <p class="hero-number">13.38%</p>
+    <p class="hero-frac">47,966 entradas <span style="opacity:.5">/</span> 358,580 elegibles</p>
+    <h1 class="hero-title">De cada 100 créditos con una cuota por vencer, ~13 caen en mora al día siguiente.</h1>
+    <p class="hero-sub">Es la constante <code>P_NO_PAGA_DIA0</code> del modelo de capital asegurado — reconstruida acá paso a paso, con datos reales de Athena, no en abstracto.</p>
+  </header>
+
+  <section>
+    <p class="sec-label"><span class="num">01</span> Qué pregunta responde</p>
+    <h2>No es "¿cuánto paga tarde?" — es "¿cuántos créditos <em>sanos</em> se dañan?"</h2>
+    <p class="lead">13.38% es la probabilidad de que un crédito <strong>al día</strong> (sin mora) se atrase por primera vez al día siguiente de que vence una cuota. Se mide a nivel <strong>crédito</strong>, no a nivel cuota — y esa distinción ya le costó cara al proyecto una vez.</p>
+    <p>El primer intento de este modelo usó 27.4% en su lugar — el complemento de la curva de "% de cuotas pagadas a tiempo". Sonaba razonable. Contra el backtest real de junio, sobreestimó el recupero en <strong>+79%</strong>.</p>
+
+    <div class="duel">
+      <div class="duel-card no">
+        <div class="duel-tag">Se probó y falló</div>
+        <div class="duel-num">27.4%</div>
+        <div class="duel-desc"><b>Nivel cuota.</b> % de cuotas no pagadas exactamente el día de vencimiento — cuenta de nuevo cada mes a un crédito que ya viene arrastrando mora. Mezclada con la curva de recupero: <b style="color:var(--rust)">+79% de error</b>.</div>
+      </div>
+      <div class="duel-card yes">
+        <div class="duel-tag">La que se usa</div>
+        <div class="duel-num">13.38%</div>
+        <div class="duel-desc"><b>Nivel crédito.</b> Solo cuenta una entrada <b>nueva</b> — créditos que estaban al día y se atrasan por primera vez ese mes. Backtest real: <b style="color:var(--teal)">+5.4% de error</b>.</div>
+      </div>
+    </div>
+    <p class="cap">Ver bug 6 y bug 10 en el registro del proyecto — mezclar tasa y curva de poblaciones distintas es el error más caro que se ha cometido acá.</p>
+  </section>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">02</span> El embudo</p>
+    <h2>Cómo se define "elegible" y "entrada"</h2>
+    <p>Para cada mes del período de calibración (ago-2025 a may-2026), se arma un embudo de dos filtros y una bifurcación:</p>
+
+    <div class="funnel">
+      <div class="f-stage">
+        <div class="f-title">Créditos activos, sin reenganches</div>
+        <div class="f-note"><code>status IN (ACTIVE, COMPLETED)</code> · <code>flg_last_loan_in_chain = 1</code></div>
+      </div>
+      <div class="f-arrow">↓ con una cuota por vencer ese mes</div>
+      <div class="f-minus">− créditos que YA estaban en mora al cierre del mes anterior (no pueden "entrar" de nuevo — ya estaban dentro)</div>
+      <div class="f-arrow">↓</div>
+      <div class="f-stage base">
+        <div class="f-title">ELEGIBLES</div>
+        <div class="f-num" style="font-size:20px;">358,580</div>
+        <div class="f-note">10 meses, ago-2025 a may-2026</div>
+      </div>
+      <div class="f-arrow">↓ ¿paga la cuota a tiempo?</div>
+      <div class="f-split">
+        <div class="f-card yes">
+          <div class="f-tag">Sigue al día</div>
+          <div class="f-count">310,614</div>
+          <div class="f-sub">dayslate se mantiene en 0</div>
+        </div>
+        <div class="f-card no">
+          <div class="f-tag">Entrada</div>
+          <div class="f-count">47,966</div>
+          <div class="f-sub">dayslate pasa de 0 a 1</div>
+        </div>
+      </div>
+      <div class="f-result">tasa = 47,966 ÷ 358,580 = <b>13.38%</b></div>
+    </div>
+  </section>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">03</span> Con nombre y apellido</p>
+    <h2>Dos créditos reales, mismos 10 días</h2>
+    <p>Ambos tenían una cuota venciendo el 28 de febrero de 2026. Uno la paga, el otro no. <code>dayslate</code> es la variable que el modelo lee cada noche — "días de atraso" del crédito.</p>
+
+    <div class="timeline-block">
+      <div class="tl-head">
+        <span class="tl-name entrada"><span class="dot"></span>Crédito A — se atrasa</span>
+        <span class="tl-id">59f31a83…a891 · saldo S/2,463.43</span>
+      </div>
+      <div class="scroller">
+      <div class="tl-row">
+        <div class="tl-cell"><div class="tl-date">25 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell"><div class="tl-date">26 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell"><div class="tl-date">27 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell flagged"><div class="tl-date">28 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,463</div><div class="tl-flag">vence, no paga</div></div>
+        <div class="tl-cell on flagged"><div class="tl-date">1 mar</div><div class="tl-mora">1</div><div class="tl-saldo">S/2,463</div><div class="tl-flag">← ENTRADA</div></div>
+        <div class="tl-cell on"><div class="tl-date">2 mar</div><div class="tl-mora">2</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell on"><div class="tl-date">3 mar</div><div class="tl-mora">3</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell on"><div class="tl-date">4 mar</div><div class="tl-mora">4</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell on"><div class="tl-date">5 mar</div><div class="tl-mora">5</div><div class="tl-saldo">S/2,463</div></div>
+        <div class="tl-cell on"><div class="tl-date">6 mar</div><div class="tl-mora">6</div><div class="tl-saldo">S/2,463</div></div>
+      </div>
+      </div>
+    </div>
+
+    <div class="timeline-block">
+      <div class="tl-head">
+        <span class="tl-name aldia"><span class="dot"></span>Crédito B — sigue al día</span>
+        <span class="tl-id">19cd8179…bd7e · saldo S/2,458.52 → S/2,095.24</span>
+      </div>
+      <div class="scroller">
+      <div class="tl-row">
+        <div class="tl-cell"><div class="tl-date">25 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,459</div></div>
+        <div class="tl-cell"><div class="tl-date">26 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,459</div></div>
+        <div class="tl-cell"><div class="tl-date">27 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,459</div></div>
+        <div class="tl-cell flagged"><div class="tl-date">28 feb</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div><div class="tl-flag">vence, paga</div></div>
+        <div class="tl-cell"><div class="tl-date">1 mar</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div></div>
+        <div class="tl-cell"><div class="tl-date">2 mar</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div></div>
+        <div class="tl-cell"><div class="tl-date">3 mar</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div></div>
+        <div class="tl-cell"><div class="tl-date">4 mar</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div></div>
+        <div class="tl-cell"><div class="tl-date">5 mar</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div></div>
+        <div class="tl-cell"><div class="tl-date">6 mar</div><div class="tl-mora">0</div><div class="tl-saldo">S/2,095</div></div>
+      </div>
+      </div>
+    </div>
+    <p class="cap">Ambos son "elegibles" ese mes (tenían una cuota por vencer). Solo el Crédito A cuenta como "entrada" — el saldo completo de S/2,463.43 es lo que el modelo trata como capital recién dañado, no los S/363.28 que el Crédito B sí pagó.</p>
+  </section>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">04</span> El agregado</p>
+    <h2>10 meses, mes a mes</h2>
+    <p>El 13.38% no es un solo mes bueno o malo — es la suma de 10 meses fuera de muestra (nunca incluye el mes que se está probando en el backtest). Cada barra es un mes real:</p>
+
+    <div class="chart">
+      <div class="scroller">
+      <div class="bars">
+        <div class="avg-line" style="bottom:91.6%;"><span>promedio 13.45%</span></div>
+        <div class="bar-col"><div class="bar-val">14.03%</div><div class="bar" style="height:95.7%" data-tip="ago-2025 · 3,541 / 25,231"></div><div class="bar-label">ago</div></div>
+        <div class="bar-col"><div class="bar-val">13.95%</div><div class="bar" style="height:95.2%" data-tip="sep-2025 · 4,052 / 29,042"></div><div class="bar-label">sep</div></div>
+        <div class="bar-col"><div class="bar-val">14.61%</div><div class="bar" style="height:99.7%" data-tip="oct-2025 · 4,320 / 29,567"></div><div class="bar-label">oct</div></div>
+        <div class="bar-col"><div class="bar-val">13.37%</div><div class="bar" style="height:91.2%" data-tip="nov-2025 · 3,661 / 27,384"></div><div class="bar-label">nov</div></div>
+        <div class="bar-col"><div class="bar-val">12.99%</div><div class="bar" style="height:88.6%" data-tip="dic-2025 · 4,306 / 33,142"></div><div class="bar-label">dic</div></div>
+        <div class="bar-col"><div class="bar-val">12.37%</div><div class="bar" style="height:84.4%" data-tip="ene-2026 · 4,502 / 36,395"></div><div class="bar-label">ene</div></div>
+        <div class="bar-col"><div class="bar-val">11.47%</div><div class="bar" style="height:78.2%" data-tip="feb-2026 · 4,471 / 38,964"></div><div class="bar-label">feb</div></div>
+        <div class="bar-col"><div class="bar-val">14.68%</div><div class="bar" style="height:100%" data-tip="mar-2026 · 6,143 / 41,842"></div><div class="bar-label">mar</div></div>
+        <div class="bar-col"><div class="bar-val">13.08%</div><div class="bar" style="height:89.1%" data-tip="abr-2026 · 5,784 / 44,222"></div><div class="bar-label">abr</div></div>
+        <div class="bar-col"><div class="bar-val">14.16%</div><div class="bar" style="height:96.5%" data-tip="may-2026 · 6,671 / 47,111"></div><div class="bar-label">may</div></div>
+      </div>
+      </div>
+    </div>
+    <p class="cap">Rango mensual: 11.47% (feb) a 14.68% (mar) — nunca por debajo de 11% ni por encima de 15% en 10 meses. La tasa pooled (13.45% con la corrección de datos duplicados de esta sesión, ver §5) es un promedio estable, no un artefacto de un mes atípico.</p>
+
+    <div class="scroller">
+    <table class="data">
+      <thead><tr><th>Mes</th><th>Elegibles</th><th>Entradas</th><th>Tasa</th></tr></thead>
+      <tbody>
+        <tr><td>2025-08</td><td>25,231</td><td>3,541</td><td>14.03%</td></tr>
+        <tr><td>2025-09</td><td>29,042</td><td>4,052</td><td>13.95%</td></tr>
+        <tr><td>2025-10</td><td>29,567</td><td>4,320</td><td>14.61%</td></tr>
+        <tr><td>2025-11</td><td>27,384</td><td>3,661</td><td>13.37%</td></tr>
+        <tr><td>2025-12</td><td>33,142</td><td>4,306</td><td>12.99%</td></tr>
+        <tr><td>2026-01</td><td>36,395</td><td>4,502</td><td>12.37%</td></tr>
+        <tr><td>2026-02</td><td>38,964</td><td>4,471</td><td>11.47%</td></tr>
+        <tr><td>2026-03</td><td>41,842</td><td>6,143</td><td>14.68%</td></tr>
+        <tr><td>2026-04</td><td>44,222</td><td>5,784</td><td>13.08%</td></tr>
+        <tr><td>2026-05</td><td>47,111</td><td>6,671</td><td>14.16%</td></tr>
+        <tr class="total"><td>Total</td><td>352,900</td><td>47,451</td><td>13.45%</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="cap">Tabla reconstruida esta sesión con la regla de deduplicado del proyecto aplicada (bug 11) — 13.45% vs. el 13.38% en producción (47,966/358,580, sin ese ajuste). Diferencia: +0.07pp, ver §5.</p>
+
+    <h3>Día por día, últimos 12 meses (22-ago-2025 a 22-ago-2026)</h3>
+    <p>Lo de arriba son promedios mensuales. Esto es la misma tasa, sin agregar — 299 días con cuotas venciendo, cada uno con su propio elegibles/entradas. La línea recorre 8.1% a 24.7% día a día; pasá el mouse por cualquier punto.</p>
+    <div class="scroller">
+      <div class="daily-chart-wrap">
+      <svg viewBox="0 0 1000 286" preserveAspectRatio="none" class="daily-svg">
+        <g><line x1="0.0" y1="0" x2="0.0" y2="260" class="gridline"/><text x="0.0" y="278" class="axis-label">ago</text><line x1="26.9" y1="0" x2="26.9" y2="260" class="gridline"/><text x="26.9" y="278" class="axis-label">sep</text><line x1="110.7" y1="0" x2="110.7" y2="260" class="gridline"/><text x="110.7" y="278" class="axis-label">oct</text><line x1="198.0" y1="0" x2="198.0" y2="260" class="gridline"/><text x="198.0" y="278" class="axis-label">nov</text><line x1="281.9" y1="0" x2="281.9" y2="260" class="gridline"/><text x="281.9" y="278" class="axis-label">dic</text><line x1="359.1" y1="0" x2="359.1" y2="260" class="gridline"/><text x="359.1" y="278" class="axis-label">ene</text><line x1="446.3" y1="0" x2="446.3" y2="260" class="gridline"/><text x="446.3" y="278" class="axis-label">feb</text><line x1="526.9" y1="0" x2="526.9" y2="260" class="gridline"/><text x="526.9" y="278" class="axis-label">mar</text><line x1="614.1" y1="0" x2="614.1" y2="260" class="gridline"/><text x="614.1" y="278" class="axis-label">abr</text><line x1="694.6" y1="0" x2="694.6" y2="260" class="gridline"/><text x="694.6" y="278" class="axis-label">may</text><line x1="781.9" y1="0" x2="781.9" y2="260" class="gridline"/><text x="781.9" y="278" class="axis-label">jun</text><line x1="862.4" y1="0" x2="862.4" y2="260" class="gridline"/><text x="862.4" y="278" class="axis-label">jul</text><line x1="943.0" y1="0" x2="943.0" y2="260" class="gridline"/><text x="943.0" y="278" class="axis-label">ago</text></g>
+        <line x1="0" y1="170.59" x2="1000" y2="170.59" class="refline"/>
+        <path d="M 0.00,215.55 L 3.36,143.13 L 6.71,82.95 L 10.07,187.55 L 13.42,176.78 L 16.78,186.47 L 20.13,177.18 L 23.49,67.34 L 26.85,201.15 L 30.20,173.28 L 33.56,186.07 L 36.91,191.99 L 40.27,127.78 L 43.62,81.74 L 46.98,182.84 L 50.34,156.32 L 53.69,105.70 L 57.05,148.38 L 60.40,133.03 L 63.76,55.89 L 67.11,164.53 L 70.47,191.32 L 73.83,164.80 L 77.18,186.74 L 80.54,129.66 L 83.89,24.80 L 87.25,168.97 L 90.60,193.88 L 93.96,161.70 L 97.32,180.01 L 100.67,149.18 L 104.03,68.41 L 107.38,218.51 L 110.74,177.72 L 114.09,196.16 L 117.45,201.15 L 120.81,196.57 L 124.16,86.86 L 127.52,151.34 L 130.87,135.99 L 134.23,165.88 L 137.58,128.45 L 140.94,44.18 L 144.30,201.55 L 147.65,214.47 L 151.01,191.99 L 154.36,171.80 L 157.72,128.32 L 161.07,96.01 L 164.43,156.18 L 167.79,159.41 L 171.14,173.01 L 174.50,218.24 L 177.85,154.16 L 181.21,111.89 L 184.56,202.49 L 187.92,180.55 L 191.28,192.93 L 194.63,121.59 L 197.99,81.47 L 201.34,170.18 L 204.70,219.72 L 208.05,190.11 L 211.41,227.66 L 214.77,92.24 L 218.12,80.80 L 221.48,173.95 L 224.83,184.32 L 228.19,194.28 L 231.54,185.53 L 234.90,133.43 L 238.26,68.55 L 241.61,163.18 L 244.97,208.41 L 248.32,203.97 L 251.68,203.43 L 255.03,120.51 L 258.39,126.03 L 261.74,206.93 L 265.10,218.91 L 268.46,221.34 L 271.81,186.88 L 275.17,150.53 L 278.52,171.39 L 281.88,199.13 L 285.23,187.01 L 288.59,152.14 L 291.95,202.90 L 295.30,151.61 L 298.66,149.32 L 302.01,179.74 L 305.37,178.13 L 308.72,129.80 L 312.08,65.85 L 315.44,222.55 L 318.79,222.28 L 322.15,229.28 L 325.50,199.13 L 328.86,158.20 L 332.21,122.26 L 335.57,208.82 L 338.93,194.95 L 342.28,110.41 L 345.64,192.66 L 348.99,187.82 L 352.35,216.90 L 355.70,166.82 L 359.06,46.34 L 362.42,151.20 L 365.77,119.30 L 369.13,206.13 L 372.48,217.57 L 375.84,204.51 L 379.19,196.03 L 382.55,138.01 L 385.91,106.64 L 389.26,212.05 L 392.62,187.01 L 395.97,185.93 L 399.33,212.86 L 402.68,166.01 L 406.04,131.95 L 409.40,202.76 L 412.75,176.91 L 416.11,197.91 L 419.46,202.63 L 422.82,150.39 L 426.17,93.99 L 429.53,222.28 L 432.89,214.88 L 436.24,242.07 L 439.60,234.80 L 442.95,165.88 L 446.31,136.80 L 449.66,196.03 L 453.02,159.28 L 456.38,215.82 L 459.73,215.82 L 463.09,184.18 L 466.44,89.14 L 469.80,203.30 L 473.15,189.97 L 476.51,217.30 L 479.87,177.32 L 483.22,72.32 L 486.58,39.47 L 489.93,208.28 L 493.29,117.14 L 496.64,49.57 L 500.00,198.59 L 503.36,99.37 L 506.71,17.93 L 510.07,223.49 L 513.42,196.84 L 516.78,222.28 L 520.13,223.22 L 523.49,182.43 L 526.85,148.91 L 530.20,189.97 L 533.56,189.43 L 536.91,173.55 L 540.27,141.91 L 543.62,164.80 L 546.98,100.18 L 550.34,206.40 L 553.69,184.05 L 557.05,182.57 L 560.40,195.09 L 563.76,132.36 L 567.11,99.64 L 570.47,194.55 L 573.83,197.65 L 577.18,193.74 L 580.54,203.84 L 583.89,146.49 L 587.25,124.82 L 590.60,206.53 L 593.96,210.84 L 597.32,197.24 L 600.67,233.72 L 604.03,193.74 L 607.38,92.37 L 610.74,145.68 L 614.09,169.24 L 617.45,102.87 L 620.81,125.76 L 624.16,119.03 L 627.52,186.07 L 630.87,153.09 L 634.23,187.55 L 637.58,135.45 L 640.94,73.39 L 644.30,190.24 L 647.65,156.72 L 651.01,178.53 L 654.36,199.80 L 657.72,154.30 L 661.07,101.39 L 664.43,189.97 L 667.79,161.16 L 671.14,189.16 L 674.50,197.11 L 677.85,175.30 L 681.21,145.68 L 684.56,215.55 L 687.92,207.47 L 691.28,229.82 L 694.63,173.28 L 697.99,96.01 L 701.34,198.32 L 704.70,197.11 L 708.05,200.88 L 711.41,185.93 L 714.77,117.95 L 718.12,87.66 L 721.48,201.95 L 724.83,176.38 L 728.19,173.82 L 731.54,167.09 L 734.90,137.07 L 738.26,138.01 L 741.61,199.13 L 744.97,170.99 L 748.32,186.47 L 751.68,195.90 L 755.03,157.26 L 758.39,131.14 L 761.74,209.90 L 765.10,197.11 L 768.46,184.45 L 771.81,217.43 L 775.17,199.80 L 778.52,106.24 L 781.88,175.57 L 785.23,196.03 L 788.59,197.24 L 791.95,201.15 L 795.30,153.49 L 798.66,133.84 L 802.01,203.97 L 805.37,184.59 L 808.72,186.88 L 812.08,171.80 L 815.44,126.30 L 818.79,88.07 L 822.15,183.51 L 825.50,216.49 L 828.86,174.36 L 832.21,190.78 L 835.57,134.24 L 838.93,92.24 L 842.28,198.45 L 845.64,187.41 L 848.99,163.99 L 852.35,187.15 L 855.70,139.63 L 859.06,144.47 L 862.42,237.90 L 865.77,170.59 L 869.13,180.68 L 872.48,139.89 L 875.84,148.38 L 879.19,197.51 L 882.55,177.99 L 885.91,186.61 L 889.26,188.09 L 892.62,146.63 L 895.97,103.41 L 899.33,173.55 L 902.68,189.30 L 906.04,177.86 L 909.40,193.07 L 912.75,174.22 L 916.11,126.97 L 919.46,201.15 L 922.82,171.66 L 926.17,135.72 L 929.53,165.47 L 932.89,158.47 L 936.24,162.78 L 939.60,161.97 L 942.95,114.18 L 946.31,97.89 L 949.66,185.53 L 953.02,179.34 L 956.38,119.84 L 959.73,151.07 L 963.09,131.55 L 966.44,187.28 L 969.80,177.59 L 973.15,129.53 L 976.51,156.72 L 979.87,138.14 L 983.22,112.16 L 986.58,189.03 L 989.93,178.93 L 993.29,167.63 L 996.64,169.38 L 1000.00,40.82 L 1000,260 L 0,260 Z" class="daily-area"/>
+        <path d="M 0.00,215.55 L 3.36,143.13 L 6.71,82.95 L 10.07,187.55 L 13.42,176.78 L 16.78,186.47 L 20.13,177.18 L 23.49,67.34 L 26.85,201.15 L 30.20,173.28 L 33.56,186.07 L 36.91,191.99 L 40.27,127.78 L 43.62,81.74 L 46.98,182.84 L 50.34,156.32 L 53.69,105.70 L 57.05,148.38 L 60.40,133.03 L 63.76,55.89 L 67.11,164.53 L 70.47,191.32 L 73.83,164.80 L 77.18,186.74 L 80.54,129.66 L 83.89,24.80 L 87.25,168.97 L 90.60,193.88 L 93.96,161.70 L 97.32,180.01 L 100.67,149.18 L 104.03,68.41 L 107.38,218.51 L 110.74,177.72 L 114.09,196.16 L 117.45,201.15 L 120.81,196.57 L 124.16,86.86 L 127.52,151.34 L 130.87,135.99 L 134.23,165.88 L 137.58,128.45 L 140.94,44.18 L 144.30,201.55 L 147.65,214.47 L 151.01,191.99 L 154.36,171.80 L 157.72,128.32 L 161.07,96.01 L 164.43,156.18 L 167.79,159.41 L 171.14,173.01 L 174.50,218.24 L 177.85,154.16 L 181.21,111.89 L 184.56,202.49 L 187.92,180.55 L 191.28,192.93 L 194.63,121.59 L 197.99,81.47 L 201.34,170.18 L 204.70,219.72 L 208.05,190.11 L 211.41,227.66 L 214.77,92.24 L 218.12,80.80 L 221.48,173.95 L 224.83,184.32 L 228.19,194.28 L 231.54,185.53 L 234.90,133.43 L 238.26,68.55 L 241.61,163.18 L 244.97,208.41 L 248.32,203.97 L 251.68,203.43 L 255.03,120.51 L 258.39,126.03 L 261.74,206.93 L 265.10,218.91 L 268.46,221.34 L 271.81,186.88 L 275.17,150.53 L 278.52,171.39 L 281.88,199.13 L 285.23,187.01 L 288.59,152.14 L 291.95,202.90 L 295.30,151.61 L 298.66,149.32 L 302.01,179.74 L 305.37,178.13 L 308.72,129.80 L 312.08,65.85 L 315.44,222.55 L 318.79,222.28 L 322.15,229.28 L 325.50,199.13 L 328.86,158.20 L 332.21,122.26 L 335.57,208.82 L 338.93,194.95 L 342.28,110.41 L 345.64,192.66 L 348.99,187.82 L 352.35,216.90 L 355.70,166.82 L 359.06,46.34 L 362.42,151.20 L 365.77,119.30 L 369.13,206.13 L 372.48,217.57 L 375.84,204.51 L 379.19,196.03 L 382.55,138.01 L 385.91,106.64 L 389.26,212.05 L 392.62,187.01 L 395.97,185.93 L 399.33,212.86 L 402.68,166.01 L 406.04,131.95 L 409.40,202.76 L 412.75,176.91 L 416.11,197.91 L 419.46,202.63 L 422.82,150.39 L 426.17,93.99 L 429.53,222.28 L 432.89,214.88 L 436.24,242.07 L 439.60,234.80 L 442.95,165.88 L 446.31,136.80 L 449.66,196.03 L 453.02,159.28 L 456.38,215.82 L 459.73,215.82 L 463.09,184.18 L 466.44,89.14 L 469.80,203.30 L 473.15,189.97 L 476.51,217.30 L 479.87,177.32 L 483.22,72.32 L 486.58,39.47 L 489.93,208.28 L 493.29,117.14 L 496.64,49.57 L 500.00,198.59 L 503.36,99.37 L 506.71,17.93 L 510.07,223.49 L 513.42,196.84 L 516.78,222.28 L 520.13,223.22 L 523.49,182.43 L 526.85,148.91 L 530.20,189.97 L 533.56,189.43 L 536.91,173.55 L 540.27,141.91 L 543.62,164.80 L 546.98,100.18 L 550.34,206.40 L 553.69,184.05 L 557.05,182.57 L 560.40,195.09 L 563.76,132.36 L 567.11,99.64 L 570.47,194.55 L 573.83,197.65 L 577.18,193.74 L 580.54,203.84 L 583.89,146.49 L 587.25,124.82 L 590.60,206.53 L 593.96,210.84 L 597.32,197.24 L 600.67,233.72 L 604.03,193.74 L 607.38,92.37 L 610.74,145.68 L 614.09,169.24 L 617.45,102.87 L 620.81,125.76 L 624.16,119.03 L 627.52,186.07 L 630.87,153.09 L 634.23,187.55 L 637.58,135.45 L 640.94,73.39 L 644.30,190.24 L 647.65,156.72 L 651.01,178.53 L 654.36,199.80 L 657.72,154.30 L 661.07,101.39 L 664.43,189.97 L 667.79,161.16 L 671.14,189.16 L 674.50,197.11 L 677.85,175.30 L 681.21,145.68 L 684.56,215.55 L 687.92,207.47 L 691.28,229.82 L 694.63,173.28 L 697.99,96.01 L 701.34,198.32 L 704.70,197.11 L 708.05,200.88 L 711.41,185.93 L 714.77,117.95 L 718.12,87.66 L 721.48,201.95 L 724.83,176.38 L 728.19,173.82 L 731.54,167.09 L 734.90,137.07 L 738.26,138.01 L 741.61,199.13 L 744.97,170.99 L 748.32,186.47 L 751.68,195.90 L 755.03,157.26 L 758.39,131.14 L 761.74,209.90 L 765.10,197.11 L 768.46,184.45 L 771.81,217.43 L 775.17,199.80 L 778.52,106.24 L 781.88,175.57 L 785.23,196.03 L 788.59,197.24 L 791.95,201.15 L 795.30,153.49 L 798.66,133.84 L 802.01,203.97 L 805.37,184.59 L 808.72,186.88 L 812.08,171.80 L 815.44,126.30 L 818.79,88.07 L 822.15,183.51 L 825.50,216.49 L 828.86,174.36 L 832.21,190.78 L 835.57,134.24 L 838.93,92.24 L 842.28,198.45 L 845.64,187.41 L 848.99,163.99 L 852.35,187.15 L 855.70,139.63 L 859.06,144.47 L 862.42,237.90 L 865.77,170.59 L 869.13,180.68 L 872.48,139.89 L 875.84,148.38 L 879.19,197.51 L 882.55,177.99 L 885.91,186.61 L 889.26,188.09 L 892.62,146.63 L 895.97,103.41 L 899.33,173.55 L 902.68,189.30 L 906.04,177.86 L 909.40,193.07 L 912.75,174.22 L 916.11,126.97 L 919.46,201.15 L 922.82,171.66 L 926.17,135.72 L 929.53,165.47 L 932.89,158.47 L 936.24,162.78 L 939.60,161.97 L 942.95,114.18 L 946.31,97.89 L 949.66,185.53 L 953.02,179.34 L 956.38,119.84 L 959.73,151.07 L 963.09,131.55 L 966.44,187.28 L 969.80,177.59 L 973.15,129.53 L 976.51,156.72 L 979.87,138.14 L 983.22,112.16 L 986.58,189.03 L 989.93,178.93 L 993.29,167.63 L 996.64,169.38 L 1000.00,40.82" class="daily-line"/>
+        <circle cx="436.24" cy="242.07" r="4" class="pt-min"/><circle cx="506.71" cy="17.93" r="4" class="pt-max"/>
+      </svg>
+      <div class="dstrips"><div class="dstrip" style="left:0.0000%;width:0.3344%" data-tip="22-aug · 10.04% (75/747)"></div><div class="dstrip" style="left:0.3344%;width:0.3344%" data-tip="23-aug · 15.42% (115/746)"></div><div class="dstrip" style="left:0.6689%;width:0.3344%" data-tip="24-aug · 19.89% (150/754)"></div><div class="dstrip" style="left:1.0033%;width:0.3344%" data-tip="26-aug · 12.12% (273/2252)"></div><div class="dstrip" style="left:1.3378%;width:0.3344%" data-tip="27-aug · 12.92% (101/782)"></div><div class="dstrip" style="left:1.6722%;width:0.3344%" data-tip="28-aug · 12.20% (92/754)"></div><div class="dstrip" style="left:2.0067%;width:0.3344%" data-tip="29-aug · 12.89% (98/760)"></div><div class="dstrip" style="left:2.3411%;width:0.3344%" data-tip="30-aug · 21.05% (132/627)"></div><div class="dstrip" style="left:2.6756%;width:0.3344%" data-tip="02-sep · 11.11% (445/4006)"></div><div class="dstrip" style="left:3.0100%;width:0.3344%" data-tip="03-sep · 13.18% (135/1024)"></div><div class="dstrip" style="left:3.3445%;width:0.3344%" data-tip="04-sep · 12.23% (101/826)"></div><div class="dstrip" style="left:3.6789%;width:0.3344%" data-tip="05-sep · 11.79% (87/738)"></div><div class="dstrip" style="left:4.0134%;width:0.3344%" data-tip="06-sep · 16.56% (303/1830)"></div><div class="dstrip" style="left:4.3478%;width:0.3344%" data-tip="07-sep · 19.98% (167/836)"></div><div class="dstrip" style="left:4.6823%;width:0.3344%" data-tip="09-sep · 12.47% (193/1548)"></div><div class="dstrip" style="left:5.0167%;width:0.3344%" data-tip="10-sep · 14.44% (109/755)"></div><div class="dstrip" style="left:5.3512%;width:0.3344%" data-tip="11-sep · 18.20% (150/824)"></div><div class="dstrip" style="left:5.6856%;width:0.3344%" data-tip="12-sep · 15.03% (86/572)"></div><div class="dstrip" style="left:6.0201%;width:0.3344%" data-tip="13-sep · 16.17% (115/711)"></div><div class="dstrip" style="left:6.3545%;width:0.3344%" data-tip="14-sep · 21.90% (143/653)"></div><div class="dstrip" style="left:6.6890%;width:0.3344%" data-tip="16-sep · 13.83% (330/2386)"></div><div class="dstrip" style="left:7.0234%;width:0.3344%" data-tip="17-sep · 11.84% (103/870)"></div><div class="dstrip" style="left:7.3579%;width:0.3344%" data-tip="18-sep · 13.81% (112/811)"></div><div class="dstrip" style="left:7.6923%;width:0.3344%" data-tip="19-sep · 12.18% (85/698)"></div><div class="dstrip" style="left:8.0268%;width:0.3344%" data-tip="20-sep · 16.42% (124/755)"></div><div class="dstrip" style="left:8.3612%;width:0.3344%" data-tip="21-sep · 24.21% (223/921)"></div><div class="dstrip" style="left:8.6957%;width:0.3344%" data-tip="23-sep · 13.50% (208/1541)"></div><div class="dstrip" style="left:9.0301%;width:0.3344%" data-tip="24-sep · 11.65% (98/841)"></div><div class="dstrip" style="left:9.3645%;width:0.3344%" data-tip="25-sep · 14.04% (108/769)"></div><div class="dstrip" style="left:9.6990%;width:0.3344%" data-tip="26-sep · 12.68% (203/1601)"></div><div class="dstrip" style="left:10.0334%;width:0.3344%" data-tip="27-sep · 14.97% (119/795)"></div><div class="dstrip" style="left:10.3679%;width:0.3344%" data-tip="28-sep · 20.97% (168/801)"></div><div class="dstrip" style="left:10.7023%;width:0.3344%" data-tip="30-sep · 9.82% (136/1385)"></div><div class="dstrip" style="left:11.0368%;width:0.3344%" data-tip="01-oct · 12.85% (361/2809)"></div><div class="dstrip" style="left:11.3712%;width:0.3344%" data-tip="02-oct · 11.48% (181/1577)"></div><div class="dstrip" style="left:11.7057%;width:0.3344%" data-tip="03-oct · 11.11% (119/1071)"></div><div class="dstrip" style="left:12.0401%;width:0.3344%" data-tip="04-oct · 11.45% (100/873)"></div><div class="dstrip" style="left:12.3746%;width:0.3344%" data-tip="05-oct · 19.60% (147/750)"></div><div class="dstrip" style="left:12.7090%;width:0.3344%" data-tip="07-oct · 14.81% (402/2715)"></div><div class="dstrip" style="left:13.0435%;width:0.3344%" data-tip="08-oct · 15.95% (133/834)"></div><div class="dstrip" style="left:13.3779%;width:0.3344%" data-tip="10-oct · 13.73% (209/1522)"></div><div class="dstrip" style="left:13.7124%;width:0.3344%" data-tip="11-oct · 16.51% (143/866)"></div><div class="dstrip" style="left:14.0468%;width:0.3344%" data-tip="12-oct · 22.77% (135/593)"></div><div class="dstrip" style="left:14.3813%;width:0.3344%" data-tip="14-oct · 11.08% (164/1480)"></div><div class="dstrip" style="left:14.7157%;width:0.3344%" data-tip="15-oct · 10.12% (74/731)"></div><div class="dstrip" style="left:15.0502%;width:0.3344%" data-tip="16-oct · 11.79% (206/1747)"></div><div class="dstrip" style="left:15.3846%;width:0.3344%" data-tip="17-oct · 13.29% (112/843)"></div><div class="dstrip" style="left:15.7191%;width:0.3344%" data-tip="18-oct · 16.52% (136/823)"></div><div class="dstrip" style="left:16.0535%;width:0.3344%" data-tip="19-oct · 18.92% (136/719)"></div><div class="dstrip" style="left:16.3880%;width:0.3344%" data-tip="21-oct · 14.45% (263/1820)"></div><div class="dstrip" style="left:16.7224%;width:0.3344%" data-tip="22-oct · 14.21% (110/774)"></div><div class="dstrip" style="left:17.0569%;width:0.3344%" data-tip="23-oct · 13.20% (99/750)"></div><div class="dstrip" style="left:17.3913%;width:0.3344%" data-tip="24-oct · 9.84% (80/813)"></div><div class="dstrip" style="left:17.7258%;width:0.3344%" data-tip="25-oct · 14.60% (112/767)"></div><div class="dstrip" style="left:18.0602%;width:0.3344%" data-tip="26-oct · 17.74% (275/1550)"></div><div class="dstrip" style="left:18.3946%;width:0.3344%" data-tip="28-oct · 11.01% (182/1653)"></div><div class="dstrip" style="left:18.7291%;width:0.3344%" data-tip="29-oct · 12.64% (101/799)"></div><div class="dstrip" style="left:19.0635%;width:0.3344%" data-tip="30-oct · 11.72% (75/640)"></div><div class="dstrip" style="left:19.3980%;width:0.3344%" data-tip="31-oct · 17.02% (461/2708)"></div><div class="dstrip" style="left:19.7324%;width:0.3344%" data-tip="01-nov · 20.00% (30/150)"></div><div class="dstrip" style="left:20.0669%;width:0.3344%" data-tip="04-nov · 13.41% (465/3468)"></div><div class="dstrip" style="left:20.4013%;width:0.3344%" data-tip="05-nov · 9.73% (82/843)"></div><div class="dstrip" style="left:20.7358%;width:0.3344%" data-tip="06-nov · 11.93% (206/1727)"></div><div class="dstrip" style="left:21.0702%;width:0.3344%" data-tip="07-nov · 9.14% (83/908)"></div><div class="dstrip" style="left:21.4047%;width:0.3344%" data-tip="08-nov · 19.20% (158/823)"></div><div class="dstrip" style="left:21.7391%;width:0.3344%" data-tip="09-nov · 20.05% (175/873)"></div><div class="dstrip" style="left:22.0736%;width:0.3344%" data-tip="11-nov · 13.13% (217/1653)"></div><div class="dstrip" style="left:22.4080%;width:0.3344%" data-tip="12-nov · 12.36% (87/704)"></div><div class="dstrip" style="left:22.7425%;width:0.3344%" data-tip="13-nov · 11.62% (92/792)"></div><div class="dstrip" style="left:23.0769%;width:0.3344%" data-tip="14-nov · 12.27% (94/766)"></div><div class="dstrip" style="left:23.4114%;width:0.3344%" data-tip="15-nov · 16.14% (117/725)"></div><div class="dstrip" style="left:23.7458%;width:0.3344%" data-tip="16-nov · 20.96% (372/1775)"></div><div class="dstrip" style="left:24.0803%;width:0.3344%" data-tip="18-nov · 13.93% (234/1680)"></div><div class="dstrip" style="left:24.4147%;width:0.3344%" data-tip="19-nov · 10.57% (85/804)"></div><div class="dstrip" style="left:24.7492%;width:0.3344%" data-tip="20-nov · 10.90% (90/826)"></div><div class="dstrip" style="left:25.0836%;width:0.3344%" data-tip="21-nov · 10.94% (109/996)"></div><div class="dstrip" style="left:25.4181%;width:0.3344%" data-tip="22-nov · 17.10% (131/766)"></div><div class="dstrip" style="left:25.7525%;width:0.3344%" data-tip="23-nov · 16.69% (130/779)"></div><div class="dstrip" style="left:26.0870%;width:0.3344%" data-tip="25-nov · 10.68% (171/1601)"></div><div class="dstrip" style="left:26.4214%;width:0.3344%" data-tip="26-nov · 9.79% (166/1696)"></div><div class="dstrip" style="left:26.7559%;width:0.3344%" data-tip="27-nov · 9.61% (82/853)"></div><div class="dstrip" style="left:27.0903%;width:0.3344%" data-tip="28-nov · 12.17% (103/846)"></div><div class="dstrip" style="left:27.4247%;width:0.3344%" data-tip="29-nov · 14.87% (123/827)"></div><div class="dstrip" style="left:27.7592%;width:0.3344%" data-tip="30-nov · 13.32% (87/653)"></div><div class="dstrip" style="left:28.0936%;width:0.3344%" data-tip="02-dec · 11.26% (525/4662)"></div><div class="dstrip" style="left:28.4281%;width:0.3344%" data-tip="03-dec · 12.16% (131/1077)"></div><div class="dstrip" style="left:28.7625%;width:0.3344%" data-tip="04-dec · 14.75% (140/949)"></div><div class="dstrip" style="left:29.0970%;width:0.3344%" data-tip="05-dec · 10.98% (93/847)"></div><div class="dstrip" style="left:29.4314%;width:0.3344%" data-tip="06-dec · 14.79% (255/1724)"></div><div class="dstrip" style="left:29.7659%;width:0.3344%" data-tip="07-dec · 14.96% (137/916)"></div><div class="dstrip" style="left:30.1003%;width:0.3344%" data-tip="11-dec · 12.70% (448/3527)"></div><div class="dstrip" style="left:30.4348%;width:0.3344%" data-tip="12-dec · 12.82% (90/702)"></div><div class="dstrip" style="left:30.7692%;width:0.3344%" data-tip="13-dec · 16.41% (129/786)"></div><div class="dstrip" style="left:31.1037%;width:0.3344%" data-tip="14-dec · 21.16% (164/775)"></div><div class="dstrip" style="left:31.4381%;width:0.3344%" data-tip="16-dec · 9.52% (267/2804)"></div><div class="dstrip" style="left:31.7726%;width:0.3344%" data-tip="17-dec · 9.54% (100/1048)"></div><div class="dstrip" style="left:32.1070%;width:0.3344%" data-tip="18-dec · 9.02% (81/898)"></div><div class="dstrip" style="left:32.4415%;width:0.3344%" data-tip="19-dec · 11.26% (100/888)"></div><div class="dstrip" style="left:32.7759%;width:0.3344%" data-tip="20-dec · 14.30% (119/832)"></div><div class="dstrip" style="left:33.1104%;width:0.3344%" data-tip="21-dec · 16.97% (178/1049)"></div><div class="dstrip" style="left:33.4448%;width:0.3344%" data-tip="23-dec · 10.54% (187/1775)"></div><div class="dstrip" style="left:33.7793%;width:0.3344%" data-tip="24-dec · 11.57% (116/1003)"></div><div class="dstrip" style="left:34.1137%;width:0.3344%" data-tip="25-dec · 17.85% (146/818)"></div><div class="dstrip" style="left:34.4482%;width:0.3344%" data-tip="27-dec · 11.74% (309/2633)"></div><div class="dstrip" style="left:34.7826%;width:0.3344%" data-tip="28-dec · 12.10% (105/868)"></div><div class="dstrip" style="left:35.1171%;width:0.3344%" data-tip="30-dec · 9.94% (174/1751)"></div><div class="dstrip" style="left:35.4515%;width:0.3344%" data-tip="31-dec · 13.66% (447/3272)"></div><div class="dstrip" style="left:35.7860%;width:0.3344%" data-tip="01-jan · 22.61% (26/115)"></div><div class="dstrip" style="left:36.1204%;width:0.3344%" data-tip="03-jan · 14.82% (409/2759)"></div><div class="dstrip" style="left:36.4548%;width:0.3344%" data-tip="04-jan · 17.19% (171/995)"></div><div class="dstrip" style="left:36.7893%;width:0.3344%" data-tip="06-jan · 10.74% (290/2701)"></div><div class="dstrip" style="left:37.1237%;width:0.3344%" data-tip="07-jan · 9.89% (108/1092)"></div><div class="dstrip" style="left:37.4582%;width:0.3344%" data-tip="08-jan · 10.86% (107/985)"></div><div class="dstrip" style="left:37.7926%;width:0.3344%" data-tip="09-jan · 11.49% (127/1105)"></div><div class="dstrip" style="left:38.1271%;width:0.3344%" data-tip="10-jan · 15.80% (165/1044)"></div><div class="dstrip" style="left:38.4615%;width:0.3344%" data-tip="11-jan · 18.13% (173/954)"></div><div class="dstrip" style="left:38.7960%;width:0.3344%" data-tip="13-jan · 10.30% (162/1573)"></div><div class="dstrip" style="left:39.1304%;width:0.3344%" data-tip="14-jan · 12.16% (112/921)"></div><div class="dstrip" style="left:39.4649%;width:0.3344%" data-tip="15-jan · 12.24% (116/948)"></div><div class="dstrip" style="left:39.7993%;width:0.3344%" data-tip="16-jan · 10.24% (226/2207)"></div><div class="dstrip" style="left:40.1338%;width:0.3344%" data-tip="17-jan · 13.72% (159/1159)"></div><div class="dstrip" style="left:40.4682%;width:0.3344%" data-tip="18-jan · 16.25% (169/1040)"></div><div class="dstrip" style="left:40.8027%;width:0.3344%" data-tip="20-jan · 10.99% (213/1939)"></div><div class="dstrip" style="left:41.1371%;width:0.3344%" data-tip="21-jan · 12.91% (168/1301)"></div><div class="dstrip" style="left:41.4716%;width:0.3344%" data-tip="22-jan · 11.35% (123/1084)"></div><div class="dstrip" style="left:41.8060%;width:0.3344%" data-tip="23-jan · 11.00% (119/1082)"></div><div class="dstrip" style="left:42.1405%;width:0.3344%" data-tip="24-jan · 14.88% (181/1216)"></div><div class="dstrip" style="left:42.4749%;width:0.3344%" data-tip="25-jan · 19.07% (209/1096)"></div><div class="dstrip" style="left:42.8094%;width:0.3344%" data-tip="27-jan · 9.54% (267/2800)"></div><div class="dstrip" style="left:43.1438%;width:0.3344%" data-tip="28-jan · 10.09% (112/1110)"></div><div class="dstrip" style="left:43.4783%;width:0.3344%" data-tip="29-jan · 8.07% (83/1028)"></div><div class="dstrip" style="left:43.8127%;width:0.3344%" data-tip="30-jan · 8.61% (87/1010)"></div><div class="dstrip" style="left:44.1472%;width:0.3344%" data-tip="31-jan · 13.73% (425/3095)"></div><div class="dstrip" style="left:44.4816%;width:0.3344%" data-tip="01-feb · 15.89% (24/151)"></div><div class="dstrip" style="left:44.8161%;width:0.3344%" data-tip="03-feb · 11.49% (336/2924)"></div><div class="dstrip" style="left:45.1505%;width:0.3344%" data-tip="04-feb · 14.22% (165/1160)"></div><div class="dstrip" style="left:45.4849%;width:0.3344%" data-tip="05-feb · 10.02% (101/1008)"></div><div class="dstrip" style="left:45.8194%;width:0.3344%" data-tip="06-feb · 10.02% (183/1826)"></div><div class="dstrip" style="left:46.1538%;width:0.3344%" data-tip="07-feb · 12.37% (142/1148)"></div><div class="dstrip" style="left:46.4883%;width:0.3344%" data-tip="08-feb · 19.43% (211/1086)"></div><div class="dstrip" style="left:46.8227%;width:0.3344%" data-tip="10-feb · 10.95% (235/2147)"></div><div class="dstrip" style="left:47.1572%;width:0.3344%" data-tip="11-feb · 11.94% (134/1122)"></div><div class="dstrip" style="left:47.4916%;width:0.3344%" data-tip="12-feb · 9.91% (90/908)"></div><div class="dstrip" style="left:47.8261%;width:0.3344%" data-tip="13-feb · 12.88% (115/893)"></div><div class="dstrip" style="left:48.1605%;width:0.3344%" data-tip="14-feb · 20.68% (207/1001)"></div><div class="dstrip" style="left:48.4950%;width:0.3344%" data-tip="15-feb · 23.12% (231/999)"></div><div class="dstrip" style="left:48.8294%;width:0.3344%" data-tip="17-feb · 10.58% (360/3402)"></div><div class="dstrip" style="left:49.1639%;width:0.3344%" data-tip="18-feb · 17.35% (207/1193)"></div><div class="dstrip" style="left:49.4983%;width:0.3344%" data-tip="19-feb · 22.37% (247/1104)"></div><div class="dstrip" style="left:49.8328%;width:0.3344%" data-tip="20-feb · 11.30% (120/1062)"></div><div class="dstrip" style="left:50.1672%;width:0.3344%" data-tip="21-feb · 18.67% (258/1382)"></div><div class="dstrip" style="left:50.5017%;width:0.3344%" data-tip="22-feb · 24.72% (287/1161)"></div><div class="dstrip" style="left:50.8361%;width:0.3344%" data-tip="24-feb · 9.45% (222/2350)"></div><div class="dstrip" style="left:51.1706%;width:0.3344%" data-tip="25-feb · 11.43% (147/1286)"></div><div class="dstrip" style="left:51.5050%;width:0.3344%" data-tip="26-feb · 9.54% (177/1856)"></div><div class="dstrip" style="left:51.8395%;width:0.3344%" data-tip="27-feb · 9.47% (119/1257)"></div><div class="dstrip" style="left:52.1739%;width:0.3344%" data-tip="28-feb · 12.50% (153/1224)"></div><div class="dstrip" style="left:52.5084%;width:0.3344%" data-tip="01-mar · 14.99% (819/5465)"></div><div class="dstrip" style="left:52.8428%;width:0.3344%" data-tip="03-mar · 11.94% (406/3399)"></div><div class="dstrip" style="left:53.1773%;width:0.3344%" data-tip="04-mar · 11.98% (153/1277)"></div><div class="dstrip" style="left:53.5117%;width:0.3344%" data-tip="05-mar · 13.16% (145/1102)"></div><div class="dstrip" style="left:53.8462%;width:0.3344%" data-tip="06-mar · 15.51% (295/1902)"></div><div class="dstrip" style="left:54.1806%;width:0.3344%" data-tip="07-mar · 13.81% (165/1195)"></div><div class="dstrip" style="left:54.5151%;width:0.3344%" data-tip="08-mar · 18.61% (236/1268)"></div><div class="dstrip" style="left:54.8495%;width:0.3344%" data-tip="10-mar · 10.72% (251/2341)"></div><div class="dstrip" style="left:55.1839%;width:0.3344%" data-tip="11-mar · 12.38% (147/1187)"></div><div class="dstrip" style="left:55.5184%;width:0.3344%" data-tip="12-mar · 12.49% (126/1009)"></div><div class="dstrip" style="left:55.8528%;width:0.3344%" data-tip="13-mar · 11.56% (115/995)"></div><div class="dstrip" style="left:56.1873%;width:0.3344%" data-tip="14-mar · 16.22% (175/1079)"></div><div class="dstrip" style="left:56.5217%;width:0.3344%" data-tip="15-mar · 18.65% (213/1142)"></div><div class="dstrip" style="left:56.8562%;width:0.3344%" data-tip="17-mar · 11.60% (416/3585)"></div><div class="dstrip" style="left:57.1906%;width:0.3344%" data-tip="18-mar · 11.37% (137/1205)"></div><div class="dstrip" style="left:57.5251%;width:0.3344%" data-tip="19-mar · 11.66% (134/1149)"></div><div class="dstrip" style="left:57.8595%;width:0.3344%" data-tip="20-mar · 10.91% (118/1082)"></div><div class="dstrip" style="left:58.1940%;width:0.3344%" data-tip="21-mar · 15.17% (216/1424)"></div><div class="dstrip" style="left:58.5284%;width:0.3344%" data-tip="22-mar · 16.78% (214/1275)"></div><div class="dstrip" style="left:58.8629%;width:0.3344%" data-tip="24-mar · 10.71% (266/2484)"></div><div class="dstrip" style="left:59.1973%;width:0.3344%" data-tip="25-mar · 10.39% (140/1347)"></div><div class="dstrip" style="left:59.5318%;width:0.3344%" data-tip="26-mar · 11.40% (225/1974)"></div><div class="dstrip" style="left:59.8662%;width:0.3344%" data-tip="27-mar · 8.69% (114/1312)"></div><div class="dstrip" style="left:60.2007%;width:0.3344%" data-tip="28-mar · 11.66% (143/1226)"></div><div class="dstrip" style="left:60.5351%;width:0.3344%" data-tip="29-mar · 19.19% (427/2225)"></div><div class="dstrip" style="left:60.8696%;width:0.3344%" data-tip="31-mar · 15.23% (537/3525)"></div><div class="dstrip" style="left:61.2040%;width:0.3344%" data-tip="01-apr · 13.48% (19/141)"></div><div class="dstrip" style="left:61.5385%;width:0.3344%" data-tip="02-apr · 18.41% (368/1999)"></div><div class="dstrip" style="left:61.8729%;width:0.3344%" data-tip="05-apr · 16.71% (684/4094)"></div><div class="dstrip" style="left:62.2074%;width:0.3344%" data-tip="07-apr · 17.21% (555/3225)"></div><div class="dstrip" style="left:62.5418%;width:0.3344%" data-tip="08-apr · 12.23% (170/1390)"></div><div class="dstrip" style="left:62.8763%;width:0.3344%" data-tip="09-apr · 14.68% (206/1403)"></div><div class="dstrip" style="left:63.2107%;width:0.3344%" data-tip="10-apr · 12.12% (148/1221)"></div><div class="dstrip" style="left:63.5452%;width:0.3344%" data-tip="11-apr · 15.99% (197/1232)"></div><div class="dstrip" style="left:63.8796%;width:0.3344%" data-tip="12-apr · 20.60% (218/1058)"></div><div class="dstrip" style="left:64.2140%;width:0.3344%" data-tip="14-apr · 11.92% (256/2147)"></div><div class="dstrip" style="left:64.5485%;width:0.3344%" data-tip="15-apr · 14.41% (180/1249)"></div><div class="dstrip" style="left:64.8829%;width:0.3344%" data-tip="16-apr · 12.79% (335/2620)"></div><div class="dstrip" style="left:65.2174%;width:0.3344%" data-tip="17-apr · 11.21% (145/1294)"></div><div class="dstrip" style="left:65.5518%;width:0.3344%" data-tip="18-apr · 14.59% (183/1254)"></div><div class="dstrip" style="left:65.8863%;width:0.3344%" data-tip="19-apr · 18.52% (218/1177)"></div><div class="dstrip" style="left:66.2207%;width:0.3344%" data-tip="21-apr · 11.94% (310/2596)"></div><div class="dstrip" style="left:66.5552%;width:0.3344%" data-tip="22-apr · 14.08% (199/1413)"></div><div class="dstrip" style="left:66.8896%;width:0.3344%" data-tip="23-apr · 12.00% (163/1358)"></div><div class="dstrip" style="left:67.2241%;width:0.3344%" data-tip="24-apr · 11.41% (154/1350)"></div><div class="dstrip" style="left:67.5585%;width:0.3344%" data-tip="25-apr · 13.03% (172/1320)"></div><div class="dstrip" style="left:67.8930%;width:0.3344%" data-tip="26-apr · 15.23% (326/2141)"></div><div class="dstrip" style="left:68.2274%;width:0.3344%" data-tip="28-apr · 10.04% (273/2719)"></div><div class="dstrip" style="left:68.5619%;width:0.3344%" data-tip="29-apr · 10.64% (227/2133)"></div><div class="dstrip" style="left:68.8963%;width:0.3344%" data-tip="30-apr · 8.98% (78/869)"></div><div class="dstrip" style="left:69.2308%;width:0.3344%" data-tip="01-may · 13.18% (390/2960)"></div><div class="dstrip" style="left:69.5652%;width:0.3344%" data-tip="03-may · 18.92% (726/3837)"></div><div class="dstrip" style="left:69.8997%;width:0.3344%" data-tip="05-may · 11.32% (301/2660)"></div><div class="dstrip" style="left:70.2341%;width:0.3344%" data-tip="06-may · 11.41% (238/2086)"></div><div class="dstrip" style="left:70.5686%;width:0.3344%" data-tip="07-may · 11.13% (148/1330)"></div><div class="dstrip" style="left:70.9030%;width:0.3344%" data-tip="08-may · 12.24% (170/1389)"></div><div class="dstrip" style="left:71.2375%;width:0.3344%" data-tip="09-may · 17.29% (246/1423)"></div><div class="dstrip" style="left:71.5719%;width:0.3344%" data-tip="10-may · 19.54% (244/1249)"></div><div class="dstrip" style="left:71.9064%;width:0.3344%" data-tip="12-may · 11.05% (281/2542)"></div><div class="dstrip" style="left:72.2408%;width:0.3344%" data-tip="13-may · 12.95% (143/1104)"></div><div class="dstrip" style="left:72.5753%;width:0.3344%" data-tip="14-may · 13.14% (151/1149)"></div><div class="dstrip" style="left:72.9097%;width:0.3344%" data-tip="15-may · 13.64% (173/1268)"></div><div class="dstrip" style="left:73.2441%;width:0.3344%" data-tip="16-may · 15.87% (430/2710)"></div><div class="dstrip" style="left:73.5786%;width:0.3344%" data-tip="17-may · 15.80% (210/1329)"></div><div class="dstrip" style="left:73.9130%;width:0.3344%" data-tip="19-may · 11.26% (299/2656)"></div><div class="dstrip" style="left:74.2475%;width:0.3344%" data-tip="20-may · 13.35% (174/1303)"></div><div class="dstrip" style="left:74.5819%;width:0.3344%" data-tip="21-may · 12.20% (190/1557)"></div><div class="dstrip" style="left:74.9164%;width:0.3344%" data-tip="22-may · 11.50% (169/1469)"></div><div class="dstrip" style="left:75.2508%;width:0.3344%" data-tip="23-may · 14.37% (214/1489)"></div><div class="dstrip" style="left:75.5853%;width:0.3344%" data-tip="24-may · 16.31% (235/1441)"></div><div class="dstrip" style="left:75.9197%;width:0.3344%" data-tip="26-may · 10.46% (385/3681)"></div><div class="dstrip" style="left:76.2542%;width:0.3344%" data-tip="27-may · 11.41% (177/1551)"></div><div class="dstrip" style="left:76.5886%;width:0.3344%" data-tip="28-may · 12.35% (170/1376)"></div><div class="dstrip" style="left:76.9231%;width:0.3344%" data-tip="29-may · 9.90% (194/1959)"></div><div class="dstrip" style="left:77.2575%;width:0.3344%" data-tip="30-may · 11.21% (110/981)"></div><div class="dstrip" style="left:77.5920%;width:0.3344%" data-tip="31-may · 18.16% (649/3573)"></div><div class="dstrip" style="left:77.9264%;width:0.3344%" data-tip="02-jun · 13.01% (292/2245)"></div><div class="dstrip" style="left:78.2609%;width:0.3344%" data-tip="03-jun · 11.49% (210/1827)"></div><div class="dstrip" style="left:78.5953%;width:0.3344%" data-tip="04-jun · 11.40% (151/1324)"></div><div class="dstrip" style="left:78.9298%;width:0.3344%" data-tip="05-jun · 11.11% (183/1647)"></div><div class="dstrip" style="left:79.2642%;width:0.3344%" data-tip="06-jun · 14.65% (324/2212)"></div><div class="dstrip" style="left:79.5987%;width:0.3344%" data-tip="07-jun · 16.11% (235/1459)"></div><div class="dstrip" style="left:79.9331%;width:0.3344%" data-tip="09-jun · 10.90% (335/3072)"></div><div class="dstrip" style="left:80.2676%;width:0.3344%" data-tip="10-jun · 12.34% (208/1685)"></div><div class="dstrip" style="left:80.6020%;width:0.3344%" data-tip="11-jun · 12.17% (180/1479)"></div><div class="dstrip" style="left:80.9365%;width:0.3344%" data-tip="12-jun · 13.29% (186/1400)"></div><div class="dstrip" style="left:81.2709%;width:0.3344%" data-tip="13-jun · 16.67% (204/1224)"></div><div class="dstrip" style="left:81.6054%;width:0.3344%" data-tip="14-jun · 19.51% (237/1215)"></div><div class="dstrip" style="left:81.9398%;width:0.3344%" data-tip="16-jun · 12.42% (513/4131)"></div><div class="dstrip" style="left:82.2742%;width:0.3344%" data-tip="17-jun · 9.97% (154/1545)"></div><div class="dstrip" style="left:82.6087%;width:0.3344%" data-tip="18-jun · 13.10% (200/1527)"></div><div class="dstrip" style="left:82.9431%;width:0.3344%" data-tip="19-jun · 11.88% (169/1422)"></div><div class="dstrip" style="left:83.2776%;width:0.3344%" data-tip="20-jun · 16.08% (218/1356)"></div><div class="dstrip" style="left:83.6120%;width:0.3344%" data-tip="21-jun · 19.20% (312/1625)"></div><div class="dstrip" style="left:83.9465%;width:0.3344%" data-tip="23-jun · 11.31% (333/2944)"></div><div class="dstrip" style="left:84.2809%;width:0.3344%" data-tip="24-jun · 12.13% (195/1608)"></div><div class="dstrip" style="left:84.6154%;width:0.3344%" data-tip="25-jun · 13.87% (200/1442)"></div><div class="dstrip" style="left:84.9498%;width:0.3344%" data-tip="26-jun · 12.15% (309/2544)"></div><div class="dstrip" style="left:85.2843%;width:0.3344%" data-tip="27-jun · 15.68% (239/1524)"></div><div class="dstrip" style="left:85.6187%;width:0.3344%" data-tip="28-jun · 15.32% (209/1364)"></div><div class="dstrip" style="left:85.9532%;width:0.3344%" data-tip="01-jul · 8.38% (550/6565)"></div><div class="dstrip" style="left:86.2876%;width:0.3344%" data-tip="02-jul · 13.38% (334/2497)"></div><div class="dstrip" style="left:86.6221%;width:0.3344%" data-tip="03-jul · 12.63% (238/1884)"></div><div class="dstrip" style="left:86.9565%;width:0.3344%" data-tip="04-jul · 15.66% (220/1405)"></div><div class="dstrip" style="left:87.2910%;width:0.3344%" data-tip="05-jul · 15.03% (255/1697)"></div><div class="dstrip" style="left:87.6254%;width:0.3344%" data-tip="07-jul · 11.38% (442/3885)"></div><div class="dstrip" style="left:87.9599%;width:0.3344%" data-tip="08-jul · 12.83% (200/1559)"></div><div class="dstrip" style="left:88.2943%;width:0.3344%" data-tip="09-jul · 12.19% (194/1592)"></div><div class="dstrip" style="left:88.6288%;width:0.3344%" data-tip="10-jul · 12.08% (202/1672)"></div><div class="dstrip" style="left:88.9632%;width:0.3344%" data-tip="11-jul · 15.16% (239/1577)"></div><div class="dstrip" style="left:89.2977%;width:0.3344%" data-tip="12-jul · 18.37% (259/1410)"></div><div class="dstrip" style="left:89.6321%;width:0.3344%" data-tip="14-jul · 13.16% (353/2682)"></div><div class="dstrip" style="left:89.9666%;width:0.3344%" data-tip="15-jul · 11.99% (163/1359)"></div><div class="dstrip" style="left:90.3010%;width:0.3344%" data-tip="16-jul · 12.84% (376/2929)"></div><div class="dstrip" style="left:90.6355%;width:0.3344%" data-tip="17-jul · 11.71% (181/1546)"></div><div class="dstrip" style="left:90.9699%;width:0.3344%" data-tip="18-jul · 13.11% (197/1503)"></div><div class="dstrip" style="left:91.3043%;width:0.3344%" data-tip="19-jul · 16.62% (242/1456)"></div><div class="dstrip" style="left:91.6388%;width:0.3344%" data-tip="21-jul · 11.11% (349/3142)"></div><div class="dstrip" style="left:91.9732%;width:0.3344%" data-tip="22-jul · 13.30% (194/1459)"></div><div class="dstrip" style="left:92.3077%;width:0.3344%" data-tip="23-jul · 15.97% (233/1459)"></div><div class="dstrip" style="left:92.6421%;width:0.3344%" data-tip="25-jul · 13.76% (406/2951)"></div><div class="dstrip" style="left:92.9766%;width:0.3344%" data-tip="26-jul · 14.28% (376/2633)"></div><div class="dstrip" style="left:93.3110%;width:0.3344%" data-tip="28-jul · 13.96% (410/2937)"></div><div class="dstrip" style="left:93.6455%;width:0.3344%" data-tip="31-jul · 14.02% (1088/7760)"></div><div class="dstrip" style="left:93.9799%;width:0.3344%" data-tip="01-aug · 17.57% (13/74)"></div><div class="dstrip" style="left:94.3144%;width:0.3344%" data-tip="02-aug · 18.78% (465/2476)"></div><div class="dstrip" style="left:94.6488%;width:0.3344%" data-tip="04-aug · 12.27% (428/3488)"></div><div class="dstrip" style="left:94.9833%;width:0.3344%" data-tip="05-aug · 12.73% (228/1791)"></div><div class="dstrip" style="left:95.3177%;width:0.3344%" data-tip="06-aug · 17.15% (408/2379)"></div><div class="dstrip" style="left:95.6522%;width:0.3344%" data-tip="08-aug · 14.83% (485/3271)"></div><div class="dstrip" style="left:95.9866%;width:0.3344%" data-tip="09-aug · 16.28% (269/1652)"></div><div class="dstrip" style="left:96.3211%;width:0.3344%" data-tip="11-aug · 12.14% (409/3369)"></div><div class="dstrip" style="left:96.6555%;width:0.3344%" data-tip="12-aug · 12.86% (195/1516)"></div><div class="dstrip" style="left:96.9900%;width:0.3344%" data-tip="13-aug · 16.43% (244/1485)"></div><div class="dstrip" style="left:97.3244%;width:0.3344%" data-tip="14-aug · 14.41% (218/1513)"></div><div class="dstrip" style="left:97.6589%;width:0.3344%" data-tip="15-aug · 15.79% (223/1412)"></div><div class="dstrip" style="left:97.9933%;width:0.3344%" data-tip="16-aug · 17.72% (554/3126)"></div><div class="dstrip" style="left:98.3278%;width:0.3344%" data-tip="18-aug · 12.01% (395/3288)"></div><div class="dstrip" style="left:98.6622%;width:0.3344%" data-tip="19-aug · 12.76% (211/1653)"></div><div class="dstrip" style="left:98.9967%;width:0.3344%" data-tip="20-aug · 13.60% (197/1448)"></div><div class="dstrip" style="left:99.3311%;width:0.3344%" data-tip="21-aug · 13.47% (258/1916)"></div><div class="dstrip" style="left:99.6656%;width:0.3344%" data-tip="22-aug · 23.02% (360/1564)"></div></div>
+      </div>
+    </div>
+    <div class="daily-legend">
+      <span><span class="sw"></span>tasa diaria</span>
+      <span><span class="sw ref"></span>referencia 13.38%</span>
+      <span><span class="dot min"></span>mínimo: 29-ene, 8.07%</span>
+      <span><span class="dot max"></span>máximo: 22-feb, 24.72%</span>
+    </div>
+    <p class="cap"><strong>Dos patrones semanales explican gran parte del ruido, no son errores de datos:</strong> los <strong>lunes desaparecen</strong> de la serie (ninguna cuota vence en domingo — se corren a lunes, así que no hay un vencimiento con fecha domingo cuyo "día siguiente" caiga lunes) y los <strong>martes casi siempre pican</strong> (absorben el vencimiento de todo el fin de semana de una vez, con 2-6&times; más elegibles que un día normal). El 1&deg; de cada mes también es un dato chico y ruidoso (ver ene, feb, abr, ago: n&lt;160) — muy pocas cuotas vencen exactamente el último día de un mes. Ninguno de estos patrones mueve el promedio mensual (&sect;4) de forma material — se cancelan al agregar.</p>
+  </section>
+
+  <section>
+    <p class="sec-label"><span class="num">05</span> ¿Sigue vigente?</p>
+    <h2>Se puso a prueba dos veces esta semana</h2>
+    <p><strong>Primero, el deduplicado.</strong> ~0.003% de las filas de la tabla fuente vienen duplicadas (mismo crédito, mismo día, dos fotos — un bug ya conocido del proyecto, bug 11). La query que calcula 13.38% nunca había aplicado la corrección. Se re-corrió con la regla validada: <strong>13.45%</strong> — un movimiento de +0.07pp, prácticamente nada.</p>
+    <p><strong>Segundo, la ventana de calibración.</strong> ¿Y si 10 meses fuera un período raro? Se recalculó con 6 y con 12 meses, siempre terminando en may-2026 (para no filtrar junio/julio, los meses de backtest):</p>
+
+    <div class="chart">
+      <div class="scroller">
+      <div class="win-bars">
+        <div class="win-col">
+          <div class="win-val">13.19%</div>
+          <div class="win-bar other" style="height:89.9%"></div>
+          <div class="win-label">6 meses<br>dic25–may26</div>
+        </div>
+        <div class="win-col iscur">
+          <div class="win-val">13.45%</div>
+          <div class="win-bar current" style="height:91.6%"></div>
+          <div class="win-label">10 meses<br>ago25–may26</div>
+          <div class="win-tag">en producción</div>
+        </div>
+        <div class="win-col">
+          <div class="win-val">13.38%</div>
+          <div class="win-bar other" style="height:91.1%"></div>
+          <div class="win-label">12 meses<br>jun25–may26</div>
+        </div>
+      </div>
+      </div>
+    </div>
+    <p class="cap">Las 3 ventanas caen dentro de 0.3pp entre sí. Si la cartera hubiera cambiado de comportamiento, una ventana de 6 meses debería verse distinta a una de 12 — no es el caso. La tasa no está desactualizada.</p>
+
+    <div class="callout">
+      <b>Lo que esto no explica:</b> en agosto 2026, el capital que realmente entra en mora corre ~26% por encima de lo que el calendario × 13.38% proyecta (ver el análisis de volumen vs. efectividad). Ni el deduplicado ni la ventana mueven la tasa lo suficiente como para justificarlo — la hipótesis más probable es una composición distinta de qué créditos entran (más saldo alto), no una tasa histórica mal calibrada.
+    </div>
+  </section>
+
+  <footer>
+    <span>Reconstruido con Athena, <code style="font-family:inherit">dev_datalake_master</code> — mismas reglas de siempre: <code style="font-family:inherit">status IN (ACTIVE,COMPLETED)</code>, excluye reenganches, dedup bug 11.</span>
+    <span class="src">fase3_backtest.sql · bloque 3H</span>
+  </footer>
+
+</div>

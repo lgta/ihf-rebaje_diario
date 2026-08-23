@@ -31,12 +31,39 @@ Insumos:
 
 Real a la fecha (1-18 ago), query K4 (2026-08-18): ASEG_STOCK saldo_asegurado_real=2,605,896.73
 (1,678/2,696 creditos activados), ASEG_NUEVOS saldo_asegurado_real=4,189,176.85
-(2,773/4,141 creditos activados) -- hardcodeado abajo, no hay CSV diario.
-Real fantasma a la fecha (1-18 ago, query 2026-08-20, investigacion_capa_fantasma.sql
-patron): S/2,827,691.80 (1,997 creditos) + S/3,556.95 (4 creditos) de la
-cohorte 31-jul (bug14 v3, ya resuelta -- el desenlace de "pago 1 dia tarde"
-se conoce el 1-ago, no cambia entre el 18-ago y el 20-ago) = S/2,831,248.75
--- hardcodeado abajo, no hay CSV diario.
+(2,773/4,141 creditos activados). Real fantasma (1-18 ago, investigacion_capa_
+fantasma.sql patron): S/2,827,691.80 (1,997 creditos) + S/3,556.95 (4 creditos)
+de la cohorte 31-jul (bug14 v3) = S/2,831,248.75.
+
+v4 (2026-08-21, a pedido del usuario): refresco del corte a 20-ago -- NO se
+espera a que cierre agosto, se sigue el avance con la data disponible hasta
+ayer (hoy=21-ago). Las 3 queries K1/K2/K3 (mismo patron que cierre_julio.sql
+J1/J2 e investigacion_capa_fantasma.sql Q3, ancladas a julio->agosto, corte
+20-ago) se corrieron frescas contra Athena -- ya no hardcodeadas de memoria,
+quedan documentadas en el scratchpad de esa sesion si hace falta reconstruir.
+K3 (fantasma) ya incluye la cohorte 31-jul unificada en el mismo filtro de
+fecha_pago (1-ago a 20-ago), no hace falta sumarla aparte como en v2/v3.
+
+Real a la fecha (1-20 ago):
+  ASEG_STOCK   saldo_asegurado_real=2,690,562.16 (1,741/2,695 creditos activados)
+  ASEG_NUEVOS  saldo_asegurado_real=5,173,860.76 (3,369/4,744 creditos activados)
+  FANTASMA     saldo_asegurado_real=3,134,320.83 (2,255 creditos, cohorte 31-jul incluida)
+
+v5 (2026-08-22, a pedido del usuario -- item 2/3 del pedido de sesion):
+refresco del corte a 21-ago. Corte elegido 21-ago (no 22-ago/hoy) porque
+dts_asignaciones_gestiones_cobranza (usada en el analisis de volumen vs
+efectividad de la misma sesion) solo tiene datos hasta 21-ago -- un solo
+corte para todo el analisis. Queries K1/K2/K3 ahora SI quedan en el repo,
+segmentadas por tramo/avance ademas del agregado -- ver
+analisis_volumen_efectividad_agosto.sql/.md y
+datos_volumen_efectividad_agosto/. Desagregado por segmento (item 3) y
+descomposicion volumen-vs-efectividad (item 4) documentados ahi, no en
+este archivo (este archivo solo trackea el agregado del avance en vivo).
+
+Real a la fecha (1-21 ago):
+  ASEG_STOCK   saldo_asegurado_real=2,734,665.08 (1,772/2,695 creditos activados)
+  ASEG_NUEVOS  saldo_asegurado_real=5,537,430.70 (3,618/5,196 creditos activados)
+  FANTASMA     saldo_asegurado_real=3,348,684.20 (2,403 creditos, cohorte 31-jul incluida)
 """
 import csv
 from datetime import date, timedelta
@@ -96,13 +123,13 @@ CUOTAS_31JUL_FANTASMA = {
 SALDO_31JUL_FANTASMA = sum(CUOTAS_31JUL_FANTASMA.values())  # 140,194
 
 INICIO = date(2026, 8, 1)
-HOY = date(2026, 8, 18)
+HOY = date(2026, 8, 21)
 N_DIAS = 31
 saldo_stock_inicial = sum(stock_agosto.values())
 
-REAL_STOCK_A_HOY = 2605896.73
-REAL_NUEVOS_A_HOY = 4189176.85
-REAL_FANTASMA_A_HOY = 2827691.80 + 3556.95  # + cohorte 31-jul (bug14 v3), ver docstring
+REAL_STOCK_A_HOY = 2734665.08
+REAL_NUEVOS_A_HOY = 5537430.70
+REAL_FANTASMA_A_HOY = 3348684.20  # ya incluye la cohorte 31-jul (bug14 v3), ver docstring
 
 filas = []
 for d in range(1, N_DIAS + 1):
@@ -146,11 +173,11 @@ if __name__ == "__main__":
     print(f"\n=== RESUMEN AL {HOY.isoformat()} -- ENFOQUE ALFA: CAPITAL ASEGURADO, AGOSTO 2026 (con capa fantasma) ===")
     print(f"Meta total de agosto (proyectada al cierre):     S/ {fin_row['aseg_total']:,.0f}")
     print(f"  stock: S/ {fin_row['aseg_stock']:,.0f}  |  nuevos: S/ {fin_row['aseg_nuevos']:,.0f}  |  fantasma: S/ {fin_row['aseg_fantasma']:,.0f}")
-    print(f"Ya asegurado real (1-18 ago):                     S/ {real_total_hoy:,.0f}")
+    print(f"Ya asegurado real (1-{HOY.day} ago):                     S/ {real_total_hoy:,.0f}")
     print(f"  stock: S/ {REAL_STOCK_A_HOY:,.0f}  |  nuevos: S/ {REAL_NUEVOS_A_HOY:,.0f}  |  fantasma: S/ {REAL_FANTASMA_A_HOY:,.0f}")
-    print(f"Meta proyectada acumulada al mismo día (día 18):  S/ {hoy_row['aseg_total']:,.0f}")
+    print(f"Meta proyectada acumulada al mismo día (día {HOY.day}):  S/ {hoy_row['aseg_total']:,.0f}")
     avance_pct = 100 * real_total_hoy / fin_row['aseg_total']
     print(f"Avance real vs meta total del mes: {avance_pct:.1f}%")
-    err_dia18 = real_total_hoy - hoy_row['aseg_total']
-    print(f"Real vs. proyectado AL MISMO DIA (18): {100*err_dia18/hoy_row['aseg_total']:+.1f}%")
-    print(f"\n>>> LO QUE RESTA DEL MES (día 19 al 31): S/ {fin_row['aseg_total'] - real_total_hoy:,.0f} <<<")
+    err_hoy = real_total_hoy - hoy_row['aseg_total']
+    print(f"Real vs. proyectado AL MISMO DIA ({HOY.day}): {100*err_hoy/hoy_row['aseg_total']:+.1f}%")
+    print(f"\n>>> LO QUE RESTA DEL MES (día {HOY.day+1} al 31): S/ {fin_row['aseg_total'] - real_total_hoy:,.0f} <<<")

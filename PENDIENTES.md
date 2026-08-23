@@ -71,21 +71,20 @@ nuevo sobre `dts_mambu_loans_hist`, y este archivo nunca lo había tenido):**
 - Resultados actualizados en `avance_cobranza_fase.md` (tabla + lectura de resultados). La
   nota "⚠ Pendiente" en `ESTADO.md` "Análisis puntuales" — quitada.
 
-### Tarea 2 — Refrescar el artifact `capital_asegurado.html`
-**Archivo:** `capital_asegurado.html` (ya reescrito con 5 créditos reales + curvas +
-backtest + avance en vivo, pero con **números pre-bug-12**).
+### Tarea 2 — ~~Refrescar el artifact `capital_asegurado.html`~~ CERRADA 2026-08-23
+**Reconstrucción completa** (no un simple refresco de cifras — el archivo tenía números
+previos a bug 12 Y a la capa fantasma de bug 14, un motor de 2 componentes en vez de 3).
+Se rehizo con: curvas actuales (bug 12), backtest de 3 meses cerrados con capa fantasma
+(mayo -4.4%, junio +2.65%, julio -0.2% — este último el número reconstruido en bug 17,
+`BUGS.md`), avance en vivo de agosto (corte 21-ago, +2.7% vs. proyectado mismo día) y
+segmentado de agosto, más 5 créditos de ejemplo nuevos (agosto real). Mismo motor visual/JS
+del archivo original, solo se reemplazaron los datos y el texto que los describe.
 
-**Qué hacer:** actualizar los números del artifact con los vigentes en
-`enfoque_capital_asegurado.md`/`ESTADO.md`: backtest de junio -4.4% (stock +7.2%, nuevos
--8.6%), avance de julio +4.1% al corte del día 13 (meta S/10,306,231, real S/4,971,669).
-Republicar vía la herramienta Artifact usando la misma URL
-(`https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a`). Copiar el
-archivo fuente actualizado al repo (ya está ahí, solo hay que sobreescribirlo — es la
-convención del proyecto, ver `CLAUDE.md`). Actualizar su estado de "⚠ desactualizado" a
-"✓ vigente" en las tablas de `README.md` y `ESTADO.md`.
-
-**Criterio de terminado:** el artifact muestra los mismos números que `ESTADO.md`; ambas
-tablas (README/ESTADO) dicen "✓ vigente".
+**URL vieja (`3a6b8cb9...`) ya no existía** (mismo patrón que pasó con
+`curvas_matriz_alfa.html` — los artifacts pueden expirar/desaparecer con el tiempo) —
+republicado en una URL nueva:
+`https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7`. `README.md` y
+`ESTADO.md` actualizados a "✓ vigente" con la URL nueva.
 
 ### Tarea 3 — ~~Aplicar el fix de bug 11 (filas duplicadas) a `enfoque_capital_asegurado.sql`~~ hecho 2026-08-20
 **Contexto:** bug 11 (`BUGS.md`) encontró 1,316 combinaciones (crédito, día) con filas
@@ -182,20 +181,39 @@ Meta proyectada S/2,108,435 (stock S/711,160 + nuevos S/1,397,275) vs. real fina
 
 ## Compartidas entre ambos enfoques
 
-### Tarea 9 — Extender el backtest a 3-6 meses cerrados más
-**Avance 2026-08-18:** julio ya se cerró como segundo punto de dato para ambos enfoques
-(`cierre_julio.sql`, ver `SEGUIMIENTO.md`) — capital asegurado +4.7% (vs. -4.7% en junio,
-signo invertido), recupero oficial +17.6% (vs. +5.4% en junio, mismo signo pero mucho más
-grande, concentrado en "nuevos"). Con 2 meses todavía no alcanza para saber si ±5-22% es el
-error típico o si julio fue una anomalía — faltan 2-4 meses más (replicar `cierre_julio.sql`
-ajustando fechas para meses previos ya cerrados: mayo, abril, etc., y anotar cada uno en
-`SEGUIMIENTO.md`).
+### Tarea 9 — Extender el backtest a 3-6 meses cerrados más — PARCIAL, 2026-08-22/23
+**Avance 2026-08-22:** mayo agregado como tercer mes cerrado del backtest de capital
+asegurado (`backtest_capital_asegurado_mayo.py`) — error -4.4% (stock -0.8%, nuevos -14.9%,
+fantasma +7.4%). Al reconstruir julio con el mismo rigor (dedup + calendario de fantasma
+frontier-adjusted, `backtest_capital_asegurado_julio_diario.py`) se encontró que el número
+oficial anterior (+2.17%) estaba calculado con `jul_calendario.csv`, un archivo huérfano que
+corría 7.9% alto — **el número correcto es -0.2%** (stock -1.9%, nuevos -12.2%, fantasma
++15.4%), adoptado y confirmado con el usuario 2026-08-23 (ver bug 17 en `BUGS.md`,
+`SEGUIMIENTO.md` ya actualizado). Con los 3 meses (mayo -4.4%, junio +2.65%, julio -0.2%):
+**"nuevos" subestima en los 3, sin excepción** (mismo signo, distinta magnitud) — señal
+posiblemente real, no solo varianza, ver `analisis_volumen_efectividad_agosto.md` (el mismo
+patrón aparece en el tracking en vivo de agosto). El artifact
+[📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)
+explica el mecanismo completo con julio y mayo como ejemplos.
 
-### Tarea 10 — Recalibrar las curvas excluyendo el mes de prueba
-Hoy `curva_stock`/`curva_nuevos` (ambos enfoques) se calibran sobre los 14 meses completos
-de historia (incluyen junio, peso marginal ~1/14) — solo la tasa `P(no paga a tiempo)` se
-recalibró estrictamente fuera de muestra. Un backtest riguroso recalcularía también las
-curvas excluyendo cada mes de prueba.
+**Sigue pendiente:** 3 puntos de dato todavía no alcanzan para una conclusión firme — extender
+a abril/marzo 2026 (o más atrás si hay datos limpios), replicando el patrón ya usado 2 veces
+esta sesión (`enfoque_capital_asegurado_backtest_mayo.sql` es la plantilla — cambiar fechas de
+abril→mayo a marzo→abril, etc. — **ojo:** ese archivo NO incluye el fix del calendario de
+fantasma frontier-adjusted por separado del calendario de nuevos, que sí se aplicó a mano en
+los scripts `.py` — ver bug 17 para el patrón correcto antes de replicarlo). También pendiente
+(menor prioridad): confirmar la causa exacta de por qué `jul_calendario.csv` corría alto —
+no se investigó a fondo, la pista es saldo promedio ~11% más alto por crédito con MENOS
+créditos, no una firma de fila duplicada.
+
+### Tarea 10 — Recalibrar las curvas excluyendo el mes de prueba — CERRADA 2026-08-22
+Se recalibraron `curva_asegurado_stock_seg.csv`/`curva_asegurado_nuevos_seg.csv` excluyendo
+por completo mayo, junio Y julio (antes solo julio quedaba fuera por casualidad de rango) y
+se re-corrieron los 3 backtests con las curvas nuevas — movimiento de ~0.15-0.2pp en los 3
+meses, mismo patrón que la prueba de ventana de `P_NO_PAGA_DIA0` (bug 11 en `BUGS.md`): el
+modelo es robusto a la exclusión estricta. **No se adopta en producción** (impacto no lo
+justifica). Ver bug 11 (actualización 2026-08-22) en `BUGS.md` para el detalle completo y
+la tabla comparativa.
 
 ### Tarea 11 — Investigar la sobreestimación de stock en junio
 El stock sobreestimó +16.2% (recupero oficial) / +7.2% (capital asegurado tras bug 12) en

@@ -1,0 +1,263 @@
+<title>Proyectado vs. Real</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,500&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --paper:#F4F5F0;
+    --paper-raised:#FFFFFF;
+    --paper-sunken:#EAECE5;
+    --ink:#1A2420;
+    --ink-2:#4B5750;
+    --ink-3:#7C8880;
+    --line:#D8DCD3;
+    --teal:#049688;
+    --teal-soft:rgba(4,150,136,0.10);
+    --teal-line:rgba(4,150,136,0.35);
+    --rust:#A8432E;
+    --rust-soft:rgba(168,67,46,0.10);
+    --rust-line:rgba(168,67,46,0.35);
+    --font-display:'Source Serif 4',Georgia,'Times New Roman',serif;
+    --font-body:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#121916; --paper-raised:#1B2420; --paper-sunken:#0D1210;
+      --ink:#E7ECE6; --ink-2:#B9C2BB; --ink-3:#8A948C; --line:#2B332E;
+      --teal:#1CA898; --teal-soft:rgba(28,168,152,0.14); --teal-line:rgba(28,168,152,0.4);
+      --rust:#D46A45; --rust-soft:rgba(212,106,69,0.14); --rust-line:rgba(212,106,69,0.4);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#121916; --paper-raised:#1B2420; --paper-sunken:#0D1210;
+    --ink:#E7ECE6; --ink-2:#B9C2BB; --ink-3:#8A948C; --line:#2B332E;
+    --teal:#1CA898; --teal-soft:rgba(28,168,152,0.14); --teal-line:rgba(28,168,152,0.4);
+    --rust:#D46A45; --rust-soft:rgba(212,106,69,0.14); --rust-line:rgba(212,106,69,0.4);
+  }
+
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-body); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  ::selection{ background:var(--rust-soft); }
+  .page{ max-width:1080px; margin:0 auto; padding:0 24px 120px; }
+
+  header.hero{ max-width:820px; margin:0 auto; padding:76px 0 50px; text-align:center; }
+  .eyebrow{ font-family:var(--font-mono); font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 22px; }
+  h1.hero-title{ font-family:var(--font-display); font-weight:700; font-size:clamp(32px,5vw,52px); line-height:1.08; letter-spacing:-.01em; margin:0 0 20px; text-wrap:balance; }
+  .hero-sub{ font-size:18px; color:var(--ink-2); max-width:640px; margin:0 auto; text-wrap:balance; }
+
+  section{ max-width:760px; margin:0 auto; padding:60px 0; border-top:1px solid var(--line); }
+  section.wide{ max-width:980px; }
+  .sec-label{ font-family:var(--font-mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--rust); margin:0 0 14px; display:flex; align-items:baseline; gap:10px; }
+  .sec-label .num{ color:var(--ink-3); }
+  h2{ font-family:var(--font-display); font-weight:600; font-size:clamp(24px,3.4vw,32px); margin:0 0 18px; text-wrap:balance; }
+  h3{ font-family:var(--font-display); font-weight:600; font-size:19px; margin:28px 0 10px; }
+  p{ margin:0 0 16px; color:var(--ink-2); max-width:66ch; }
+  p.lead{ font-size:18px; color:var(--ink); }
+  strong{ color:var(--ink); font-weight:600; }
+  code{ font-family:var(--font-mono); font-size:.92em; background:var(--paper-sunken); padding:.15em .4em; border-radius:4px; color:var(--ink); }
+  .cap{ font-size:13px; color:var(--ink-3); margin-top:10px; }
+  .scroller{ overflow-x:auto; }
+
+  /* ---------- engine diagram ---------- */
+  .engines{ display:flex; gap:14px; margin:30px 0; flex-wrap:wrap; }
+  .engine{ flex:1 1 260px; background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; padding:20px 22px; }
+  .engine .e-name{ font-family:var(--font-display); font-weight:600; font-size:17px; margin-bottom:8px; }
+  .engine .e-formula{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-2); background:var(--paper-sunken); padding:10px 12px; border-radius:8px; margin-bottom:10px; line-height:1.5; }
+  .engine .e-desc{ font-size:13.5px; color:var(--ink-2); }
+  .engine.fantasma .e-name{ color:var(--rust); }
+  .plus-row{ display:flex; align-items:center; justify-content:center; gap:14px; font-family:var(--font-mono); font-size:22px; color:var(--ink-3); margin:2px 0 18px; }
+
+  /* ---------- month card ---------- */
+  .month-head{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px; }
+  .month-head .m-name{ font-family:var(--font-display); font-weight:700; font-size:28px; }
+  .month-head .m-error{ font-family:var(--font-mono); font-weight:700; font-size:22px; }
+  .m-error.neg{ color:var(--rust); }
+  .m-error.pos{ color:var(--teal); }
+  .month-sub{ font-size:14px; color:var(--ink-3); margin-bottom:22px; }
+
+  .bt-chart-wrap{ position:relative; width:100%; min-width:760px; height:286px; }
+  .bt-svg{ width:100%; height:100%; display:block; overflow:visible; }
+  .bt-svg .bt-real-area{ fill:var(--rust); opacity:.07; stroke:none; }
+  .bt-svg .bt-real-line{ fill:none; stroke:var(--rust); stroke-width:2; vector-effect:non-scaling-stroke; }
+  .bt-svg .bt-proy-line{ fill:none; stroke:var(--ink-3); stroke-width:2; stroke-dasharray:5 4; vector-effect:non-scaling-stroke; }
+  .dstrips2{ position:absolute; inset:0; bottom:0; display:block; }
+  .dstrip2{ position:absolute; top:0; bottom:0; cursor:default; }
+  .dstrip2:hover{ background:var(--rust-soft); }
+  .dstrip2::after{
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); font-family:var(--font-mono); font-size:11px; white-space:nowrap;
+    padding:6px 9px; border-radius:6px; opacity:0; pointer-events:none; transition:opacity .1s ease; z-index:6;
+  }
+  .dstrip2:hover::after{ opacity:1; }
+  .bt-legend{ display:flex; gap:22px; font-size:12.5px; color:var(--ink-2); margin-top:12px; flex-wrap:wrap; }
+  .bt-legend span{ display:inline-flex; align-items:center; gap:7px; }
+  .bt-legend .sw{ width:16px; height:0; border-top:2px solid var(--rust); display:inline-block; }
+  .bt-legend .sw.proy{ border-top:2px dashed var(--ink-3); }
+
+  table.data{ width:100%; border-collapse:collapse; font-size:13.5px; font-family:var(--font-mono); min-width:560px; }
+  table.data th, table.data td{ padding:8px 12px; text-align:right; border-bottom:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  table.data th:first-child, table.data td:first-child{ text-align:left; font-family:var(--font-body); }
+  table.data th{ color:var(--ink-3); font-weight:500; text-transform:uppercase; font-size:10.5px; letter-spacing:.05em; }
+  table.data tr.total td{ border-top:2px solid var(--ink-3); font-weight:700; color:var(--ink); }
+  table.data td.neg{ color:var(--rust); font-weight:600; }
+  table.data td.pos{ color:var(--teal); font-weight:600; }
+
+  .callout{ background:var(--paper-raised); border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:0 10px 10px 0; padding:18px 22px; margin:22px 0; font-size:14.5px; color:var(--ink-2); }
+  .callout b{ color:var(--ink); }
+  .callout.warn{ border-left-color:var(--rust); }
+
+  footer{ max-width:760px; margin:64px auto 0; padding-top:28px; border-top:1px solid var(--line); font-size:13px; color:var(--ink-3); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  footer .src{ font-family:var(--font-mono); }
+</style>
+
+<div class="page">
+
+  <header class="hero">
+    <p class="eyebrow">OKA · Cobranza · Enfoque alfa · Backtest</p>
+    <h1 class="hero-title">Proyectado vs. Real</h1>
+    <p class="hero-sub">Cada mes, el modelo suma 3 motores independientes, día por día, y los compara contra lo que efectivamente pasó. Acá está el mecanismo completo, con mayo y julio de 2026 como ejemplo — números reales, no ilustrativos.</p>
+  </header>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">01</span> El mecanismo</p>
+    <h2>3 motores, sumados día a día</h2>
+    <p class="lead">El "proyectado" de un día no es un número mágico — es la suma de tres piezas, cada una con su propia población y su propia regla de maduración.</p>
+
+    <div class="engines">
+      <div class="engine">
+        <div class="e-name">Stock</div>
+        <div class="e-formula">población (cierre mes anterior + día 1)<br>× curva de maduración (tramo × avance)</div>
+        <div class="e-desc">Créditos que YA estaban en mora. No entra capital nuevo — solo maduran los que ya estaban ahí.</div>
+      </div>
+      <div class="engine">
+        <div class="e-name">Nuevos</div>
+        <div class="e-formula">calendario de vencimientos del mes<br>× 13.38% (<code>P_NO_PAGA_DIA0</code>)<br>× curva de maduración (avance, días desde entrada)</div>
+        <div class="e-desc">Créditos que podrían caer en mora fresca — el calendario ya sabe cuánto vence cada día, la tasa dice cuántos no pagan.</div>
+      </div>
+      <div class="engine fantasma">
+        <div class="e-name">Fantasma</div>
+        <div class="e-formula">calendario (ajustado por frontera de mes)<br>× 8.55% (<code>P_FANTASMA</code>)<br>activado 100% al día siguiente, sin curva</div>
+        <div class="e-desc">El punto ciego de <code>dayslate</code> (bug 9): créditos que pagan exactamente 1 día tarde y nunca se ven como mora. Capa independiente, se ve el explicador de 13.38% para el resto de la tasa.</div>
+      </div>
+    </div>
+    <div class="plus-row">proyectado(día) = stock(día) + nuevos(día) + fantasma(día)</div>
+    <p>El "real" de un día es más simple: cuánto saldo de esas mismas poblaciones tuvo <em>al menos un pago</em> hasta ese día, sumado. Los dos lados (proyectado y real) se acumulan por separado durante todo el mes y se comparan al cierre — pero también día a día, que es donde se ve si el error es parejo o se concentra en algún momento del mes.</p>
+  </section>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">02</span> Ejemplo 1</p>
+    <div class="month-head">
+      <span class="m-name">Julio 2026</span>
+      <span class="m-error neg">-0.2%</span>
+    </div>
+    <p class="month-sub">Proyectado S/17,125,792 · Real S/17,154,500 · 31 días</p>
+    <div class="scroller">
+      <div class="bt-chart-wrap">
+        <svg viewBox="0 0 1000 286" preserveAspectRatio="none" class="bt-svg">
+          <path d="M 0.00,244.29 L 33.33,229.15 L 66.67,218.27 L 100.00,213.18 L 133.33,209.70 L 166.67,200.16 L 200.00,190.35 L 233.33,180.79 L 266.67,171.95 L 300.00,161.13 L 333.33,155.14 L 366.67,151.27 L 400.00,148.70 L 433.33,134.60 L 466.67,123.70 L 500.00,111.24 L 533.33,101.92 L 566.67,96.47 L 600.00,94.05 L 633.33,85.12 L 666.67,74.63 L 700.00,67.03 L 733.33,62.51 L 766.67,56.74 L 800.00,51.20 L 833.33,46.17 L 866.67,37.27 L 900.00,33.19 L 933.33,31.31 L 966.67,23.60 L 1000.00,0.00 L 1000,260 L 0,260 Z" class="bt-real-area"/>
+          <path d="M 0.00,237.53 L 33.33,222.90 L 66.67,212.48 L 100.00,204.21 L 133.33,195.40 L 166.67,191.65 L 200.00,178.86 L 233.33,171.38 L 266.67,163.94 L 300.00,157.00 L 333.33,149.93 L 366.67,143.55 L 400.00,140.51 L 433.33,131.83 L 466.67,125.58 L 500.00,113.82 L 533.33,106.48 L 566.67,99.73 L 600.00,93.21 L 633.33,90.09 L 666.67,80.48 L 700.00,74.09 L 733.33,67.70 L 766.67,64.86 L 800.00,55.96 L 833.33,44.87 L 866.67,41.24 L 900.00,31.37 L 933.33,27.94 L 966.67,25.11 L 1000.00,0.44" class="bt-proy-line"/>
+          <path d="M 0.00,244.29 L 33.33,229.15 L 66.67,218.27 L 100.00,213.18 L 133.33,209.70 L 166.67,200.16 L 200.00,190.35 L 233.33,180.79 L 266.67,171.95 L 300.00,161.13 L 333.33,155.14 L 366.67,151.27 L 400.00,148.70 L 433.33,134.60 L 466.67,123.70 L 500.00,111.24 L 533.33,101.92 L 566.67,96.47 L 600.00,94.05 L 633.33,85.12 L 666.67,74.63 L 700.00,67.03 L 733.33,62.51 L 766.67,56.74 L 800.00,51.20 L 833.33,46.17 L 866.67,37.27 L 900.00,33.19 L 933.33,31.31 L 966.67,23.60 L 1000.00,0.00" class="bt-real-line"/>
+        </svg>
+        <div class="dstrips2"><div class="dstrip2" style="left:0.0000%;width:3.2258%" data-tip="jul 01 · proy S/489,604 · real S/1,036,751"></div><div class="dstrip2" style="left:3.2258%;width:3.2258%" data-tip="jul 02 · proy S/1,454,736 · real S/2,035,268"></div><div class="dstrip2" style="left:6.4516%;width:3.2258%" data-tip="jul 03 · proy S/2,142,334 · real S/2,752,984"></div><div class="dstrip2" style="left:9.6774%;width:3.2258%" data-tip="jul 04 · proy S/2,687,809 · real S/3,089,406"></div><div class="dstrip2" style="left:12.9032%;width:3.2258%" data-tip="jul 05 · proy S/3,269,020 · real S/3,318,421"></div><div class="dstrip2" style="left:16.1290%;width:3.2258%" data-tip="jul 06 · proy S/3,516,748 · real S/3,948,328"></div><div class="dstrip2" style="left:19.3548%;width:3.2258%" data-tip="jul 07 · proy S/4,360,591 · real S/4,595,109"></div><div class="dstrip2" style="left:22.5806%;width:3.2258%" data-tip="jul 08 · proy S/4,853,615 · real S/5,226,029"></div><div class="dstrip2" style="left:25.8065%;width:3.2258%" data-tip="jul 09 · proy S/5,344,847 · real S/5,809,328"></div><div class="dstrip2" style="left:29.0323%;width:3.2258%" data-tip="jul 10 · proy S/5,802,615 · real S/6,523,412"></div><div class="dstrip2" style="left:32.2581%;width:3.2258%" data-tip="jul 11 · proy S/6,268,847 · real S/6,918,356"></div><div class="dstrip2" style="left:35.4839%;width:3.2258%" data-tip="jul 12 · proy S/6,689,977 · real S/7,173,801"></div><div class="dstrip2" style="left:38.7097%;width:3.2258%" data-tip="jul 13 · proy S/6,890,900 · real S/7,343,676"></div><div class="dstrip2" style="left:41.9355%;width:3.2258%" data-tip="jul 14 · proy S/7,463,328 · real S/8,273,503"></div><div class="dstrip2" style="left:45.1613%;width:3.2258%" data-tip="jul 15 · proy S/7,875,490 · real S/8,992,831"></div><div class="dstrip2" style="left:48.3871%;width:3.2258%" data-tip="jul 16 · proy S/8,651,459 · real S/9,815,189"></div><div class="dstrip2" style="left:51.6129%;width:3.2258%" data-tip="jul 17 · proy S/9,135,727 · real S/10,430,056"></div><div class="dstrip2" style="left:54.8387%;width:3.2258%" data-tip="jul 18 · proy S/9,581,256 · real S/10,789,515"></div><div class="dstrip2" style="left:58.0645%;width:3.2258%" data-tip="jul 19 · proy S/10,011,404 · real S/10,949,463"></div><div class="dstrip2" style="left:61.2903%;width:3.2258%" data-tip="jul 20 · proy S/10,217,004 · real S/11,538,423"></div><div class="dstrip2" style="left:64.5161%;width:3.2258%" data-tip="jul 21 · proy S/10,851,100 · real S/12,230,309"></div><div class="dstrip2" style="left:67.7419%;width:3.2258%" data-tip="jul 22 · proy S/11,272,726 · real S/12,731,623"></div><div class="dstrip2" style="left:70.9677%;width:3.2258%" data-tip="jul 23 · proy S/11,694,314 · real S/13,030,406"></div><div class="dstrip2" style="left:74.1935%;width:3.2258%" data-tip="jul 24 · proy S/11,881,998 · real S/13,410,756"></div><div class="dstrip2" style="left:77.4194%;width:3.2258%" data-tip="jul 25 · proy S/12,469,092 · real S/13,776,345"></div><div class="dstrip2" style="left:80.6452%;width:3.2258%" data-tip="jul 26 · proy S/13,201,082 · real S/14,108,563"></div><div class="dstrip2" style="left:83.8710%;width:3.2258%" data-tip="jul 27 · proy S/13,440,464 · real S/14,695,310"></div><div class="dstrip2" style="left:87.0968%;width:3.2258%" data-tip="jul 28 · proy S/14,091,664 · real S/14,964,888"></div><div class="dstrip2" style="left:90.3226%;width:3.2258%" data-tip="jul 29 · proy S/14,317,550 · real S/15,088,795"></div><div class="dstrip2" style="left:93.5484%;width:3.2258%" data-tip="jul 30 · proy S/14,504,708 · real S/15,597,338"></div><div class="dstrip2" style="left:96.7742%;width:3.2258%" data-tip="jul 31 · proy S/17,125,792 · real S/17,154,500"></div></div>
+      </div>
+    </div>
+    <div class="bt-legend">
+      <span><span class="sw proy"></span>proyectado (acumulado)</span>
+      <span><span class="sw"></span>real (acumulado)</span>
+    </div>
+
+    <div class="scroller">
+      <table class="data">
+        <thead><tr><th>Componente</th><th>Proyectado</th><th>Real</th><th>Error</th></tr></thead>
+        <tbody>
+          <tr><td>Stock</td><td>S/3,077,157</td><td>S/3,135,776</td><td class="neg">-1.9%</td></tr>
+          <tr><td>Nuevos</td><td>S/6,767,108</td><td>S/7,709,820</td><td class="neg">-12.2%</td></tr>
+          <tr><td>Fantasma</td><td>S/7,281,526</td><td>S/6,308,904</td><td class="pos">+15.4%</td></tr>
+          <tr class="total"><td>Total</td><td>S/17,125,792</td><td>S/17,154,500</td><td class="neg">-0.2%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <b>Este número reemplaza a uno anterior.</b> Hasta el 2026-08-22, <code>SEGUIMIENTO.md</code> tenía julio en +2.17% (stock -1.0%/nuevos -5.7%/fantasma +13.0%), calculado con un archivo de calendario distinto (<code>jul_calendario.csv</code>) que corría ~7.9% más alto que esta reconstrucción. Se probó y descartó con datos que fuera el deduplicado del proyecto (bug 11) — el mismo cálculo sin ese paso da un resultado casi idéntico. La causa de fondo de ese archivo viejo no se terminó de explicar (saldo promedio ~11% más alto por crédito, con menos créditos en total — no es la firma de una fila duplicada), pero esta reconstrucción usa el mismo patrón de calendario ya validado para junio y reproduce de forma independiente el total de fantasma ya establecido en bug 14 — por eso se adoptó como el número oficial. Ver bug 17 en <code>BUGS.md</code> para el detalle completo.
+    </div>
+  </section>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">03</span> Ejemplo 2</p>
+    <div class="month-head">
+      <span class="m-name">Mayo 2026</span>
+      <span class="m-error neg">-4.4%</span>
+    </div>
+    <p class="month-sub">Proyectado S/14,053,372 · Real S/14,697,936 · 31 días</p>
+    <div class="scroller">
+      <div class="bt-chart-wrap">
+        <svg viewBox="0 0 1000 286" preserveAspectRatio="none" class="bt-svg">
+          <path d="M 0.00,252.03 L 33.33,245.15 L 66.67,237.63 L 100.00,223.41 L 133.33,207.98 L 166.67,195.93 L 200.00,186.43 L 233.33,178.60 L 266.67,173.80 L 300.00,171.08 L 333.33,164.15 L 366.67,153.93 L 400.00,144.85 L 433.33,136.83 L 466.67,127.20 L 500.00,118.85 L 533.33,114.44 L 566.67,105.42 L 600.00,96.25 L 633.33,87.69 L 666.67,79.62 L 700.00,71.52 L 733.33,66.67 L 766.67,63.11 L 800.00,55.36 L 833.33,41.99 L 866.67,32.75 L 900.00,24.06 L 933.33,12.88 L 966.67,7.13 L 1000.00,0.00 L 1000,260 L 0,260 Z" class="bt-real-area"/>
+          <path d="M 0.00,244.58 L 33.33,236.84 L 66.67,221.45 L 100.00,216.60 L 133.33,205.00 L 166.67,194.71 L 200.00,187.42 L 233.33,180.06 L 266.67,173.24 L 300.00,166.97 L 333.33,163.84 L 366.67,154.39 L 400.00,148.51 L 433.33,142.40 L 466.67,136.31 L 500.00,125.04 L 533.33,117.88 L 566.67,114.60 L 600.00,105.64 L 633.33,99.32 L 666.67,92.03 L 700.00,85.25 L 733.33,78.62 L 766.67,72.05 L 800.00,69.22 L 833.33,55.83 L 866.67,48.23 L 900.00,41.22 L 933.33,32.64 L 966.67,26.66 L 1000.00,11.40" class="bt-proy-line"/>
+          <path d="M 0.00,252.03 L 33.33,245.15 L 66.67,237.63 L 100.00,223.41 L 133.33,207.98 L 166.67,195.93 L 200.00,186.43 L 233.33,178.60 L 266.67,173.80 L 300.00,171.08 L 333.33,164.15 L 366.67,153.93 L 400.00,144.85 L 433.33,136.83 L 466.67,127.20 L 500.00,118.85 L 533.33,114.44 L 566.67,105.42 L 600.00,96.25 L 633.33,87.69 L 666.67,79.62 L 700.00,71.52 L 733.33,66.67 L 766.67,63.11 L 800.00,55.36 L 833.33,41.99 L 866.67,32.75 L 900.00,24.06 L 933.33,12.88 L 966.67,7.13 L 1000.00,0.00" class="bt-real-line"/>
+        </svg>
+        <div class="dstrips2"><div class="dstrip2" style="left:0.0000%;width:3.2258%" data-tip="may 01 · proy S/871,566 · real S/450,266"></div><div class="dstrip2" style="left:3.2258%;width:3.2258%" data-tip="may 02 · proy S/1,309,028 · real S/839,731"></div><div class="dstrip2" style="left:6.4516%;width:3.2258%" data-tip="may 03 · proy S/2,179,139 · real S/1,264,553"></div><div class="dstrip2" style="left:9.6774%;width:3.2258%" data-tip="may 04 · proy S/2,453,365 · real S/2,068,688"></div><div class="dstrip2" style="left:12.9032%;width:3.2258%" data-tip="may 05 · proy S/3,109,146 · real S/2,940,911"></div><div class="dstrip2" style="left:16.1290%;width:3.2258%" data-tip="may 06 · proy S/3,690,705 · real S/3,622,045"></div><div class="dstrip2" style="left:19.3548%;width:3.2258%" data-tip="may 07 · proy S/4,102,707 · real S/4,158,796"></div><div class="dstrip2" style="left:22.5806%;width:3.2258%" data-tip="may 08 · proy S/4,519,018 · real S/4,601,831"></div><div class="dstrip2" style="left:25.8065%;width:3.2258%" data-tip="may 09 · proy S/4,904,321 · real S/4,872,986"></div><div class="dstrip2" style="left:29.0323%;width:3.2258%" data-tip="may 10 · proy S/5,259,298 · real S/5,026,581"></div><div class="dstrip2" style="left:32.2581%;width:3.2258%" data-tip="may 11 · proy S/5,435,718 · real S/5,418,633"></div><div class="dstrip2" style="left:35.4839%;width:3.2258%" data-tip="may 12 · proy S/5,969,950 · real S/5,996,103"></div><div class="dstrip2" style="left:38.7097%;width:3.2258%" data-tip="may 13 · proy S/6,302,788 · real S/6,509,328"></div><div class="dstrip2" style="left:41.9355%;width:3.2258%" data-tip="may 14 · proy S/6,647,826 · real S/6,962,727"></div><div class="dstrip2" style="left:45.1613%;width:3.2258%" data-tip="may 15 · proy S/6,992,298 · real S/7,507,205"></div><div class="dstrip2" style="left:48.3871%;width:3.2258%" data-tip="may 16 · proy S/7,629,228 · real S/7,979,383"></div><div class="dstrip2" style="left:51.6129%;width:3.2258%" data-tip="may 17 · proy S/8,034,011 · real S/8,228,330"></div><div class="dstrip2" style="left:54.8387%;width:3.2258%" data-tip="may 18 · proy S/8,219,279 · real S/8,738,263"></div><div class="dstrip2" style="left:58.0645%;width:3.2258%" data-tip="may 19 · proy S/8,726,025 · real S/9,256,874"></div><div class="dstrip2" style="left:61.2903%;width:3.2258%" data-tip="may 20 · proy S/9,083,504 · real S/9,740,590"></div><div class="dstrip2" style="left:64.5161%;width:3.2258%" data-tip="may 21 · proy S/9,495,711 · real S/10,196,856"></div><div class="dstrip2" style="left:67.7419%;width:3.2258%" data-tip="may 22 · proy S/9,878,498 · real S/10,655,041"></div><div class="dstrip2" style="left:70.9677%;width:3.2258%" data-tip="may 23 · proy S/10,253,740 · real S/10,929,275"></div><div class="dstrip2" style="left:74.1935%;width:3.2258%" data-tip="may 24 · proy S/10,625,013 · real S/11,130,135"></div><div class="dstrip2" style="left:77.4194%;width:3.2258%" data-tip="may 25 · proy S/10,785,055 · real S/11,568,680"></div><div class="dstrip2" style="left:80.6452%;width:3.2258%" data-tip="may 26 · proy S/11,541,993 · real S/12,324,434"></div><div class="dstrip2" style="left:83.8710%;width:3.2258%" data-tip="may 27 · proy S/11,971,448 · real S/12,846,390"></div><div class="dstrip2" style="left:87.0968%;width:3.2258%" data-tip="may 28 · proy S/12,367,560 · real S/13,337,592"></div><div class="dstrip2" style="left:90.3226%;width:3.2258%" data-tip="may 29 · proy S/12,852,519 · real S/13,969,803"></div><div class="dstrip2" style="left:93.5484%;width:3.2258%" data-tip="may 30 · proy S/13,190,570 · real S/14,294,673"></div><div class="dstrip2" style="left:96.7742%;width:3.2258%" data-tip="may 31 · proy S/14,053,372 · real S/14,697,936"></div></div>
+      </div>
+    </div>
+    <div class="bt-legend">
+      <span><span class="sw proy"></span>proyectado (acumulado)</span>
+      <span><span class="sw"></span>real (acumulado)</span>
+    </div>
+
+    <div class="scroller">
+      <table class="data">
+        <thead><tr><th>Componente</th><th>Proyectado</th><th>Real</th><th>Error</th></tr></thead>
+        <tbody>
+          <tr><td>Stock</td><td>S/2,501,504</td><td>S/2,521,167</td><td class="neg">-0.8%</td></tr>
+          <tr><td>Nuevos</td><td>S/5,825,301</td><td>S/6,845,309</td><td class="neg">-14.9%</td></tr>
+          <tr><td>Fantasma</td><td>S/5,726,566</td><td>S/5,331,460</td><td class="pos">+7.4%</td></tr>
+          <tr class="total"><td>Total</td><td>S/14,053,372</td><td>S/14,697,936</td><td class="neg">-4.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Mayo es el tercer mes cerrado del backtest, agregado en esta sesión — antes solo había junio y julio. A diferencia de julio, no hay una versión anterior con la que comparar: este es el primer cálculo.</p>
+  </section>
+
+  <section class="wide">
+    <p class="sec-label"><span class="num">04</span> Los 3 meses juntos</p>
+    <h2>El mismo patrón se repite en "nuevos"</h2>
+    <p>Stock y fantasma oscilan sin un patrón claro — a veces sobreestiman, a veces no. <strong>"Nuevos" subestima en los 3 meses</strong>, sin excepción, y la magnitud va creciendo.</p>
+    <div class="scroller">
+      <table class="data">
+        <thead><tr><th>Mes</th><th>Total</th><th>Stock</th><th>Nuevos</th><th>Fantasma</th></tr></thead>
+        <tbody>
+          <tr><td>Mayo</td><td class="neg">-4.4%</td><td class="neg">-0.8%</td><td class="neg">-14.9%</td><td class="pos">+7.4%</td></tr>
+          <tr><td>Junio</td><td class="pos">+2.65%</td><td class="pos">+7.3%</td><td class="neg">-5.8%</td><td class="pos">+12.4%</td></tr>
+          <tr><td>Julio</td><td class="neg">-0.2%</td><td class="neg">-1.9%</td><td class="neg">-12.2%</td><td class="pos">+15.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Julio con el número oficial vigente (ver sección 2) — el número anterior, ya reemplazado, también tenía "nuevos" subestimando (-5.7%), así que la conclusión de esta sección no depende de cuál versión se use.</p>
+    <div class="callout">
+      <b>Conecta directo con el análisis de volumen de agosto:</b> el mismo patrón — más capital entrando en mora del que el calendario × 13.38% asume — ya apareció en el tracking en vivo de agosto (ver el artifact de volumen vs. efectividad). Con 3 meses backtested mostrando la misma dirección, es cada vez menos probable que sea varianza aleatoria. Con solo 3 puntos todavía no alcanza para una conclusión firme — sigue pendiente extender el backtest a más meses.
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-label"><span class="num">05</span> ¿Las curvas hacen trampa?</p>
+    <h2>No — el modelo aguanta la prueba</h2>
+    <p>Las curvas de maduración se calibran sobre 15 meses de historia — y hasta ahora, esa historia incluía de refilón a mayo y junio (los meses que también se usan para el backtest). Se recalibraron excluyendo mayo, junio Y julio por completo, y se re-corrieron los 3 backtests con las curvas nuevas:</p>
+
+    <div class="scroller">
+      <table class="data">
+        <thead><tr><th>Mes</th><th>Curvas actuales (con fuga)</th><th>Curvas fuera de muestra</th><th>Movimiento</th></tr></thead>
+        <tbody>
+          <tr><td>Mayo</td><td class="neg">-4.4%</td><td class="neg">-4.2%</td><td>+0.2pp</td></tr>
+          <tr><td>Junio</td><td class="pos">+2.65%</td><td class="pos">+2.8%</td><td>+0.15pp</td></tr>
+          <tr><td>Julio</td><td class="neg">-0.2%</td><td class="pos">+0.0%</td><td>+0.2pp</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">"Curvas actuales" todavía calibran con algo de mayo/junio adentro (una fuga chica, no deliberada). "Curvas fuera de muestra" las recalibra sin mayo, junio NI julio. El movimiento es de 0.15-0.2pp en los 3 meses, siempre en la misma dirección — mismo patrón que la prueba de ventana de 13.38% (ver el explicador de esa tasa): el modelo no depende de una filtración de datos para verse bien.</p>
+  </section>
+
+  <footer>
+    <span>Reconstruido con Athena, <code style="font-family:inherit">dev_datalake_master</code> — dedup bug 11, capa fantasma con ajuste de frontera de mes (bug 14), curvas y tasa de producción.</span>
+    <span class="src">enfoque_capital_asegurado_backtest_mayo.sql · backtest_capital_asegurado_*.py</span>
+  </footer>
+
+</div>

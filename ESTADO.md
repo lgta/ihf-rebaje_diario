@@ -5,7 +5,82 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-08-21.
+Última actualización: 2026-08-23.
+
+> **2026-08-22/23 (continuación) — 3 artifacts nuevos/reconstruidos, backtest extendido a 3
+> meses, número oficial de julio corregido, tarea 10 cerrada.** A pedido del usuario, en
+> orden:
+> 1. **Artifact [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637):**
+>    reconstruye `P_NO_PAGA_DIA0` paso a paso (embudo elegibles/entradas, 2 créditos reales,
+>    desglose de 10 meses) más, agregado después, **la curva diaria de 365 días** (pedido
+>    explícito del usuario) — reveló un patrón semanal limpio (lunes sin cuotas vencidas,
+>    domingo se corre a lunes; martes absorbe el fin de semana, 2-6× el volumen normal).
+>    Verificación de robustez: el deduplicado de bug 11 mueve la tasa +0.07pp (13.38%→13.45%,
+>    nada), y ventanas de 6/10/12 meses dan 13.19%/13.45%/13.38% — la tasa no está
+>    desactualizada.
+> 2. **Extensión del backtest a mayo 2026** (tercer mes cerrado) — error -4.4% (stock -0.8%,
+>    nuevos -14.9%, fantasma +7.4%). Al reconstruirlo se encontró y corrigió un bug propio
+>    (el calendario de fantasma necesita su propio rango frontier-adjusted, no el mismo que
+>    "nuevos" — ver bug 17 en `BUGS.md`) que también reveló que **el número oficial de julio
+>    estaba mal** (`jul_calendario.csv`, un archivo huérfano, corría 7.9% alto) — el usuario
+>    confirmó adoptar el número reconstruido: **julio pasa de +2.17% a -0.2%**
+>    (stock -1.9%, nuevos -12.2%, fantasma +15.4%). Con los 3 meses, **"nuevos" subestima
+>    sin excepción** (mayo/junio/julio), consistente con el hallazgo de volumen de agosto.
+> 3. **Tarea 10 (`PENDIENTES.md`) cerrada:** curvas recalibradas excluyendo estrictamente
+>    mayo/junio/julio de su propia calibración — movimiento de solo 0.15-0.2pp en los 3
+>    meses, no se adopta (impacto no lo justifica), pero confirma que el modelo no depende
+>    de la fuga.
+> 4. **Artifact [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa):**
+>    explica el mecanismo de 3 motores (stock+nuevos+fantasma) con julio y mayo día a día,
+>    la tabla de los 3 meses, y la prueba de robustez de las curvas.
+> 5. **Tarea 2 (`PENDIENTES.md`) cerrada — `capital_asegurado.html` reconstruido por
+>    completo**, no un simple refresco (el archivo predataba bug 12 Y capa fantasma): curvas
+>    actuales, backtest de 3 meses, avance en vivo de agosto (corte 21-ago, +2.7%) y
+>    segmentado, 5 créditos de ejemplo nuevos (agosto real). URL vieja ya no existía (mismo
+>    patrón que `curvas_matriz_alfa.html`) — republicado en
+>    [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7).
+>
+> **Pendientes que deja esta sesión** (detalle completo en "Prompt de continuación" abajo):
+> extender el backtest más allá de 3 meses (tarea 9, `PENDIENTES.md` — el usuario pidió
+> explícitamente seguir corriendo backtest); explicar la causa de fondo de por qué
+> `jul_calendario.csv` corría alto (pista sin confirmar: reenganches con saldo stale); ítem 1
+> original (reestructurar `curvas_matriz_alfa.html`) sigue sin tocar.
+
+> **2026-08-22 (continuación, sesión nueva) — volumen vs. efectividad (pendiente de bug 16)
+> ejecutado: el exceso Real>Proyectado de agosto es volumen, no efectividad de gestión.**
+> A pedido del usuario, se comparó proyectado-a-la-fecha vs. real-a-la-fecha (mismo corte,
+> 21-ago, no un mes cerrado), desagregado por segmento, y se corrió la prueba pendiente de
+> bug 16: tasa de activación de `grupo_control` (no gestionado) vs. gestionado, mismo corte.
+> Total: **+2.61%** (stock +1.54%, nuevos +24.21%, fantasma −19.78%, este último parcialmente
+> timing — verificado, no un hueco real). Descompuesto el exceso de "nuevos" en volumen
+> (+26.3% en soles / +8.5% en # créditos, el capital que entra en mora supera lo que
+> `P_NO_PAGA_DIA0=13.38%` asume) vs. tasa de activación condicional (real **levemente por
+> DEBAJO** del modelo, −1.1pp, no por encima). Grupo control vs. gestionado: stock (muestra
+> grande) sin diferencia (64.8% vs. 65.1%); nuevos con control activando MÁS que gestionado
+> (94.0% vs. 69.3%, pero n=50 en control, no concluyente). **Conclusión: no hay evidencia de
+> que una mejora real de efectividad de cobranza explique el error del modelo — es volumen.**
+> Caveat sin resolver: no se confirmó si `grupo_control` es asignación aleatoria o regla de
+> negocio. Ver `analisis_volumen_efectividad_agosto.md`/`.sql` para el detalle completo y
+> bug 16 en `BUGS.md` para el cierre del pendiente. `meta_agosto_capital_asegurado.py`
+> refrescado a v5 (corte 21-ago) en el mismo paso — ver "La meta vigente" abajo. **Queda
+> pendiente de esta sesión:** ítem 1 del pedido original (reestructurar
+> `curvas_matriz_alfa.html`) — el usuario prefirió describir las observaciones en texto,
+> todavía no las dio.
+
+> **2026-08-22 — investigación de `dias_atraso_cuota` (`dts_cobranza_creditos_calendario_
+> diario`) como reemplazo de `dayslate`, resultado MIXTO, NO adoptado en producción.** A
+> pedido del usuario, se probó reconstruir el universo de mora "desde el origen" (sin el
+> parche aditivo de capa fantasma) usando una tabla nueva que reconstruye día a día los
+> días de atraso por crédito. Cierra ~83% del hueco de bug 9 al reconciliar contra
+> `vw_seguimiento_diario_cohorte_tramo` (S/5.1M→S/854K sin capturar, de los cuales 89% es
+> la exclusión deliberada de reenganches, no un hueco nuevo). Pero el backtest completo
+> (curva + tasa recalibradas, primera vez excluyendo ambos meses de prueba) da error mixto:
+> junio +0.93% (mejora vs. +2.65% actual), julio +9.71% (empeora vs. +2.17% actual). **Sin
+> cambios a la meta vigente ni a la metodología de producción** — ver bug 16 en `BUGS.md`
+> para el detalle completo y los pendientes (extender backtest, revisar volatilidad del
+> componente stock, probar si el error refleja mejora real de cobranza vía `grupo_control`).
+> Se agregó un principio nuevo a `CLAUDE.md` ("Principio de universo"): siempre cuadrar el
+> universo histórico contra una fuente formal disponible antes de confiar en curvas propias.
 
 > **2026-08-21 (continuación, 4ta vuelta) — `homologacion_tipo_mora_gestiones.sql` (bug
 > 13) re-verificado con `aux02`, bajo impacto CONFIRMADO (no solo esperado). Los 3 archivos
@@ -148,32 +223,50 @@
 > error más alto medido hasta ahora en este enfoque, ver nota de cautela abajo). Fuente:
 > `cierre_julio.sql`.
 
-**Agosto 2026, corte 18-ago — Capital asegurado (con capa fantasma, tasa recalibrada y fix
-de frontera de mes, ver bug 14 en `BUGS.md`):** meta proyectada **S/16,410,194** (stock
-S/2,951,390 + nuevos S/7,269,629 + fantasma S/6,189,175, incluye 77 créditos/S/140,194 del
-31-jul). Real asegurado a la fecha: **S/9,626,322** (58.7% de avance del total del mes) —
-**-2.1% por debajo de lo proyectado para el mismo día**. Resta: S/6,783,872 (días 19-31).
-Fuente: `meta_agosto_capital_asegurado.py` (v3) + `datos_avance_capital_asegurado_agosto/`.
-Curvas calibradas y validadas con backtest de junio (**+2.65%** con capa fantasma + dedup
-de bug 11 + tasa `P_FANTASMA` recalibrada, antes +2.2% con la tasa vieja, +0.7% sin el
-dedup, -4.4% sin ninguna corrección) y del cierre real de julio (**+2.17%**, antes +0.12%
-con la tasa vieja — ver `SEGUIMIENTO.md` para el detalle completo del porqué sube). Las
-curvas de este archivo (Q1/Q2) no se recalcularon con el dedup de bug 11 — el impacto
+**Agosto 2026, corte 21-ago — Capital asegurado (con capa fantasma, tasa recalibrada y fix
+de frontera de mes, ver bug 14 en `BUGS.md`):** meta proyectada **S/16,410,194** (sin
+cambios — stock S/2,951,390 + nuevos S/7,269,629 + fantasma S/6,189,175, incluye 77
+créditos/S/140,194 del 31-jul; la meta se fija una sola vez al inicio del mes, no se
+recalcula día a día). Real asegurado a la fecha: **S/11,620,780** (70.8% de avance del
+total del mes) — **+2.6% por encima de lo proyectado para el mismo día** (proyectado
+mismo corte: S/11,325,584). Resta: S/4,789,414 (días 22-31). Fuente:
+`meta_agosto_capital_asegurado.py` (v5, refrescado 2026-08-22 a pedido del usuario — no
+se esperó al cierre de agosto) + `datos_avance_capital_asegurado_agosto/`. **Desagregado
+por segmento y descompuesto en volumen vs. efectividad el mismo día — ver
+`analisis_volumen_efectividad_agosto.md`, resumen arriba.** Curvas calibradas y validadas
+con backtest de **3 meses cerrados** (ver bug 17 en `BUGS.md` y el artifact
+[📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)):
+mayo **-4.4%**, junio **+2.65%**, julio **-0.2%** (corregido 2026-08-23 — el número anterior,
++2.17%, usaba un archivo de calendario huérfano que corría 7.9% alto, ver bug 17). En los
+3 meses, "nuevos" subestima sin excepción — señal posiblemente real, no solo varianza (ver
+tarea 9, `PENDIENTES.md`). Curvas también verificadas fuera de muestra estricta (tarea 10,
+`PENDIENTES.md` CERRADA 2026-08-22): recalibrarlas excluyendo los 3 meses de backtest por
+completo mueve el error solo 0.15-0.2pp — el modelo no depende de la fuga. Las curvas de
+este archivo (Q1/Q2) no se recalcularon con el dedup de bug 11 en producción — el impacto
 medido en las curvas fue <1pp, bajo impacto confirmado (ver bug 11 en `BUGS.md`), no se
 justificó rehacer la meta de agosto por esto.
 
+**2026-08-21/22 — el avance cruzó de negativo a positivo en 18-ago→20-ago y se mantuvo
+positivo al día siguiente:** -2.1% (18-ago) → +1.9% (20-ago) → +2.6% (21-ago). Los swings
+de 18→20-ago fueron los 3 componentes creciendo (stock +3.2%, nuevos +23.5%, fantasma
++10.7% en soles absolutos) — consistente con más días de cobranza y más cuotas vencidas
+resolviéndose, no un salto anómalo en un componente. **Todavía es alta la varianza día a
+día** — no tratar +2.6% como una tendencia asentada, seguir el avance con la misma cautela
+que antes (ver nota de abajo).
+
 **2026-08-20 — cambio de metodología, no un cambio de tendencia:** la lectura de "+8.7%
-adelantado" que se reportaba antes de esta sesión no incluía la capa fantasma (créditos
+adelantado" que se reportaba antes de esa sesión no incluía la capa fantasma (créditos
 que pagan 1 día tarde sin que `dayslate` los vea — bug 9/14). Al agregarla (con su fix de
-frontera de mes y tasa recalibrada), tanto la meta como el real crecen, pero la meta crece
-más (el calendario de vencimientos completo de agosto es mayor que lo ya observado a la
-fecha) — el avance pasa a **-2.1%**, prácticamente en línea con lo proyectado. Esto no es
-una señal nueva de deterioro: junio y julio (backtest en 2 meses cerrados) muestran que con
-la capa fantasma completa el error total baja a ±2.65% en vez de ±4.4%, así que la meta
-corregida es más confiable, no menos. Con solo 2 meses de cierre real (ambos ahora con la
-misma metodología), todavía no hay base para saber si un futuro error tiende a crecer o es
+frontera de mes y tasa recalibrada), tanto la meta como el real crecen, pero al corte
+18-ago la meta creció más (el calendario de vencimientos completo de agosto es mayor que
+lo ya observado a la fecha) — el avance pasó a -2.1% ese día. Esto no fue una señal de
+deterioro: junio y julio (backtest en 2 meses cerrados) muestran que con la capa fantasma
+completa el error total baja a ±2.65% en vez de ±4.4%, así que la meta corregida es más
+confiable, no menos. Con solo 2 meses de cierre real (ambos ahora con la misma
+metodología), todavía no hay base para saber si un futuro error tiende a crecer o es
 varianza normal (ver tarea 9, `PENDIENTES.md`, extender el backtest a más meses). Seguir el
-avance semana a semana antes de sacar conclusiones.
+avance con frecuencia antes de sacar conclusiones — el swing de 18→20-ago (arriba) confirma
+que hace falta.
 
 Metodología: modelo evento × magnitud, dos motores (stock anclado al cierre del mes
 anterior UNION entrantes del día 1, nuevos vía calendario de vencimientos × P(no paga a
@@ -183,14 +276,15 @@ vez de "% recuperado". Detalle completo en `enfoque_capital_asegurado.md`.
 
 ### Recupero oficial (soles cobrados, se sigue trackeando en paralelo)
 
-**Agosto 2026, corte 18-ago:** meta total **S/2,108,435** (stock S/711,160 + nuevos
-S/1,397,275). Real recuperado a la fecha: S/1,147,110 (54.4% de avance) — **-1.5% respecto
-a lo proyectado para el mismo día** (proyección al día 18: S/1,164,716). Resta:
-**S/961,325** (días 19-31). Fuente: `meta_agosto.py` + `datos_meta_agosto/`. Julio cerró
-con +17.6% de error (ver `SEGUIMIENTO.md`) — el error más alto medido hasta ahora en este
-enfoque, concentrado en "nuevos" (+22.5%); agosto a mitad de mes va casi exacto (-1.5%), sin
-señal todavía de que se repita. Detalle completo en `guia_tecnica_recupero.md` y en el
-artifact interactivo de abajo.
+**Agosto 2026, corte 20-ago:** meta total **S/2,108,435** (sin cambios — stock S/711,160 +
+nuevos S/1,397,275). Real recuperado a la fecha: **S/1,332,479** (63.2% de avance) —
+**+3.3% respecto a lo proyectado para el mismo día** (proyección al día 20: S/1,289,840).
+Resta: **S/775,956** (días 21-31). Fuente: `meta_agosto.py` (refrescado 2026-08-21) +
+`datos_meta_agosto/`. Julio cerró con +17.6% de error (ver `SEGUIMIENTO.md`) — el error más
+alto medido hasta ahora en este enfoque, concentrado en "nuevos" (+22.5%); agosto pasó de
+-1.5% (18-ago) a **+3.3%** (20-ago) — mismo swing hacia positivo que capital asegurado en
+esos 2 días (ver arriba), sin señal todavía de que se repita el patrón de julio. Detalle
+completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
 
 ## Artifacts publicados
 
@@ -202,9 +296,12 @@ artifact interactivo de abajo.
 | [Deck (11 slides)](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) | ⚠ desactualizado | Mismo motivo |
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/3a6b8cb9-0b2a-4dac-9569-473327a84b0a) | ⚠ desactualizado (números pre-bug 12) | Enfoque alfa, **meta principal de julio** — explicado con 5 créditos reales, curvas por segmento, backtest de junio y avance en vivo de julio. Números vigentes en `enfoque_capital_asegurado.md`/`ESTADO.md`, el artifact todavía tiene los de antes del fix del 2026-07-14 (bug 12). **Pendiente en `PENDIENTES.md` tarea 2.** |
-| [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/c8d733d5-f008-4f33-b4e6-e7712f1c4ece) | ✓ vigente (2026-07-15) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, ya con la definición corregida (bug 12). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
-| De julio a agosto — cómo se arma la meta | ✓ vigente (2026-08-21), sin publicar | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto), ambos enfoques con toggle. **Actualizado 2026-08-21** con el fix de frontera de mes + tasa `P_FANTASMA` recalibrada (bug 14): julio +2.17%/meta agosto S/16,410,194/avance -2.1%. Agregada **sección 4 "Diferencias con la reconciliación"** — explica el punto ciego de `dayslate`, la capa fantasma, el fix de frontera y por qué julio sube más que junio (dilución por solapamiento). **Sin URL de claude.ai** — no hay herramienta Artifact disponible en esta sesión; abrir directo `resumen_julio_agosto.html` en un navegador, o publicarlo desde una sesión con esa herramienta. Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) | ✓ vigente, reconstruido 2026-08-23 (URL nueva — la vieja 3a6b8cb9... dejó de existir) | Enfoque alfa, **meta principal de agosto** — 5 créditos reales de agosto, curvas con bug 12, backtest de 3 meses cerrados (mayo/junio/julio, con capa fantasma) y avance en vivo de agosto (corte 21-ago) por segmento. Reconstrucción completa, tarea 2 de `PENDIENTES.md` CERRADA. |
+| [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85) | ✓ vigente (republicado 2026-08-22, URL nueva — la anterior dejó de estar disponible) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, con la definición corregida (bug 12). Agregado 2026-08-22: banner de "Principio de universo" + estado de la investigación de `dias_atraso_cuota` (bug 16, no adoptada). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
+| [📈 De julio a agosto — cómo se arma la meta](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) | ✓ vigente y publicado (2026-08-21) | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto), ambos enfoques con toggle. **Refrescado 2026-08-21 al corte 20-ago** (a pedido del usuario, sin esperar al cierre de agosto): capital asegurado avance +1.9% (antes -2.1% al 18-ago), recupero oficial +3.3% (antes -1.5%) — ambos enfoques cruzaron a positivo en 2 días, ver nota de cautela en `ESTADO.md` "La meta vigente". Sección 4 "Diferencias con la reconciliación" sin cambios (explica el punto ciego de `dayslate`, la capa fantasma, el fix de frontera y por qué julio sube más que junio). Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` + `meta_agosto_capital_asegurado.py` (v4) + `meta_agosto.py` (v2). |
+
+| [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637) | ✓ vigente, nuevo 2026-08-22 | Reconstruye paso a paso `P_NO_PAGA_DIA0=13.38%`: el embudo elegibles/entradas, 2 créditos reales día por día, desglose mensual (10 meses) y diario (365 días) con curva por día, y las pruebas de robustez de esta sesión (dedup bug 11, ventanas 6/10/12 meses). Fuente: `tasa_1338.html`. |
+| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) | ✓ vigente, nuevo 2026-08-22 | Cómo se arma el backtest mensual completo (3 motores: stock+nuevos+fantasma), explicado con julio y mayo 2026 día a día, más la prueba de robustez de las curvas (tarea 10). Julio usa el número reconstruido de bug 17 (-0.2%), distinto del publicado antes en `SEGUIMIENTO.md` (+2.17%) — ver el callout de la propia página. Fuente: `proyectado_vs_real.html`. |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
@@ -226,7 +323,7 @@ siguen existiendo en claude.ai, solo dejaron de mantenerse.)*
 
 | Enfoque | Archivo | Qué mide | Estado |
 |---|---|---|---|
-| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest +2.65% (jun) / +2.17% (jul) con capa fantasma completa (bug 14: tasa recalibrada + fix de frontera de mes) + dedup bug 11, todos 2026-08-20. Pendientes en `PENDIENTES.md` |
+| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest de 3 meses cerrados: -4.4% (may) / +2.65% (jun) / -0.2% (jul, corregido 2026-08-23, ver bug 17). Curvas verificadas fuera de muestra estricta (tarea 10 CERRADA, impacto <0.2pp). "Nuevos" subestima en los 3 meses — pendiente investigar. Pendientes en `PENDIENTES.md` |
 | Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4%. Pendientes en `PENDIENTES.md` |
 | Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` (respaldo de una decisión del enfoque acumulado, no es un enfoque propio) | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
 
@@ -307,34 +404,114 @@ Detalle del último:
 
 ## Pendiente de copiar al repo desde scratchpad
 
-Nada por ahora — todo lo generado hasta el 2026-07-13 (backtest de capital asegurado,
-investigación de reincidencia, avance por fase de cobranza) ya está en el repo.
+**No recuperable, pero documentado el patrón:** las queries usadas para reconstruir
+`capital_asegurado.html` (2026-08-23) — real diario de agosto por día (stock/nuevos/
+fantasma), la recalibración de curvas de tarea 10, y las queries de los 5 créditos de
+ejemplo — se corrieron en el scratchpad de la sesión y se borraron al limpiar (no
+sobreviven entre sesiones). **Los RESULTADOS sí están guardados**: embebidos en el JSON de
+`capital_asegurado.html`, y las curvas recalibradas en `datos_capital_asegurado_recal/`. Si
+hace falta reconstruir las queries, el patrón exacto (stock/nuevos/fantasma real por día,
+frontier-adjusted) ya está documentado y SÍ guardado en `enfoque_capital_asegurado_
+backtest_mayo.sql` — solo cambian las fechas (julio→agosto en vez de abril→mayo).
 
 **Cuando termines una sesión con hallazgos nuevos, revisa esta sección antes de cerrar** —
 si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perderlo.
 
 ## Prompt de continuación
 
-> La reconciliación TEMPRANA (bug 14), la tarea 1 de `PENDIENTES.md`
-> (`avance_cobranza_fase.sql`, bugs 11/12/15) y la re-verificación de
-> `homologacion_tipo_mora_gestiones.sql` (bug 13/15) quedan **completamente cerradas** con
-> esta continuación — el hallazgo de `aux02` (bug 15) ya está desplegado en los 3 archivos
-> del proyecto que lo necesitaban, no queda ningún pendiente de este tema. No hay un prompt
-> de retoma específico. Para el resto, ver `PENDIENTES.md` y la nota de re-medir la
-> cobertura de agosto de la capa fantasma cuando el mes cierre (día 31), ya anotada arriba
-> en "La meta vigente".
+> Copiar/pegar esto al abrir la siguiente sesión para retomar sin releer todo:
+
+```
+Lee ESTADO.md (esta sección, en particular el bloque "2026-08-22/23 (continuación)" arriba
+-- 3 artifacts nuevos/reconstruidos, backtest extendido a 3 meses, número de julio corregido)
+y bug 17 en BUGS.md completo (el hallazgo del calendario de fantasma + el número de julio
+corregido de +2.17% a -0.2%, con el usuario confirmando adoptarlo). También lee
+feedback-cuadrar-universo-fuente-formal y feedback-verificar-antes-de-afirmar en memoria --
+esta sesión aplicó ambas dos veces (se descartó con datos una hipótesis propia -- el
+deduplicado NO explicaba el gap de jul_calendario.csv -- antes de aceptarla).
+
+Pendientes activos, en orden sugerido (no hay uno "el" pendiente esta vez -- son varios
+hilos independientes, elegir con el usuario cuál seguir):
+
+1. **Extender el backtest más allá de 3 meses (tarea 9, PENDIENTES.md) -- pedido explícito
+   del usuario, no completado del todo.** Ya están mayo (-4.4%), junio (+2.65%) y julio
+   (-0.2%, recién corregido). Replicar el patrón para abril 2026 (y marzo si hay datos
+   limpios) usando `enfoque_capital_asegurado_backtest_mayo.sql` como plantilla (cambiar
+   fechas abril->mayo por marzo->abril, etc.) -- **OJO:** ese .sql no tiene el fix del
+   calendario de fantasma frontier-adjusted por separado del calendario de "nuevos" (ver
+   bug 17) -- construirlo como un archivo `.sql` NUEVO en el repo esta vez (no solo en
+   scratchpad, que se pierde entre sesiones -- ver "Pendiente de copiar al repo" arriba).
+   Una vez con 4+ meses, actualizar el artifact [Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)
+   con la tabla ampliada.
+
+2. **Explicar por qué `jul_calendario.csv` corría 7.9% alto (bug 17, BUGS.md, menor
+   prioridad).** Se descartó que fuera el deduplicado de bug 11 (probado explícitamente, sin
+   dedup da el mismo resultado). La pista sin confirmar: saldo promedio ~11% más alto por
+   crédito, con MENOS créditos (no más) -- no es firma de fila duplicada, más consistente con
+   reenganches con saldo stale de un eslabón anterior de la cadena (bug 3). No bloquea nada
+   (ya se adoptó el número corregido), pero cerraría la investigación.
+
+3. **Ítem 1 original, todavía sin tocar: reestructurar el artifact `curvas_matriz_alfa.html`**
+   (https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85 -- URL vigente, OJO
+   que la anterior c8d733d5... ya no existe). El usuario prefirió describir las observaciones
+   específicas en texto -- si esta sesión abre y todavía no las dio, preguntarle directamente
+   qué quiere cambiar antes de tocar el HTML. Cargar la skill artifact-design antes de tocar
+   el archivo. Republicar con la MISMA url (pasando url=).
+
+4. **Pendientes de `analisis_volumen_efectividad_agosto.md`:** ~~confirmar con el equipo de
+   `gestiones_cobranza` cómo se define/asigna `grupo_control`~~ RESUELTO 2026-08-23 -- el
+   usuario confirmó aleatorización estratificada por riesgo y monto, la comparación
+   control/gestionado ya tiene soporte causal. Sigue pendiente: repetir la comparación en
+   2-3 cortes más de agosto (n=50 en "nuevos control" es chico, la muestra crece cada día).
+
+5. **Otros pendientes más antiguos en PENDIENTES.md, sin tocar:** tarea 6 (aplicar el
+   dedup de bug 11 a los 3 archivos del motor oficial de recupero -- fase1_stock.sql,
+   fase2_nuevos.sql, fase3_backtest.sql -- nunca se tocaron, fuera de alcance de todas las
+   pasadas hasta ahora), tarea 5 (decidir destino de los artifacts marcados
+   "⚠ desactualizado" -- meta en vivo de julio, deck de 11 slides), tarea 11 (investigar la
+   sobreestimación de stock en junio -- excluida a pedido explícito del usuario en la sesión
+   2026-08-22/23, sigue sin tocar), tarea 12 (baja prioridad, reorganizar en carpetas).
+
+Reglas de datos que aplican siempre (CLAUDE.md, incluye el "Principio de universo" nuevo):
+status IN ('ACTIVE','COMPLETED') para histórico, excluir reenganches vía
+flg_last_loan_in_chain, coalesce(dayslate,0) siempre (o coalesce(dias_atraso_cuota,0) si se
+usa esa tabla), dedup de bug 11 (saldo<>0 antes de lastmodifieddate) en cualquier
+row_number()/lag() nuevo sobre dts_mambu_loans_hist, capa fantasma con su PROPIO calendario
+frontier-adjusted (bug 17, no reusar el de "nuevos"), y cuadrar cualquier población nueva
+contra una fuente formal antes de confiar en ella -- ver BUGS.md antes de escribir queries
+nuevas.
+```
 
 ## Pendiente de git
 
-**Sí hay pendiente:** esta continuación (4ta vuelta, 2026-08-21) agregó:
-`homologacion_tipo_mora_gestiones.sql` (Q1/Q2/Q3) corregido con `aux02` (bug 15), cerrando
-el último de los 3 archivos que usaban el crosswalk `dni`+`producto` viejo — re-verificado
-que el 98.5% de acuerdo con `gestiones_cobranzas` (bug 13) se mantiene prácticamente
-idéntico (98.49%, mismos 28 casos de desacuerdo); y las actualizaciones de `BUGS.md`
-(bug 15) / `ESTADO.md` que cierran ese hallazgo. **Todo lo de la vuelta anterior de esta
-misma sesión (Q7-Q12 de `reconciliacion_temprana.sql`, fix de `avance_cobranza_fase.sql`,
-`FUENTES_DATOS.md`, `PENDIENTES.md` tarea 1) ya está commiteado y pusheado**
-(commit `ef5f717`).
+**Sí hay pendiente:** la sesión del 2026-08-22 (investigación de `dias_atraso_cuota`, bug 16)
+modificó `CLAUDE.md` (principio de universo nuevo), `BUGS.md` (bug 16), `ESTADO.md` (esta
+sección y "Prompt de continuación") y `README.md` (URL nueva del artifact de curvas). Las
+queries de esa investigación (`sc_A` a `sc_AE`) quedaron solo en el scratchpad de la sesión,
+no se copiaron al repo — ver la nota de "Archivos de esta investigación" en bug 16 si se
+retoma. El artifact `curvas_matriz_alfa.html` se republicó dos veces (URL nueva por
+necesidad, la vieja ya no existía; luego corrección de julio/agosto) — el archivo fuente en
+el repo ya refleja la versión publicada.
+
+**Continuación 2026-08-22 (misma fecha, sesión nueva, volumen vs. efectividad):** agregó
+`analisis_volumen_efectividad_agosto.md`/`.sql` (nuevos) y
+`datos_volumen_efectividad_agosto/` (nuevo, CSVs + script de proyección segmentada), y
+modificó `meta_agosto_capital_asegurado.py` (v5, corte 21-ago), `BUGS.md` (cierre del
+pendiente de bug 16) y `ESTADO.md` (esta sección, "La meta vigente", "Prompt de
+continuación", índice de documentos). Ítem 1 (artifact `curvas_matriz_alfa.html`) sigue sin
+tocar — no se modificó ni se republicó en esta sesión.
+
+**Continuación 2026-08-22/23 (misma sesión extendida, backtest + artifacts):** agregó
+`tasa_1338.html`, `proyectado_vs_real.html` (fuentes de los 2 artifacts nuevos),
+`backtest_capital_asegurado_mayo.py`, `backtest_capital_asegurado_julio_diario.py`,
+`enfoque_capital_asegurado_backtest_mayo.sql`, `datos_backtest_mayo/`,
+`datos_backtest_julio_diario/`, `datos_capital_asegurado_recal/` (curvas fuera de muestra
+de tarea 10). Modificó `capital_asegurado.html` (reconstrucción completa, tarea 2 CERRADA),
+`BUGS.md` (bug 17), `SEGUIMIENTO.md` (fila de mayo agregada, fila de julio corregida a
+-0.2%), `PENDIENTES.md` (tareas 2, 9, 10), `README.md`/`ESTADO.md` (tablas de artifacts,
+URLs nuevas de `capital_asegurado.html` y los 2 artifacts nuevos). **Todo lo de sesiones
+anteriores (hasta bug 15, `ef5f717`) ya estaba commiteado y pusheado — nada de lo de arriba
+(desde el bloque "volumen vs. efectividad" en adelante) está commiteado todavía.**
 
 ## Índice de los demás documentos
 
@@ -357,3 +534,6 @@ misma sesión (Q7-Q12 de `reconciliacion_temprana.sql`, fix de `avance_cobranza_
   en `reconciliacion_temprana.sql` (julio), `reconciliacion_agosto.sql` (agosto) e
   `investigacion_frontera_mes_fantasma.sql` (hueco de frontera de mes, fix adoptado).
 - `PENDIENTES.md` — plan de continuación accionable para los 2 enfoques vigentes.
+- `analisis_volumen_efectividad_agosto.md`/`.sql` — proyectado-vs-real mismo corte
+  desagregado por segmento + descomposición volumen vs. efectividad de gestión (corte
+  21-ago), cierra el pendiente de comparación grupo_control de bug 16.

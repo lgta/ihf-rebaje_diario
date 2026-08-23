@@ -199,6 +199,45 @@ corregir. `fase1_stock.sql`/`fase2_nuevos.sql`/`fase3_backtest.sql` (recupero of
 Tarea 6) **no se tocaron** — fuera de alcance de esta pasada, igual que bug 12/14 (afecta
 únicamente Enfoque alfa).
 
+**Actualización 2026-08-22 (continuación, sesión de volumen vs. efectividad) — el hueco de
+`fase3_backtest.sql` (bloque 3H, fuente real de `P_NO_PAGA_DIA0=13.38%`, compartida por
+Enfoque alfa vía `meta_agosto_capital_asegurado.py`) se verificó con datos, a pedido del
+usuario: sigue sin dedup (confirmado leyendo el archivo, no tiene la CTE de bug 11), y
+recalibrar con la regla validada da **47,451/352,900 = 13.45%** (vs. 13.38% original) —
+**+0.07pp, movimiento despreciable**, consistente con que el patrón de filas duplicadas es
+~0.003% de la tabla y afecta poco cualquier medida basada en conteo (igual que el resto de
+los hallazgos de este bug). **No recalibrado en producción** — el movimiento no lo justifica
+y no explica el volumen de entrada a mora observado en agosto por encima de 13.38% (ver
+`analisis_volumen_efectividad_agosto.md`) — esa brecha sigue sin explicación confirmada,
+la hipótesis más plausible es que la ventana de calibración (ago2025-may2026) esté
+desactualizada para la cartera actual, no un bug pendiente de corregir. **Ojo, primer
+intento de esta verificación tuvo un bug propio** (se agrupó por un literal `'TOTAL'` en vez
+de por `cm.periodo` como el original, colapsando de forma incorrecta créditos elegibles en
+más de un mes — dio 26.57%, un artefacto, no un resultado real; detectado y corregido antes
+de reportarlo, re-corrido con el `group by cm.periodo` correcto).
+
+**Actualización 2026-08-22 (misma sesión) — recalibrado también con ventana de 12 y 6 meses,
+a pedido del usuario: la tasa es estable, no está desactualizada.** Ambas ventanas terminan
+en may-2026 (igual que el original) para mantener junio y julio 2026 fuera de muestra
+(backtest válido), con el mismo dedup de bug 11:
+- 12 meses (jun2025-may2026): 53,964/403,230 = **13.38%**
+- 6 meses (dic2025-may2026): 31,877/241,676 = **13.19%**
+- (original, 10 meses con dedup, arriba): **13.45%**
+
+Las 3 ventanas caen dentro de 0.3pp entre sí — **la hipótesis de "ventana de calibración
+desactualizada" queda descartada**, no hay evidencia de que acortar o alargar la ventana
+mueva la tasa de forma material. Hallazgo colateral relevante para
+`analisis_volumen_efectividad_agosto.md`: el desglose mes a mes de la ventana de 12 meses
+da un rango de 11.47%-14.68% — la tasa real de agosto 2026 observada en ese análisis
+(14.52% por conteo de créditos) **cae dentro de ese rango histórico normal**, no es un
+outlier por esa métrica. El exceso de volumen documentado en soles (+26.3% agregado,
+hasta +45.8%/+56.0% en algunos segmentos de avance) sigue sin explicarse por esta vía —
+sugiere que el mecanismo es más una composición distinta de qué créditos entran (sesgo
+hacia saldo más alto) que un aumento genérico en cuántos créditos entran. **Pendiente:**
+repetir el desglose mes a mes ponderado por SALDO (no solo por conteo) para confirmar si
+ese sesgo hacia saldo alto es en sí mismo inusual para agosto o es un patrón que también
+aparece en otros meses.
+
 **Impacto medido (re-corrida completa, junio y julio, principio de modelado de
 `CLAUDE.md`):**
 - **Curvas de calibración (14 meses, `enfoque_capital_asegurado.sql` Q1/Q2):** bajo
@@ -670,3 +709,210 @@ del crosswalk en el proyecto quedan corregidos:**
 Con esto, **los 3 archivos del proyecto que cruzan contra `dts_asignaciones_gestiones_
 cobranza` usan `aux02` de forma consistente** — no queda ningún uso del crosswalk
 `dni`+`producto` viejo en el repo.
+
+### 16. `dts_cobranza_creditos_calendario_diario.dias_atraso_cuota` reconstruye el universo de mora sin el punto ciego de `dayslate` (bug 9) — cierra ~83% del hueco de origen, pero el backtest da mixto (investigación, NO adoptado)
+
+**Contexto (2026-08-22):** a raíz de bug 14/9 (punto ciego de `dayslate`, hoy parchado con la
+capa fantasma aditiva), el usuario propuso reconstruir el universo de mora "bien desde el
+origen" en vez de seguir parchando — mismo espíritu que el motor cuota-consistente de bug 10,
+pero con una tabla nueva que el usuario aportó: `dts_cobranza_creditos_calendario_diario`
+(`fecha_calendario`, `id_ihfintech_loan`, `fechaporvencer`, `fecha_pago`,
+`dias_atraso_cuota`) — reconstrucción DIARIA (no cuota-a-cuota como bug 10) de cuántos días
+de atraso tiene la cuota vigente de cada crédito. Grano 1 fila por (crédito, día), sin
+duplicados (verificado). Datos desde 2023-10-17.
+
+**Por qué esto es mejor que bug 10 (motor `a_tiempo`/`lag`):** bug 10 comparaba cada cuota
+contra la INMEDIATA anterior — un crédito con historial de atrasos leves (nunca exactamente
+"a tiempo") queda invisible para siempre a ese método, aunque `dayslate` sí lo vea entrar en
+mora fresca cada vez que se pone al día entre cuotas. Verificado con casos reales de julio
+2026: de 11,516 créditos que `dias_atraso_cuota` detecta entrando en mora en julio ("nuevos"),
+solo 4,389 los detecta también el método de bug 10 — el resto (**1,929 son el bug 9 clásico**,
+pagó 1 día tarde; **5,244 son créditos que bug 10 nunca ve** por su historial de atrasos
+previos) queda **fuera del método de bug 10**, no solo de `dayslate`. `dias_atraso_cuota`
+captura ambos casos porque reconstruye día por día sin depender de la cuota anterior.
+
+**Reconciliación contra `vw_seguimiento_diario_cohorte_tramo` (julio, TEMPRANA) — mejora
+grande:**
+
+| Método | Solo oficial (hueco no capturado) | Total nuestro vs. oficial (11,718 créd. / S/18.7M) |
+|---|---:|---|
+| `dayslate` (sin parche) | 3,265 créd. / S/5,116,147 | 9,699 créd. / S/15,701,255 (-16.2%) |
+| **`dias_atraso_cuota`** | **745 créd. / S/854,236 (-83%)** | 13,016 créd. / S/20,364,523 (+8.7%) |
+
+Del remanente de S/854,236: **89% (S/653,350) es la MISMA exclusión deliberada de
+reenganches** (`flg_last_loan_in_chain`, bug 3) que ya se aceptaba con `dayslate` — no es un
+hueco nuevo. Lo genuinamente sin explicar queda en ~S/201,000 (0.2% de lo oficial). El 3.6%
+de diferencia en soles en la población "en ambos" (los créditos que SÍ coinciden) no es
+desfase de fecha de detección (verificado: 71% de los casos coincide el día EXACTO y aun así
+difiere ~5%) — es más probable que sea diferencia entre sistemas (Mambu vs. la tabla de
+asignaciones, hipótesis del usuario: horarios de snapshot distintos, redondeo) — no
+investigado a fondo, bajo impacto.
+
+**Backtest completo (curva + tasa recalibradas sobre `dias_atraso_cuota`, ventana ago-2025 a
+may-2026 para la tasa y mar/feb-2025 a may-2026 para las curvas — la PRIMERA vez en el
+proyecto que se calibra excluyendo AMBOS meses de backtest, no solo uno):**
+
+| Mes | Proyectado (`dias_atraso_cuota`, sin fantasma) | Real | Error | Error (producción actual, `dayslate`+fantasma) |
+|---|---:|---:|---:|---:|
+| Junio 2026 | S/13,632,488 | S/13,759,705 | **+0.93%** | +2.65% |
+| Julio 2026 | S/16,224,200 | S/17,799,839 | **+9.71%** | +2.17% (⚠ desactualizado — ver nota abajo) |
+
+**⚠ Actualización 2026-08-23 — el "+2.17%" de julio de la tabla de arriba ya no es el
+número oficial de producción.** Se encontró y corrigió (bug 17) que ese número usaba un
+archivo de calendario huérfano con un problema no explicado — el número correcto,
+adoptado con el usuario, es **-0.2%**. La comparación de esta tabla (`dias_atraso_cuota`
++9.71% vs. producción +2.17%) queda desactualizada — con el número correcto de producción
+(-0.2%), la brecha entre ambos métodos es TODAVÍA MÁS GRANDE (9.71pp de diferencia en vez
+de 7.54pp), no menor. No se recalculó `dias_atraso_cuota` con datos frescos — si se retoma
+esta línea, hacerlo contra el número de julio ya corregido.
+
+**Resultado mixto, no concluyente — NO se adopta con esta sola evidencia.** Junio mejora
+sobre la producción actual; julio empeora bastante. El promedio de magnitud de error
+(~5.3%) es peor que el de producción (~2.4%), pero la muestra es de solo 2 meses — el mismo
+problema de siempre (`IDEAS.md` punto 1, `PENDIENTES.md` tarea 9). La tasa prospectiva nueva
+(`P_entra_mora_calendario` ≈ 22.68%, ago25-may26) es casi idéntica en magnitud a la suma
+13.38%+`P_FANTASMA`(8.55%)=21.93% del enfoque actual — consistencia interna razonable, pero
+no explica la volatilidad mes a mes del backtest.
+
+**Pendiente, no bloqueante para la meta vigente (no se tocó producción):**
+- Correr 2-4 meses más de backtest antes de decidir si reemplazar `dayslate`+fantasma por
+  `dias_atraso_cuota` como fuente única.
+- Investigar si el swing de error (+0.93%→+9.71%) es varianza normal de calibrar con solo 14
+  meses, un problema específico del componente stock (que también osciló: -5.28% jun,
+  +10.24% jul) o algo del propio julio (ver bug 14, "fantasma sobreestima por dilución de
+  solapamiento" — podría aplicar un mecanismo parecido acá).
+- Pendiente del usuario: si el `+9.71%`/`+0.93%` de error (Real > Proyectado) refleja mejora
+  real de gestión de cobranza o es varianza de calibración — la forma de probarlo sin
+  debatir en abstracto es comparar la tasa de activación del `grupo_control` (no gestionado)
+  contra la población gestionada, mismo mes — no ejecutado todavía.
+- Ver `feedback-cuadrar-universo-fuente-formal` en memoria para el principio general que
+  motivó esta investigación, y la sección "Principio de universo" en `CLAUDE.md`.
+
+**Archivos de esta investigación:** quedaron solo en el scratchpad de la sesión (queries
+`sc_A` a `sc_AC`) — no se copiaron al repo todavía porque el resultado es mixto y no se
+adoptó nada en producción. Si se retoma esta línea, replicar el patrón documentado acá
+(`dias_atraso_cuota` en vez de `coalesce(dayslate,0)`, mismas exclusiones de status/chain/
+dedup que el resto del proyecto) en un archivo `.sql` nuevo antes de seguir.
+
+**Actualización 2026-08-22 (continuación, sesión nueva) — el pendiente "volumen vs.
+efectividad" SÍ se ejecutó, con el enfoque de producción actual (`dayslate`+capa fantasma,
+no `dias_atraso_cuota`):** a pedido del usuario, se corrió la comparación pendiente
+(grupo_control vs. gestionado, mismo corte) más una descomposición adicional de volumen vs.
+tasa de activación condicional. Ver `analisis_volumen_efectividad_agosto.md`/`.sql` para el
+detalle completo — resumen:
+- **Volumen:** el capital que efectivamente entra en mora en agosto (corte 21-ago) es 26.3%
+  más alto (en soles) que lo que el calendario × `P_NO_PAGA_DIA0=13.38%` asume (+8.5% en
+  # de créditos) — consistente en los 4 segmentos de avance.
+  **Tasa de activación condicional** (dado que un crédito entró, ¿a qué tasa paga?): real
+  está LEVEMENTE por debajo del modelo (−1.1pp agregado), no por encima.
+- **Grupo control vs. gestionado (mismo corte):** stock (n grande en ambos lados) no muestra
+  diferencia (64.8% vs. 65.1%); nuevos muestra al control activando MÁS que gestionado
+  (94.0% vs. 69.3%), pero con n=50 en control — muestra chica, no concluyente, dirección
+  opuesta a "la gestión mejora la tasa".
+- **Conclusión:** no hay evidencia de que una mejora real de efectividad de cobranza
+  explique el error Real>Proyectado — la explicación que mejor sobrevive es volumen
+  (entra más capital en mora del que el modelo asume), no efectividad. Esto es consistente
+  con (aunque no prueba) que el mismo mecanismo podría explicar el `+9.71%` de julio con
+  `dias_atraso_cuota` de arriba, pero esta prueba se hizo sobre el enfoque de producción,
+  no se repitió con `dias_atraso_cuota` — sigue pendiente si se retoma esa línea.
+- **Caveat RESUELTO 2026-08-23:** el usuario confirmó que `grupo_control` es una
+  aleatorización estratificada por riesgo y monto (holdout real, no una regla de negocio) —
+  la comparación control/gestionado en `analisis_volumen_efectividad_agosto.md` sí soporta
+  una lectura causal.
+
+### 17. Backtest diario de mayo/julio (tarea 9): el calendario de fantasma necesita su PROPIO
+rango frontier-adjusted, y `jul_calendario.csv` corre ~7.9% más alto que una reconstrucción
+fresca con dedup — dos hallazgos distintos, encontrados 2026-08-22 al extender el backtest.
+
+**Hallazgo A — bug propio, corregido el mismo día:** al construir el backtest día-a-día de
+mayo y julio (`backtest_capital_asegurado_mayo.py` / `_julio_diario.py`, mismo patrón que
+`backtest_capital_asegurado_junio.py`), el primer intento reutilizó el calendario de
+"nuevos" (`calendario_mayo`/`calendario_julio`, basado en `fechavencimiento` dentro del mes)
+también para el cálculo de `proy_fantasma` — el mismo patrón que ya tenía
+`backtest_capital_asegurado_junio.py`. Para junio esto no importaba (31-may no tiene cuotas
+vencidas, así que no hay cohorte de frontera que perder), pero para mayo y julio SÍ hay
+cuotas vencidas el último día del mes anterior (30-abr, 30-jun) — el calendario de "nuevos"
+NO las incluye (empieza el 1 del mes), así que `proy_fantasma` quedaba sistemáticamente
+subestimado (bug 14, "hueco de frontera de mes", el mismo problema ya resuelto para el
+calendario prospectivo de agosto pero nunca portado a los scripts de backtest de mayo/julio
+porque no existían todavía). **Impacto medido:** julio pasó de -6.0% de error total (con el
+bug) a -0.2% (corregido) — el fantasma solo, de -0.3% a +15.4%. Mayo: de -7.6% a -4.4% (el
+fantasma solo, de -1.5% a +7.4%). **Corregido:** ambos scripts ahora leen un calendario
+SEPARADO para fantasma (`bt_calendario_fantasma_mayo.csv`/`_julio.csv`, construido con
+`date_add('day',1,fechavencimiento)` en vez de `fechavencimiento` directo, mismo patrón que
+`investigacion_capa_fantasma.sql` Q3), verificado sumando ~S/85.1M para julio (vs. el
+S/85,280,364 ya documentado en bug 14 — diferencia <0.2%, confirma la reconstrucción).
+
+**Hallazgo B — RESUELTO 2026-08-22 (continuación), adoptado como número oficial de julio,
+con la causa de fondo todavía sin explicar del todo:** al reconstruir el calendario de
+"nuevos" de julio desde cero (con dedup de bug 11, `bt_julio_calendario.sql`) para el
+backtest diario, el total (S/73,660,982) **no coincidía con `datos_meta_julio/jul_calendario.
+csv`** (S/79,459,608, usado por `meta_julio_capital_asegurado.py` para el número oficial de
+julio en `SEGUIMIENTO.md`) — un 7.9% más alto.
+
+**La primera hipótesis (dedup de bug 11) se probó y se DESCARTÓ con datos:** se re-corrió
+`bt_julio_calendario.sql` quitando el paso de dedup por completo — el total dio S/73,660,985
+(prácticamente idéntico a la versión con dedup, S/73,660,982) — la deduplicación no mueve
+este número, consistente con el patrón ya conocido en el resto del proyecto (bug 11 mueve
+agregados <1-2pp en todos lados, nunca 7.9%). **Corrección de lo que se afirmaba antes en
+este bug** (no confirmar sin verificar — ver `feedback-verificar-antes-de-afirmar` en
+memoria).
+
+**Pista real, no perseguida a fondo:** `jul_calendario.csv` tiene MENOS créditos (51,440)
+que la reconstrucción fresca (53,068) pero MÁS saldo total (S/79.46M vs. S/73.66M) — saldo
+promedio por crédito ~11% más alto. No es una firma de filas duplicadas (eso infla el
+conteo de filas, no el promedio por crédito) — más consistente con una diferencia de fuente
+o timing del saldo en sí (candidato no confirmado: reenganches con saldo stale de un
+eslabón anterior de la cadena, ver bug 3). **No investigado más a fondo — pendiente si se
+quiere cerrar la explicación por completo.**
+
+**Decisión (con el usuario, 2026-08-22):** se adopta el número reconstruido esta sesión
+como el oficial de julio — **Proyectado S/17,125,792 / Real S/17,154,500 = -0.2%** (stock
+-1.9%, nuevos -12.2%, fantasma +15.4%), reemplazando el **+2.17%** anterior. Razón: el
+calendario de "nuevos" usado acá replica EXACTO el patrón ya validado y reusado para junio
+(`bt_calendario_junio.csv`, documentado sin bugs desde `fase3_backtest.sql`), y el
+calendario de fantasma reproduce el total ya establecido en la actualización anterior de
+este mismo bug (S/85.14M vs. S/85,280,364 ya documentado, <0.2% de diferencia) — dos
+validaciones independientes a favor de la reconstrucción nueva, contra un archivo huérfano
+(`jul_calendario.csv`) sin construcción documentada. **`SEGUIMIENTO.md` actualizado** con el
+número nuevo como el vigente.
+
+**Pendiente, menor prioridad:**
+1. Explicar por qué `jul_calendario.csv` tiene saldo promedio más alto por crédito (pista de
+   reenganche, no confirmada).
+2. Re-evaluar la conclusión de bug 16 sobre julio (`dias_atraso_cuota` dio +9.71% comparado
+   contra el `+2.17%` de producción — con el número nuevo (-0.2%), esa comparación cambia).
+3. Verificar si algún archivo de calendario equivalente de mayo/junio tiene el mismo
+   problema (no debería, mayo y junio se reconstruyeron desde cero esta sesión sin depender
+   de ningún archivo `_calendario.csv` preexistente).
+
+**Archivos nuevos de esta sesión:** `backtest_capital_asegurado_mayo.py`,
+`backtest_capital_asegurado_julio_diario.py`, `enfoque_capital_asegurado_backtest_mayo.sql`,
+`datos_backtest_mayo/`, `datos_backtest_julio_diario/`.
+
+**Continuación 2026-08-22 (misma sesión) — tarea 10 de `PENDIENTES.md` (recalibrar curvas
+excluyendo los meses de backtest) ejecutada: impacto bajo, no se adopta.** Las curvas
+Q1/Q2 de `enfoque_capital_asegurado.sql` calibraban sobre `periodo_meta`/`fechaproceso`
+hasta junio/mayo respectivamente — dejaban filtrar 2 de los 3 meses ahora usados para
+backtest (mayo, junio) dentro de su propia calibración. Se recalibraron ambas curvas
+excluyendo mayo, junio Y julio por completo (`periodo_meta between '202504' and '202604'`
+para stock; `fechaproceso between '20250301' and '20260430'` para nuevos) y se re-corrieron
+los 3 backtests con las curvas nuevas:
+
+| Mes | Error con curvas actuales (con leak) | Error con curvas fuera de muestra (sin leak) |
+|---|---:|---:|
+| Junio | +2.65% | +2.8% |
+| Mayo | -4.4% | -4.2% |
+| Julio | -0.2% (ver hallazgo B arriba) | +0.0% |
+
+Los 3 meses se mueven ~0.15-0.2pp, todos en la misma dirección (proyectado sube levemente),
+consistente con calibrar sobre menos historia — pero el movimiento es chico y no cambia
+ninguna conclusión, mismo patrón que la prueba de ventana de `P_NO_PAGA_DIA0` (6/10/12
+meses, ver actualización anterior de este mismo bug): **el modelo es robusto a excluir
+estrictamente los meses de prueba de su propia calibración.** **No se adopta en
+producción** — el impacto no lo justifica, y las curvas de producción siguen siendo las
+que ya estaban (`datos_capital_asegurado/`). Curvas recalibradas quedan en
+`datos_capital_asegurado_recal/` como referencia si se quiere repetir la prueba con más
+meses en el futuro. Scripts de verificación (`scratch_sql/bt_*_recal.py`) no copiados al
+repo — mismo patrón que los otros scripts de backtest, con `DIR_ASEG` apuntando a la
+carpeta recalibrada en vez de la de producción.
