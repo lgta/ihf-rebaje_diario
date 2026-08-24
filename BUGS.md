@@ -916,3 +916,154 @@ que ya estaban (`datos_capital_asegurado/`). Curvas recalibradas quedan en
 meses en el futuro. Scripts de verificación (`scratch_sql/bt_*_recal.py`) no copiados al
 repo — mismo patrón que los otros scripts de backtest, con `DIR_ASEG` apuntando a la
 carpeta recalibrada en vez de la de producción.
+
+### 18. El índice de la curva de "nuevos" está corrido 1 día — la curva se calibra desde la ENTRADA en mora pero el proyector la aplica desde el VENCIMIENTO
+
+**Encontrado 2026-08-24**, a raíz de un punto conceptual del usuario: *"la fecha de
+vencimiento es el último día que el cliente puede pagar sin entrar en mora — entra en mora
+si no paga ese día, sino después"*. Es decir: **entrada en mora = vencimiento + 1**, nunca
+el mismo día del vencimiento.
+
+**Verificado con datos (no solo lectura de código):** para la población real de "nuevos" de
+julio 2026 (misma definición del modelo: `dayslate` 0→1, días 2-31, excluyendo stock), el
+gap entre `fechavencimiento` y el día en que `dayslate` pasa a 1 es:
+
+| Gap venc → entrada | Créditos | % |
+|---|---:|---:|
+| **1 día** | **7,144** | **99.99%** |
+| 30 días | 1 | 0.01% |
+
+**Causa:** la curva de nuevos se calibra (`enfoque_capital_asegurado.sql` Q2) indexando por
+`dia_desde_entrada = date_diff(fecha_entrada, fechaproceso)`, con el join
+`f.fechaproceso > e.fecha_entrada` (estrictamente mayor) — o sea que **el día 1 de la curva
+es 1 día DESPUÉS de la entrada = vencimiento + 2**. Pero el proyector (todos los
+`backtest_capital_asegurado_*.py` y `meta_agosto_capital_asegurado.py`) indexa por:
+
+```python
+dias_desde_entrada = d - dd     # dd = día de VENCIMIENTO del calendario, no de entrada
+```
+
+que es `fechaproceso − vencimiento`. Resultado: **aplica `curva[k]` donde corresponde
+`curva[k−1]`** — la curva va un día adelantada. Como la curva es acumulada creciente, el
+proyectado de "nuevos" sale sobreestimado.
+
+**La capa fantasma NO está afectada** — no usa curva (se activa 100% el día siguiente al
+vencimiento), y ahí el índice `d − dd >= 1` sí es correcto.
+
+**Impacto medido (los 4 meses cerrados; comparador corrido en el scratchpad de la sesión,
+lógica replicable cambiando el índice a `dias_desde_entrada = d - dd - 1`):**
+
+| Mes | Error total actual | Corregido | Error "nuevos" actual | Corregido |
+|---|---:|---:|---:|---:|
+| Abril 2026 | -17.6% | **-19.2%** | -24.1% | -27.3% |
+| Mayo 2026 | -4.4% | **-6.8%** | -14.9% | -20.1% |
+| Junio 2026 | +2.65% | **+1.6%** | -5.8% | -8.0% |
+| Julio 2026 | -0.2% | **-3.3%** | -12.2% | -19.2% |
+
+**OJO — corregirlo EMPEORA el error agregado, y aun así hay que corregirlo.** El bug estaba
+compensando parcialmente el sesgo ya conocido de que "nuevos" subestima en todos los meses
+(ver `analisis_volumen_efectividad_agosto.md`: entra más capital en mora del que
+`13.38%` × calendario asume). Ver el principio de `CLAUDE.md` ("El error se explica, no se
+optimiza", agregado por el usuario en esta misma sesión): la proyección **es** la meta y el
+error mide ejecución vs. histórico — no se deja un error de indexación sin corregir porque
+el número agregado se vea mejor con él.
+
+**Hipótesis descartada en el camino (verificada con datos, no asumida):** se sospechó que la
+calibración de `P_NO_PAGA_DIA0=13.38%` (`fase3_backtest.sql` 3H) tenía el mismo problema de
+frontera de mes, porque empareja por MES (`left join entradas e on e.periodo = cm.periodo`,
+donde `cm.periodo` es el mes del vencimiento y `e.periodo` el de la entrada) — una cuota que
+vence el 31-jul entra en mora el 1-ago y no matchea. Se recalibró emparejando por fecha
+exacta (entrada = vencimiento + 1), misma ventana (venc. ago-2025 a may-2026), mismos
+filtros y misma exclusión de stock:
+
+| Criterio de match | Elegibles | Entradas | Tasa |
+|---|---:|---:|---:|
+| Original (por mes) | 352,707 | 47,435 | **13.4488%** |
+| Corregido (por fecha exacta) | 352,707 | 47,858 | **13.5688%** |
+
+**Solo +0.12pp (+0.9% relativo) — no explica el sesgo de "nuevos".** Por mes sí hay
+diferencias grandes (feb-2026: 11.48% → 13.52%; mar-2026: 14.69% → 13.23%) pero se compensan
+en el agregado, porque el criterio "mismo mes" también captura entradas que NO corresponden
+a esa cuota. La tasa no está mal calibrada en magnitud. Query en el scratchpad de la sesión
+(patrón documentado acá, replicable).
+
+**Estado: NO corregido todavía** — acordado con el usuario dejarlo como primer paso de la
+sesión siguiente (ver `PENDIENTES.md` tarea 13). Al corregirlo hay que tocar los 4 scripts
+de backtest, `meta_agosto_capital_asegurado.py`, y actualizar `SEGUIMIENTO.md` +
+`ESTADO.md` + los artifacts con los números nuevos.
+
+### 19. El universo de calibración de curvas no coincide con las reglas de ejecución del negocio
+
+**Encontrado 2026-08-24**, ejercicio diseñado por el usuario: *"trata agosto como si fuera un
+mes antiguo, donde recreas el universo hasta el día donde tengas data, y eso compáralo con lo
+que realmente se ejecutó en agosto de la tabla asignaciones — mi intención es saber si tus
+universos del pasado usados para calibrar curvas son coherentes con las reglas de la
+ejecución"*.
+
+Es la aplicación directa del "Principio de universo" de `CLAUDE.md`, pero a la **regla de
+construcción** en vez de a un mes puntual: las curvas se calibran sobre universos
+reconstruidos de meses pasados (stock = mora 1-30 al cierre del mes anterior + entrantes día
+1; nuevos = `dayslate` 0→1 desde el día 2) y **nunca se había validado si esa regla coincide
+con la población que el negocio realmente gestiona.**
+
+**Método:** se reconstruyó el universo de agosto 2026 con el método histórico **sin mirar la
+tabla de asignaciones** (corte 23-ago; ambas fuentes llegan al 24) y recién después se cruzó
+contra `dts_asignaciones_gestiones_cobranza` vía `aux02` (bug 15). Universo nuestro = el de
+calibración de curvas (stock + nuevos vía `dayslate`), **sin capa fantasma** — la capa
+fantasma es aditiva y no participa de la calibración, que es lo que se quería validar.
+Queries completas y reproducibles en `validacion_universo_ejecucion.sql` (V0/V1/V2).
+
+**Resultado 1 — falta el 21.6% que el negocio SÍ gestiona:**
+
+| | Créditos |
+|---|---:|
+| Nuestro universo (stock + nuevos) | 8,385 |
+| Oficial TEMPRANA (asignaciones) | 10,035 |
+| En ambos | 7,866 |
+| **Solo oficial** | **2,169 (21.6% de la oficial)** — 2,093 punto ciego `dayslate` (bug 9) + 76 reenganches |
+| Solo nuestro | 519 (6.2% del nuestro) |
+
+**Resultado 2 — sobra población que el negocio NO gestiona, y es ASIMÉTRICA entre stock y
+nuevos:**
+
+| Situación de ejecución real | Stock | % | Nuevos | % |
+|---|---:|---:|---:|---:|
+| TEMPRANA gestionado | 2,274 | 84.4% | 5,363 | 94.2% |
+| TEMPRANA pero **grupo control** (no gestionado) | 193 | 7.2% | 36 | 0.6% |
+| Aparece pero **nunca en TEMPRANA** (otra fase) | 176 | 6.5% | 41 | 0.7% |
+| No aparece en asignaciones | 51 | 1.9% | 251 | 4.4% |
+| **Total NO gestionado como TEMPRANA** | | **15.6%** | | **5.8%** |
+
+**Aclaración del usuario que acota el hallazgo (2026-08-24):** el **grupo control solo
+existió en julio y parte de agosto 2026** (y los de agosto pudieron recibir tratamiento
+después; son pocos). Como las curvas se calibran sobre `202504`-`202606` (abril 2025 a junio
+2026), **el grupo control NO contamina las curvas históricas** — queda descartado como sesgo
+de calibración. Residuo real: la meta de agosto se proyectó con curvas de población 100%
+gestionada aplicadas a una población con 7.2% del stock sin gestión (≈S/441K de S/12.6M,
+3.5% en saldo) — chico, pero explica una fracción del error de agosto.
+
+**Lo que SÍ queda como incoherencia estructural (afecta todo el histórico):**
+1. **El punto ciego de `dayslate` (~21%)** — la curva de "nuevos" está calibrada sobre una
+   población de la que se removió sistemáticamente a **los mejores pagadores** (los que pagan
+   1 día tarde). Hoy se parcha con la capa fantasma sumada aparte **en la proyección**, pero
+   la curva sigue calibrada sobre la población incompleta. Es coherente aritméticamente, no
+   conceptualmente.
+2. **Escalados a ESPECIALIZADA/RECOVERY** (6.5% del stock, 0.7% de nuevos) — a diferencia del
+   grupo control, estos **sí existen en todo el histórico** (asignación a nivel CLIENTE por
+   arrastre, ver `FUENTES_DATOS.md`). Están dentro de la calibración recibiendo una gestión
+   distinta a la que la curva pretende representar.
+3. **302 créditos que no aparecen en asignaciones** (1.9% del stock, 4.4% de nuevos) — sin
+   explicar todavía. En julio el bucket equivalente eran 120 créditos (bug 15).
+
+**Limitación dura:** `dts_asignaciones_gestiones_cobranza` solo tiene datos desde 2026-07-01,
+y las curvas se calibran sobre 14 meses previos — **el universo histórico no se puede limpiar
+retroactivamente** (no hay forma de saber qué créditos estaban en qué fase antes de julio
+2026). Lo que sí se puede: medir el tamaño del sesgo en julio/agosto (calibrar solo sobre
+gestionados vs. sobre todos) para saber si importa en la práctica.
+
+**Conexión con la tarea 11 (`PENDIENTES.md`, nunca investigada):** el stock es el componente
+errático del backtest (+7.9% abr, -0.8% may, +7.3% jun, -1.9% jul) mientras "nuevos" es
+consistente en signo. La contaminación del stock (15.6%) es casi 3× la de nuevos (5.8%) — si
+la proporción varía mes a mes, la curva de stock (calibrada con un mix promedio) erraría de
+forma variable. **Hipótesis, no verificada** — y no se puede verificar antes de julio 2026
+por la limitación de arriba.

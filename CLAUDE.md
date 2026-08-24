@@ -53,6 +53,22 @@ fuente formal disponible antes de confiar en curvas/tasas calibradas solo con la
 propia**, y tratar cualquier diferencia como algo a explicar con datos (exclusión deliberada,
 diferencia de sistemas, hueco real), no a asumir.
 
+## Principio de interpretación del error — no negociable
+
+**La proyección de un mes ES la meta de ese mes; el real permite ver si la ejecución va de
+acuerdo al histórico esperado.** Un error de -17% no significa "modelo malo" — significa que
+la gestión, el mix o el volumen se movieron respecto al histórico. **Las diferencias se
+explican, no se huye de ellas.** Nunca ajustar una constante, un índice o una regla con el
+objetivo de reducir el error del backtest: eso convierte al modelo en un ajuste ex-post y
+destruye lo que lo hace útil como meta fijada al inicio del mes.
+
+Lo que **sí** hay que corregir es que el universo o las reglas de construcción no coincidan
+con las reglas de ejecución del negocio (ahí las curvas quedan calibradas sobre una población
+equivocada). Ante un hallazgo, la pregunta correcta es *"¿esto cambia QUIÉN entra al universo
+o CÓMO se mide?"* — si sí, corregir **aunque el error suba** (caso real: bug 18, el fix del
+índice empeora los 4 meses y se corrige igual); si no, documentar la diferencia como señal de
+negocio a explicar.
+
 ## Ejecutar SQL contra Athena
 
 DB `dev_datalake_master`, workgroup `primary`, output

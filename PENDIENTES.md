@@ -189,22 +189,35 @@ frontier-adjusted, `backtest_capital_asegurado_julio_diario.py`) se encontró qu
 oficial anterior (+2.17%) estaba calculado con `jul_calendario.csv`, un archivo huérfano que
 corría 7.9% alto — **el número correcto es -0.2%** (stock -1.9%, nuevos -12.2%, fantasma
 +15.4%), adoptado y confirmado con el usuario 2026-08-23 (ver bug 17 en `BUGS.md`,
-`SEGUIMIENTO.md` ya actualizado). Con los 3 meses (mayo -4.4%, junio +2.65%, julio -0.2%):
-**"nuevos" subestima en los 3, sin excepción** (mismo signo, distinta magnitud) — señal
-posiblemente real, no solo varianza, ver `analisis_volumen_efectividad_agosto.md` (el mismo
-patrón aparece en el tracking en vivo de agosto). El artifact
-[📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)
-explica el mecanismo completo con julio y mayo como ejemplos.
+`SEGUIMIENTO.md` ya actualizado).
 
-**Sigue pendiente:** 3 puntos de dato todavía no alcanzan para una conclusión firme — extender
-a abril/marzo 2026 (o más atrás si hay datos limpios), replicando el patrón ya usado 2 veces
-esta sesión (`enfoque_capital_asegurado_backtest_mayo.sql` es la plantilla — cambiar fechas de
-abril→mayo a marzo→abril, etc. — **ojo:** ese archivo NO incluye el fix del calendario de
-fantasma frontier-adjusted por separado del calendario de nuevos, que sí se aplicó a mano en
-los scripts `.py` — ver bug 17 para el patrón correcto antes de replicarlo). También pendiente
-(menor prioridad): confirmar la causa exacta de por qué `jul_calendario.csv` corría alto —
-no se investigó a fondo, la pista es saldo promedio ~11% más alto por crédito con MENOS
-créditos, no una firma de fila duplicada.
+**Avance 2026-08-23:** abril agregado como cuarto mes cerrado (`backtest_capital_
+asegurado_abril.py`, `enfoque_capital_asegurado_backtest_abril.sql`) — error **-17.6%**
+(stock +7.9%, nuevos -24.1%, fantasma -18.9%), el error más grande de los 4 meses. Con los
+4 meses (abril -17.6%, mayo -4.4%, junio +2.65%, julio -0.2%): **"nuevos" subestima en los
+4, sin excepción** (-24.1% / -14.9% / -5.8% / -12.2%) — señal cada vez más consistente con
+sesgo real en `P_NO_PAGA_DIA0=13.38%` (subestima volumen de entrada), no solo varianza, ver
+`analisis_volumen_efectividad_agosto.md` (mismo patrón en el tracking en vivo de agosto, y
+el caveat de causalidad de esa lectura ya se resolvió — `grupo_control` es aleatorización
+estratificada por riesgo y monto, confirmado por el usuario). **Esta vez la query del
+calendario de fantasma frontier-adjusted SÍ quedó copiada al repo** (bug 17 pedía
+explícitamente evitar que se perdiera en el scratchpad otra vez) —
+`enfoque_capital_asegurado_backtest_abril.sql` query BT-ASEG-ABR-CALFANT. El artifact
+[📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)
+explica el mecanismo completo con julio y mayo como ejemplos — **todavía no incluye abril**,
+pendiente de refrescar.
+
+**Sigue pendiente:** 4 puntos de dato es una base más firme pero todavía vale extender a
+marzo 2026 (o más atrás si hay datos limpios) para confirmar el patrón, usando
+`enfoque_capital_asegurado_backtest_abril.sql` como plantilla esta vez (ya incluye el fix
+completo del calendario de fantasma, a diferencia de la plantilla de mayo). Dado que abril
+tiene el error más grande de los 4 (y en dirección distinta en fantasma/stock respecto a
+mayo/junio/julio), vale la pena investigar si marzo confirma esa magnitud o si abril es un
+outlier puntual antes de sacar conclusiones sobre tendencia. También pendiente (menor
+prioridad): confirmar la causa exacta de por qué `jul_calendario.csv` corría alto — no se
+investigó a fondo, la pista es saldo promedio ~11% más alto por crédito con MENOS créditos,
+no una firma de fila duplicada. Y actualizar el artifact "Proyectado vs. Real" con la tabla
+ampliada a 4 meses.
 
 ### Tarea 10 — Recalibrar las curvas excluyendo el mes de prueba — CERRADA 2026-08-22
 Se recalibraron `curva_asegurado_stock_seg.csv`/`curva_asegurado_nuevos_seg.csv` excluyendo
@@ -220,6 +233,77 @@ El stock sobreestimó +16.2% (recupero oficial) / +7.2% (capital asegurado tras 
 junio, mientras "nuevos" acertó casi exacto en ambos casos. Podría ser varianza normal (el
 tramo 9-15 osciló 9.8%-18.8% entre meses en los 14 de historia) o un segmentador que falta
 — investigar antes de asumir que es un problema del modelo.
+
+**Pista nueva 2026-08-24 (bug 19):** con 4 meses de backtest el stock es el componente
+errático (+7.9% abr, -0.8% may, +7.3% jun, -1.9% jul) mientras "nuevos" es consistente en
+signo. Y la validación de universo encontró que **la contaminación del stock (15.6% no
+gestionado como TEMPRANA) es casi 3× la de nuevos (5.8%)** — si esa proporción varía mes a
+mes, la curva de stock (calibrada con un mix promedio) erraría de forma variable. Es
+hipótesis, no verificada, y **no se puede verificar antes de julio 2026** (la tabla de
+asignaciones no existe antes). Ver bug 19 en `BUGS.md`.
+
+### Tarea 13 — Corregir el índice de la curva de nuevos (bug 18) — PRIMER PASO ACORDADO
+**Prioridad: la más alta.** Es un error puro, verificado con datos, y afecta la meta vigente
+de agosto además de los 4 backtests. Acordado con el usuario 2026-08-24 como el primer paso
+de la sesión siguiente.
+
+**Qué está mal:** la curva de nuevos se calibra indexada desde `fecha_entrada` (día que
+`dayslate`=1 = vencimiento+1, verificado 99.99%), con el join `f.fechaproceso >
+e.fecha_entrada` — o sea el día 1 de la curva es vencimiento+2. Pero los proyectores indexan
+`dias_desde_entrada = d - dd` donde `dd` es el día de VENCIMIENTO, o sea
+`fechaproceso − vencimiento`. Aplica `curva[k]` donde corresponde `curva[k−1]`.
+
+**Qué hacer:**
+1. Cambiar el índice a `dias_desde_entrada = d - dd - 1` en los 4 scripts de backtest
+   (`backtest_capital_asegurado_abril.py`, `_mayo.py`, `_junio.py`, `_julio_diario.py`) y en
+   `meta_agosto_capital_asegurado.py`. **No tocar el loop de fantasma** — ese no usa curva y
+   su índice actual es correcto.
+2. Re-correr los 4 backtests y actualizar `SEGUIMIENTO.md` (las 4 filas), `ESTADO.md`
+   ("La meta vigente" + índice de enfoques) y la meta de agosto.
+3. Republicar los artifacts afectados con los números nuevos:
+   [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)
+   y [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7)
+   (pasar `url=` para no crear artifacts nuevos).
+
+**Impacto ya medido — el error EMPEORA y aun así se corrige** (ver el principio nuevo de
+`CLAUDE.md`, "El error se explica, no se optimiza"): abril -17.6%→-19.2%, mayo -4.4%→-6.8%,
+junio +2.65%→+1.6%, julio -0.2%→-3.3%. El bug estaba compensando parcialmente el sesgo de
+"nuevos" (que subestima en los 4 meses). Al corregirlo, ese sesgo queda expuesto — **eso es
+lo correcto**, hay que explicarlo (volumen/mix/gestión), no taparlo.
+
+Ver bug 18 en `BUGS.md` para el detalle completo, la verificación empírica y la hipótesis
+que se descartó en el camino (la tasa 13.38% NO tiene el mismo problema — recalibrada por
+fecha exacta da 13.57%, solo +0.9% relativo).
+
+### Tarea 14 — Investigar los 302 créditos que no aparecen en asignaciones (bug 19)
+**Segundo paso acordado** — barato, y puede cambiar la lectura de las tareas 15/16.
+
+De la validación de universo de agosto (bug 19): 302 créditos de nuestro universo (1.9% del
+stock, **4.4% de nuevos** — el bucket más grande de ese lado) no aparecen en
+`dts_asignaciones_gestiones_cobranza` ningún día de agosto. En julio el bucket equivalente
+eran 120 créditos (bug 15, tras el fix de `aux02`). Averiguar qué son: ¿mora que dura menos
+de un día de corte de asignación? ¿productos fuera del alcance de cobranza? ¿un hueco real
+de la tabla? Query base en `validacion_universo_ejecucion.sql` V2 (categoría "3. no aparece
+en asignaciones").
+
+### Tarea 15 — Decidir qué debe representar la curva: población gestionada vs. población total (bug 19)
+**Requiere decisión del usuario, no solo trabajo técnico.** La curva de "nuevos" está
+calibrada sobre una población que excluye al ~21% que paga 1 día tarde (punto ciego de
+`dayslate`) — es decir, **se removió sistemáticamente a los mejores pagadores**. Hoy eso se
+compensa sumando la capa fantasma aparte en la proyección, pero la curva en sí sigue
+calibrada sobre la población incompleta: coherente aritméticamente, no conceptualmente.
+
+**Limitación dura:** `dts_asignaciones_gestiones_cobranza` solo existe desde 2026-07-01 y las
+curvas se calibran sobre 14 meses previos — el universo histórico **no se puede limpiar
+retroactivamente**. Lo que sí se puede: medir el tamaño del sesgo en julio/agosto (calibrar
+solo sobre gestionados vs. sobre todos) y decidir con ese número si importa en la práctica.
+
+### Tarea 16 — Escalados a ESPECIALIZADA/RECOVERY dentro de la calibración (bug 19)
+6.5% del stock y 0.7% de nuevos están en mora 1-30 pero el negocio los gestiona en otra fase
+(asignación a nivel CLIENTE por arrastre, ver `FUENTES_DATOS.md`). **A diferencia del grupo
+control, estos sí existen en todo el histórico**, así que sí contaminan las curvas. Decidir
+si se excluyen de la calibración o se documentan como parte del universo. Misma limitación de
+fecha que la tarea 15.
 
 ### Tarea 12 (baja prioridad) — Reorganizar en carpetas
 Considerar `sql/`, `python/`, `docs/` si el root sigue creciendo. No bloquea nada; con la
