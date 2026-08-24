@@ -145,14 +145,19 @@ for d in range(1, N_DIAS + 1):
     for dd in range(1, d + 1):
         fecha_venc = (INICIO + timedelta(days=dd - 1)).isoformat()
         riesgo_por_avance = calendario_agosto.get(fecha_venc, {})
-        dias_desde_entrada = d - dd
+        if d - dd < 1:
+            continue
+        # fantasma: 100% activado el dia siguiente al vencimiento, sin curva.
+        # NO afectado por bug18 -- no usa curva, su indice (d - dd >= 1) es correcto.
+        aseg_fantasma += sum(riesgo_por_avance.values()) * P_FANTASMA
+        # bug18: la curva de nuevos se calibra desde la ENTRADA en mora
+        # (= vencimiento + 1), no desde el vencimiento. Indice = d - dd - 1.
+        dias_desde_entrada = d - dd - 1
         if dias_desde_entrada < 1:
             continue
         for avance, saldo_riesgo in riesgo_por_avance.items():
             pct = lookup(curva_aseg_nuevos.get(avance, {}), dias_desde_entrada)
             aseg_nuevos += saldo_riesgo * P_NO_PAGA_DIA0 * pct / 100.0
-        # fantasma: 100% activado el dia siguiente al vencimiento, sin curva
-        aseg_fantasma += sum(riesgo_por_avance.values()) * P_FANTASMA
 
     filas.append({
         "dia": d, "fecha": fecha.isoformat(),

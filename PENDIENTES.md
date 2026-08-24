@@ -242,7 +242,18 @@ mes, la curva de stock (calibrada con un mix promedio) erraría de forma variabl
 hipótesis, no verificada, y **no se puede verificar antes de julio 2026** (la tabla de
 asignaciones no existe antes). Ver bug 19 en `BUGS.md`.
 
-### Tarea 13 — Corregir el índice de la curva de nuevos (bug 18) — PRIMER PASO ACORDADO
+### Tarea 13 — Corregir el índice de la curva de nuevos (bug 18) — ✅ CERRADA 2026-08-24
+**Resuelta.** Índice cambiado a `dias_desde_entrada = d - dd - 1` en los 4 backtests y en
+`meta_agosto_capital_asegurado.py`; en `_junio.py` y `meta_agosto_*` hubo que desacoplar el
+guard compartido con la capa fantasma para dejarla intacta (ver bug 18 en `BUGS.md`).
+Resultados: abril **-19.2%**, mayo **-6.8%**, junio **+1.6%**, julio **-3.3%** — exactamente
+los números pre-medidos. Meta de agosto S/16,410,194 → **S/16,211,015**. `SEGUIMIENTO.md`,
+`ESTADO.md` y los 2 artifacts actualizados. **Lo que queda abierto es explicar el sesgo de
+"nuevos" ya sin el bug compensándolo** (-27.3% abr / -20.1% may / -8.0% jun / -19.2% jul) —
+eso es tarea 9 + el análisis de volumen/mix/gestión, no un ajuste de constante.
+
+<details><summary>Enunciado original</summary>
+
 **Prioridad: la más alta.** Es un error puro, verificado con datos, y afecta la meta vigente
 de agosto además de los 4 backtests. Acordado con el usuario 2026-08-24 como el primer paso
 de la sesión siguiente.
@@ -275,35 +286,57 @@ Ver bug 18 en `BUGS.md` para el detalle completo, la verificación empírica y l
 que se descartó en el camino (la tasa 13.38% NO tiene el mismo problema — recalibrada por
 fecha exacta da 13.57%, solo +0.9% relativo).
 
-### Tarea 14 — Investigar los 302 créditos que no aparecen en asignaciones (bug 19)
-**Segundo paso acordado** — barato, y puede cambiar la lectura de las tareas 15/16.
+</details>
 
-De la validación de universo de agosto (bug 19): 302 créditos de nuestro universo (1.9% del
-stock, **4.4% de nuevos** — el bucket más grande de ese lado) no aparecen en
-`dts_asignaciones_gestiones_cobranza` ningún día de agosto. En julio el bucket equivalente
-eran 120 créditos (bug 15, tras el fix de `aux02`). Averiguar qué son: ¿mora que dura menos
-de un día de corte de asignación? ¿productos fuera del alcance de cobranza? ¿un hueco real
-de la tabla? Query base en `validacion_universo_ejecucion.sql` V2 (categoría "3. no aparece
-en asignaciones").
+### Tarea 14 — Investigar los 302 créditos que no aparecen en asignaciones (bug 19) — ✅ CERRADA 2026-08-24
+**Resuelta.** Son dos mecanismos distintos, no uno (detalle completo en bug 19,
+`BUGS.md`, actualización 2026-08-24; queries en `tarea14_no_aparece_asignaciones.sql`):
+- **~69 créditos (50 stock + 19 nuevos, 22.8%)** confirman la hipótesis original (pagos que
+  resuelven el crédito antes de que el proceso de asignación del día los alcance) — el
+  stock pagó el 01-ago (día 1 del mes), los nuevos salieron de mora en 1 día exacto (100%
+  vs. 37.6% de baseline).
+- **232 créditos (77.2%, todo el resto de "nuevos")** es censura por el corte de fecha del
+  propio ejercicio de validación — entraron en mora el 23-ago, el último día de la ventana
+  de asignaciones usada, y simplemente no tuvieron tiempo de aparecer. No es un hallazgo de
+  negocio.
 
-### Tarea 15 — Decidir qué debe representar la curva: población gestionada vs. población total (bug 19)
-**Requiere decisión del usuario, no solo trabajo técnico.** La curva de "nuevos" está
-calibrada sobre una población que excluye al ~21% que paga 1 día tarde (punto ciego de
-`dayslate`) — es decir, **se removió sistemáticamente a los mejores pagadores**. Hoy eso se
-compensa sumando la capa fantasma aparte en la proyección, pero la curva en sí sigue
-calibrada sobre la población incompleta: coherente aritméticamente, no conceptualmente.
+No cambia la lectura de bug 19 (el hueco del 21.6% y la contaminación asimétrica 15.6%/5.8%
+siguen de pie) — solo cierra la pregunta puntual de por qué estos 302 no aparecían.
 
-**Limitación dura:** `dts_asignaciones_gestiones_cobranza` solo existe desde 2026-07-01 y las
-curvas se calibran sobre 14 meses previos — el universo histórico **no se puede limpiar
-retroactivamente**. Lo que sí se puede: medir el tamaño del sesgo en julio/agosto (calibrar
-solo sobre gestionados vs. sobre todos) y decidir con ese número si importa en la práctica.
+### Tareas 15 y 16 — Población gestionada vs. total, y escalados ESPECIALIZADA/RECOVERY (bug 19) — MEDIDAS 2026-08-24, DECISIÓN SIGUE ABIERTA
+**El trabajo técnico (medir el sesgo) está hecho — lo que falta es la decisión del usuario,
+que sigue siendo suya.** Julio 2026 (único mes cerrado con asignaciones completas) muestra
+que ESPECIALIZADA/RECOVERY activa capital muchísimo menos que TEMPRANA gestionado — gap real
+y grande por componente:
 
-### Tarea 16 — Escalados a ESPECIALIZADA/RECOVERY dentro de la calibración (bug 19)
-6.5% del stock y 0.7% de nuevos están en mora 1-30 pero el negocio los gestiona en otra fase
-(asignación a nivel CLIENTE por arrastre, ver `FUENTES_DATOS.md`). **A diferencia del grupo
-control, estos sí existen en todo el histórico**, así que sí contaminan las curvas. Decidir
-si se excluyen de la calibración o se documentan como parte del universo. Misma limitación de
-fecha que la tarea 15.
+| | TEMPRANA gestionado | ESPECIALIZADA/RECOVERY | Gap |
+|---|---:|---:|---:|
+| Stock (% saldo asegurado) | 64.7% | 9.6% | **-55.1pp** |
+| Nuevos (% saldo asegurado) | 73.0% | 11.6% | **-61.4pp** |
+
+**Pero en el AGREGADO (curva completa) el efecto es chico** — "todos" vs. "solo TEMPRANA":
+stock 64.6% vs 64.7% (-0.1pp), nuevos 71.5% vs 73.0% (-1.5pp). ESPECIALIZADA/RECOVERY es
+poco volumen (6.5% stock, 0.7% nuevos) y su arrastre se compensa casi del todo con otros
+buckets. Detalle completo, incluyendo el bucket residual sin explicar ("otra situación") y
+la nota sobre grupo control, en bug 19 (`BUGS.md`) y `tarea15_16_sesgo_gestionado_julio.sql`.
+
+**Recomendación (no decisión):** dado el efecto agregado chico, mismo criterio que tarea 10
+(fuga de datos, 0.15-0.2pp, no adoptado) — no tocar la calibración de producción por esto
+ahora, solo documentar el gap real por componente para cuando la pregunta vuelva (ej. si el
+volumen de escalados crece). **Si el usuario prefiere excluir ESPECIALIZADA/RECOVERY de
+todos modos por coherencia conceptual** (la curva debería representar lo que TEMPRANA hace,
+no una fase de gestión distinta) aunque el impacto agregado sea chico, esa sigue siendo su
+llamada — avisar para implementarlo.
+
+**Limitación dura que sigue de pie:** `dts_asignaciones_gestiones_cobranza` solo existe
+desde 2026-07-01 y las curvas se calibran sobre 14 meses previos — el universo histórico no
+se puede limpiar retroactivamente. Esta medición es de UN mes (julio) — no se sabe si es
+representativo de otros meses ni si la proporción de escalados varía con el tiempo (conecta
+con la hipótesis no verificada de la tarea 11, ver bug 19).
+
+La motivación original de la tarea 15 (el punto ciego de ~21% de `dayslate`, población fuera
+de nuestro universo que paga 1 día tarde) es una pregunta DISTINTA, ya parcialmente resuelta
+por la capa fantasma (bug 9/14) — no remedida en esta sesión.
 
 ### Tarea 12 (baja prioridad) — Reorganizar en carpetas
 Considerar `sql/`, `python/`, `docs/` si el root sigue creciendo. No bloquea nada; con la

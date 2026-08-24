@@ -111,7 +111,9 @@ for d in range(1, N_DIAS + 1):
     for dd in range(1, d + 1):
         fecha_venc = (INICIO + timedelta(days=dd - 1)).isoformat()
         riesgo_por_avance = calendario_mayo.get(fecha_venc, {})
-        dias_desde_entrada = d - dd
+        # bug18: la curva de nuevos se calibra desde la ENTRADA en mora
+        # (= vencimiento + 1), no desde el vencimiento. Indice = d - dd - 1.
+        dias_desde_entrada = d - dd - 1
         if dias_desde_entrada < 1:
             continue
         for avance, saldo_riesgo in riesgo_por_avance.items():

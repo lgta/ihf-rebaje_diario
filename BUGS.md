@@ -987,10 +987,22 @@ en el agregado, porque el criterio "mismo mes" también captura entradas que NO 
 a esa cuota. La tasa no está mal calibrada en magnitud. Query en el scratchpad de la sesión
 (patrón documentado acá, replicable).
 
-**Estado: NO corregido todavía** — acordado con el usuario dejarlo como primer paso de la
-sesión siguiente (ver `PENDIENTES.md` tarea 13). Al corregirlo hay que tocar los 4 scripts
-de backtest, `meta_agosto_capital_asegurado.py`, y actualizar `SEGUIMIENTO.md` +
-`ESTADO.md` + los artifacts con los números nuevos.
+**Estado: CORREGIDO 2026-08-24.** Índice cambiado a `dias_desde_entrada = d - dd - 1` en
+`backtest_capital_asegurado_abril.py`, `_mayo.py`, `_junio.py`, `_julio_diario.py` y
+`meta_agosto_capital_asegurado.py`. Los 4 backtests re-corridos dan exactamente los números
+pre-medidos de la tabla de arriba (-19.2% / -6.8% / +1.6% / -3.3%), y la meta de agosto pasó
+de S/16,410,194 a **S/16,211,015** (nuevos S/7,269,629 → S/7,070,451; stock y fantasma sin
+cambios). `SEGUIMIENTO.md`, `ESTADO.md` y los 2 artifacts afectados actualizados.
+
+**Detalle de implementación a tener presente si se toca esto de nuevo:** en
+`backtest_capital_asegurado_abril.py`, `_mayo.py` y `_julio_diario.py` la capa fantasma vive
+en un loop separado (calendario propio frontier-adjusted, bug 17), así que bastó con cambiar
+la primera ocurrencia del índice. Pero en `_junio.py` y en `meta_agosto_capital_asegurado.py`
+**fantasma se calcula dentro del MISMO loop y compartía el guard `if dias_desde_entrada < 1:
+continue`** — bajar el índice ahí habría movido también la fantasma (que no debe cambiar).
+Se desacopló: primero `if d - dd < 1: continue` + acumulación de fantasma, después
+`dias_desde_entrada = d - dd - 1` + su propio guard para la curva. **Verificado: stock y
+fantasma dan idéntico al céntimo antes/después en los 4 meses.**
 
 ### 19. El universo de calibración de curvas no coincide con las reglas de ejecución del negocio
 
@@ -1052,8 +1064,9 @@ gestionada aplicadas a una población con 7.2% del stock sin gestión (≈S/441K
    grupo control, estos **sí existen en todo el histórico** (asignación a nivel CLIENTE por
    arrastre, ver `FUENTES_DATOS.md`). Están dentro de la calibración recibiendo una gestión
    distinta a la que la curva pretende representar.
-3. **302 créditos que no aparecen en asignaciones** (1.9% del stock, 4.4% de nuevos) — sin
-   explicar todavía. En julio el bucket equivalente eran 120 créditos (bug 15).
+3. **302 créditos que no aparecen en asignaciones** (1.9% del stock, 4.4% de nuevos) —
+   **explicado 2026-08-24, ver actualización de tarea 14 abajo.** En julio el bucket
+   equivalente eran 120 créditos (bug 15).
 
 **Limitación dura:** `dts_asignaciones_gestiones_cobranza` solo tiene datos desde 2026-07-01,
 y las curvas se calibran sobre 14 meses previos — **el universo histórico no se puede limpiar
@@ -1061,9 +1074,89 @@ retroactivamente** (no hay forma de saber qué créditos estaban en qué fase an
 2026). Lo que sí se puede: medir el tamaño del sesgo en julio/agosto (calibrar solo sobre
 gestionados vs. sobre todos) para saber si importa en la práctica.
 
+**Actualización 2026-08-24 (misma sesión) — tarea 14 CERRADA, los 302 sí se explican con
+datos.** Hipótesis del usuario (verificada, no solo aceptada de palabra — ver
+[[feedback-verificar-antes-de-afirmar]]): créditos que pagan tan rápido que quedan resueltos
+antes de que el proceso de asignación del día los alcance. Resultado: son **dos mecanismos
+distintos**, no uno, y en proporción muy desigual (queries en `tarea14_no_aparece_
+asignaciones.sql`):
+
+- **Stock (50 de 51, 98%) — confirma la hipótesis, limpio.** Los 50 pagaron exactamente el
+  **01-ago**, el primer día del mes, y nunca aparecieron en asignaciones ningún día de
+  agosto. Resueltos antes de que el proceso los capture. (El crédito restante es un outlier
+  — pagó el 21-ago y tampoco apareció; bajo volumen, no investigado más.)
+- **Nuevos — 19 de 251 (7.6%) confirman la hipótesis.** De los que tuvieron una salida de
+  mora observada dentro de la ventana (19 de 251 — el resto sigue en mora, ver el punto de
+  abajo), el **100% (19/19) salió en exactamente 1 día**, contra **37.6%** (1,463/3,886) en
+  la población que sí aparece en asignaciones. Misma firma que el stock: pagan demasiado
+  rápido para que el proceso los alcance.
+- **Nuevos — el grueso, 232 de 251 (92.4%), es un mecanismo DISTINTO y no tiene relación con
+  la hipótesis.** Estos 232 entraron en mora el **23-ago** — el ÚLTIMO día de la ventana de
+  asignaciones usada en `validacion_universo_ejecucion.sql` (`fecha_base between 2026-08-01
+  and 2026-08-23`) — y siguen en mora esa misma fecha. Es censura por el corte del propio
+  ejercicio de validación: simplemente no tuvieron tiempo de aparecer en asignaciones
+  todavía, no un hueco real de negocio ni de la tabla.
+
+**Neto:** de los 302 originales, **~69 (50 stock + 19 nuevos, 22.8%)** confirman la
+hipótesis del usuario (pagos que resuelven el crédito antes de que el proceso de asignación
+los alcance) — un mecanismo real y ahora verificado, primo del punto ciego de `dayslate`
+(bug 9) pero del lado de asignaciones, no de Mambu. El **77.2% restante (232 créditos) es un
+artefacto del corte de fecha** del ejercicio de validación (bug 19), no un hallazgo de
+negocio — se resuelve extendiendo la ventana de asignaciones o excluyendo del bucket a los
+entrantes del último día del corte. **No cambia la lectura de bug 19** (el 21.6%/hueco y el
+15.6%/5.8% de contaminación asimétrica siguen de pie, son otra categoría) — esto solo cierra
+la pregunta específica de "por qué estos 302 no aparecen".
+
 **Conexión con la tarea 11 (`PENDIENTES.md`, nunca investigada):** el stock es el componente
 errático del backtest (+7.9% abr, -0.8% may, +7.3% jun, -1.9% jul) mientras "nuevos" es
 consistente en signo. La contaminación del stock (15.6%) es casi 3× la de nuevos (5.8%) — si
 la proporción varía mes a mes, la curva de stock (calibrada con un mix promedio) erraría de
 forma variable. **Hipótesis, no verificada** — y no se puede verificar antes de julio 2026
 por la limitación de arriba.
+
+**Actualización 2026-08-24 (misma sesión) — tareas 15/16 medidas con datos (julio 2026,
+único mes cerrado con cobertura completa de asignaciones). Query en `tarea15_16_sesgo_
+gestionado_julio.sql`.** Se comparó el % de saldo "asegurado" (≥1 día de pago en julio,
+misma definición del enfoque alfa) entre TEMPRANA gestionado y ESPECIALIZADA/RECOVERY —
+la única contaminación que SÍ existe en todo el histórico (a diferencia de grupo control,
+ver arriba):
+
+| | TEMPRANA gestionado | ESPECIALIZADA/RECOVERY | Gap |
+|---|---:|---:|---:|
+| Stock (% saldo asegurado) | **64.7%** (2,395 créd. / S/4.02M) | **9.6%** (117 créd. / S/242,593) | **-55.1pp** |
+| Nuevos (% saldo asegurado) | **73.0%** (5,868 créd. / S/9.26M) | **11.6%** (60 créd. / S/113,359) | **-61.4pp** |
+
+**El gap por componente es enorme y tiene sentido de negocio** (ESPECIALIZADA/RECOVERY es
+una escalación por casos más difíciles — activan mucho menos porque son, precisamente, los
+que no respondieron a la gestión temprana). Responde que sí, la curva SÍ debería representar
+solo lo que TEMPRANA gestiona, conceptualmente.
+
+**Pero el efecto en el AGREGADO (curva completa, "todos" vs. "solo TEMPRANA") sale casi
+idéntico en julio** — no material:
+
+| | Solo TEMPRANA | Todos (TEMPRANA + ESP/REC + no aparece + otra situación) | Diferencia |
+|---|---:|---:|---:|
+| Stock | 64.7% | **64.6%** | -0.1pp |
+| Nuevos | 73.0% | **71.5%** | -1.5pp |
+
+**Por qué el agregado no muestra el sesgo aunque el componente sí es real:** ESPECIALIZADA/
+RECOVERY es chico en volumen (6.5% del stock, 0.7% de nuevos, bug 19) y su arrastre hacia
+abajo se compensa casi por completo con el bucket "no aparece en asignaciones" (~100%
+asegurado, pero por construcción — son los pagadores instantáneos de tarea 14, no una señal
+independiente) y, en nuevos, con un bucket residual "aparece, otra situación" (721 créd.,
+62.0% asegurado, `fase_estrategia` sin mapear a TEMPRANA/ESP/REC — no investigado, volumen
+bajo) que queda sin explicar del todo. Ver también un matiz: en esta partición de julio no
+apareció **ningún** crédito de grupo control (ni stock ni nuevos) — sorprendente dado que el
+usuario confirmó que existió en julio (ver arriba); no investigado más, volumen irrelevante
+para la conclusión.
+
+**Recomendación (no decisión — sigue siendo del usuario, tareas 15/16 requieren su
+criterio):** dado que el efecto agregado es chico (-0.1pp stock, -1.5pp nuevos) y el costo de
+construir un pipeline de calibración filtrado por gestión es real, **no se justifica tocar la
+calibración de producción por esto ahora** — mismo criterio que tarea 10 (fuga de datos,
+0.15-0.2pp, no adoptado). Sí vale **documentar** el gap de ESPECIALIZADA/RECOVERY como una
+diferencia de comportamiento real y ahora cuantificada, para cuando la pregunta vuelva a
+aparecer (ej. si la proporción de escalados crece con el tiempo, el efecto agregado sí
+importaría). La limitación de fecha sigue de pie: esto solo se pudo medir para julio (único
+mes cerrado con asignaciones completas) — no se puede saber si julio es representativo de
+otros meses.

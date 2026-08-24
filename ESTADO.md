@@ -7,10 +7,57 @@
 
 Última actualización: 2026-08-24.
 
+> **2026-08-24 (continuación) — BUG 18 CORREGIDO Y DESPLEGADO.** Índice de la curva de
+> nuevos cambiado a `dias_desde_entrada = d - dd - 1` en los 4 backtests y en la meta de
+> agosto; capa fantasma intacta (verificado: stock y fantasma idénticos al céntimo en los 4
+> meses — en `_junio.py` y `meta_agosto_*` hubo que desacoplar el guard que fantasma
+> compartía con la curva). Resultados nuevos: abril **-19.2%**, mayo **-6.8%**, junio
+> **+1.6%**, julio **-3.3%** — exactamente los pre-medidos. **Meta vigente de agosto:
+> S/16,410,194 → S/16,211,015** (-1.2%); el avance al 21-ago pasa de +2.6% a **+5.1%** sobre
+> lo proyectado al mismo día. `SEGUIMIENTO.md`, `ESTADO.md`, `BUGS.md` (bug 18 cerrado),
+> `PENDIENTES.md` (tarea 13 cerrada) y los 2 artifacts actualizados.
+> **Lo que esto deja abierto — y es el punto:** sin el bug compensando, el sesgo de "nuevos"
+> queda expuesto en su tamaño real (**-27.3% abr, -20.1% may, -8.0% jun, -19.2% jul**,
+> subestima en los 4 sin excepción). Eso **se explica** (volumen/mix/gestión — ver
+> `analisis_volumen_efectividad_agosto.md` y tarea 9), no se ajusta con una constante.
+
+> **2026-08-24 (continuación 2) — TAREA 14 CERRADA: los 302 créditos sin asignación (bug 19)
+> se explican con datos, y son dos mecanismos distintos.** Hipótesis del usuario (pagos que
+> resuelven el crédito antes de que el proceso de asignación del día los alcance),
+> verificada por separado en stock y nuevos:
+> - **~69 créditos (50 stock + 19 nuevos, 22.8%) confirman la hipótesis, limpio.** El stock
+>   pagó el **01-ago** (día 1 del mes) sin excepción; los 19 nuevos con salida observada
+>   salieron de mora en exactamente 1 día el **100%** de las veces (vs. 37.6% de baseline).
+> - **232 créditos (77.2% del total) son OTRA cosa — censura por el corte de fecha del
+>   propio ejercicio de validación**, no un hallazgo de negocio: entraron en mora el
+>   **23-ago**, el último día de la ventana de asignaciones usada, y simplemente no tuvieron
+>   tiempo de aparecer todavía.
+> No cambia la lectura de bug 19 (el hueco del 21.6% y la contaminación asimétrica
+> 15.6%/5.8% siguen de pie). Detalle y queries en bug 19 (`BUGS.md`) y
+> `tarea14_no_aparece_asignaciones.sql`.
+
+> **2026-08-24 (continuación 3) — TAREAS 15/16 MEDIDAS con julio 2026 (único mes cerrado con
+> asignaciones completas): el gap real por componente es grande, pero el efecto agregado es
+> chico.** ESPECIALIZADA/RECOVERY activa capital muchísimo menos que TEMPRANA gestionado —
+> stock 9.6% vs. 64.7% (-55.1pp), nuevos 11.6% vs. 73.0% (-61.4pp), gap con sentido de
+> negocio (son los casos que no respondieron a gestión temprana). **Pero en el agregado
+> ("todos" vs. "solo TEMPRANA") el movimiento es chico** — stock 64.6% vs. 64.7% (-0.1pp),
+> nuevos 71.5% vs. 73.0% (-1.5pp) — porque ESPECIALIZADA/RECOVERY es poco volumen (6.5%
+> stock, 0.7% nuevos) y su arrastre se compensa con otros buckets. **Recomendación (no
+> decisión, sigue siendo del usuario): no tocar la calibración de producción por esto ahora**
+> (mismo criterio que tarea 10, impacto chico) — documentar el gap real y esperar a que
+> importe en la práctica (ej. si el volumen de escalados crece). Detalle completo, el bucket
+> residual sin explicar y la nota sobre grupo control (no apareció en esta partición de
+> julio) en bug 19 (`BUGS.md`) y `tarea15_16_sesgo_gestionado_julio.sql`.
+
 > **2026-08-24 — DOS HALLAZGOS ESTRUCTURALES a partir de un punto conceptual del usuario:
-> el índice de la curva de nuevos está corrido 1 día (bug 18) y el universo de calibración
-> no coincide con las reglas de ejecución del negocio (bug 19). Nada corregido todavía —
-> el plan quedó acordado para la sesión siguiente.**
+> el índice de la curva de nuevos está corrido 1 día (bug 18, **ya corregido — ver bloque
+> de arriba**) y el universo de calibración no coincide con las reglas de ejecución del
+
+> **2026-08-24 — DOS HALLAZGOS ESTRUCTURALES a partir de un punto conceptual del usuario:
+> el índice de la curva de nuevos está corrido 1 día (bug 18, **ya corregido — ver bloque
+> de arriba**) y el universo de calibración no coincide con las reglas de ejecución del
+> negocio (bug 19, sin corregir).**
 >
 > **El punto de partida (usuario):** *"la fecha de vencimiento es el último día que el
 > cliente puede pagar sin entrar en mora — entra en mora si no paga ese día, sino
@@ -292,24 +339,27 @@
 > error más alto medido hasta ahora en este enfoque, ver nota de cautela abajo). Fuente:
 > `cierre_julio.sql`.
 
-**Agosto 2026, corte 21-ago — Capital asegurado (con capa fantasma, tasa recalibrada y fix
-de frontera de mes, ver bug 14 en `BUGS.md`):** meta proyectada **S/16,410,194** (sin
-cambios — stock S/2,951,390 + nuevos S/7,269,629 + fantasma S/6,189,175, incluye 77
-créditos/S/140,194 del 31-jul; la meta se fija una sola vez al inicio del mes, no se
-recalcula día a día). Real asegurado a la fecha: **S/11,620,780** (70.8% de avance del
-total del mes) — **+2.6% por encima de lo proyectado para el mismo día** (proyectado
-mismo corte: S/11,325,584). Resta: S/4,789,414 (días 22-31). Fuente:
+**Agosto 2026, corte 21-ago — Capital asegurado (con capa fantasma, tasa recalibrada, fix
+de frontera de mes —bug 14— y fix del índice de curva —bug 18, 2026-08-24—):** meta
+proyectada **S/16,211,015** (recalculada 2026-08-24 por el fix de bug 18; antes
+S/16,410,194, -1.2% — stock S/2,951,390 + nuevos S/7,070,451 + fantasma S/6,189,175,
+incluye 77 créditos/S/140,194 del 31-jul; la meta se fija una sola vez al inicio del mes, no
+se recalcula día a día — este cambio es una corrección de error, no un reajuste). Real
+asegurado a la fecha: **S/11,620,780** (71.7% de avance del total del mes) — **+5.1% por
+encima de lo proyectado para el mismo día** (proyectado mismo corte: S/11,054,795; antes del
+fix era +2.6%). Resta: S/4,590,235 (días 22-31). Fuente:
 `meta_agosto_capital_asegurado.py` (v5, refrescado 2026-08-22 a pedido del usuario — no
 se esperó al cierre de agosto) + `datos_avance_capital_asegurado_agosto/`. **Desagregado
 por segmento y descompuesto en volumen vs. efectividad el mismo día — ver
 `analisis_volumen_efectividad_agosto.md`, resumen arriba.** Curvas calibradas y validadas
 con backtest de **4 meses cerrados** (ver bug 17 en `BUGS.md` y el artifact
-[📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa),
-este último todavía sin refrescar con abril): abril **-17.6%** (agregado 2026-08-23, el
-error más grande de los 4), mayo **-4.4%**, junio **+2.65%**, julio **-0.2%** (corregido
-2026-08-23 — el número anterior, +2.17%, usaba un archivo de calendario huérfano que corría
-7.9% alto, ver bug 17). En los 4 meses, "nuevos" subestima sin excepción — señal cada vez
-más consistente con sesgo real, no solo varianza (ver tarea 9, `PENDIENTES.md`). Curvas también verificadas fuera de muestra estricta (tarea 10,
+[📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)):
+abril **-19.2%** (el error más grande de los 4), mayo **-6.8%**, junio **+1.6%**, julio
+**-3.3%** — los 4 recalculados 2026-08-24 con el fix de bug 18 (antes -17.6% / -4.4% /
++2.65% / -0.2%; el fix EMPEORA los 4 y se aplica igual, ver `SEGUIMIENTO.md`). En los 4
+meses "nuevos" subestima sin excepción y ahora en su tamaño real (-27.3% abr, -20.1% may,
+-8.0% jun, -19.2% jul) — sesgo estructural, no varianza; explicarlo es la tarea abierta (ver
+tarea 9, `PENDIENTES.md`). Curvas también verificadas fuera de muestra estricta (tarea 10,
 `PENDIENTES.md` CERRADA 2026-08-22): recalibrarlas excluyendo los 3 meses de backtest por
 completo mueve el error solo 0.15-0.2pp — el modelo no depende de la fuga. Las curvas de
 este archivo (Q1/Q2) no se recalcularon con el dedup de bug 11 en producción — el impacto
@@ -366,24 +416,23 @@ completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
 | [Deck (11 slides)](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) | ⚠ desactualizado | Mismo motivo |
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) | ✓ vigente, reconstruido 2026-08-23 (URL nueva — la vieja 3a6b8cb9... dejó de existir) | Enfoque alfa, **meta principal de agosto** — 5 créditos reales de agosto, curvas con bug 12, backtest de 3 meses cerrados (mayo/junio/julio, con capa fantasma) y avance en vivo de agosto (corte 21-ago) por segmento. Reconstrucción completa, tarea 2 de `PENDIENTES.md` CERRADA. |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) | ✓ vigente, **actualizado 2026-08-24 con el fix de bug 18** | Enfoque alfa, **meta principal de agosto** — 5 créditos reales de agosto, curvas con bug 12, backtest de **4 meses cerrados** (abril a julio, con capa fantasma) y avance en vivo de agosto (corte 21-ago) por segmento. La actualización de bug 18 tocó: aviso nuevo arriba, meta S/16.41M→**S/16.21M**, avance mismo día +2.7%→**+5.2%**, tabla de meses ampliada a 4 con los errores nuevos, serie diaria de julio y de agosto regeneradas desde los scripts, y `meta_s`/`diff_pct` de nuevos por avance recalculados. |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85) | ✓ vigente (republicado 2026-08-22, URL nueva — la anterior dejó de estar disponible) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, con la definición corregida (bug 12). Agregado 2026-08-22: banner de "Principio de universo" + estado de la investigación de `dias_atraso_cuota` (bug 16, no adoptada). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
 | [📈 De julio a agosto — cómo se arma la meta](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) | ✓ vigente y publicado (2026-08-21) | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto), ambos enfoques con toggle. **Refrescado 2026-08-21 al corte 20-ago** (a pedido del usuario, sin esperar al cierre de agosto): capital asegurado avance +1.9% (antes -2.1% al 18-ago), recupero oficial +3.3% (antes -1.5%) — ambos enfoques cruzaron a positivo en 2 días, ver nota de cautela en `ESTADO.md` "La meta vigente". Sección 4 "Diferencias con la reconciliación" sin cambios (explica el punto ciego de `dayslate`, la capa fantasma, el fix de frontera y por qué julio sube más que junio). Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` + `meta_agosto_capital_asegurado.py` (v4) + `meta_agosto.py` (v2). |
 
 | [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637) | ✓ vigente, nuevo 2026-08-22 | Reconstruye paso a paso `P_NO_PAGA_DIA0=13.38%`: el embudo elegibles/entradas, 2 créditos reales día por día, desglose mensual (10 meses) y diario (365 días) con curva por día, y las pruebas de robustez de esta sesión (dedup bug 11, ventanas 6/10/12 meses). Fuente: `tasa_1338.html`. |
-| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) | ✓ vigente, nuevo 2026-08-22 | Cómo se arma el backtest mensual completo (3 motores: stock+nuevos+fantasma), explicado con julio y mayo 2026 día a día, más la prueba de robustez de las curvas (tarea 10). Julio usa el número reconstruido de bug 17 (-0.2%), distinto del publicado antes en `SEGUIMIENTO.md` (+2.17%) — ver el callout de la propia página. Fuente: `proyectado_vs_real.html`. |
+| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) | ✓ vigente, **actualizado 2026-08-24 con el fix de bug 18** | Cómo se arma el backtest mensual completo (3 motores: stock+nuevos+fantasma), explicado con julio y mayo 2026 día a día, más la prueba de robustez de las curvas (tarea 10). Ahora con aviso de bug 18 arriba, los 4 errores nuevos (-19.2% / -6.8% / +1.6% / -3.3%) y la tabla resumen ampliada a 4 meses (abril agregado). Las series diarias de julio y mayo se regeneraron desde los scripts — de paso se corrigió un desfase que tenían los tooltips de julio (mostraban el proyectado sin la cohorte fantasma del 30-jun; el trazo del gráfico sí la incluía). La sección 5 (curvas fuera de muestra) queda con niveles pre-fix, marcado en la propia página. Fuente: `proyectado_vs_real.html`. |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
 no republicar sin actualizarlos primero.
 
-> **⚠ 2026-08-24 — todos los artifacts que muestran números de backtest o la meta de agosto
-> quedarán desactualizados cuando se corrija bug 18** (índice de la curva corrido 1 día, ver
-> `BUGS.md`): los 4 errores mensuales cambian (abril -17.6%→-19.2%, mayo -4.4%→-6.8%, junio
-> +2.65%→+1.6%, julio -0.2%→-3.3%) y la meta de agosto también. Afecta sobre todo a
-> **📈 Proyectado vs. Real** y **🔒 Capital asegurado**. **No republicar ninguno hasta
-> aplicar el fix** (tarea 13 de `PENDIENTES.md`), y hacerlo pasando `url=` para conservar
-> las URLs actuales.
+> **✔ 2026-08-24 — bug 18 corregido y artifacts republicados.** Los 4 errores mensuales
+> cambiaron (abril -17.6%→**-19.2%**, mayo -4.4%→**-6.8%**, junio +2.65%→**+1.6%**, julio
+> -0.2%→**-3.3%**) y la meta de agosto pasó de S/16,410,194 a **S/16,211,015**.
+> **📈 Proyectado vs. Real** y **🔒 Capital asegurado** ya fueron republicados con los
+> números nuevos pasando `url=` (URLs conservadas). Los demás artifacts que citan estos
+> números de pasada siguen marcados "⚠ desactualizado" abajo.
 
 *(Los artifacts de "Salida de mora" y "Los 4 enfoques explicados" ya no están en esta
 tabla — sus enfoques se descontinuaron 2026-07-15, ver `DECISIONES.md`. Los artifacts
@@ -401,7 +450,7 @@ siguen existiendo en claude.ai, solo dejaron de mantenerse.)*
 
 | Enfoque | Archivo | Qué mide | Estado |
 |---|---|---|---|
-| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest de 4 meses cerrados: -17.6% (abr, agregado 2026-08-23) / -4.4% (may) / +2.65% (jun) / -0.2% (jul, corregido 2026-08-23, ver bug 17). Curvas verificadas fuera de muestra estricta (tarea 10 CERRADA, impacto <0.2pp). "Nuevos" subestima en los 4 meses sin excepción — señal cada vez más consistente con sesgo real, no solo varianza. Pendientes en `PENDIENTES.md` |
+| **Alfa — Capital asegurado** (meta principal desde 2026-07-13) | `enfoque_capital_asegurado.md` | % de capital con ≥1 pago en el mes (no soles recuperados) | ✅ Backtest de 4 meses cerrados, todos recalculados 2026-08-24 con el fix de bug 18: **-19.2%** (abr) / **-6.8%** (may) / **+1.6%** (jun) / **-3.3%** (jul). Curvas verificadas fuera de muestra estricta (tarea 10 CERRADA, impacto <0.2pp). "Nuevos" subestima en los 4 meses sin excepción y, sin el bug 18 compensando, en su tamaño real (-27.3% / -20.1% / -8.0% / -19.2%) — sesgo estructural a explicar, no varianza. Pendientes en `PENDIENTES.md` |
 | Acumulado (recupero oficial, en paralelo) | `enfoque_acumulado.md` | Soles recuperados, mes completo anclado al cierre anterior | ✅ Validado, backtest +5.4%. Pendientes en `PENDIENTES.md` |
 | Tasa 25% plano / motor cuota-consistente | ver `BUGS.md` bug 10 | Alternativas de `P(no paga a tiempo)` (respaldo de una decisión del enfoque acumulado, no es un enfoque propio) | ❌ Descartados por backtest (+66% a +81% / -35.7%) |
 
@@ -501,14 +550,22 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ```
 CONTEXTO MÍNIMO PARA ARRANCAR (leer en este orden):
-1. ESTADO.md, bloque "2026-08-24" arriba -- los 2 hallazgos estructurales de la sesión
-   anterior (bug 18 y 19), ninguno corregido todavía.
-2. BUGS.md bugs 18 y 19 COMPLETOS -- tienen la verificación empírica, el impacto medido y
-   las hipótesis que ya se descartaron con datos (no repetirlas).
-3. CLAUDE.md, principio nuevo "Principio de interpretación del error" -- es la corrección
+1. ESTADO.md, bloques "2026-08-24 (continuación)", "(continuación 2)" y "(continuación 3)"
+   arriba -- bug 18 YA CORREGIDO y desplegado (backtests, meta de agosto, docs y los 2
+   artifacts), tarea 14 YA CERRADA (302 créditos sin asignación, explicados), tareas 15/16 YA
+   MEDIDAS (gap real por componente, efecto agregado chico, recomendación dada -- decisión
+   final de todos modos sigue siendo del usuario). Bug 19 en sí (el hueco del 21.6% y la
+   contaminación asimétrica) sigue SIN "corregir" -- no hay más trabajo técnico pendiente,
+   solo la decisión.
+2. BUGS.md bug 19 COMPLETO, incluida la actualización de tareas 15/16 al final (tiene los
+   números y el razonamiento completo -- no remedir). Bug 18 solo si hay que tocar el índice
+   otra vez (nota de implementación sobre el guard compartido con fantasma).
+3. CLAUDE.md, principio "Principio de interpretación del error" -- es la corrección
    conceptual que dio el usuario y cambia cómo se prioriza cualquier hallazgo.
-4. PENDIENTES.md tareas 13-16 (las nuevas, en orden acordado).
-5. En memoria: feedback-error-se-explica-no-se-optimiza (nuevo),
+4. PENDIENTES.md -- tareas 13-16 ya están CERRADAS/MEDIDAS. Lo único abierto de esta línea de
+   trabajo es la decisión del usuario sobre tareas 15/16 (excluir ESPECIALIZADA/RECOVERY de
+   la calibración o no); si no hay nada más que decidir, pasar a los pendientes más antiguos.
+5. En memoria: feedback-error-se-explica-no-se-optimiza,
    feedback-verificar-antes-de-afirmar y feedback-cuadrar-universo-fuente-formal.
 
 EL PUNTO CONCEPTUAL QUE ORIGINÓ TODO (del usuario, tenerlo presente en cualquier query
@@ -519,36 +576,41 @@ día 1 del mes SOLO puede tener antiguos. Verificado: entrada = vencimiento + 1 
 
 PLAN ACORDADO, en este orden:
 
-1. **PRIMERO: corregir bug 18 (tarea 13, PENDIENTES.md).** Es error puro, verificado, y
-   toca la meta vigente de agosto. Cambiar el índice a `dias_desde_entrada = d - dd - 1` en
-   los 4 backtests (`backtest_capital_asegurado_abril.py`, `_mayo.py`, `_junio.py`,
-   `_julio_diario.py`) y en `meta_agosto_capital_asegurado.py`. **NO tocar el loop de
-   fantasma** -- no usa curva y su índice actual es correcto. Después: re-correr los 4
-   backtests, actualizar SEGUIMIENTO.md (4 filas), ESTADO.md ("La meta vigente" + índice de
-   enfoques) y republicar los 2 artifacts afectados PASANDO url= (Proyectado vs. Real:
-   https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa ; Capital asegurado:
-   https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7 -- confirmar ambas
-   contra la tabla "Artifacts publicados" de ESTADO.md antes de republicar).
-   **OJO: el error EMPEORA con el fix** (abril -17.6%→-19.2%, mayo -4.4%→-6.8%, junio
-   +2.65%→+1.6%, julio -0.2%→-3.3%) y eso está bien -- ver el principio de CLAUDE.md. El
-   sesgo de "nuevos" que queda expuesto hay que EXPLICARLO (volumen/mix/gestión), no taparlo.
+0. **HECHO (no rehacer): bug 18 corregido, tarea 13 CERRADA.** Índice de la curva de nuevos
+   = `d - dd - 1` en los 4 backtests y en `meta_agosto_capital_asegurado.py`. Números
+   vigentes: abril -19.2%, mayo -6.8%, junio +1.6%, julio -3.3%; meta de agosto S/16,211,015
+   (nuevos S/7,070,451). SEGUIMIENTO.md, ESTADO.md, BUGS.md, PENDIENTES.md, README.md y los
+   2 artifacts ya actualizados. **Lo que queda de ahí es EXPLICAR el sesgo de "nuevos"**
+   (-27.3% abr / -20.1% may / -8.0% jun / -19.2% jul, subestima en los 4) con
+   volumen/mix/gestión -- NO ajustando constantes.
 
-2. **Investigar los 302 créditos sin asignación (tarea 14).** 1.9% del stock y 4.4% de
-   nuevos no aparecen en dts_asignaciones_gestiones_cobranza ningún día de agosto. Barato, y
-   puede cambiar la lectura de las tareas 15/16. Query base:
-   `validacion_universo_ejecucion.sql` V2, categoría "3. no aparece en asignaciones".
+0b. **HECHO (no rehacer): tarea 14 CERRADA.** Los 302 créditos sin asignación son DOS
+    mecanismos: ~69 (50 stock + 19 nuevos) confirman "pagan antes de que el proceso de
+    asignación los alcance" (stock: 100% pagó el 01-ago; nuevos: 100% salió de mora en 1
+    día vs. 37.6% baseline); los 232 restantes son censura por el corte de fecha del propio
+    ejercicio de validación (entraron el 23-ago, último día de la ventana), no un hallazgo
+    de negocio. No cambia la lectura de bug 19. Detalle en BUGS.md (bug 19) y
+    `tarea14_no_aparece_asignaciones.sql`.
 
-3. **Recién ahí, decidir sobre las incoherencias de universo (tareas 15 y 16) -- REQUIEREN
-   DECISIÓN DEL USUARIO**, no solo trabajo técnico: qué debe representar la curva, la
-   población gestionada o la población total. Limitación dura a tener presente: la tabla de
-   asignaciones solo existe desde 2026-07-01 y las curvas se calibran sobre 14 meses previos
-   -- el universo histórico NO se puede limpiar retroactivamente. Lo que sí se puede: medir
-   el tamaño del sesgo en julio/agosto y decidir con ese número.
+1c. **HECHO (no rehacer): tareas 15/16 MEDIDAS con julio 2026 (único mes cerrado con
+    asignaciones completas).** Gap real por componente, grande: ESPECIALIZADA/RECOVERY activa
+    9.6% (stock) / 11.6% (nuevos) vs. 64.7% / 73.0% de TEMPRANA gestionado. Pero en el
+    AGREGADO el efecto es chico: "todos" vs. "solo TEMPRANA" da 64.6% vs 64.7% (stock, -0.1pp)
+    y 71.5% vs 73.0% (nuevos, -1.5pp) -- ESPECIALIZADA/RECOVERY es poco volumen (6.5%/0.7%) y
+    se compensa con otros buckets. Recomendación dada (no tocar producción, documentar --
+    mismo criterio que tarea 10): **espera confirmación o instrucción distinta del usuario**,
+    no asumir que quedó cerrada como decisión, solo como medición. Detalle en BUGS.md (bug
+    19) y `tarea15_16_sesgo_gestionado_julio.sql`.
+
+1d. **Si el usuario ya respondió sobre 15/16 en algún punto de la sesión y esto quedó
+    desactualizado, confiar en la conversación, no en este prompt** -- este texto se escribió
+    antes de conocer esa respuesta.
 
 PENDIENTES MÁS ANTIGUOS, sin tocar (menor prioridad que lo de arriba):
 - Tarea 9: extender el backtest a marzo 2026. Usar `enfoque_capital_asegurado_backtest_
   abril.sql` como plantilla (ya incluye el calendario de fantasma frontier-adjusted).
-  **Esperar a que bug 18 esté corregido** para no generar un quinto mes con el índice viejo.
+  **Ya se puede hacer** -- bug 18 está corregido; copiar el índice `d - dd - 1` del script
+  de abril (y su loop de fantasma SEPARADO, que no lleva el -1).
 - Tarea 6: aplicar bug 12 + dedup de bug 11 al motor de recupero oficial (fase1_stock.sql,
   fase2_nuevos.sql, fase3_backtest.sql). fase1_stock.sql documenta explícitamente lo
   CONTRARIO a la regla del usuario ("los que entran en mora el día 1 quedan como nuevos").
@@ -612,8 +674,21 @@ push, no se pidió).
   `BUGS.md` (bugs 18 y 19), `CLAUDE.md` (principio de interpretación del error),
   `PENDIENTES.md` (tareas 13-16 nuevas + pista nueva en tarea 11), `ESTADO.md` (bloque de
   sesión, prompt de continuación reescrito, tabla de artifacts).
+- **Sesión 2026-08-24 (continuación, fix de bug 18):** `backtest_capital_asegurado_abril.py`,
+  `_mayo.py`, `_junio.py`, `_julio_diario.py` y `meta_agosto_capital_asegurado.py` (índice
+  `d - dd - 1`; en junio y meta-agosto además se desacopló el guard de la capa fantasma),
+  `proyectado_vs_real.html` y `capital_asegurado.html` (fuentes de los 2 artifacts
+  republicados), `SEGUIMIENTO.md` (nota nueva + 5 filas), `BUGS.md` (bug 18 cerrado con nota
+  de implementación), `PENDIENTES.md` (tarea 13 cerrada), `ESTADO.md` y `README.md`.
+- **Sesión 2026-08-24 (continuación 2, tarea 14):** `tarea14_no_aparece_asignaciones.sql`
+  (nuevo, 3 queries), `BUGS.md` (bug 19, actualización con el hallazgo), `PENDIENTES.md`
+  (tarea 14 cerrada), `ESTADO.md` (bloque de sesión nuevo, prompt de continuación).
+- **Sesión 2026-08-24 (continuación 3, tareas 15/16):**
+  `tarea15_16_sesgo_gestionado_julio.sql` (nuevo), `BUGS.md` (bug 19, segunda actualización),
+  `PENDIENTES.md` (tareas 15/16 medidas, decisión sigue abierta), `ESTADO.md` (bloque de
+  sesión nuevo, prompt de continuación reescrito).
 
-**Nada de esto está commiteado todavía.**
+**Se pidió commit al cierre de esta sesión — ver el hash más abajo si ya se hizo.**
 
 ## Índice de los demás documentos
 
