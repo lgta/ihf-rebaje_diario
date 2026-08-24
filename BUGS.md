@@ -820,6 +820,40 @@ detalle completo — resumen:
   la comparación control/gestionado en `analisis_volumen_efectividad_agosto.md` sí soporta
   una lectura causal.
 
+**Actualización 2026-08-24 (sesión nueva) — REVIVIDA con un ángulo nuevo: el mecanismo
+HORARIO detrás del punto ciego de `dayslate`. PLANIFICADA, no ejecutada — ver tarea 17 en
+`PENDIENTES.md` para el plan completo en fases.** El usuario propuso una explicación
+mecánica concreta para por qué `dias_atraso_cuota` ve población que `dayslate` no ve: el
+snapshot diario de `dts_mambu_loans_hist` se toma cerca de las 10pm; un crédito que entra en
+mora (vencimiento+1) y paga ese mismo día DESPUÉS de las 9am (cuando ya se armó la
+asignación del día) pero ANTES de las 10pm queda asignado a TEMPRANA en la tabla oficial,
+pero Mambu ya lo ve pagado en su única foto — nunca pasa por `dayslate=1`.
+
+**Verificado a nivel de caso (no solo en agregado):** crédito `1f49097f-3bb7-4886-8a22-
+7ca10a5f5704` (categorizado "solo oficial - punto ciego dayslate" en la validación de
+capital de julio, ver actualización de bug 19 abajo) — su cuota vigente venció
+**2026-07-07**, se pagó **2026-07-08 12:39:41** — vencimiento+1, dentro de la ventana
+9am-10pm propuesta. Query: `select id_ihfintech_loan, cuotavencimiento, fechavencimiento,
+installmentlastpaiddate from dts_cobranza_creditos_cuotas where id_ihfintech_loan = '...'
+order by fechavencimiento` (aportada por el usuario).
+
+**3 correcciones del usuario al enfoque planteado en esta sesión (tenerlas presentes al
+ejecutar tarea 17):**
+1. Al revisar casos de `dts_cobranza_creditos_cuotas`, mirar SOLO la cuota vigente (la que
+   coincide con lo que dice asignaciones para ese crédito) — no otras cuotas del mismo
+   crédito. `dias_atraso_cuota` (`dts_cobranza_creditos_calendario_diario`) ya resuelve cuál
+   es la cuota vigente en cada fecha, no reinventar esa lógica desde cuotas directo.
+2. El objetivo de cuadrar el universo es **identificar diferencias y sus motivos, no
+   reducirlas** — mismo "Principio de interpretación del error" de `CLAUDE.md`, aplicado
+   ahora a la reconciliación de universo, no solo al backtest de recupero.
+3. El propósito real no es solo julio/agosto — es validar si el método usado para calibrar
+   curvas en TODOS los meses históricos (`dayslate`) es ciego a esta población, y si
+   `dias_atraso_cuota` (datos desde 2023-10-17) la ve. Julio/agosto son el banco de pruebas
+   (única ventana con tabla formal de asignaciones), no el objetivo final.
+
+**Plan completo en 4 fases (cantidad → montos → curva real para reemplazar `P_FANTASMA`
+plano → evaluar recalibrar toda la producción) en tarea 17, `PENDIENTES.md`.**
+
 ### 17. Backtest diario de mayo/julio (tarea 9): el calendario de fantasma necesita su PROPIO
 rango frontier-adjusted, y `jul_calendario.csv` corre ~7.9% más alto que una reconstrucción
 fresca con dedup — dos hallazgos distintos, encontrados 2026-08-22 al extender el backtest.
@@ -1174,3 +1208,67 @@ julio.csv`. De paso resuelve el bucket "otra situación" que había quedado sin 
 esas 918 filas (197 stock + 721 nuevos), `fase_estrategia` viene **NULL** en
 `dts_asignaciones_gestiones_cobranza` — no es una fase de gestión real, es un dato faltante
 de la fuente.
+
+**Actualización 2026-08-24 (misma sesión, continuación) — validación en CAPITAL (soles), no
+solo en créditos, para julio Y agosto. Pedido explícito del usuario, y expone un hueco real
+en la V1 original.** La pregunta del usuario: *"¿la lógica con la que reconstruyo el universo
+en meses históricos (donde NO hay tabla de asignaciones) devuelve el mismo CAPITAL que la
+tabla formal, en un mes donde SÍ la tenemos?"* — no es recalibrar ni reconciliar recupero, es
+validar el insumo (el universo en soles) que alimenta toda curva. **Gap en la V1 original:**
+esa query solo sumaba `saldo` del lado NUESTRO — para "solo oficial" (lo que la tabla de
+asignaciones tiene y nuestra lógica no encuentra) el saldo salía en **cero por construcción**,
+nunca se supo cuántos soles representaba lo que falta. Corregido trayendo el saldo de Mambu
+(último `fechaproceso` visto en la ventana) para AMBOS lados. Query en
+`validacion_universo_capital_julio_agosto.sql`, casos completos (12,948 y 10,554 filas, con
+`id_ihfintech_loan` completo) en `datos_validacion_universo_capital/`.
+
+**Resultado — nuestro universo captura MÁS capital (%) del que captura en créditos (%), en
+los dos meses:**
+
+| | Créditos: nuestro/oficial | **Soles: nuestro/oficial** | Oficial TEMPRANA (soles) | Nuestro universo (soles) |
+|---|---:|---:|---:|---:|
+| Julio | 80.7% | **87.6%** | S/17,504,209 | S/15,338,201 |
+| Agosto | 83.6% | **89.1%** | S/15,016,316 | S/13,381,648 |
+
+Es decir: en soles, cubrimos ~88-89% del capital que el negocio realmente asigna a TEMPRANA —
+mejor que el 80-84% en créditos, porque **lo que falta son créditos de saldo relativamente
+chico** (el punto ciego de `dayslate`, bug 9 — pagadores 1 día tarde, que en promedio no son
+los créditos más grandes de la cartera).
+
+**El hueco NO es nuevo ni misterioso — es casi enteramente el mismo bug 9 ya documentado:**
+
+| Categoría ("solo oficial" — falta en nuestro universo) | Julio (soles) | Agosto (soles) |
+|---|---:|---:|
+| 3d. Punto ciego `dayslate` (bug 9) | S/4,011,637 (95.1% del hueco) | S/2,373,602 (100% del hueco) |
+| 3c. Reenganche (excluido por chain, regla correcta) | S/205,285 (4.9%) | S/0 (0%, saldo ya en 0 tras reenganche) |
+| 3b. Status no activo (residual) | S/0 (1 crédito) | — |
+| **Total "solo oficial"** | **S/4,216,923 (24.1% de lo oficial)** | **S/2,373,602 (15.8% de lo oficial)** |
+
+**Por qué esto importa para "lo recuperado", como preguntó el usuario — pero con un matiz
+importante:** el backtest (`proyectado_total = stock + nuevos + fantasma`) NO ignora este
+hueco — la capa fantasma (bug 9/14, `P_FANTASMA`) ya suma ADITIVAMENTE, por fuera de la
+curva, casi exactamente esta misma población (pagadores de `dayslate` ciego). El hueco no es
+"capital que desaparece del modelo", es capital que se modela con un mecanismo DISTINTO
+(tasa plana, sin curva) al de "nuevos"/"stock". Lo que **sigue siendo cierto** (el punto
+original de la tarea 15, todavía sin resolver): la CURVA de "nuevos" en sí se calibra solo
+sobre el 88% dayslate-visible — si el 12% fantasma tiene una FORMA de activación distinta
+(no solo un nivel distinto) a la del resto, esa diferencia de forma no se captura (fantasma
+usa una tasa plana, no una curva por día). Este ejercicio no mide eso — solo mide que el
+NIVEL de capital cuadra razonablemente y que el hueco tiene explicación conocida.
+
+**Lo que SÍ queda en "nuestro universo" y el negocio NO gestiona como TEMPRANA** (el lado
+opuesto, "solo nuestro" — esto es lo que tareas 15/16 ya cuantificaron para julio en tasa de
+activación): grupo control 8.6% del capital nuestro en julio (S/1,676,132, prácticamente 0 en
+agosto — confirma que el grupo control fue mayormente un fenómeno de julio), ESPECIALIZADA/
+RECOVERY ~1% en ambos meses (S/202,017 julio, S/198,378 agosto), y "no aparece en
+asignaciones" (tarea 14) 0.9%-2.6%.
+
+**Actualización 2026-08-24 (misma sesión, continuación) — el bucket "punto ciego dayslate"
+de arriba puede tener una explicación MECÁNICA concreta, no solo "son pagadores rápidos".**
+Uno de los ejemplos dados al usuario (`1f49097f-3bb7-4886-8a22-7ca10a5f5704`) se verificó a
+nivel de cuota: venció **2026-07-07**, se pagó **2026-07-08 12:39:41** — vencimiento+1,
+pagado entre las 9am y las 10pm. El usuario propone que ESE es el mecanismo sistemático: el
+snapshot de `dts_mambu_loans_hist` corre ~10pm, la asignación de cobranza se arma más
+temprano — un pago en esa ventana queda asignado a TEMPRANA pero invisible para `dayslate`.
+**Esto revive bug 16** (`dias_atraso_cuota`, archivado por resultado mixto en el backtest) —
+plan completo en tarea 17, `PENDIENTES.md`. NO ejecutado todavía, solo planificado.

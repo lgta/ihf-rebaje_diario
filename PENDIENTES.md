@@ -340,6 +340,80 @@ La motivación original de la tarea 15 (el punto ciego de ~21% de `dayslate`, po
 de nuestro universo que paga 1 día tarde) es una pregunta DISTINTA, ya parcialmente resuelta
 por la capa fantasma (bug 9/14) — no remedida en esta sesión.
 
+### Tarea 17 — Validar el universo a nivel de CUOTA (`dias_atraso_cuota`) contra asignaciones, y construir una curva real para la capa fantasma — PLANIFICADA 2026-08-24, NO ejecutada todavía
+**Prioridad: la más alta de las pendientes — precede y puede cambiar cómo se resuelven las
+tareas 15/16.** Revive y extiende bug 16 (`dias_atraso_cuota`, investigación de 2026-08-22
+archivada por resultado "mixto" en el backtest) con un ángulo nuevo del usuario: el mecanismo
+HORARIO por el que `dayslate` es ciego a pagos de 1 día de mora.
+
+**El punto de partida (usuario, 2026-08-24):** el snapshot diario de `dts_mambu_loans_hist`
+se toma cerca de las 10pm. Un crédito que entra en mora (vencimiento+1) y paga ese mismo día
+DESPUÉS de las 9am (cuando ya se armó la asignación de cobranza del día) pero ANTES de las
+10pm (cuando corre el snapshot de Mambu) **queda asignado a TEMPRANA en la tabla oficial,
+pero `dayslate` nunca lo ve en mora** — Mambu ya lo ve pagado en su única foto del día. Esto
+explicaría por qué las curvas calibradas con `dayslate` (todos los meses históricos,
+2025-04 a 2026-06) sistemáticamente excluyen a esta población, y por qué `dts_cobranza_
+creditos_cuotas`/`dias_atraso_cuota` (que reconstruye día por día desde el pago real, no de
+un snapshot único) SÍ la captura.
+
+**Verificado a nivel de caso, ejemplo real (2026-08-24):** crédito `1f49097f-3bb7-4886-8a22-
+7ca10a5f5704` (categorizado "solo oficial - punto ciego dayslate" en julio) — su cuota
+vigente venció **2026-07-07**, se pagó **2026-07-08 12:39:41** (vencimiento+1, dentro de la
+ventana 9am-10pm). Confirma el mecanismo a nivel de caso individual, no solo en agregado.
+
+**3 correcciones del usuario al plan original de esta sesión — tenerlas presentes:**
+1. **Al revisar casos de `dts_cobranza_creditos_cuotas`, mirar SOLO la cuota vigente** (la
+   que efectivamente cayó en mora y coincide con lo que dice la tabla de asignaciones para
+   ese crédito) — no otras cuotas del mismo crédito (pasadas ya pagadas, futuras no
+   vencidas). Usar `dts_cobranza_creditos_calendario_diario.dias_atraso_cuota` (bug 16) como
+   la reconstrucción diaria ya resuelve cuál es la cuota vigente en cada fecha — no
+   reinventar esa lógica desde `dts_cobranza_creditos_cuotas` directo.
+2. **El objetivo de cuadrar el universo es IDENTIFICAR diferencias y sus motivos, NO
+   reducirlas.** Si al final queda un % sin explicar, se documenta como tal — no se busca
+   minimizarlo. Aplica el mismo "Principio de interpretación del error" de `CLAUDE.md` a
+   este ejercicio específico de reconciliación de universo, no solo al backtest de recupero.
+3. **El propósito real no es solo julio/agosto — es VALIDAR si el método usado para calibrar
+   curvas en TODOS los meses históricos (`dayslate`) es ciego a esta población,** y si
+   `dias_atraso_cuota` (con datos desde 2023-10-17, mucho más profundo que los 14 meses
+   actuales) la ve. Julio/agosto son el banco de pruebas (única ventana con tabla formal de
+   asignaciones) para confirmar el mecanismo antes de aplicarlo a la historia completa.
+
+**Plan en fases (ejecutar en este orden, ninguna fase saltada):**
+
+**Fase 1 — Cuadrar CANTIDAD (créditos), julio primero, agosto después.**
+1. Reconstruir el universo de julio con `dias_atraso_cuota` en vez de `dayslate` (mismo
+   patrón que bug 16, pero **copiado al repo esta vez** — las queries originales de bug 16,
+   `sc_A` a `sc_AC`, quedaron solo en el scratchpad de esa sesión y nunca se recuperaron).
+   A nivel de CASO (`id_ihfintech_loan` completo), no agregado — mismo estándar que
+   `tarea15_16_casos_julio.sql`/`tarea14_casos_agosto.sql` de esta sesión.
+2. Comparar contra `dts_asignaciones_gestiones_cobranza` en cantidad de créditos, con el
+   mismo esquema de categorías de `validacion_universo_ejecucion.sql`/
+   `validacion_universo_capital_julio_agosto.sql` (en ambos / solo nuestro -grupo control,
+   ESP-REC, no aparece- / solo oficial -sin match, status, reenganche, resto-).
+3. Para lo que quede "solo oficial" sin explicar, usar `installmentlastpaiddate` (tiene
+   timestamp completo, ya confirmado) para verificar si cae en la ventana 9am-10pm —
+   sistemáticamente, no solo el ejemplo de arriba.
+4. Repetir para agosto (corte 23-ago, grupo control mucho más chico que julio).
+5. **Entregable: tabla de categorías con motivo para cada una, no un número único de "%
+   cuadrado".**
+
+**Fase 2 — Recién con la Fase 1 completa: montos (soles), misma metodología.**
+
+**Fase 3 — Si el mecanismo horario se confirma sistemáticamente: construir una curva real
+(no una tasa plana) para la población "paga 1 día tarde"**, calibrada sobre la historia
+completa de `dias_atraso_cuota`/`installmentlastpaiddate` (2023-10-17 en adelante) —
+reemplazando el supuesto de tasa plana `P_FANTASMA=8.5524%` (tarea 7, bug 14) que el usuario
+señaló como inadecuado. Misma metodología ya usada para calibrar la curva de "nuevos".
+
+**Fase 4 (pendiente de la Fase 3) — evaluar si conviene recalibrar TODAS las curvas de
+producción (stock, nuevos) usando `dias_atraso_cuota` en vez de `dayslate`** — es la pregunta
+que bug 16 dejó abierta con resultado "mixto" (junio mejoró, julio empeoró en su momento, con
+el número de julio ya desactualizado) y que este trabajo podría finalmente explicar.
+
+**No ejecutar sin releer:** bug 16 completo (`BUGS.md`) — tiene la reconciliación previa
+(83%→99.8% de cierre en soles) y el backtest mixto ya corrido, no repetir esas 2 corridas de
+junio/julio sin releer primero qué se probó y qué falta.
+
 ### Tarea 12 (baja prioridad) — Reorganizar en carpetas
 Considerar `sql/`, `python/`, `docs/` si el root sigue creciendo. No bloquea nada; con la
 limpieza del 2026-07-15 el root ya bajó en 8 archivos + 2 carpetas de datos.

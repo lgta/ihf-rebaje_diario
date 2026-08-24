@@ -50,6 +50,45 @@
 > residual sin explicar y la nota sobre grupo control (no apareció en esta partición de
 > julio) en bug 19 (`BUGS.md`) y `tarea15_16_sesgo_gestionado_julio.sql`.
 
+> **2026-08-24 (continuación 4) — VALIDACIÓN DEL UNIVERSO EN CAPITAL (soles, no solo
+> créditos), julio Y agosto, a pedido del usuario.** Pregunta distinta de tareas 14/15/16:
+> ¿la lógica con la que reconstruimos el universo en meses históricos (sin tabla de
+> asignaciones) devuelve el mismo CAPITAL que la tabla formal, en un mes donde sí la
+> tenemos? **Resultado: nuestro universo captura 87.6% (julio) / 89.1% (agosto) del capital
+> oficial TEMPRANA** — mejor cobertura en soles que en créditos (80.7%/83.6%), porque lo que
+> falta son créditos de saldo relativamente chico. **El hueco no es nuevo ni misterioso: es
+> 95-100% el mismo bug 9 ya documentado** (punto ciego de `dayslate`) + reenganches
+> (exclusión correcta). La capa fantasma ya suma esta población aparte — el hueco no es
+> "capital perdido del modelo", es capital modelado con un mecanismo distinto (tasa plana,
+> no curva). **Lo que sigue sin resolver** (punto original de tarea 15): la curva de
+> "nuevos" se calibra solo sobre el 88% dayslate-visible — si esa población tiene una FORMA
+> de activación distinta, no solo un nivel distinto, eso no se captura con una tasa plana.
+> Se corrigió también un gap real en la query V1 original de bug 19 (`saldo_nuestro` para
+> "solo oficial" salía en cero por construcción — nunca se supo cuántos soles representaba
+> el hueco). Detalle completo, tabla por categoría y casos individuales (23,502 filas con
+> `id_ihfintech_loan` completo) en bug 19 (`BUGS.md`), `validacion_universo_capital_julio_
+> agosto.sql` y `datos_validacion_universo_capital/`.
+
+> **2026-08-24 (continuación 5) — REPLANTEO: el hueco de bug 9 tiene una explicación
+> MECÁNICA concreta (horario), y esto REVIVE bug 16. PLANIFICADO en 4 fases, NADA ejecutado
+> todavía — es el primer paso de la sesión siguiente.** El usuario propuso el mecanismo: el
+> snapshot de `dts_mambu_loans_hist` corre ~10pm; un crédito que entra en mora
+> (vencimiento+1) y paga esa misma tarde (después de las 9am, cuando ya se armó la
+> asignación del día, pero antes de las 10pm) queda asignado a TEMPRANA en la tabla oficial
+> pero invisible para `dayslate`. Verificado a nivel de caso: crédito
+> `1f49097f-3bb7-4886-8a22-7ca10a5f5704`, cuota vencida 2026-07-07, pagada
+> **2026-07-08 12:39:41** — encaja exacto. **3 correcciones del usuario al plan, ya
+> incorporadas en tarea 17 (`PENDIENTES.md`) y en la actualización de bug 16 (`BUGS.md`):**
+> (1) mirar solo la cuota VIGENTE de cada crédito (usar `dias_atraso_cuota`, que ya resuelve
+> eso, no `dts_cobranza_creditos_cuotas` directo); (2) el objetivo es identificar y explicar
+> diferencias, **no reducirlas** — mismo principio de `CLAUDE.md` aplicado a la
+> reconciliación de universo; (3) el propósito real es validar si `dayslate` es ciego a esta
+> población en **toda la historia de calibración**, no solo julio/agosto — esos meses son
+> el banco de pruebas porque son los únicos con tabla de asignaciones. **Plan en 4 fases:**
+> cantidad (créditos) → montos (soles) → curva real para reemplazar `P_FANTASMA` (tasa
+> plana, tarea 7/bug 14) → evaluar recalibrar toda la producción con `dias_atraso_cuota`.
+> Detalle completo en tarea 17 (`PENDIENTES.md`) y bug 16 (`BUGS.md`, actualización).
+
 > **2026-08-24 — DOS HALLAZGOS ESTRUCTURALES a partir de un punto conceptual del usuario:
 > el índice de la curva de nuevos está corrido 1 día (bug 18, **ya corregido — ver bloque
 > de arriba**) y el universo de calibración no coincide con las reglas de ejecución del
@@ -550,21 +589,22 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ```
 CONTEXTO MÍNIMO PARA ARRANCAR (leer en este orden):
-1. ESTADO.md, bloques "2026-08-24 (continuación)", "(continuación 2)" y "(continuación 3)"
-   arriba -- bug 18 YA CORREGIDO y desplegado (backtests, meta de agosto, docs y los 2
-   artifacts), tarea 14 YA CERRADA (302 créditos sin asignación, explicados), tareas 15/16 YA
-   MEDIDAS (gap real por componente, efecto agregado chico, recomendación dada -- decisión
-   final de todos modos sigue siendo del usuario). Bug 19 en sí (el hueco del 21.6% y la
-   contaminación asimétrica) sigue SIN "corregir" -- no hay más trabajo técnico pendiente,
-   solo la decisión.
-2. BUGS.md bug 19 COMPLETO, incluida la actualización de tareas 15/16 al final (tiene los
-   números y el razonamiento completo -- no remedir). Bug 18 solo si hay que tocar el índice
-   otra vez (nota de implementación sobre el guard compartido con fantasma).
-3. CLAUDE.md, principio "Principio de interpretación del error" -- es la corrección
-   conceptual que dio el usuario y cambia cómo se prioriza cualquier hallazgo.
-4. PENDIENTES.md -- tareas 13-16 ya están CERRADAS/MEDIDAS. Lo único abierto de esta línea de
-   trabajo es la decisión del usuario sobre tareas 15/16 (excluir ESPECIALIZADA/RECOVERY de
-   la calibración o no); si no hay nada más que decidir, pasar a los pendientes más antiguos.
+1. ESTADO.md, bloques "2026-08-24 (continuación)" a "(continuación 5)" arriba -- bug 18 YA
+   CORREGIDO (backtests, meta de agosto, docs y los 2 artifacts), tareas 13/14 YA CERRADAS,
+   tareas 15/16 YA MEDIDAS (decisión del usuario sigue pendiente, no urgente), universo
+   validado EN CAPITAL julio/agosto con el método `dayslate` (87.6%/89.1% en soles). La
+   PRIORIDAD de esta sesión es la tarea 17 (abajo) -- NO tareas 15/16, que quedan en pausa
+   hasta que tarea 17 (que puede cambiar el universo base de toda curva) esté resuelta.
+2. BUGS.md bug 16 COMPLETO (la investigación original de `dias_atraso_cuota`, archivada por
+   resultado mixto -- releer qué se probó exactamente antes de repetir nada) y su
+   actualización 2026-08-24 (el mecanismo horario, el caso verificado, las 3 correcciones
+   del usuario). Bug 19 solo si hace falta contexto de la validación de capital previa.
+3. CLAUDE.md, "Principio de interpretación del error" -- aplica DIRECTO a tarea 17: el
+   objetivo es identificar y explicar diferencias de universo, NO reducirlas. No tratar un
+   "% sin explicar" chico como la meta.
+4. PENDIENTES.md tarea 17 COMPLETA -- tiene el plan en 4 fases y las 3 correcciones del
+   usuario ya incorporadas. Es la única tarea nueva de esta sesión; el resto (15/16 y las
+   más antiguas) esperan.
 5. En memoria: feedback-error-se-explica-no-se-optimiza,
    feedback-verificar-antes-de-afirmar y feedback-cuadrar-universo-fuente-formal.
 
@@ -574,43 +614,66 @@ mora. Entra en mora al día SIGUIENTE. Por eso: "nuevo" = vence dentro del mes y
 dentro del mes; "antiguo" = está en mora por una cuota que venció en un mes anterior; y el
 día 1 del mes SOLO puede tener antiguos. Verificado: entrada = vencimiento + 1 en 99.99%.
 
-PLAN ACORDADO, en este orden:
+PLAN ACORDADO -- TAREA 17 ES EL PRIMER PASO, en este orden (detalle completo en
+PENDIENTES.md tarea 17 y BUGS.md bug 16, no reescribir el plan desde cero):
 
-0. **HECHO (no rehacer): bug 18 corregido, tarea 13 CERRADA.** Índice de la curva de nuevos
-   = `d - dd - 1` en los 4 backtests y en `meta_agosto_capital_asegurado.py`. Números
-   vigentes: abril -19.2%, mayo -6.8%, junio +1.6%, julio -3.3%; meta de agosto S/16,211,015
-   (nuevos S/7,070,451). SEGUIMIENTO.md, ESTADO.md, BUGS.md, PENDIENTES.md, README.md y los
-   2 artifacts ya actualizados. **Lo que queda de ahí es EXPLICAR el sesgo de "nuevos"**
-   (-27.3% abr / -20.1% may / -8.0% jun / -19.2% jul, subestima en los 4) con
-   volumen/mix/gestión -- NO ajustando constantes.
+**Fase 1 -- Cuadrar CANTIDAD (créditos), julio primero, agosto después.**
+1. Reconstruir el universo de julio con `dias_atraso_cuota`
+   (`dts_cobranza_creditos_calendario_diario`) en vez de `dayslate` -- mismo patrón que bug
+   16 pero COPIADO AL REPO esta vez (las queries originales, `sc_A` a `sc_AC`, se perdieron
+   en un scratchpad y nunca se recuperaron). A nivel de CASO, `id_ihfintech_loan` completo
+   -- no agregado.
+2. Comparar contra `dts_asignaciones_gestiones_cobranza` en cantidad de créditos, mismo
+   esquema de categorías que `validacion_universo_capital_julio_agosto.sql` (en ambos /
+   solo nuestro -grupo control, ESP-REC, no aparece- / solo oficial -sin match, status,
+   reenganche, resto-).
+3. Para lo que quede "solo oficial" sin explicar, usar `installmentlastpaiddate` (tiene
+   timestamp completo) para verificar sistemáticamente si cae en la ventana 9am-10pm.
+4. Repetir para agosto (corte 23-ago).
+5. **Entregable: tabla de categorías CON MOTIVO, no un % único a minimizar** -- ver
+   corrección 2 del usuario abajo, es la regla más importante de esta tarea.
 
-0b. **HECHO (no rehacer): tarea 14 CERRADA.** Los 302 créditos sin asignación son DOS
-    mecanismos: ~69 (50 stock + 19 nuevos) confirman "pagan antes de que el proceso de
-    asignación los alcance" (stock: 100% pagó el 01-ago; nuevos: 100% salió de mora en 1
-    día vs. 37.6% baseline); los 232 restantes son censura por el corte de fecha del propio
-    ejercicio de validación (entraron el 23-ago, último día de la ventana), no un hallazgo
-    de negocio. No cambia la lectura de bug 19. Detalle en BUGS.md (bug 19) y
-    `tarea14_no_aparece_asignaciones.sql`.
+**Fase 2 (recién después de Fase 1 completa) -- montos (soles), misma metodología.**
 
-1c. **HECHO (no rehacer): tareas 15/16 MEDIDAS con julio 2026 (único mes cerrado con
-    asignaciones completas).** Gap real por componente, grande: ESPECIALIZADA/RECOVERY activa
-    9.6% (stock) / 11.6% (nuevos) vs. 64.7% / 73.0% de TEMPRANA gestionado. Pero en el
-    AGREGADO el efecto es chico: "todos" vs. "solo TEMPRANA" da 64.6% vs 64.7% (stock, -0.1pp)
-    y 71.5% vs 73.0% (nuevos, -1.5pp) -- ESPECIALIZADA/RECOVERY es poco volumen (6.5%/0.7%) y
-    se compensa con otros buckets. Recomendación dada (no tocar producción, documentar --
-    mismo criterio que tarea 10): **espera confirmación o instrucción distinta del usuario**,
-    no asumir que quedó cerrada como decisión, solo como medición. Detalle en BUGS.md (bug
-    19) y `tarea15_16_sesgo_gestionado_julio.sql`.
+**Fase 3 -- si el mecanismo horario se confirma sistemáticamente:** construir una curva real
+(no una tasa plana) para la población "paga 1 día tarde", calibrada sobre la historia
+completa de `dias_atraso_cuota`/`installmentlastpaiddate` (desde 2023-10-17) --
+reemplazando `P_FANTASMA` (tasa plana actual, tarea 7/bug 14) que el usuario señaló como
+inadecuada.
 
-1d. **Si el usuario ya respondió sobre 15/16 en algún punto de la sesión y esto quedó
-    desactualizado, confiar en la conversación, no en este prompt** -- este texto se escribió
-    antes de conocer esa respuesta.
+**Fase 4 (pendiente de Fase 3) --** evaluar si conviene recalibrar TODAS las curvas de
+producción (stock, nuevos) con `dias_atraso_cuota` en vez de `dayslate` -- pregunta que bug
+16 dejó abierta con resultado mixto, sin investigar a fondo.
+
+**3 correcciones del usuario a tener SIEMPRE presentes en tarea 17 (dadas 2026-08-24,
+después de un primer intento de plan que las necesitó):**
+1. Al mirar casos de cuotas, SOLO la cuota vigente de cada crédito (la que coincide con
+   asignaciones) -- no otras cuotas del mismo crédito. Usar `dias_atraso_cuota`, que ya
+   resuelve cuál es la vigente; no reinventar esa lógica desde `dts_cobranza_creditos_
+   cuotas` directo.
+2. **El objetivo es identificar diferencias y sus motivos, NO reducirlas.** Si algo queda
+   sin explicar, se documenta como tal -- no se optimiza para que el número sea chico.
+3. El propósito real es validar si `dayslate` es ciego a esta población en TODA la historia
+   de calibración (14 meses), no solo julio/agosto -- esos meses son el banco de pruebas
+   porque son los únicos con tabla de asignaciones formal.
+
+**Punto de partida ya verificado (no repetir):** crédito
+`1f49097f-3bb7-4886-8a22-7ca10a5f5704`, cuota vencida 2026-07-07, pagada
+2026-07-08 12:39:41 (vencimiento+1, dentro de la ventana 9am-10pm) -- confirma el mecanismo
+a nivel de caso individual.
+
+PENDIENTE, EN PAUSA hasta que tarea 17 avance -- NO es lo siguiente a hacer:
+- Tareas 15/16: decisión del usuario sobre excluir ESPECIALIZADA/RECOVERY de la calibración
+  (gap real -55/-61pp por componente, efecto agregado chico -0.1pp/-1.5pp). Si el usuario
+  pregunta por esto antes de tarea 17, responder con lo ya medido (BUGS.md bug 19) -- no
+  hace falta esperar a tarea 17 para eso específicamente, son preguntas relacionadas pero
+  independientes.
 
 PENDIENTES MÁS ANTIGUOS, sin tocar (menor prioridad que lo de arriba):
 - Tarea 9: extender el backtest a marzo 2026. Usar `enfoque_capital_asegurado_backtest_
-  abril.sql` como plantilla (ya incluye el calendario de fantasma frontier-adjusted).
-  **Ya se puede hacer** -- bug 18 está corregido; copiar el índice `d - dd - 1` del script
-  de abril (y su loop de fantasma SEPARADO, que no lleva el -1).
+  abril.sql` como plantilla. Ya se puede hacer (bug 18 corregido) pero **esperar a que
+  tarea 17 defina si el universo cambia** -- no tiene sentido correr un quinto mes con
+  `dayslate` si se va a recalibrar con `dias_atraso_cuota` poco después.
 - Tarea 6: aplicar bug 12 + dedup de bug 11 al motor de recupero oficial (fase1_stock.sql,
   fase2_nuevos.sql, fase3_backtest.sql). fase1_stock.sql documenta explícitamente lo
   CONTRARIO a la regla del usuario ("los que entran en mora el día 1 quedan como nuevos").
@@ -691,6 +754,26 @@ push, no se pidió).
 **COMMITEADO 2026-08-24 (a pedido del usuario) — los 3 bloques de arriba (fix de bug 18,
 tarea 14, tareas 15/16) quedaron en el commit `207cd06`.** No se pusheó (el usuario controla
 explícitamente el push, no se pidió).
+
+- **Sesión 2026-08-24 (continuación 4, casos individuales de tareas 14/15/16):**
+  `tarea14_casos_agosto.sql`, `tarea15_16_casos_julio.sql` (nuevos),
+  `datos_tareas14_15_16/` (nuevo, 2 CSV), `BUGS.md` (pointers a los casos). **COMMITEADO en
+  `665721f`** (a pedido del usuario).
+- **Sesión 2026-08-24 (continuación 4, validación de universo en CAPITAL, julio y agosto):**
+  `validacion_universo_capital_julio_agosto.sql` (nuevo), `datos_validacion_universo_
+  capital/` (nuevo, 2 CSV), `BUGS.md` (bug 19, tercera actualización — cobertura en soles
+  87.6%/89.1%), `ESTADO.md` (bloque de sesión). **Pendiente de commit** — ese pedido no
+  incluyó la instrucción explícita de commitear, a diferencia de las 2 rondas anteriores; se
+  preguntó al usuario y todavía no respondió eso puntual (siguió directo con la corrección
+  del plan) — confirmar antes de commitear esta ronda.
+- **Sesión 2026-08-24 (continuación 5, replanteo — tarea 17 nueva, NADA ejecutado):** no
+  generó SQL ni CSV nuevos (una sola query de verificación puntual, la del usuario, corrida
+  pero no guardada — es trivial de re-correr si hace falta). Solo documentación:
+  `PENDIENTES.md` (tarea 17, plan completo en 4 fases), `BUGS.md` (bug 16, actualización con
+  el mecanismo horario y las 3 correcciones del usuario; bug 19, nota cruzada corta),
+  `ESTADO.md` (bloque de sesión, "Prompt de continuación" reescrito por completo — tarea 17
+  pasa a ser la prioridad #1, tareas 15/16 quedan en pausa explícita). **Pendiente de
+  commit** — tampoco tuvo instrucción explícita todavía en el momento de escribir esto.
 
 ## Índice de los demás documentos
 
