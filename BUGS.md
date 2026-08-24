@@ -1107,6 +1107,11 @@ entrantes del último día del corte. **No cambia la lectura de bug 19** (el 21.
 15.6%/5.8% de contaminación asimétrica siguen de pie, son otra categoría) — esto solo cierra
 la pregunta específica de "por qué estos 302 no aparecen".
 
+**Casos individuales (2026-08-24, a pedido del usuario — no solo agregados):**
+`tarea14_casos_agosto.sql` devuelve las 302 filas con `id_ihfintech_loan` completo, saldo,
+fecha de entrada y fecha de pago. CSV completo en
+`datos_tareas14_15_16/tarea14_casos_agosto.csv`.
+
 **Conexión con la tarea 11 (`PENDIENTES.md`, nunca investigada):** el stock es el componente
 errático del backtest (+7.9% abr, -0.8% may, +7.3% jun, -1.9% jul) mientras "nuevos" es
 consistente en signo. La contaminación del stock (15.6%) es casi 3× la de nuevos (5.8%) — si
@@ -1160,3 +1165,12 @@ aparecer (ej. si la proporción de escalados crece con el tiempo, el efecto agre
 importaría). La limitación de fecha sigue de pie: esto solo se pudo medir para julio (único
 mes cerrado con asignaciones completas) — no se puede saber si julio es representativo de
 otros meses.
+
+**Casos individuales (2026-08-24, a pedido del usuario — no solo agregados):**
+`tarea15_16_casos_julio.sql` devuelve las 9,475 filas de `tarea15_16_sesgo_gestionado_
+julio.sql` sin agrupar, con `id_ihfintech_loan` completo, `saldo`, `fecha_entrada`,
+`asegurado` (0/1) y `fecha_pago`. CSV completo en `datos_tareas14_15_16/tarea15_16_casos_
+julio.csv`. De paso resuelve el bucket "otra situación" que había quedado sin explicar: en
+esas 918 filas (197 stock + 721 nuevos), `fase_estrategia` viene **NULL** en
+`dts_asignaciones_gestiones_cobranza` — no es una fase de gestión real, es un dato faltante
+de la fuente.

@@ -319,6 +319,8 @@ stock 64.6% vs 64.7% (-0.1pp), nuevos 71.5% vs 73.0% (-1.5pp). ESPECIALIZADA/REC
 poco volumen (6.5% stock, 0.7% nuevos) y su arrastre se compensa casi del todo con otros
 buckets. Detalle completo, incluyendo el bucket residual sin explicar ("otra situación") y
 la nota sobre grupo control, en bug 19 (`BUGS.md`) y `tarea15_16_sesgo_gestionado_julio.sql`.
+**Casos individuales (no solo agregados) en `tarea15_16_casos_julio.sql` /
+`datos_tareas14_15_16/` — el usuario los pidió 2026-08-24 para revisar antes de decidir.**
 
 **Recomendación (no decisión):** dado el efecto agregado chico, mismo criterio que tarea 10
 (fuga de datos, 0.15-0.2pp, no adoptado) — no tocar la calibración de producción por esto

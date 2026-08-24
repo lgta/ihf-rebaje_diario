@@ -688,7 +688,9 @@ push, no se pidió).
   `PENDIENTES.md` (tareas 15/16 medidas, decisión sigue abierta), `ESTADO.md` (bloque de
   sesión nuevo, prompt de continuación reescrito).
 
-**Se pidió commit al cierre de esta sesión — ver el hash más abajo si ya se hizo.**
+**COMMITEADO 2026-08-24 (a pedido del usuario) — los 3 bloques de arriba (fix de bug 18,
+tarea 14, tareas 15/16) quedaron en el commit `207cd06`.** No se pusheó (el usuario controla
+explícitamente el push, no se pidió).
 
 ## Índice de los demás documentos
 
