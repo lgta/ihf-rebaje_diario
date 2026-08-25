@@ -19,11 +19,22 @@ vista externa oficial se cuantificó en **~27% de toda la población real de mor
 TEMPRANA** — no es un caso de borde (ver `reconciliacion_vw_seguimiento_temprana.md`).
 
 Se agregó una capa **independiente** (no reemplaza ni mezcla `13.38%` ni la curva de Q2 —
-evita repetir bug 10): detecta el pago-1-día-tarde no visto por `dayslate`, y se activa
+evita repetir bug 10): detecta la entrada en mora no vista por `dayslate`, y se activa
 **100% del saldo el día siguiente al vencimiento** (sin curva propia — por definición, si
-se detecta el evento es porque ya se pagó). Tasa `P_FANTASMA=8.5524%` (346,396/29,625,
-mismo criterio y ventana fuera de muestra que `13.38%` — ver `enfoque_capital_asegurado.sql`
-Q3). Por mes: ~7-10%, casi tan grande como el propio `13.38%`.
+se detecta el evento es porque ya se pagó; confirmado vigente incluso con la definición
+ampliada de tarea 17, ver nota abajo). Tasa vigente `P_FANTASMA=8.6163%` (348,605/30,037,
+recalibrada 2026-08-25 con `dias_atraso_cuota` — ver `tarea17_fase3_curva_fantasma.sql` y
+bug 16 en `BUGS.md`; antes 8.5524%, calibrada con `dias_vencimiento_a_pago=1` sobre
+`enfoque_capital_asegurado.sql` Q3, que queda como referencia histórica). Por mes: ~7-10%,
+casi tan grande como el propio `13.38%`.
+
+**Actualización 2026-08-25 (tarea 17 fase 3):** la definición de "fantasma" se amplió de
+"paga exactamente 1 día tarde" a "cualquier entrada que `dias_atraso_cuota` detecta y
+`dayslate` no ve" — mecanismo más amplio, incluye el hueco de fin de semana (`BUGS.md` bug
+16). Se confirmó con datos que la activación instantánea sigue siendo correcta bajo esta
+definición ampliada (99.6% ponderado en el día 0, verificado en 2 ventanas de calibración) —
+no hizo falta reemplazar la arquitectura de tasa plana por una curva multi-día, solo
+actualizar la constante.
 
 **Fix de frontera de mes (2026-08-20, mismo día):** la verificación a nivel crédito
 encontró que la capa fantasma original (basada en `fechavencimiento` directo) solo cubría

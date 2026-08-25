@@ -300,6 +300,14 @@ order by 1, 2
 -- reemplaza 8.4534%. Backtest re-corrido con la tasa consistente: junio
 -- +2.2%->+2.65%, julio +0.12%->+2.17% (ambos siguen siendo buenos numeros,
 -- lejos de bug 10). Ver SEGUIMIENTO.md/BUGS.md bug 14 para el detalle.
+--
+-- ACTUALIZACION 2026-08-25 (tarea 17 fase 3, ver BUGS.md bug 16): P_FANTASMA
+-- reemplazado en produccion por 8.6163% (30,037/348,605), calibrado con
+-- dias_atraso_cuota (dts_cobranza_creditos_calendario_diario) en vez de
+-- dias_vencimiento_a_pago=1 -- definicion mas amplia (cierra tambien el
+-- hueco de fin de semana de bug 16). Esta query (Q3) queda como referencia
+-- historica de la version anterior -- la derivacion vigente esta en
+-- tarea17_fase3_curva_fantasma.sql, no aca.
 -- ---------------------------------------------------------------------
 with loan_chain as (
   select id_ihfintech_loan, max(flg_last_loan_in_chain) as last_in_chain

@@ -64,6 +64,16 @@ Real a la fecha (1-21 ago):
   ASEG_STOCK   saldo_asegurado_real=2,734,665.08 (1,772/2,695 creditos activados)
   ASEG_NUEVOS  saldo_asegurado_real=5,537,430.70 (3,618/5,196 creditos activados)
   FANTASMA     saldo_asegurado_real=3,348,684.20 (2,403 creditos, cohorte 31-jul incluida)
+
+v6 (2026-08-25, tarea 17 fase 3): P_FANTASMA recalibrado con dias_atraso_cuota
+(dts_cobranza_creditos_calendario_diario) en vez de dias_vencimiento_a_pago=1
+-- 8.5524% -> 8.6163% (ventana 12m, abr25-mar26, fuera de muestra de los 4
+meses de backtest). Fase 3 confirmo que la activacion instantanea (100% el
+dia siguiente al vencimiento, sin curva) sigue siendo correcta con la
+definicion ampliada -- no cambia la LOGICA de esta funcion, solo la
+constante. "Real a la fecha" sigue en el corte 21-ago (no se refresco la
+fecha de hoy en este cambio, es una actualizacion de constante, no de
+tracking). Ver BUGS.md bug 16 para el detalle completo.
 """
 import csv
 from datetime import date, timedelta
@@ -103,8 +113,9 @@ def lookup(curva, d):
     return curva[max(keys)] if keys else 0.0
 
 P_NO_PAGA_DIA0 = 47966 / 358580  # 13.38%
-P_FANTASMA = 29625 / 346396      # 8.5524% -- capa fantasma con fix de frontera de mes (bug14 v3),
-                                  # ver enfoque_capital_asegurado.sql Q3. Antes 29845/353054=8.4534%.
+P_FANTASMA = 30037 / 348605      # 8.6163% -- recalibrado con dias_atraso_cuota (tarea 17
+                                  # fase 3, 2026-08-25, ventana 12m abr25-mar26). Antes 8.5524%
+                                  # (29625/346396, dias_vencimiento_a_pago=1). Ver BUGS.md bug 16.
 AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 70%+"]
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 

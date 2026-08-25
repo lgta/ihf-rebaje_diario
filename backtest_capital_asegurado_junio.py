@@ -112,8 +112,9 @@ def lookup(curva, d):
 # Tasa fuera de muestra (ago-2025 a may-2026, SIN junio) -- misma que el modelo
 # oficial (fase3_backtest.sql 3H) y que meta_julio_capital_asegurado.py.
 P_NO_PAGA_DIA0 = 47966 / 358580  # 13.38%
-P_FANTASMA = 29625 / 346396      # 8.5524% -- capa fantasma con fix de frontera de mes (bug14 v4),
-                                  # ver enfoque_capital_asegurado.sql Q3. Antes 29845/353054=8.4534%.
+P_FANTASMA = 30037 / 348605      # 8.6163% -- recalibrado con dias_atraso_cuota (tarea 17
+                                  # fase 3, 2026-08-25, ventana 12m abr25-mar26). Antes 8.5524%
+                                  # (29625/346396, dias_vencimiento_a_pago=1). Ver BUGS.md bug 16.
 AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 70%+"]
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 
