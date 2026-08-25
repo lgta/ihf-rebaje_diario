@@ -7,6 +7,47 @@
 
 Última actualización: 2026-08-24.
 
+> **2026-08-24 (continuación 7) — DECISIÓN DEL USUARIO: la curva debe representar TODA la
+> mora que ocurre, no solo la que el negocio gestiona. FASE 2 (montos) DE TAREA 17
+> EJECUTADA Y CERRADA.** Resuelve la pregunta conceptual que dejó abierta Fase 1 — el
+> universo correcto para calibrar de acá en adelante es `dias_atraso_cuota`. Verificado con
+> 2 chequeos antes de aceptar: (1) un crédito que vence sábado y sigue sin pagar entra
+> oficialmente como "nuevo" el lunes — confirmado 100% con 259 casos reales; (2) la forma de
+> la curva sí difiere por día de semana del vencimiento — fin de semana paga ~2x más rápido
+> en el día 1 desde la entrada (30.96% vs. 14.84%), porque sin gestión activa el sábado más
+> créditos "se escapan" a mora pero pagan apenas los llaman el lunes (hipótesis del usuario,
+> reemplaza la mía de rezago de procesamiento, descartada). **Implicación para Fase 3: día de
+> semana del vencimiento pasa a ser segmentador de la curva.** También: corrección de wording
+> ("días de gestión" → "días calendario", el modelo ya estaba bien, solo mal nombrado) y
+> observación del usuario de que el segmentador `avance_band` (4 buckets) simplifica a 3
+> (40-70% y 70%+ no se separan bien). **Fase 2 (soles):** cobertura del universo oficial sube
+> de 75.9%→**97.8%** (julio) y 84.2%→**99.3%** (agosto) al usar `dias_atraso_cuota`; el hueco
+> baja de S/4.22M→S/390K (julio) y S/2.37M→S/101K (agosto). En el camino se detectó y
+> corrigió un bug propio (saldo de fin de mes en vez de saldo al momento de entrada),
+> verificado 99.94% de coincidencia tras el fix. **Sin cambios a producción todavía** —
+> siguiente paso es Fase 3 (curva real, reemplaza `P_FANTASMA` plano). Detalle completo en
+> bug 16 (`BUGS.md`) y tarea 17 (`PENDIENTES.md`).
+
+> **2026-08-24 (continuación 6) — TAREA 17 FASE 1 (cantidad) EJECUTADA Y CERRADA: el
+> mecanismo horario propuesto por el usuario se confirma (~97% de reducción del punto ciego
+> de `dayslate`), pero aparece un mecanismo HERMANO no anticipado, más grande — el fin de
+> semana.** `dts_asignaciones_gestiones_cobranza` no tiene NINGUNA fila sábado/domingo — el
+> negocio asigna de lunes a viernes solamente. `dias_atraso_cuota`, al reconstruir día por
+> día, detecta episodios de mora reales pero breves que nacen y se resuelven DENTRO de un fin
+> de semana, invisibles para la asignación semanal-hábil — verificado en 4 subpoblaciones
+> (91-100% de coincidencia). **Cobertura del universo oficial TEMPRANA: 70.4%→96.3% (julio),
+> 78.4%→98.6% (agosto)** al cambiar de `dayslate` a `dias_atraso_cuota`. El punto ciego
+> específico baja de 3,130→87 (julio) y 2,093→63 (agosto). Queda un residual sin forzar
+> explicación (150 créditos, <1% del universo, patrón mixto) y una pregunta conceptual
+> abierta para Fase 3: si `dias_atraso_cuota` ve mora que el negocio nunca llega a gestionar
+> (por su propio ciclo semanal), ¿la curva debe representar TODA la mora o solo la
+> gestionable? **Sin cambios a producción todavía** (Fase 1 es solo cantidad/créditos, no
+> montos) — Fase 2 (soles) es el siguiente paso, no ejecutada. Queries nuevas copiadas al
+> repo (a diferencia de bug 16 original, que se perdió en scratchpad):
+> `tarea17_universo_dias_atraso_cuota.sql`, `tarea17_fase1_mecanismo.sql`,
+> `datos_tarea17_universo/`. Detalle completo en bug 16 (`BUGS.md`) y tarea 17
+> (`PENDIENTES.md`).
+
 > **2026-08-24 (continuación) — BUG 18 CORREGIDO Y DESPLEGADO.** Índice de la curva de
 > nuevos cambiado a `dias_desde_entrada = d - dd - 1` en los 4 backtests y en la meta de
 > agosto; capa fantasma intacta (verificado: stock y fantasma idénticos al céntimo en los 4
@@ -762,18 +803,18 @@ explícitamente el push, no se pidió).
 - **Sesión 2026-08-24 (continuación 4, validación de universo en CAPITAL, julio y agosto):**
   `validacion_universo_capital_julio_agosto.sql` (nuevo), `datos_validacion_universo_
   capital/` (nuevo, 2 CSV), `BUGS.md` (bug 19, tercera actualización — cobertura en soles
-  87.6%/89.1%), `ESTADO.md` (bloque de sesión). **Pendiente de commit** — ese pedido no
-  incluyó la instrucción explícita de commitear, a diferencia de las 2 rondas anteriores; se
-  preguntó al usuario y todavía no respondió eso puntual (siguió directo con la corrección
-  del plan) — confirmar antes de commitear esta ronda.
+  87.6%/89.1%), `ESTADO.md` (bloque de sesión).
 - **Sesión 2026-08-24 (continuación 5, replanteo — tarea 17 nueva, NADA ejecutado):** no
   generó SQL ni CSV nuevos (una sola query de verificación puntual, la del usuario, corrida
   pero no guardada — es trivial de re-correr si hace falta). Solo documentación:
   `PENDIENTES.md` (tarea 17, plan completo en 4 fases), `BUGS.md` (bug 16, actualización con
   el mecanismo horario y las 3 correcciones del usuario; bug 19, nota cruzada corta),
   `ESTADO.md` (bloque de sesión, "Prompt de continuación" reescrito por completo — tarea 17
-  pasa a ser la prioridad #1, tareas 15/16 quedan en pausa explícita). **Pendiente de
-  commit** — tampoco tuvo instrucción explícita todavía en el momento de escribir esto.
+  pasa a ser la prioridad #1, tareas 15/16 quedan en pausa explícita).
+
+**COMMITEADO 2026-08-24 (a pedido del usuario) — continuación 4 y continuación 5 (arriba)
+quedaron juntas en el commit `9e499aa`.** No se pusheó (el usuario controla explícitamente
+el push, no se pidió).
 
 ## Índice de los demás documentos
 

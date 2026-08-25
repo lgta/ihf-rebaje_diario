@@ -46,6 +46,22 @@ cuota pagada 1 día tarde casi nunca hace que `dayslate` llegue a mostrar 1 (sol
 los casos medidos) — probablemente porque la foto diaria captura el estado después de que
 el pago ya se aplicó. Ver bug 9 en `BUGS.md`.
 
+**`dias_atraso_cuota`** — campo de `dts_cobranza_creditos_calendario_diario` (nivel
+crédito-día, datos desde 2023-10-17): días de atraso de la cuota VIGENTE de cada crédito,
+reconstruidos día por día desde el pago real (no un snapshot único como `dayslate`). `NULL`
+cuando está al día (mismo patrón que `dayslate`, usar `coalesce(...,0)`). Cierra ~97% del
+punto ciego de `dayslate` (bug 9) porque ve episodios de mora reales pero breves que
+`dayslate` nunca captura — decidido 2026-08-24 (ver `DECISIONES.md`) como el universo
+correcto para calibrar curvas de acá en adelante, reemplazando `dayslate`. Detalle completo
+en bug 16 (`BUGS.md`) y tarea 17 (`PENDIENTES.md`).
+
+**Días calendario (hasta fin de mes)** — el índice que elige qué % de la curva de
+maduración aplicar al proyectar un vencimiento (días transcurridos desde el vencimiento
+hasta el día que se proyecta). Es literal: incluye sábados y domingos aunque no haya
+gestión de cobranza esos días — NO confundir con "días de gestión" (término impreciso, ya
+no se usa). El modelo funciona bien así porque la curva se calibra sobre la misma base de
+días calendario — ver bug 16 en `BUGS.md`, actualización 2026-08-24.
+
 **P(no paga a tiempo)** — probabilidad de que un crédito "elegible" (con cuota venciendo,
 no ya en stock) entre en mora ese mes. Valor oficial: **13.38%**, medido a nivel crédito
 (`dayslate` 0→1), fuera de muestra. NO confundir con el complemento de "% paga a tiempo" a

@@ -340,11 +340,73 @@ La motivación original de la tarea 15 (el punto ciego de ~21% de `dayslate`, po
 de nuestro universo que paga 1 día tarde) es una pregunta DISTINTA, ya parcialmente resuelta
 por la capa fantasma (bug 9/14) — no remedida en esta sesión.
 
-### Tarea 17 — Validar el universo a nivel de CUOTA (`dias_atraso_cuota`) contra asignaciones, y construir una curva real para la capa fantasma — PLANIFICADA 2026-08-24, NO ejecutada todavía
+### Tarea 17 — Validar el universo a nivel de CUOTA (`dias_atraso_cuota`) contra asignaciones, y construir una curva real para la capa fantasma — FASE 1 (cantidad) CERRADA 2026-08-24, Fase 2 pendiente
 **Prioridad: la más alta de las pendientes — precede y puede cambiar cómo se resuelven las
 tareas 15/16.** Revive y extiende bug 16 (`dias_atraso_cuota`, investigación de 2026-08-22
 archivada por resultado "mixto" en el backtest) con un ángulo nuevo del usuario: el mecanismo
 HORARIO por el que `dayslate` es ciego a pagos de 1 día de mora.
+
+**✅ FASE 1 (cantidad) EJECUTADA Y CERRADA 2026-08-24 — resultado más rico de lo planificado:
+el mecanismo horario se confirma (~97% de reducción del punto ciego), pero aparece un
+mecanismo HERMANO no anticipado (fin de semana sin asignación) que es MÁS GRANDE que el
+original. Detalle completo, las 4 queries de diagnóstico verificadas, y la tabla de
+categorías con motivo en bug 16 (`BUGS.md`, actualización 2026-08-24). Resumen:**
+- El universo oficial TEMPRANA es idéntico entre métodos (11,736 julio / 10,035 agosto) —
+  cambia cuánto capturamos. `dias_atraso_cuota` sube la cobertura de 70.4%→**96.3%** (julio)
+  y 78.4%→**98.6%** (agosto).
+- El "punto ciego" específico baja de 3,130→**87** (julio) y 2,093→**63** (agosto), ~97% de
+  reducción — confirma el mecanismo horario del usuario.
+- Pero aparece "no aparece en asignaciones" (117→**851** julio, 302→**1,708** agosto) — NO
+  es ruido: `dts_asignaciones_gestiones_cobranza` no tiene NINGUNA fila los fines de semana
+  (verificado), y `dias_atraso_cuota` detecta episodios de mora reales pero breves que nacen
+  y se resuelven DENTRO de un fin de semana, invisibles para la asignación semanal-hábil.
+  91-100% de las 4 subpoblaciones revisadas (nuevos/stock × julio/agosto) caen exactas en
+  este patrón.
+- Residual sin explicar: 87+63=150 créditos (<1% del universo oficial), patrón mixto, no
+  forzado a una explicación — documentado en bug 16.
+- **Archivos nuevos en el repo (a diferencia de bug 16 original, que se perdió en
+  scratchpad):** `tarea17_universo_dias_atraso_cuota.sql` (reconstrucción + categorización,
+  julio y agosto), `tarea17_fase1_mecanismo.sql` (Q1-Q4, diagnóstico del mecanismo, todas
+  auto-contenidas, sin depender de listas de IDs de sesión), `datos_tarea17_universo/`
+  (CSVs caso por caso, `id_ihfintech_loan` completo).
+
+**✅ Pregunta conceptual RESUELTA por el usuario 2026-08-24: la curva debe representar TODA
+la mora que ocurre (cualquier día con vencimientos), no solo la que el negocio gestiona.**
+"dias_atraso_cuota" es el universo correcto para calibrar de acá en adelante. Verificado con
+2 chequeos antes de aceptar la decisión (detalle en bug 16, `BUGS.md`):
+1. Un crédito que vence sábado y sigue sin pagar entra oficialmente como "nuevo" el lunes —
+   confirmado 100% con 259 casos reales.
+2. La forma de la curva SÍ difiere por día de la semana del vencimiento (fin de semana paga
+   ~2x más rápido en el día 1 desde la entrada que entre semana) — hipótesis del usuario
+   (sin gestión activa el sábado, más créditos "se escapan" a mora, pero pagan rápido apenas
+   los llaman el lunes) adoptada sobre la mía (rezago de procesamiento de pago, descartada
+   por el usuario). **Implicación para Fase 3: el día de la semana del vencimiento debe
+   tratarse como segmentador de la curva**, no solo como parte de la tasa de entrada.
+   De paso, se corrigió el wording: lo que se llamaba "días de gestión" (el índice que elige
+   el % de la curva al proyectar un vencimiento hasta fin de mes) son en realidad **días
+   calendario** desde el vencimiento — el modelo está bien así, solo estaba mal nombrado.
+
+**Observación adicional del usuario sobre el segmentador `avance_band` existente (4 buckets:
+<10% / 10-40% / 40-70% / 70%+): 40-70% y 70%+ no se separan bien, candidato a simplificar a
+3 buckets (<10% / 10-40% / 40%+) en Fase 3.**
+
+**✅ FASE 2 (montos, soles) EJECUTADA Y CERRADA 2026-08-24 — mismo patrón que Fase 1, en
+soles.** Archivo `tarea17_fase2_montos.sql`, CSVs en `datos_tarea17_universo/`. Detección y
+corrección de un bug propio en el camino (saldo de fin de mes en vez de saldo al momento de
+entrada — corregido y verificado 99.94% de coincidencia contra el método `dayslate` en
+créditos "EN AMBOS"). Resultado:
+
+| | Julio — cobertura | Julio — hueco | Agosto — cobertura | Agosto — hueco |
+|---|---:|---:|---:|---:|
+| `dayslate` | 75.9% (S/13.29M) | S/4.22M (24.1%) | 84.2% (S/12.64M) | S/2.37M (15.8%) |
+| `dias_atraso_cuota` | **97.8% (S/17.23M)** | **S/390K (2.2%)** | **99.3% (S/14.92M)** | **S/101K (0.7%)** |
+
+Detalle completo, incluyendo el desglose del "solo nuestro - no aparece en asignaciones" en
+soles, en bug 16 (`BUGS.md`).
+
+**Siguiente paso: Fase 3 — construir la curva real que reemplaza `P_FANTASMA` (tasa plana),
+incorporando el segmentador de día de la semana del vencimiento y la simplificación de
+`avance_band` a 3 buckets.** No ejecutado todavía.
 
 **El punto de partida (usuario, 2026-08-24):** el snapshot diario de `dts_mambu_loans_hist`
 se toma cerca de las 10pm. Un crédito que entra en mora (vencimiento+1) y paga ese mismo día

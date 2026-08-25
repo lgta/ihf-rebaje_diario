@@ -19,7 +19,15 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
 - Nunca usar `principalamountpaid`/`principalamountdue` (`dts_cobranza_creditos_cuotas`)
   para capital — están rotos (sobre-atribuyen pagos, superan 400% acumulado). Para capital,
   usar deltas de `balances_principalbalance` en `dts_mambu_loans_hist`.
-- Ver `FUENTES_DATOS.md` para el detalle completo de las 3 tablas y `GLOSARIO.md` para los
+- **Para CALIBRAR curvas nuevas, usar `dts_cobranza_creditos_calendario_diario.
+  dias_atraso_cuota` en vez de `dts_mambu_loans_hist.dayslate`** (decisión 2026-08-24, ver
+  `DECISIONES.md`) — `dayslate` es un snapshot único diario con un punto ciego de ~1 día
+  (bug 9) que `dias_atraso_cuota` cierra en ~97% al reconstruir día por día. Mismo patrón
+  `coalesce(dias_atraso_cuota,0)`, `NULL` cuando está al día. **Las curvas de producción
+  vigentes (stock, nuevos) siguen calibradas con `dayslate` todavía** — migrarlas es tarea
+  17 Fase 4, pendiente y no decidida; no reemplazar `dayslate` en código de producción sin
+  revisar el estado de esa fase en `PENDIENTES.md`.
+- Ver `FUENTES_DATOS.md` para el detalle completo de las tablas y `GLOSARIO.md` para los
   términos (tramo, avance, entrada en mora, etc.).
 
 ## Gotcha de Presto/Athena

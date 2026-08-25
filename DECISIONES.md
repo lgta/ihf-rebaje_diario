@@ -68,6 +68,25 @@ cambio propuesto y ver el error real. Esto resolvió en minutos la discusión so
 25% donde el razonamiento abstracto se hubiera estancado. Ver
 `feedback-tasa-curva-consistente` en memoria para el detalle.
 
+### Las curvas deben representar TODA la mora que ocurre, no solo la que el negocio gestiona (2026-08-24)
+Al investigar el mecanismo detrás del punto ciego de `dayslate` (bug 9/16), se encontró que
+`dts_asignaciones_gestiones_cobranza` (la asignación real de cobranza) no tiene NINGUNA fila
+los sábados/domingos — el negocio gestiona solo de lunes a viernes. Esto abrió una pregunta
+de fondo: si una reconstrucción más fina (`dias_atraso_cuota`) ve mora real que el propio
+negocio nunca llega a gestionar (porque su ciclo no corre fines de semana), ¿la curva debe
+representar esa mora igual, o solo la que el negocio puede gestionar? **El usuario decidió
+que la curva debe capturar el comportamiento de CUALQUIER día donde haya vencimientos**,
+gestionado o no — un crédito que entra en mora el sábado y paga el domingo sí entró en mora
+de verdad, aunque el negocio nunca lo haya visto. Verificado antes de aceptar la decisión:
+(1) un crédito que vence sábado y sigue sin pagar aparece oficialmente como "nuevo" recién
+el lunes (100% en 259 casos reales); (2) la forma de la curva sí difiere por día de semana
+del vencimiento (fin de semana paga ~2x más rápido en el día 1 desde la entrada) — sin
+gestión activa el sábado, más créditos "se escapan" a mora pero pagan apenas los llaman el
+lunes. Esto convierte a `dias_atraso_cuota` en el universo correcto para calibrar de acá en
+adelante (reemplaza `dayslate`) y al día de la semana del vencimiento en un segmentador de
+curva pendiente de incorporar. Ver bug 16 en `BUGS.md` y tarea 17 en `PENDIENTES.md` para el
+detalle completo, las queries y los números.
+
 ### Enfoque "reinicio del reloj" y Enfoque beta "salida de mora" descontinuados (2026-07-15)
 A pedido explícito del usuario, el proyecto acota su alcance a **2 enfoques**: el
 acumulado/oficial (rebaje, capital reducido) y el alfa (capital asegurado, meta principal

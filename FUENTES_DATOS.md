@@ -58,6 +58,37 @@ de vencimientos y para la validación en # de operaciones.
 Sin `flg_last_loan_in_chain=1`, la curva de # operaciones sale ~10 puntos más baja de lo
 real (cuotas de créditos reenganchados quedan `LATE` para siempre).
 
+## `dts_cobranza_creditos_calendario_diario` (universo correcto para calibrar curvas — decisión 2026-08-24)
+
+**Grano:** una fila por crédito por día (`fecha_calendario`, tipo `date`), datos desde
+2023-10-17 — más profundo que los 14 meses de calibración actuales. Reconstruye día por día
+(desde el pago real, no un snapshot único como `dts_mambu_loans_hist`) cuántos días de
+atraso tiene la cuota VIGENTE de cada crédito. Sin duplicados por (crédito, día) (verificado,
+a diferencia de `dts_mambu_loans_hist`, ver bug 11).
+
+| Campo | Notas |
+|---|---|
+| `id_ihfintech_loan` | ID del crédito, llave de join con las otras tablas |
+| `dias_atraso_cuota` | días de atraso de la cuota vigente. **`NULL` cuando está al día** — usar siempre `coalesce(dias_atraso_cuota,0)`, mismo patrón que `dayslate` |
+| `fechaporvencer` | fecha de vencimiento de la cuota vigente en esa fila |
+| `fecha_pago` | fecha real de pago de la cuota (no explotada todavía en detalle) |
+
+Join con `dts_mambu_loans_hist`: `date_format(c.fecha_calendario, '%Y%m%d') = a.fechaproceso
+and a._datos_adicionales_loan_accounts_id_ihfintech = c.id_ihfintech_loan` (ver `rebaje.sql`
+para el patrón original). Requiere los mismos filtros de `dts_okaapi_loans.status` y
+`flg_last_loan_in_chain` que el resto del proyecto (`dts_cobranza_creditos_calendario_diario`
+no los trae incorporados).
+
+**Por qué importa (decisión 2026-08-24, ver `DECISIONES.md`):** `dayslate`
+(`dts_mambu_loans_hist`) tiene un punto ciego de ~1 día (bug 9) porque es un snapshot único
+diario (~10pm) — no ve mora que nace y se resuelve antes de esa foto. `dias_atraso_cuota`,
+al reconstruir día por día, cierra ~97% de ese punto ciego (verificado julio/agosto 2026
+contra `dts_asignaciones_gestiones_cobranza`, bug 16 en `BUGS.md`). El usuario decidió que
+la curva debe representar TODA la mora que ocurre (no solo la que el negocio gestiona) —
+`dias_atraso_cuota` es de acá en adelante el universo correcto para calibrar curvas,
+reemplazando `dayslate`. Investigación completa, queries reproducibles y plan de migración
+en bug 16 (`BUGS.md`) y tarea 17 (`PENDIENTES.md`).
+
 ## `dts_asignaciones_gestiones_cobranza` (tabla viva — usar esta, no la de abajo)
 
 **Grano:** `(dni_ce, producto)` por `fecha_base` — la asignación REAL de cobranza día a
@@ -66,6 +97,13 @@ día, escrita por el Lambda del proyecto hermano `gestiones_cobranzas` (a difere
 población inferida vía `dayslate`). **Reemplaza a `dts_asignaciones_cobranza`** (ver nota
 de abajo — esa quedó congelada el 2026-07-10). Confirmado 2026-08-18 vía
 `homologacion_tipo_mora_gestiones.sql`, ver bug 13 en `BUGS.md`.
+
+**No tiene NINGUNA fila los sábados/domingos** (verificado julio 2026: `fecha_base` saltea
+los 8 sábados/domingos del mes por completo) — el proceso de asignación del negocio corre
+solo de lunes a viernes. Un crédito que entra en mora y se resuelve DENTRO de un fin de
+semana nunca aparece en esta tabla para todo el mes, aunque `dias_atraso_cuota` sí lo vea
+brevemente en mora — no es un hueco de esta tabla a "corregir", es simplemente su cadencia
+real. Ver bug 16 en `BUGS.md` para el mecanismo completo y su impacto en la calibración.
 
 | Campo | Notas |
 |---|---|
