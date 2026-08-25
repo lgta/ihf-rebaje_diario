@@ -1044,9 +1044,9 @@ sin cambios (confirmada correcta arriba). Backtest re-corrido antes de adoptar (
 `CLAUDE.md`): movimiento chico en los 4 meses, afecta solo el componente fantasma — abril
 -19.2%→**-19.0%**, mayo -6.8%→**-6.5%**, junio +1.6%→**+1.9%**, julio -3.3%→**-3.0%**. Meta
 de agosto: S/16,211,015→**S/16,257,325** (+0.3%). Ver `SEGUIMIENTO.md`/`ESTADO.md` para el
-detalle completo. **Pendiente:** republicar los 2 artifacts afectados (📈 Proyectado vs.
-Real, 🔒 Capital asegurado) con los números nuevos — no se hizo en esta sesión. La
-segmentación por día de semana (9.08%-9.36% semana vs. 5.67%-6.31% fin de semana) tampoco se
+detalle completo. **Los 2 artifacts afectados (📈 Proyectado vs. Real, 🔒 Capital
+asegurado) ya fueron republicados 2026-08-25** con los números nuevos y las series diarias
+regeneradas. La segmentación por día de semana (9.08%-9.36% semana vs. 5.67%-6.31% fin de semana) tampoco se
 implementó — queda como refinamiento futuro si se justifica el impacto.
 
 **Siguiente paso: Fase 4 — evaluar si conviene recalibrar TODAS las curvas de producción

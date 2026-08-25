@@ -514,24 +514,25 @@ completo en `guia_tecnica_recupero.md` y en el artifact interactivo de abajo.
 | [Deck (11 slides)](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) | ⚠ desactualizado | Mismo motivo |
 | [**Detalle con curvas interactivas**](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) | ✓ vigente, el más completo | Composición stock, calendario nuevos, curvas por avance, cohortes, trayectoria — todo con gráficos hover |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) | ⚠ desactualizado — cifras de bug 18 (2026-08-24), **no incluye la tasa `P_FANTASMA` recalibrada de tarea 17 fase 3 (2026-08-25)** | Enfoque alfa, **meta principal de agosto** — 5 créditos reales de agosto, curvas con bug 12, backtest de **4 meses cerrados** (abril a julio, con capa fantasma) y avance en vivo de agosto (corte 21-ago) por segmento. Pendiente republicar con: meta S/16.21M→**S/16.26M**, errores -19.2%/-6.8%/+1.6%/-3.3%→**-19.0%/-6.5%/+1.9%/-3.0%**, avance mismo día +5.1%→**+4.8%** — ver bug 16 (`BUGS.md`) y `SEGUIMIENTO.md` para los números completos. |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) | ✓ vigente, **actualizado 2026-08-25 con la tasa `P_FANTASMA` recalibrada** | Enfoque alfa, **meta principal de agosto** — 5 créditos reales de agosto, curvas con bug 12, backtest de **4 meses cerrados** (abril a julio, con capa fantasma) y avance en vivo de agosto (corte 21-ago) por segmento. La actualización de tarea 17 fase 3 tocó: banner nuevo, meta S/16.21M→**S/16.26M**, errores -19.2%/-6.8%/+1.6%/-3.3%→**-19.0%/-6.5%/+1.9%/-3.0%**, avance mismo día +5.1%→**+4.8%**, tabla de 4 meses y series diarias de julio/agosto regeneradas desde los scripts. |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85) | ✓ vigente (republicado 2026-08-22, URL nueva — la anterior dejó de estar disponible) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, con la definición corregida (bug 12). Agregado 2026-08-22: banner de "Principio de universo" + estado de la investigación de `dias_atraso_cuota` (bug 16, no adoptada). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
 | [📈 De julio a agosto — cómo se arma la meta](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) | ✓ vigente y publicado (2026-08-21) | Guía paso a paso (curvas, asignación de julio, walkthrough completo de la meta de agosto), ambos enfoques con toggle. **Refrescado 2026-08-21 al corte 20-ago** (a pedido del usuario, sin esperar al cierre de agosto): capital asegurado avance +1.9% (antes -2.1% al 18-ago), recupero oficial +3.3% (antes -1.5%) — ambos enfoques cruzaron a positivo en 2 días, ver nota de cautela en `ESTADO.md` "La meta vigente". Sección 4 "Diferencias con la reconciliación" sin cambios (explica el punto ciego de `dayslate`, la capa fantasma, el fix de frontera y por qué julio sube más que junio). Fuente: `resumen_julio_agosto.html` + `armar_artifact_julio_agosto.py` + `datos_artifact_julio_agosto.json` + `meta_agosto_capital_asegurado.py` (v4) + `meta_agosto.py` (v2). |
 
 | [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637) | ✓ vigente, nuevo 2026-08-22 | Reconstruye paso a paso `P_NO_PAGA_DIA0=13.38%`: el embudo elegibles/entradas, 2 créditos reales día por día, desglose mensual (10 meses) y diario (365 días) con curva por día, y las pruebas de robustez de esta sesión (dedup bug 11, ventanas 6/10/12 meses). Fuente: `tasa_1338.html`. |
-| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) | ⚠ desactualizado — cifras de bug 18 (2026-08-24), **no incluye la tasa `P_FANTASMA` recalibrada de tarea 17 fase 3 (2026-08-25)** | Cómo se arma el backtest mensual completo (3 motores: stock+nuevos+fantasma), explicado con julio y mayo 2026 día a día, más la prueba de robustez de las curvas (tarea 10). Pendiente republicar con los 4 errores nuevos (-19.0% / -6.5% / +1.9% / -3.0%, movimiento chico vs. los de bug 18) — ver bug 16 (`BUGS.md`) y `SEGUIMIENTO.md`. La sección 5 (curvas fuera de muestra) ya quedaba con niveles pre-bug18, marcado en la propia página — sigue así. Fuente: `proyectado_vs_real.html`. |
+| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) | ✓ vigente, **actualizado 2026-08-25 con la tasa `P_FANTASMA` recalibrada** | Cómo se arma el backtest mensual completo (3 motores: stock+nuevos+fantasma), explicado con julio y mayo 2026 día a día, más la prueba de robustez de las curvas (tarea 10). Ahora con banner nuevo arriba, los 4 errores nuevos (-19.0% / -6.5% / +1.9% / -3.0%, movimiento chico vs. los de bug 18) y las series diarias de julio/mayo regeneradas desde los scripts. La sección 5 (curvas fuera de muestra) sigue con niveles pre-bug18, marcado en la propia página. Fuente: `proyectado_vs_real.html`. |
 
 Los dos primeros más el de "Detalle" son los recomendados para compartir con el equipo.
 Los "⚠ desactualizado" no tienen error, solo no incorporan los hallazgos más recientes —
 no republicar sin actualizarlos primero.
 
-> **⚠ 2026-08-25 — `P_FANTASMA` recalibrado (tarea 17 fase 3), artifacts TODAVÍA NO
-> republicados.** Los 4 errores mensuales se movieron un poco más (abril -19.2%→**-19.0%**,
-> mayo -6.8%→**-6.5%**, junio +1.6%→**+1.9%**, julio -3.3%→**-3.0%**) y la meta de agosto
-> pasó de S/16,211,015 a **S/16,257,325**. **📈 Proyectado vs. Real** y
-> **🔒 Capital asegurado** todavía muestran las cifras de bug 18 (2026-08-24) — pendiente de
-> la próxima sesión republicarlos pasando `url=` (mismo patrón que el bloque de bug 18 de
-> abajo). Ver bug 16 (`BUGS.md`) y `SEGUIMIENTO.md` para los números completos.
+> **✔ 2026-08-25 — `P_FANTASMA` recalibrado (tarea 17 fase 3) y artifacts republicados.**
+> Los 4 errores mensuales se movieron un poco más (abril -19.2%→**-19.0%**, mayo
+> -6.8%→**-6.5%**, junio +1.6%→**+1.9%**, julio -3.3%→**-3.0%**) y la meta de agosto pasó de
+> S/16,211,015 a **S/16,257,325**. **📈 Proyectado vs. Real** y **🔒 Capital asegurado** ya
+> fueron republicados con los números nuevos pasando `url=` (URLs conservadas) — incluye las
+> series diarias de julio (ambos artifacts) y agosto (Capital asegurado) regeneradas desde
+> los scripts, no solo los totales. Ver bug 16 (`BUGS.md`) y `SEGUIMIENTO.md` para el detalle
+> completo.
 
 > **✔ 2026-08-24 — bug 18 corregido y artifacts republicados.** Los 4 errores mensuales
 > cambiaron (abril -17.6%→**-19.2%**, mayo -4.4%→**-6.8%**, junio +2.65%→**+1.6%**, julio

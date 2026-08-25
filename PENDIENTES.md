@@ -426,12 +426,12 @@ aplica a las demás curvas del proyecto). Archivo `tarea17_fase3_curva_fantasma.
 backtest y en `meta_agosto_capital_asegurado.py` (v6). Backtest re-corrido — movimiento chico
 en los 4 meses (afecta solo el componente fantasma): abril -19.2%→**-19.0%**, mayo
 -6.8%→**-6.5%**, junio +1.6%→**+1.9%**, julio -3.3%→**-3.0%**. Meta de agosto:
-S/16,211,015→**S/16,257,325** (+0.3%). `SEGUIMIENTO.md` y `ESTADO.md` ya actualizados.
-**Pendiente para la próxima sesión:** republicar los 2 artifacts afectados
+S/16,211,015→**S/16,257,325** (+0.3%). `SEGUIMIENTO.md` y `ESTADO.md` ya actualizados. **Los 2 artifacts afectados
 ([📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa)
 y [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7))
-con los números nuevos, pasando `url=` para conservar las URLs — mismo patrón que el
-republish de bug 18. No se hizo en esta sesión (fuera del pedido explícito del usuario).
+ya fueron republicados 2026-08-25** con los números nuevos, pasando `url=` (URLs
+conservadas) — incluye las series diarias de julio (ambos) y agosto (Capital asegurado)
+regeneradas desde los scripts, no solo los totales.
 Tampoco se segmentó la tasa por día de semana (semana 9.08%-9.36% vs. fin de semana
 5.67%-6.31%, estable entre ventanas) — queda como refinamiento futuro si se justifica.
 
