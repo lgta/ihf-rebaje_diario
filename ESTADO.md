@@ -45,6 +45,14 @@
 > quedan como referencia histórica. **Los 2 artifacts republicados** (URLs conservadas).
 > Detalle completo en `BUGS.md` bug 16 (Fase 4) y bug 20.
 
+> **LO QUE SIGUE (tarea 18, `PENDIENTES.md`):** (a) segmentar la curva por día de semana del
+> vencimiento y evaluar `avance_band` a 3 buckets — los 2 refinamientos ya medidos en Fase
+> 2/3 y deliberadamente dejados fuera para aislar una variable a la vez; (b) explicar el
+> sesgo de "nuevos", que ahora queda expuesto entero y con signo constante en los 4 meses;
+> (c) repetir la prueba de robustez fuera de muestra sobre el motor unificado; (d) rehacer
+> `resumen_julio_agosto.html` (quedó desactualizado); (e) decidir si el motor de recupero
+> oficial también se migra — sigue con `dayslate` y sin ninguna compensación del punto ciego.
+
 > **2026-08-25 (continuación) — BUG 20, encontrado por el diagnóstico de Fase 4 y resuelto
 > por construcción:** el calendario de fantasma de ABRIL excluía `entradas_reales` del
 > denominador; ningún otro mes lo hacía y `P_FANTASMA` se calibraba sobre un denominador que

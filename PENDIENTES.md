@@ -564,6 +564,63 @@ el número de julio ya desactualizado) y que este trabajo podría finalmente exp
 (83%→99.8% de cierre en soles) y el backtest mixto ya corrido, no repetir esas 2 corridas de
 junio/julio sin releer primero qué se probó y qué falta.
 
+### Tarea 18 — Lo que deja abierto el motor unificado (tarea 17 Fase 4, adoptada 2026-08-25)
+
+**Contexto:** el Enfoque alfa ya corre con `dias_atraso_cuota` y sin capa fantasma (ver tarea
+17 y `BUGS.md` bug 16 Fase 4). Estos son los frentes que quedaron deliberadamente fuera de
+esa adopción, en orden de prioridad.
+
+**18a — Segmentar la curva por día de la semana del vencimiento, y simplificar `avance_band`
+a 3 buckets. PRIORIDAD MÁS ALTA de esta tarea.** Los dos refinamientos están medidos pero
+nunca probados contra el backtest; se dejaron fuera a propósito para aislar una variable a la
+vez (decisión del usuario al aprobar Fase 4).
+- **Día de semana:** Fase 2 midió que la forma de la curva difiere ~2x en el día 1 desde la
+  entrada (fin de semana 30.96% vs. entre semana 14.84%); Fase 3 midió que la tasa de
+  resolución mismo-día también difiere (semana 9.08%-9.36% vs. fin de semana 5.67%-6.31%).
+  Con el motor unificado el día 0 de la curva ES esa población, así que el segmentador aplica
+  directo. **Ojo:** el diagnóstico de Fase 4 mostró que el mix de fin de semana por mes
+  (mayo 36.5%, abril 30.1%, junio 27.0%, julio 23.3%, baseline 28.9%) **no ordena** con el
+  error — así que esto no es una explicación del sesgo residual, es un refinamiento de forma.
+- **3 buckets de avance** (`<10%` / `10-40%` / `40%+`): observación del usuario de que 40-70%
+  y 70%+ no se separan bien. **Pero** el día 0 de la curva unificada sí los separa
+  (31.635% vs. 30.61%) y el segmento 70%+ es el que más se desvía en agosto (+89.0% real vs.
+  meta al 21-ago) — revisar con ese dato antes de colapsarlos.
+- Correr con `backtest_capital_asegurado_unificado.py` y comparar contra el baseline actual
+  (abril -12.6%, mayo -8.7%, junio -2.6%, julio -5.0%, media 7.22%). **No adoptar por mejora
+  de error** — adoptar si el universo/medición queda más fiel, per `CLAUDE.md`.
+
+**18b — Explicar el sesgo de "nuevos", que ahora está expuesto entero.** Con el parche plano
+fuera, los 4 meses subestiman con **signo constante**: -16.4% (abr), -9.8% (may), -3.9%
+(jun), -5.1% (jul). Es aprox. la mitad de la magnitud que tenía con 3 componentes, pero ya
+sin la sobreestimación compensatoria del fantasma. Lo que ya se sabe y no hay que repetir:
+la tasa de entrada NO deriva (Fase 4 la midió mes a mes, rango 20.39%-23.82% sin tendencia),
+y en agosto el exceso es volumen y no efectividad condicional
+(`analisis_volumen_efectividad_agosto.md`). Conecta con tarea 9 y con el hallazgo de mix de
+agosto (avance 70%+ activando +89% sobre la curva). **Explicarlo, no ajustarlo.**
+
+**18c — Repetir la prueba de robustez fuera de muestra sobre el motor unificado.** La que
+existe (tarea 10, movimiento de 0.15-0.2pp) se corrió sobre la arquitectura de 3 componentes
+con curvas `dayslate`; el artifact `proyectado_vs_real.html` ya lo aclara en su sección 05.
+Las curvas unificadas calibran con `periodo_meta 202504-202606` (stock) y
+`fechaproceso 20250301-20260531` (nuevos), o sea siguen dejando entrar mayo y junio. El
+mecanismo es el mismo y la conclusión debería sostenerse, pero no está medido.
+
+**18d — `resumen_julio_agosto.html` y `armar_artifact_julio_agosto.py` quedaron
+desactualizados.** Describen el Enfoque alfa con capa fantasma y `P_FANTASMA=8.5524%` — dos
+versiones atrás, ya estaban desactualizados antes de Fase 4. El builder mezcla los dos
+enfoques (recupero oficial + alfa); solo el lado alfa necesita rehacerse sobre
+`motor_unificado.py`. Ver tarea 5 (destino de artifacts desactualizados).
+
+**18e — Decidir si el motor de recupero oficial se migra a `dias_atraso_cuota`.** Sigue con
+`dayslate` (`fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`) y nunca tuvo capa
+fantasma, así que el punto ciego de bug 9 está ahí **sin compensar de ninguna forma**. No se
+decidió nada; el alcance de Fase 4 fue solo Enfoque alfa, a pedido del usuario. Si se hace,
+el patrón ya está probado — `motor_unificado.py` + las 9 queries `tarea17_fase4_*.sql`.
+
+**Menores que siguen abiertos:** el residual de 150 créditos sin explicar de Fase 1 (<1% del
+universo, patrón mixto) y el pendiente de bug 17 (por qué `jul_calendario.csv` tenía saldo
+promedio 11% más alto por crédito) — ninguno bloquea nada.
+
 ### Tarea 12 (baja prioridad) — Reorganizar en carpetas
 Considerar `sql/`, `python/`, `docs/` si el root sigue creciendo. No bloquea nada; con la
 limpieza del 2026-07-15 el root ya bajó en 8 archivos + 2 carpetas de datos.
