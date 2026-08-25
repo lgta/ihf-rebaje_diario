@@ -7,6 +7,65 @@
 
 Última actualización: 2026-08-25.
 
+> **2026-08-25 (continuación) — MOTOR UNIFICADO ADOPTADO EN PRODUCCIÓN. LA CAPA FANTASMA
+> SE ELIMINÓ (tarea 17 Fase 4, decisión del usuario).** El Enfoque alfa pasa de 3 componentes
+> (stock + nuevos + fantasma, calibrados con `dayslate`) a 2 (stock + nuevos, calibrados con
+> `dias_atraso_cuota`).
+> - **Una sola tasa:** `P_ENTRADA = 21.9918%` (75,621/343,860, ago25-may26) reemplaza a
+>   `P_NO_PAGA_DIA0 = 13.38%` + `P_FANTASMA = 8.6163%`. La suma anterior daba 21.9963% —
+>   0.005pp de diferencia: **la masa siempre estuvo bien, lo que estaba mal era el reparto.**
+> - **Una sola curva de nuevos, que arranca en el DÍA 0.** La ex-población fantasma es el
+>   día 0 de esa curva (36.97% banda a → 30.61% banda d), en vez de una tasa plana ciega a
+>   `avance_band`. Ese era el defecto real del parche: mismo 8.62% para todas las bandas.
+> - **Un solo calendario, indexado por DÍA DE ENTRADA** (= vencimiento + 1), en vez de dos.
+> - **4 clases de bug quedan imposibles por construcción:** bug 12 (`dia1_entrantes`), bug
+>   14/17 (hueco de frontera de mes), bug 18 (índice corrido) y bug 20 (denominador de abril).
+>
+> **Backtest (4 meses):** abril **-12.6%**, mayo **-8.7%**, junio **-2.6%**, julio **-5.0%**
+> — magnitud media **7.22%** contra 6.20% de la arquitectura anterior (con bug 20 corregido).
+> **El error empeora ~1pp y se adoptó igual**, por el "Principio de interpretación del error"
+> de `CLAUDE.md`: el cambio corrige quién entra al universo y cómo se mide. El parche plano
+> **enmascaraba** el sesgo de "nuevos" por ser sistemáticamente generoso (sobreestimaba justo
+> donde nuevos subestimaba); ahora los 4 meses subestiman con **signo constante**, que es una
+> señal de negocio a explicar y no un error que cambia de signo según el mes.
+>
+> **META VIGENTE DE AGOSTO: S/16,257,325 → S/17,274,766 (+6.3%).** Casi todo el movimiento es
+> el stock: con `dias_atraso_cuota` el stock al cierre de julio es **30.2% mayor**
+> (S/5.81M vs. S/4.46M), consistente con la cobertura ya medida en Fase 1 (78.4% → 98.6%).
+> El **real casi no se mueve** (S/11,600,930 vs. S/11,620,780 al 21-ago, -0.2%): es la misma
+> realidad de negocio, medida sin partir la población en tres. **El avance al 21-ago pasa de
+> +4.8% a -0.3%** (al 24-ago: -1.4%) — agosto viene en línea, no adelantado; el "+4.8%" era
+> en buena parte un artefacto del reparto entre nuevos y fantasma.
+>
+> **Código nuevo:** `motor_unificado.py` (proyector compartido),
+> `backtest_capital_asegurado_unificado.py` (4 meses en una corrida + series diarias en
+> `datos_backtest_unificado/`), `meta_agosto_capital_asegurado.py` **v7**, curvas en
+> `datos_capital_asegurado/curva_unificada_{stock,nuevos}_seg.csv`, 9 queries
+> `tarea17_fase4_*.sql`, datos en `datos_tarea17_fase4/`. Los 4 scripts de backtest viejos
+> quedan como referencia histórica. **Los 2 artifacts republicados** (URLs conservadas).
+> Detalle completo en `BUGS.md` bug 16 (Fase 4) y bug 20.
+
+> **2026-08-25 (continuación) — BUG 20, encontrado por el diagnóstico de Fase 4 y resuelto
+> por construcción:** el calendario de fantasma de ABRIL excluía `entradas_reales` del
+> denominador; ningún otro mes lo hacía y `P_FANTASMA` se calibraba sobre un denominador que
+> NO las excluía — tasa y denominador de distinta definición, mismo patrón de bug 10.
+> Calendario corregido: S/43,576,331 → **S/52,115,389** (+19.6%), validado contra la
+> reconstrucción independiente de Fase 4 (S/51,809,606, 0.6% de diferencia explicada por la
+> regla de exclusión de stock). **El abril de la arquitectura anterior pasa de -19.0% a
+> -13.4%**, y deja de ser el outlier que parecía. Con el motor unificado el bug desaparece:
+> ya no hay dos calendarios que mantener sincronizados.
+
+
+> **2026-08-25 (continuación) — BUG 20 NUEVO, encontrado por el diagnóstico de Fase 4: el
+> calendario de fantasma de ABRIL excluye `entradas_reales` del denominador; ningún otro mes
+> lo hace y `P_FANTASMA` se calibra sobre un denominador que NO las excluye.** Tasa y
+> denominador de distinta definición — mismo patrón de bug 10. Calendario corregido:
+> S/43,576,331 → **S/52,115,389** (+19.6%), validado contra la reconstrucción independiente de
+> Fase 4 (S/51,809,606, diferencia 0.6% explicada por la regla de exclusión de stock).
+> **Impacto en el número oficial de abril: proyectado S/10,766,352 → S/11,502,103, error
+> -19.0% → -13.4%.** NO corregido en `SEGUIMIENTO.md` todavía — decisión del usuario, y queda
+> resuelto por construcción si se adopta Fase 4. Si NO se adopta, hay que aplicarlo igual.
+
 > **2026-08-25 — TAREA 17 FASE 3 EJECUTADA: resultado inesperado, la activación instantánea
 > de `P_FANTASMA` ya era correcta, NO hace falta una curva multi-día.** Calibrado con 2
 > ventanas a pedido del usuario (12 y 6 meses, no la historia completa 2023-10-17+ del plan

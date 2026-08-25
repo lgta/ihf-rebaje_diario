@@ -23,10 +23,12 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   dias_atraso_cuota` en vez de `dts_mambu_loans_hist.dayslate`** (decisión 2026-08-24, ver
   `DECISIONES.md`) — `dayslate` es un snapshot único diario con un punto ciego de ~1 día
   (bug 9) que `dias_atraso_cuota` cierra en ~97% al reconstruir día por día. Mismo patrón
-  `coalesce(dias_atraso_cuota,0)`, `NULL` cuando está al día. **Las curvas de producción
-  vigentes (stock, nuevos) siguen calibradas con `dayslate` todavía** — migrarlas es tarea
-  17 Fase 4, pendiente y no decidida; no reemplazar `dayslate` en código de producción sin
-  revisar el estado de esa fase en `PENDIENTES.md`.
+  `coalesce(dias_atraso_cuota,0)`, `NULL` cuando está al día. **Desde 2026-08-25 las curvas de
+  producción del Enfoque alfa ya están migradas a `dias_atraso_cuota`** (tarea 17 Fase 4,
+  motor unificado — ver `motor_unificado.py`): stock + nuevos con una sola tasa
+  `P_ENTRADA = 21.9918%`, sin capa fantasma. **El motor de recupero oficial
+  (`fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`) sigue con `dayslate`** —
+  migrarlo no se decidió.
 - Ver `FUENTES_DATOS.md` para el detalle completo de las tablas y `GLOSARIO.md` para los
   términos (tramo, avance, entrada en mora, etc.).
 

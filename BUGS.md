@@ -1049,8 +1049,115 @@ asegurado) ya fueron republicados 2026-08-25** con los números nuevos y las ser
 regeneradas. La segmentación por día de semana (9.08%-9.36% semana vs. 5.67%-6.31% fin de semana) tampoco se
 implementó — queda como refinamiento futuro si se justifica el impacto.
 
-**Siguiente paso: Fase 4 — evaluar si conviene recalibrar TODAS las curvas de producción
-(stock, nuevos) con `dias_atraso_cuota` en vez de `dayslate`.** No ejecutado todavía.
+**✅ FASE 4 EJECUTADA 2026-08-25 — modelo UNIFICADO construido y backtesteado en los 4
+meses. Resultado: la masa cuadra exacto, la FORMA mejora, y el error empeora ~1pp — la
+decisión no se toma por el error (Principio de interpretación, `CLAUDE.md`).** Alcance
+confirmado con el usuario antes de correr: solo Enfoque alfa (capital asegurado), y
+segmentación IDÉNTICA a producción (3 tramos × 4 buckets de avance) para aislar una variable
+a la vez. Archivos: `tarea17_fase4_{tasa,curva_nuevos,curva_stock,calendario,stock_pob,
+real_stock,real_nuevos}.sql`, `backtest_fase4_unificado.py`, datos en `datos_tarea17_fase4/`.
+
+**Qué es el modelo unificado:** stock + nuevos calibrados con `dias_atraso_cuota`, SIN capa
+fantasma — la ex-población fantasma pasa a ser el **día 0** de la curva de nuevos en vez de
+un término aditivo aparte. Además unifica los dos calendarios (el de nuevos, indexado por
+`fechavencimiento`, y el de fantasma, frontier-adjusted) en **uno solo indexado por DÍA DE
+ENTRADA** (= vencimiento + 1).
+
+**1. La tasa unificada confirma que la descomposición aditiva de producción tenía la masa
+bien:** `P_ENTRADA = 21.9918%` (75,621/343,860, ago25-may26, misma ventana que
+`P_NO_PAGA_DIA0`) vs. `13.38% + 8.6163% = 21.9963%` de producción. **Diferencia: 0.005pp.**
+Sin deriva mensual (rango 20.39%-23.82%, sin tendencia; abril 21.79%, mayo 21.57%) — el
++26.3% de volumen medido en agosto (`analisis_volumen_efectividad_agosto.md`) NO es una
+tasa de entrada que se movió, al menos no en esta ventana.
+
+**2. Lo que la tasa plana sí tenía mal es la FORMA: `P_FANTASMA` es ciega a `avance_band`,
+y la activación real del día 0 no lo es.**
+
+| Banda | día 0, producción (plano) | día 0, curva unificada | dif |
+|---|---:|---:|---:|
+| a. avance <10% | 8.62% | 8.13% | -5.6% |
+| b. avance 10-40% | 8.62% | 7.23% | **-16.1%** |
+| c. avance 40-70% | 8.62% | 6.96% | **-19.3%** |
+| d. avance 70%+ | 8.62% | 6.73% | **-21.9%** |
+
+Las dos estructuras convergen dentro de 0.1-0.8% hacia el día 20-30 — el parche estaba bien
+en el agregado del mes y mal en el reparto por banda y en la trayectoria intra-mes. Como el
+mix de bandas cambia poco mes a mes (banda a: 31.9%-35.1% en los 4 meses), el efecto neto es
+un **-2.0% a -2.6% uniforme** sobre la proyección de nuevos, no una fuente de volatilidad.
+
+**3. Backtest, 4 meses (real re-medido sobre el universo unificado — se mueve muy poco:
++0.8% abr, +0.5% may, -0.3% jun, +1.0% jul, o sea es la misma realidad de negocio):**
+
+| Mes | Proy. unificado | Real unif. | Error unif. | Error producción | Error prod. **corregido** (ver bug 20) |
+|---|---:|---:|---:|---:|---:|
+| Abril 2026 | S/11,708,992 | S/13,390,788 | **-12.6%** | -19.0% | **-13.4%** |
+| Mayo 2026 | S/13,485,767 | S/14,767,586 | **-8.7%** | -6.5% | -6.5% |
+| Junio 2026 | S/13,191,522 | S/13,543,570 | **-2.6%** | +1.9% | +1.9% |
+| Julio 2026 | S/16,454,855 | S/17,327,495 | **-5.0%** | -3.0% | -3.0% |
+| | | | media 7.22% | media 7.59% | **media 6.20%** |
+
+**Con el bug 20 de abril corregido, producción queda MEJOR en magnitud media de error (6.20%
+vs. 7.22%).** No se oculta: es el resultado.
+
+**4. Descomposición del cambio — separa "cambió el universo" de "cambió la curva":**
+
+| Mes | [P] producción | [A] estructura prod. sobre insumos unificados | [B] unificado completo | P→A | A→B |
+|---|---:|---:|---:|---:|---:|
+| Abril | S/10,766,352 | S/12,018,661 | S/11,708,992 | **+11.6%** | -2.6% |
+| Mayo | S/13,741,464 | S/13,766,248 | S/13,485,767 | +0.2% | -2.0% |
+| Junio | S/13,844,523 | S/13,495,219 | S/13,191,522 | -2.5% | -2.3% |
+| Julio | S/16,639,656 | S/16,793,370 | S/16,454,855 | +0.9% | -2.0% |
+
+**El cambio de curva (A→B) es -2.0% a -2.6% en los 4 meses, sin excepción — perfectamente
+estable. TODA la varianza mes a mes vive en el cambio de insumos (P→A), y el +11.6% de abril
+resultó ser un bug propio, no una propiedad del método** (bug 20, encontrado por este
+diagnóstico).
+
+**5. POR QUÉ empeora el error (la pregunta que el usuario pidió responder, no solo reportar
+el número): el parche plano estaba enmascarando el sesgo de "nuevos" por ser sistemáticamente
+generoso.** En producción, el componente fantasma sobreestima (+8.2% may, +13.2% jun, +16.3%
+jul) justo donde nuevos subestima (-20.1%, -8.0%, -19.2%) — los dos errores se cancelan
+parcialmente por accidente. El modelo unificado no tiene dónde esconder ese sesgo: queda un
+solo componente de nuevos con error -16.4% / -9.8% / -3.9% / -5.1%, aproximadamente **la
+mitad de la magnitud del sesgo de nuevos de producción**, pero ya sin la sobreestimación
+compensatoria. Resultado: los 4 meses del modelo unificado subestiman (**mismo signo en los
+4**), contra los signos mezclados de producción (-19.0/-6.5/+1.9/-3.0). Un sesgo de signo
+constante es una señal de negocio explicable (volumen/mix/gestión, ya documentada en tarea 9
+y `analisis_volumen_efectividad_agosto.md`); un error que cambia de signo no lo es.
+
+**El mecanismo de fin de semana NO explica la diferencia entre meses.** Se midió el mix de
+día de semana de la entrada por mes (mayo 36.5% fin de semana, abril 30.1%, junio 27.0%,
+julio 23.3%, contra un baseline de 28.9% de la ventana de calibración) y no ordena con el
+error (abril rompe la relación). La segmentación por día de semana sigue siendo un
+refinamiento razonable —Fase 2 midió 2x de diferencia en la forma del día 1— pero no es la
+explicación de este resultado. Tampoco lo es la concentración de calendario a fin de mes
+(abril 19.4%, mayo 19.1%, junio 13.5%, julio 19.2% en los últimos 5 días).
+
+**6. Ganancia estructural que no aparece en el error — 4 clases de bug se vuelven imposibles
+por construcción** al indexar el calendario por día de entrada y tener un solo universo:
+- **bug 12** (`dia1_entrantes`, el parche que suma al stock los que entran el día 1): esa
+  cohorte ahora entra por el calendario como "nuevos" con `dia_entrada = 1`, que es lo que
+  es. Verificado sin solape ni hueco: al cierre del mes anterior tiene atraso 0, así que no
+  es stock.
+- **bug 14/17** (hueco de frontera de mes, cuota vencida el último día del mes anterior):
+  incluida por construcción en `dia_entrada = 1`.
+- **bug 18** (índice de la curva corrido 1 día): el índice pasa a ser `d - dia_entrada`, sin
+  correcciones — no hay dónde equivocarse.
+- **bug 20** (denominador de abril inconsistente): solo existe porque hay DOS calendarios que
+  mantener sincronizados. Con uno solo, no puede pasar.
+
+**RECOMENDACIÓN (no decisión — es del usuario): adoptar el modelo unificado, aceptando que
+el error sube ~1pp.** El razonamiento es el "Principio de interpretación del error" de
+`CLAUDE.md` aplicado literalmente: el cambio SÍ cambia quién entra al universo (decisión ya
+tomada por el usuario en Fase 2 — "la curva debe representar TODA la mora que ocurre") y CÓMO
+se mide (el día 0 deja de ser una tasa plana ciega al segmento), así que se corrige aunque el
+error suba — mismo criterio con el que se adoptó bug 18, que empeoró los 4 meses. El ~1pp de
+deterioro no es información nueva que el modelo perdió: es sesgo que ya existía y que el
+parche tapaba.
+
+**Refinamiento siguiente si se adopta (no incluido acá a propósito, una variable a la vez):**
+segmentar la curva por día de semana del vencimiento y simplificar `avance_band` a 3 buckets
+— ambos ya medidos en Fase 2/3, ninguno probado contra el backtest todavía.
 
 ### 17. Backtest diario de mayo/julio (tarea 9): el calendario de fantasma necesita su PROPIO
 rango frontier-adjusted, y `jul_calendario.csv` corre ~7.9% más alto que una reconstrucción
@@ -1470,3 +1577,56 @@ snapshot de `dts_mambu_loans_hist` corre ~10pm, la asignación de cobranza se ar
 temprano — un pago en esa ventana queda asignado a TEMPRANA pero invisible para `dayslate`.
 **Esto revive bug 16** (`dias_atraso_cuota`, archivado por resultado mixto en el backtest) —
 plan completo en tarea 17, `PENDIENTES.md`. NO ejecutado todavía, solo planificado.
+
+### 20. El calendario de fantasma de ABRIL excluye `entradas_reales` del denominador — `P_FANTASMA` se calibra sobre un denominador que NO las excluye (solo abril; mayo/junio/julio están bien)
+
+**Encontrado 2026-08-25** como subproducto del diagnóstico de tarea 17 Fase 4 (ver bug 16):
+al descomponer por qué abril movía +11.6% al cambiar de insumos mientras mayo/julio se
+movían +0.2%/+0.9%, se comparó el calendario de fantasma de cada mes contra una
+reconstrucción independiente. Mayo y julio calzan dentro de 0.7-0.9%; **abril queda 18.9%
+corto**.
+
+**Causa, verificada en el código Y con datos:** `enfoque_capital_asegurado_backtest_abril.sql`
+(BT-ASEG-ABR-CALFANT) filtra
+`c.id_ihfintech_loan not in (select id_loan from entradas_reales_abril)` — ningún otro mes
+lo hace. Pero `P_FANTASMA` se calibra (`enfoque_capital_asegurado.sql` Q3 /
+`tarea17_fase3_curva_fantasma.sql`, CTE `calendario_mes`) sobre un denominador que excluye
+**solo el stock**, no las entradas reales. Tasa y denominador quedan de distinta definición
+— exactamente el patrón de bug 10 y del "Principio de modelado" de `CLAUDE.md`.
+
+**Por qué está mal conceptualmente, no solo por inconsistencia:** la proyección se hace al
+INICIO del mes, cuando no se sabe qué créditos van a ser `entradas_reales`. El diseño es
+`calendario × 13.38%` = los que `dayslate` ve, y `calendario × 8.6163%` = los que no ve;
+ambas tasas se aplican al MISMO calendario completo. Sacar ex-post del denominador las
+entradas que efectivamente ocurrieron es un ajuste ex-post de los que `CLAUDE.md` prohíbe.
+
+**Cuantificado** (`tarea17_fase4_abril_calfant_fix.sql`, resultado en
+`datos_backtest_abril/bt_calendario_fantasma_abril_fix.csv`):
+
+| | saldo en riesgo | créditos |
+|---|---:|---:|
+| `bt_calendario_fantasma_abril.csv` (actual) | S/43,576,331 | 35,639 |
+| corregido (excluye solo stock, igual que may/jul) | **S/52,115,389** | **41,348** |
+
+Doble validación independiente: la reconstrucción de Fase 4 vía `dias_atraso_cuota` da
+S/51,809,606 / 41,096 créditos para el mismo rango — la diferencia restante (0.6%) es
+exactamente la regla de exclusión de stock (`dias_atraso_cuota` ve más stock que `dayslate`,
+así que excluye un poco más), como se esperaba.
+
+**Impacto en el número oficial de abril:** `proy_fantasma` S/3,754,667 → **S/4,490,418**
+(+S/735,751); proyectado total S/10,766,352 → **S/11,502,103**; error **-19.0% → -13.4%**.
+Abril deja de ser un outlier gigante y pasa a estar en línea con el resto.
+
+**✅ RESUELTO POR CONSTRUCCIÓN 2026-08-25** al adoptarse el motor unificado (Fase 4): el
+calendario de fantasma de abril ya no existe, y con un solo calendario no hay dos
+denominadores que puedan divergir. El número corregido de la arquitectura anterior
+(**-13.4%**) queda registrado en `SEGUIMIENTO.md` como referencia histórica y es el que usa
+`backtest_capital_asegurado_unificado.py` en su columna de comparación — comparar el motor
+unificado contra el -19.0% viejo habría exagerado su ventaja en abril. La query del
+denominador correcto queda en `tarea17_fase4_abril_calfant_fix.sql` por si hay que
+reconstruir la serie vieja.
+
+**No confundir con bug 17 hallazgo B** (`jul_calendario.csv`, saldo promedio por crédito 11%
+alto, causa de fondo sin explicar): acá la causa SÍ está identificada y es una línea de
+código, y la diferencia está en el CONTEO de créditos (35,639 vs. 41,348, +16%), no en el
+saldo promedio (S/1,223 vs. S/1,261, +3%).

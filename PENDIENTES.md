@@ -340,7 +340,7 @@ La motivación original de la tarea 15 (el punto ciego de ~21% de `dayslate`, po
 de nuestro universo que paga 1 día tarde) es una pregunta DISTINTA, ya parcialmente resuelta
 por la capa fantasma (bug 9/14) — no remedida en esta sesión.
 
-### Tarea 17 — Validar el universo a nivel de CUOTA (`dias_atraso_cuota`) contra asignaciones, y construir una curva real para la capa fantasma — FASE 1 (cantidad) CERRADA 2026-08-24, Fase 2 pendiente
+### Tarea 17 — Validar el universo a nivel de CUOTA (`dias_atraso_cuota`) contra asignaciones y evaluar reemplazar `dayslate` en producción — FASES 1-4 EJECUTADAS; Fase 4 ADOPTADA EN PRODUCCIÓN (2026-08-25)
 **Prioridad: la más alta de las pendientes — precede y puede cambiar cómo se resuelven las
 tareas 15/16.** Revive y extiende bug 16 (`dias_atraso_cuota`, investigación de 2026-08-22
 archivada por resultado "mixto" en el backtest) con un ángulo nuevo del usuario: el mecanismo
@@ -435,8 +435,66 @@ regeneradas desde los scripts, no solo los totales.
 Tampoco se segmentó la tasa por día de semana (semana 9.08%-9.36% vs. fin de semana
 5.67%-6.31%, estable entre ventanas) — queda como refinamiento futuro si se justifica.
 
-**Siguiente paso: Fase 4 — evaluar si conviene recalibrar TODAS las curvas de producción
-(stock, nuevos) con `dias_atraso_cuota` en vez de `dayslate`.** No ejecutado todavía.
+**✅ FASE 4 EJECUTADA 2026-08-25 — modelo UNIFICADO (stock + nuevos con `dias_atraso_cuota`,
+SIN capa fantasma) construido y backtesteado en los 4 meses. DECISIÓN DEL USUARIO PENDIENTE.**
+Alcance acordado antes de correr: solo Enfoque alfa, segmentación idéntica a producción (una
+variable a la vez). Archivos: `tarea17_fase4_*.sql` (7 queries), `backtest_fase4_unificado.py`,
+`datos_tarea17_fase4/`. Detalle completo en bug 16 (`BUGS.md`). Resumen:
+
+| Mes | Error unificado | Error producción | Error prod. corregido (bug 20) |
+|---|---:|---:|---:|
+| Abril 2026 | -12.6% | -19.0% | -13.4% |
+| Mayo 2026 | -8.7% | -6.5% | -6.5% |
+| Junio 2026 | -2.6% | +1.9% | +1.9% |
+| Julio 2026 | -5.0% | -3.0% | -3.0% |
+| media \|error\| | 7.22% | 7.59% | **6.20%** |
+
+- **La masa cuadra exacto:** `P_ENTRADA` unificada = 21.9918% vs. `13.38% + 8.6163%` =
+  21.9963% de producción (0.005pp de diferencia). Sin deriva mensual.
+- **Lo que la tasa plana tenía mal es la forma:** `P_FANTASMA` es ciega a `avance_band`; la
+  activación real del día 0 va de 8.13% (banda a) a 6.73% (banda d). Efecto neto: -2.0% a
+  -2.6% de proyección, **uniforme en los 4 meses**.
+- **Toda la varianza mes a mes viene del cambio de insumos, no de la curva** — y el +11.6%
+  de abril resultó ser un bug propio (**bug 20**, nuevo).
+- **Por qué empeora el error:** el parche plano enmascaraba el sesgo de "nuevos" por ser
+  sistemáticamente generoso (fantasma +8.2%/+13.2%/+16.3% contra nuevos -20.1%/-8.0%/-19.2%).
+  El unificado deja un solo componente con sesgo de **signo constante en los 4 meses**
+  (-16.4/-9.8/-3.9/-5.1), aprox. la mitad de la magnitud, sin compensación accidental.
+- **El mecanismo de fin de semana NO explica el resultado** (mix medido por mes: mayo 36.5%,
+  abril 30.1%, junio 27.0%, julio 23.3%, baseline 28.9% — no ordena con el error).
+- **Ganancia estructural:** bug 12, bug 14/17, bug 18 y bug 20 se vuelven imposibles por
+  construcción (un solo calendario indexado por día de entrada, un solo universo).
+
+**✅ ADOPTADO EN PRODUCCIÓN 2026-08-25 (decisión del usuario).** El Enfoque alfa corre con
+el motor unificado; la capa fantasma ya no existe. Entregado:
+- `motor_unificado.py` (proyector compartido: tasa, curvas, calendario por día de entrada).
+- `backtest_capital_asegurado_unificado.py` — los 4 meses en una corrida, con series diarias
+  en `datos_backtest_unificado/`. Reemplaza a `backtest_capital_asegurado_{abril,mayo,junio}.py`
+  y `_julio_diario.py`, que quedan como referencia histórica.
+- `meta_agosto_capital_asegurado.py` **v7** — meta S/16,257,325 → **S/17,274,766** (+6.3%),
+  avance al 21-ago **-0.3%** (antes +4.8%). Insumos nuevos:
+  `tarea17_fase4_meta_agosto_insumos.sql`, `tarea17_fase4_real_agosto.sql`,
+  `tarea17_fase4_real_agosto_segmentado.sql`.
+- Curvas de producción en `datos_capital_asegurado/curva_unificada_{stock,nuevos}_seg.csv`.
+- Los 2 artifacts republicados (URLs conservadas) y `SEGUIMIENTO.md`, `ESTADO.md`,
+  `README.md`, `CLAUDE.md` actualizados.
+- **bug 20** resuelto por construcción (ver `BUGS.md`).
+
+**Si se adopta, lo que falta hacer (no hecho todavía):**
+1. Reescribir los 4 scripts de backtest sobre el motor unificado (o reemplazarlos por
+   `backtest_fase4_unificado.py`, que ya corre los 4 en una pasada).
+2. Rehacer `meta_agosto_capital_asegurado.py` (v7) con el calendario prospectivo unificado —
+   requiere una query nueva de calendario para agosto (status = 'ACTIVE' solamente, ver
+   `CLAUDE.md`), no incluida en Fase 4.
+3. Recalcular la meta vigente de agosto y el avance al corte, y republicar los 2 artifacts
+   pasando `url=` (conservar URLs).
+4. Actualizar `SEGUIMIENTO.md`, `ESTADO.md`, `README.md` y `FUENTES_DATOS.md`.
+5. Decidir aparte qué hacer con **bug 20** (fix del calendario de abril) — si se adopta Fase 4
+   queda resuelto por construcción; si NO se adopta, hay que aplicarlo igual.
+
+**Refinamiento posterior (deliberadamente fuera de esta fase):** segmentar la curva por día de
+semana del vencimiento y simplificar `avance_band` a 3 buckets — ambos medidos en Fase 2/3,
+ninguno probado contra el backtest.
 
 **El punto de partida (usuario, 2026-08-24):** el snapshot diario de `dts_mambu_loans_hist`
 se toma cerca de las 10pm. Un crédito que entra en mora (vencimiento+1) y paga ese mismo día
