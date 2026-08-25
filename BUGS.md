@@ -1037,13 +1037,17 @@ Solo escapa a `dayslate` el que paga MUY rápido (antes de la foto de esa misma 
 resulta ser relativamente menos común en fin de semana que entre semana — mecanismo opuesto
 al de "no aparece en asignaciones" (que sí es mayor en fin de semana).
 
-**Recomendación para producción (no ejecutada, pendiente de decisión del usuario):**
-actualizar `P_FANTASMA` a la tasa recalibrada con `dias_atraso_cuota` (8.617% o 8.923% según
-ventana elegida, similar magnitud a la actual 8.5524%) y opcionalmente segmentarla por día de
-semana del vencimiento (9.08%/9.36% entre semana vs. 5.67%/6.31% fin de semana) — mantener la
-activación instantánea sin cambios, ya que está confirmada correcta. Verificar con backtest
-antes de adoptar (Principio de `CLAUDE.md`: no cambiar constantes sin correr el backtest
-existente).
+**✅ ADOPTADO EN PRODUCCIÓN 2026-08-25 (a pedido del usuario):** `P_FANTASMA` actualizado a
+**8.6163%** (ventana 12m, sin segmentar por día de semana todavía) en los 4 scripts de
+backtest y en `meta_agosto_capital_asegurado.py` (v6) — se mantuvo la activación instantánea
+sin cambios (confirmada correcta arriba). Backtest re-corrido antes de adoptar (Principio de
+`CLAUDE.md`): movimiento chico en los 4 meses, afecta solo el componente fantasma — abril
+-19.2%→**-19.0%**, mayo -6.8%→**-6.5%**, junio +1.6%→**+1.9%**, julio -3.3%→**-3.0%**. Meta
+de agosto: S/16,211,015→**S/16,257,325** (+0.3%). Ver `SEGUIMIENTO.md`/`ESTADO.md` para el
+detalle completo. **Pendiente:** republicar los 2 artifacts afectados (📈 Proyectado vs.
+Real, 🔒 Capital asegurado) con los números nuevos — no se hizo en esta sesión. La
+segmentación por día de semana (9.08%-9.36% semana vs. 5.67%-6.31% fin de semana) tampoco se
+implementó — queda como refinamiento futuro si se justifica el impacto.
 
 **Siguiente paso: Fase 4 — evaluar si conviene recalibrar TODAS las curvas de producción
 (stock, nuevos) con `dias_atraso_cuota` en vez de `dayslate`.** No ejecutado todavía.
