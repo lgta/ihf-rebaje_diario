@@ -404,9 +404,29 @@ créditos "EN AMBOS"). Resultado:
 Detalle completo, incluyendo el desglose del "solo nuestro - no aparece en asignaciones" en
 soles, en bug 16 (`BUGS.md`).
 
-**Siguiente paso: Fase 3 — construir la curva real que reemplaza `P_FANTASMA` (tasa plana),
-incorporando el segmentador de día de la semana del vencimiento y la simplificación de
-`avance_band` a 3 buckets.** No ejecutado todavía.
+**✅ FASE 3 EJECUTADA 2026-08-25 — resultado inesperado: la activación instantánea de
+`P_FANTASMA` YA ERA CORRECTA, no hace falta una curva multi-día.** Calibrado con 2 ventanas
+a pedido del usuario (12 y 6 meses, no la historia completa 2023-10-17+ del plan original —
+el portafolio de esa época es ~1000x más chico, mezclarlo violaría el mismo principio que ya
+aplica a las demás curvas del proyecto). Archivo `tarea17_fase3_curva_fantasma.sql`, datos en
+`datos_tarea17_fase3/`. Resumen (detalle completo en bug 16, `BUGS.md`):
+- Tasa agregada casi idéntica a la actual pese a la redefinición más amplia (dias_atraso_cuota
+  en vez de `dias_vencimiento_a_pago=1`): **8.617% (12m) / 8.923% (6m)** vs. 8.5524% actual.
+- Activación ponderada en el **día 0 = 99.60%** (12m), 99.49%-100% por segmento (6m) — el día
+  de semana del vencimiento y `avance_band` NO cambian la forma, todos los segmentos llegan
+  a ~99-100% casi de inmediato. Un bug propio (saldo de referencia mal anclado) se encontró y
+  corrigió en el camino — ver bug 16.
+- Lo que SÍ varía por día de semana es la TASA de entrada, no la forma: semana 9.08%/9.36%
+  vs. fin de semana 5.67%/6.31% (12m/6m) — dirección opuesta al hallazgo de "no aparece en
+  asignaciones" de Fase 1, con una explicación distinta (`dayslate` corre 7 días a la semana,
+  a diferencia de asignaciones, y sí alcanza a ver la mayoría de la mora de fin de semana que
+  no se resuelve el mismo día).
+- **Recomendación, pendiente de decisión del usuario:** actualizar `P_FANTASMA` a la tasa
+  recalibrada (con o sin segmentar por día de semana), sin tocar la arquitectura de
+  activación instantánea (confirmada correcta) — verificar con backtest antes de adoptar.
+
+**Siguiente paso: Fase 4 — evaluar si conviene recalibrar TODAS las curvas de producción
+(stock, nuevos) con `dias_atraso_cuota` en vez de `dayslate`.** No ejecutado todavía.
 
 **El punto de partida (usuario, 2026-08-24):** el snapshot diario de `dts_mambu_loans_hist`
 se toma cerca de las 10pm. Un crédito que entra en mora (vencimiento+1) y paga ese mismo día

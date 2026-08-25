@@ -989,9 +989,64 @@ El universo oficial total en soles coincide entre métodos dentro de 0.65% (juli
 (agosto) — como debe ser, ya que es la misma tabla `asig` en ambos casos (el 0.65% residual
 de julio son los mismos ~5 créditos con fecha de entrada distinta entre métodos, esperado).
 
-**Siguiente paso: Fase 3 — construir la curva real (reemplaza `P_FANTASMA` plano), ahora
-incorporando el segmentador de día de la semana del vencimiento y la simplificación de
-`avance_band` a 3 buckets.** No ejecutado todavía.
+**✅ FASE 3 EJECUTADA 2026-08-25 — resultado inesperado: NO hace falta una curva multi-día,
+la activación instantánea de `P_FANTASMA` ya era correcta incluso con la definición
+ampliada.** A pedido del usuario, se calibró con 2 ventanas para comparar (12 y 6 meses,
+ninguna la historia completa 2023-10-17+ del plan original — el portafolio de 2023-2024 es
+~1000x más chico que el actual, mezclarlo violaría el mismo principio de
+`FUENTES_DATOS.md`/`CLAUDE.md` de calibrar con meses recientes). Archivo
+`tarea17_fase3_curva_fantasma.sql`, datos en `datos_tarea17_fase3/`.
+
+**Redefinición de "fantasma":** antes = cuotas pagadas EXACTAMENTE 1 día tarde
+(`dias_vencimiento_a_pago=1`), no ya en `entradas_reales` (dayslate). Ahora = cualquier
+entrada detectada por `dias_atraso_cuota` que dayslate NO ve para ese periodo (mecanismo más
+amplio, incluye el hueco de fin de semana). Tasa agregada casi idéntica a la actual pese al
+cambio de definición: **8.617% (12m) / 8.923% (6m)** vs. 8.5524% de producción.
+
+**Bug propio encontrado y corregido en el camino:** la primera versión de la curva mostraba
+un salto raro concentrado en los días 28-31 (activación ~0-9% días 1-25, luego ~60-85%) — al
+investigar, se confirmó que el `pago_flag` se buscaba solo DESPUÉS de `fecha_entrada`
+(`fechaproceso > fecha_entrada`), pero para la población fantasma el pago YA ocurrió el mismo
+día que se detecta la entrada (mismo mecanismo del caso verificado en la actualización
+anterior: entrada 2026-07-08, `fecha_pago` 2026-07-08) — el salto de día 28-31 no era la
+resolución del episodio fantasma, era la SIGUIENTE cuota regular del crédito. Corregido:
+saldo de referencia = saldo del día ANTERIOR a `fecha_entrada` (`saldo_ant`, el capital
+realmente en riesgo antes del pago), y el rango de búsqueda de pago incluye el día 0.
+
+**Resultado final, verificado en ambas ventanas — activación esencialmente instantánea, sin
+importar segmento:**
+
+| Ventana | Activación ponderada día 0 | Incremento post-día 0 |
+|---|---:|---:|
+| 12 meses | **99.60%** (sobre S/41.96M) | 0.07-0.63pp por segmento |
+| 6 meses | 99.49%-100.0% por segmento | no medido (marginal, ver 12m) |
+
+**Conclusión: la arquitectura de tasa plana + activación instantánea de producción YA ERA
+CORRECTA** — no hace falta reemplazarla por una curva multi-día. El día de la semana del
+vencimiento y `avance_band` (3 buckets) no cambian la FORMA (todos los segmentos llegan a
+~99-100% en el día 0), así que no se necesitan como segmentadores de una curva que no existe.
+
+**Lo que SÍ varía por día de semana es la TASA de entrada** (no la forma): vencimientos
+entre semana tienen una tasa fantasma MAYOR que fin de semana — 9.076% vs. 5.671% (12m),
+9.358% vs. 6.310% (6m), estable entre ventanas. **No es una contradicción con el hallazgo de
+fin de semana de Fase 1** (más créditos "se escapan" a mora el sábado): esa tasa mide la
+entrada TOTAL a mora; esta tasa mide específicamente cuántos de los que entran quedan
+invisibles para `dayslate` — que corre 7 días a la semana (a diferencia de la tabla de
+asignaciones) y sí alcanza a ver a un crédito de fin de semana que no paga hasta el lunes.
+Solo escapa a `dayslate` el que paga MUY rápido (antes de la foto de esa misma noche), y eso
+resulta ser relativamente menos común en fin de semana que entre semana — mecanismo opuesto
+al de "no aparece en asignaciones" (que sí es mayor en fin de semana).
+
+**Recomendación para producción (no ejecutada, pendiente de decisión del usuario):**
+actualizar `P_FANTASMA` a la tasa recalibrada con `dias_atraso_cuota` (8.617% o 8.923% según
+ventana elegida, similar magnitud a la actual 8.5524%) y opcionalmente segmentarla por día de
+semana del vencimiento (9.08%/9.36% entre semana vs. 5.67%/6.31% fin de semana) — mantener la
+activación instantánea sin cambios, ya que está confirmada correcta. Verificar con backtest
+antes de adoptar (Principio de `CLAUDE.md`: no cambiar constantes sin correr el backtest
+existente).
+
+**Siguiente paso: Fase 4 — evaluar si conviene recalibrar TODAS las curvas de producción
+(stock, nuevos) con `dias_atraso_cuota` en vez de `dayslate`.** No ejecutado todavía.
 
 ### 17. Backtest diario de mayo/julio (tarea 9): el calendario de fantasma necesita su PROPIO
 rango frontier-adjusted, y `jul_calendario.csv` corre ~7.9% más alto que una reconstrucción

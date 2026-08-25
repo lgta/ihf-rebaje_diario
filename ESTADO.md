@@ -5,7 +5,23 @@
 > se agrega una entrada nueva al final. Para el historial cronológico completo, ver
 > `plan_analisis.md`. Para saber por qué se decidió algo, ver `DECISIONES.md`.
 
-Última actualización: 2026-08-24.
+Última actualización: 2026-08-25.
+
+> **2026-08-25 — TAREA 17 FASE 3 EJECUTADA: resultado inesperado, la activación instantánea
+> de `P_FANTASMA` ya era correcta, NO hace falta una curva multi-día.** Calibrado con 2
+> ventanas a pedido del usuario (12 y 6 meses, no la historia completa 2023-10-17+ del plan
+> original — el portafolio de esa época es ~1000x más chico que el actual). Con la definición
+> ampliada de "fantasma" (vía `dias_atraso_cuota`, no solo pagos exactamente 1 día tarde), la
+> activación ponderada en el día 0 es **99.60%** (12m), 99.49%-100% por segmento (6m) — el
+> día de semana del vencimiento y `avance_band` no cambian la forma. Lo que sí varía por día
+> de semana es la TASA de entrada (semana 9.08%/9.36% vs. fin de semana 5.67%/6.31%,
+> 12m/6m) — dirección opuesta al hallazgo de fin de semana de Fase 1, con mecanismo distinto
+> (`dayslate` corre 7 días a la semana, a diferencia de la tabla de asignaciones). Tasa
+> agregada nueva (8.617%/8.923%) casi idéntica a la actual (8.5524%). Se encontró y corrigió
+> un bug propio en el camino (saldo de referencia mal anclado — ver bug 16, `BUGS.md`).
+> **Sin cambios a producción todavía** — recomendación pendiente de decisión del usuario:
+> actualizar la tasa (con o sin segmentar por día de semana), verificado con backtest antes
+> de adoptar. Detalle completo en bug 16 (`BUGS.md`) y tarea 17 (`PENDIENTES.md`).
 
 > **2026-08-24 (continuación 7) — DECISIÓN DEL USUARIO: la curva debe representar TODA la
 > mora que ocurre, no solo la que el negocio gestiona. FASE 2 (montos) DE TAREA 17
