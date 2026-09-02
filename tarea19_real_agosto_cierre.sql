@@ -22,7 +22,7 @@ with loan_chain as (
   from dts_mambu_loans_hist a
   join dts_okaapi_loans b on b.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
   left join loan_chain lc on lc.id_ihfintech_loan = a._datos_adicionales_loan_accounts_id_ihfintech
-  where a.fechaproceso between '20260725' and '20260826'
+  where a.fechaproceso between '20260725' and '20260901'
     and b.status in ('ACTIVE','COMPLETED')
     and coalesce(lc.last_in_chain, 1) = 1
     and b.amountfinanced > 0
@@ -39,7 +39,7 @@ with loan_chain as (
   , date_format(c.fecha_calendario, '%Y%m%d')  as fechaproceso
   , coalesce(c.dias_atraso_cuota, 0)           as mora
   from dts_cobranza_creditos_calendario_diario c
-  where c.fecha_calendario between date('2026-07-01') and date('2026-08-26')
+  where c.fecha_calendario between date('2026-07-01') and date('2026-08-31')
 )
 , dac as (
   select d.id_loan, d.fechaproceso, d.mora

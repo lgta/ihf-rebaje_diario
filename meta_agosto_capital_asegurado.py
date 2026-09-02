@@ -2,6 +2,20 @@
 Meta de capital asegurado de agosto 2026 (Enfoque alfa), anclada al cierre
 REAL de julio.
 
+v8 (2026-08-26, tarea 18a + 18f, variante W3) -- la curva de nuevos se
+segmenta ademas por DIA DE LA SEMANA DEL VENCIMIENTO y lleva un FACTOR
+POR DIA DEL MES (quincena y dias 30-31). Ver motor_unificado.py v2 y
+PENDIENTES.md tareas 18a/18f. Lo que cambia en este archivo:
+  - `cargar_curva_nuevos()` devuelve claves (avance_band, dow_venc), asi
+    que el calendario se pasa por `segmentar_calendario(...)`.
+  - `proyectar(...)` recibe `f_dm` (`cargar_factor_dia_mes()`).
+  - Las curvas se calibran con ventana rodante de 12 meses terminando en
+    el ultimo mes COMPLETAMENTE OBSERVADO al 1-ago: [202507, 202606].
+    Julio-2026 queda afuera a proposito -- al 1-ago sus cohortes no tenian
+    los 31 dias de seguimiento, y una meta fijada al inicio del mes no
+    puede usar datos que no existian todavia. Ver
+    `generar_curvas_produccion.py`.
+
 v7 (2026-08-25, tarea 17 Fase 4) -- MOTOR UNIFICADO. La capa fantasma se
 elimina: ya no hay 3 componentes (stock + nuevos + fantasma) sino 2
 (stock + nuevos), calibrados con `dias_atraso_cuota` en vez de `dayslate`.
@@ -32,13 +46,16 @@ Insumos:
   datos_tarea17_fase4/meta_agosto_insumos.csv : stock + calendario (Q-G/Q-H,
       tarea17_fase4_meta_agosto_insumos.sql)
   datos_tarea17_fase4/real_agosto.csv         : real activado por dia
-      (Q-I, tarea17_fase4_real_agosto.sql, datos hasta 25-ago)
-  datos_capital_asegurado/curva_unificada_{stock,nuevos}_seg.csv
+      (Q-I, tarea17_fase4_real_agosto.sql)
+  datos_capital_asegurado/curva_unificada_stock_seg.csv
+  datos_capital_asegurado/curva_unificada_nuevos_dow_seg.csv  (v2, con dow)
+  datos_capital_asegurado/factor_dia_mes.csv                  (v2, factor 18f)
 """
 import collections
 import csv
 
 from motor_unificado import (P_ENTRADA, cargar_curva_stock, cargar_curva_nuevos,
+                             cargar_factor_dia_mes, segmentar_calendario,
                              proyectar, acumular_real)
 
 DIR_F4 = "datos_tarea17_fase4"
@@ -46,12 +63,13 @@ N_DIAS = 31
 # Corte de tracking. 21-ago es el mismo corte del ultimo numero publicado
 # (v6), para que la comparacion antes/despues aisle el cambio de modelo y no
 # mezcle un refresco de fecha. CORTE_FRESCO es el ultimo dia completo con
-# datos (hoy es 25-ago; la foto de Mambu de hoy todavia corre).
+# datos (la foto de Mambu del dia en curso todavia corre cuando se lee).
 CORTE = 21
-CORTE_FRESCO = 24
+CORTE_FRESCO = 31   # agosto CERRADO 2026-09-01: real completo del mes
 
 curva_stock = cargar_curva_stock()
 curva_nuevos = cargar_curva_nuevos()
+factor_dia_mes = cargar_factor_dia_mes()
 
 stock_agosto = {}
 calendario_agosto = collections.defaultdict(dict)
@@ -67,7 +85,8 @@ with open(f"{DIR_F4}/real_agosto.csv") as f:
     for r in csv.DictReader(f):
         real_por_dia[r["componente"]][int(r["dia"])] = float(r["saldo_activado_dia"])
 
-filas = proyectar(stock_agosto, calendario_agosto, curva_stock, curva_nuevos, N_DIAS)
+filas = proyectar(stock_agosto, segmentar_calendario(calendario_agosto, "202608"),
+                  curva_stock, curva_nuevos, N_DIAS, f_dm=factor_dia_mes)
 real_stock_acum = acumular_real(real_por_dia["stock"], N_DIAS)
 real_nuevos_acum = acumular_real(real_por_dia["nuevos"], N_DIAS)
 for i, fila in enumerate(filas):
@@ -81,7 +100,10 @@ if __name__ == "__main__":
     saldo_cal = sum(sum(v.values()) for v in calendario_agosto.values())
     print(f"Stock al 1 de agosto (dias_atraso_cuota 1-30 al cierre de julio): S/ {saldo_stock_inicial:,.0f}")
     print(f"Calendario de agosto (por dia de entrada, excluye stock):         S/ {saldo_cal:,.0f}")
-    print(f"P_ENTRADA = {100*P_ENTRADA:.4f}%\n")
+    print(f"P_ENTRADA = {100*P_ENTRADA:.4f}%")
+    print("Factor por dia del mes: " + "  ".join(
+        f"{g}={factor_dia_mes.get(g, 1.0):.4f}" for g in ("quincena", "fin de mes", "resto")))
+    print()
 
     print(f"{'dia':>3} {'fecha':>11} | {'proy_total':>11} | {'real_total':>11}")
     for r in filas:
@@ -89,19 +111,21 @@ if __name__ == "__main__":
         if r["dia"] == CORTE:
             marca = "  <- corte comparable (21-ago)"
         elif r["dia"] == CORTE_FRESCO:
-            marca = "  <- ultimo dia con datos"
+            marca = "  <- cierre del mes"
         real = f"{r['real_total']:>11,.0f}" if r["dia"] <= CORTE_FRESCO else " " * 11
         print(f"{r['dia']:>3} {r['fecha']:>11} | {r['proy_total']:>11,.0f} | {real}{marca}")
 
     fin = filas[-1]
-    print(f"\n=== META DE AGOSTO 2026 -- ENFOQUE ALFA, MOTOR UNIFICADO (sin capa fantasma) ===")
-    print(f"Meta total del mes (proyectada al cierre):  S/ {fin['proy_total']:,.0f}")
+    print(f"\n=== META DE AGOSTO 2026 -- ENFOQUE ALFA, MOTOR UNIFICADO v2 (W3) ===")
+    print(f"Meta total del mes (proyectada al cierre):   S/ {fin['proy_total']:,.0f}")
     print(f"  stock:  S/ {fin['proy_stock']:,.0f}")
     print(f"  nuevos: S/ {fin['proy_nuevos']:,.0f}   (incluye el dia 0, que antes era la capa fantasma)")
-    print(f"\nMeta anterior (v6, con capa fantasma):     S/ 16,257,325")
-    print(f"Diferencia:                                 {100*(fin['proy_total']/16257325-1):+.1f}%")
+    print(f"\nMeta v7 (motor unificado, sin dow ni factor): S/ 17,274,766")
+    print(f"Diferencia:                                  {100*(fin['proy_total']/17274766-1):+.1f}%")
+    print(f"Meta v6 (con capa fantasma):                 S/ 16,257,325")
+    print(f"Diferencia:                                  {100*(fin['proy_total']/16257325-1):+.1f}%")
 
-    for corte, etiqueta in [(CORTE, "corte comparable"), (CORTE_FRESCO, "ultimo dia con datos")]:
+    for corte, etiqueta in [(CORTE, "corte comparable"), (CORTE_FRESCO, "cierre del mes")]:
         r = filas[corte - 1]
         print(f"\n--- Avance al {corte}-ago ({etiqueta}) ---")
         print(f"Real acumulado:                    S/ {r['real_total']:,.0f}"
