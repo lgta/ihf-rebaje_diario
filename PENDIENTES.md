@@ -110,9 +110,17 @@ Julio cerró con **+4.7% de error** (stock +1.0%, nuevos +6.3%) — ver `SEGUIMI
 `cierre_julio.sql`. Meta de agosto ya armada y en tracking (`meta_agosto_capital_
 asegurado.py`, `datos_avance_capital_asegurado_agosto/`) — nueva tarea abajo (Tarea 4b).
 
-### Tarea 4b — Cerrar la fila de agosto en `SEGUIMIENTO.md` cuando termine el mes
-Meta proyectada S/10,245,695 (stock S/2,956,828 + nuevos S/7,288,868) vs. real final.
-Fuente: `meta_agosto_capital_asegurado.py` + `datos_avance_capital_asegurado_agosto/`.
+### Tarea 4b — ~~Cerrar la fila de agosto en `SEGUIMIENTO.md`~~ ✅ CERRADA 2026-09-01
+Meta S/17,117,628 vs. real **S/17,322,872 = -1.2%** (stock -1.3%, nuevos -1.1%). **El mes más
+ajustado del proyecto**, y rompe la racha de 7 meses en que "nuevos" subestimaba sin excepción.
+Real de `tarea19_real_agosto_cierre.sql` (ventana extendida al 31-ago; la vieja cortaba el 26).
+
+Dos caveats que quedaron anotados en la fila y no hay que perder:
+- **No es un test prospectivo limpio.** Las curvas nunca vieron agosto, pero la ADOPCIÓN de W3
+  se decidió el 26-ago con 25 días del mes visibles. Septiembre sí lo es.
+- **Los cortes ya publicados se movieron al re-medir** (21-ago S/11,595,123→S/11,547,707, -0.4%;
+  25-ago S/13,484,959→S/13,398,433, -0.6%): `dts_mambu_loans_hist` se re-expresa para días
+  pasados. No es un bug del modelo; conviene tenerlo presente al comparar cortes viejos.
 
 ---
 
@@ -173,15 +181,30 @@ Julio cerró con **+17.6% de error** (stock +2.0%, nuevos +22.5%) — el más al
 ahora en este enfoque. Ver `SEGUIMIENTO.md` y `cierre_julio.sql`. Meta de agosto ya armada
 (`meta_agosto.py`, `datos_meta_agosto/`) — nueva tarea abajo (Tarea 8b).
 
-### Tarea 8b — Cerrar la fila de agosto en `SEGUIMIENTO.md` (recupero oficial) cuando termine el mes
-Meta proyectada S/2,108,435 (stock S/711,160 + nuevos S/1,397,275) vs. real final. Fuente:
-`meta_agosto.py` + `datos_meta_agosto/`.
+### Tarea 8b — ~~Cerrar la fila de agosto en `SEGUIMIENTO.md` (recupero oficial)~~ ✅ CERRADA 2026-09-01
+Meta S/2,108,435 vs. real **S/2,178,078 = -3.2%** (stock +7.7%, nuevos -7.9%).
+
+**Decisión metodológica del cierre, que no era obvia:** la meta se fijó con el motor viejo
+(`dayslate`), así que el real se midió **también con `dayslate`** — `tarea19_real_agosto_
+recupero_cierre.sql`. Medirlo con `dias_atraso_cuota` habría dado S/3,174,012 (**146%** del
+anterior, en línea con el 148-157% que 18e midió en junio/julio) y un error de +3.2% en vez de
+-3.2%: esa diferencia es **cambio de universo, no de ejecución**, y mezclarla haría ilegible la
+fila. El número con `dias_atraso_cuota` queda como referencia en la misma fila.
+
+La limitación vieja del script (calendario con el saldo del 18-ago repetido como proxy para los
+días 19-31) **muere con esta fila**: `meta_septiembre_recupero.py` ancla el saldo de todas las
+cuotas al cierre de agosto, convención única y reproducible.
 
 ---
 
 ## Compartidas entre ambos enfoques
 
-### Tarea 9 — Extender el backtest a 3-6 meses cerrados más — PARCIAL, 2026-08-22/23
+### Tarea 9 — ~~Extender el backtest a 3-6 meses cerrados más~~ ✅ SUPERADA por 18a/18f/19
+**Ya son 8 meses cerrados (ene-ago 2026) en los dos enfoques**, con calibración rodante de 12
+meses sin fuga, desde una matriz cruda que hace que agregar un mes cueste 0 queries nuevas de
+calibración. Lo de abajo es el historial de cómo se llegó ahí (4 meses, arquitectura con capa
+fantasma) — se conserva porque explica de dónde salen números viejos que todavía se citan.
+
 **Avance 2026-08-22:** mayo agregado como tercer mes cerrado del backtest de capital
 asegurado (`backtest_capital_asegurado_mayo.py`) — error -4.4% (stock -0.8%, nuevos -14.9%,
 fantasma +7.4%). Al reconstruir julio con el mismo rigor (dedup + calendario de fantasma
@@ -228,7 +251,13 @@ modelo es robusto a la exclusión estricta. **No se adopta en producción** (imp
 justifica). Ver bug 11 (actualización 2026-08-22) en `BUGS.md` para el detalle completo y
 la tabla comparativa.
 
-### Tarea 11 — Investigar la sobreestimación de stock en junio
+### Tarea 11 — Investigar la sobreestimación de stock en junio — DIAGNÓSTICO DESPLAZADO
+**2026-09-01:** con 8 meses de test el mes problemático del stock **no es junio, es febrero**, y
+18b/18g ya lo explicaron (único mes de 28 días; el modelo indexaba "fin de mes" por día
+calendario 30/31 y su cierre real nunca caía ahí — el 28-feb explica el 79.3% del gap). El factor
+de cierre real ya está adoptado. Lo que queda vivo de esta tarea es la hipótesis de contaminación
+variable del stock, abajo — pero el motivo original (junio) ya no se sostiene.
+
 El stock sobreestimó +16.2% (recupero oficial) / +7.2% (capital asegurado tras bug 12) en
 junio, mientras "nuevos" acertó casi exacto en ambos casos. Podría ser varianza normal (el
 tramo 9-15 osciló 9.8%-18.8% entre meses en los 14 de historia) o un segmentador que falta
@@ -564,14 +593,14 @@ el número de julio ya desactualizado) y que este trabajo podría finalmente exp
 (83%→99.8% de cierre en soles) y el backtest mixto ya corrido, no repetir esas 2 corridas de
 junio/julio sin releer primero qué se probó y qué falta.
 
-### Tarea 18 — Lo que deja abierto el motor unificado (tarea 17 Fase 4, adoptada 2026-08-25)
+### Tarea 18 — Lo que deja abierto el motor unificado (tarea 17 Fase 4, adoptada 2026-08-25; 18a/18f adoptadas 2026-08-26)
 
 **Contexto:** el Enfoque alfa ya corre con `dias_atraso_cuota` y sin capa fantasma (ver tarea
 17 y `BUGS.md` bug 16 Fase 4). Estos son los frentes que quedaron deliberadamente fuera de
 esa adopción, en orden de prioridad.
 
 **18a — Segmentar la curva por día de la semana del vencimiento, y simplificar `avance_band`
-a 3 buckets. PRIORIDAD MÁS ALTA de esta tarea.** Los dos refinamientos están medidos pero
+a 3 buckets — MEDIDA 2026-08-25, DECISIÓN PENDIENTE DEL USUARIO.** Los dos refinamientos estaban medidos pero
 nunca probados contra el backtest; se dejaron fuera a propósito para aislar una variable a la
 vez (decisión del usuario al aprobar Fase 4).
 - **Día de semana:** Fase 2 midió que la forma de la curva difiere ~2x en el día 1 desde la
@@ -589,6 +618,155 @@ vez (decisión del usuario al aprobar Fase 4).
   (abril -12.6%, mayo -8.7%, junio -2.6%, julio -5.0%, media 7.22%). **No adoptar por mejora
   de error** — adoptar si el universo/medición queda más fiel, per `CLAUDE.md`.
 
+**✅ 18a EJECUTADA 2026-08-25 — los dos refinamientos se separan limpio: el día de semana SÍ
+(pero con otro corte que el propuesto), los 3 buckets NO. Sin cambios a producción —
+recomendación pendiente de decisión del usuario.** Código:
+`backtest_tarea18a.py` (7 variantes en una corrida, reusa `motor_unificado.proyectar` sin
+tocarlo), `tarea18a_curva_nuevos_dow.sql` (corte binario) y `tarea18a_curva_nuevos_dow7.sql`
+(día de semana abierto), datos en `datos_tarea18a/`. La variante V0 reproduce el baseline
+publicado al centésimo en los 4 meses, así que la comparación es manzana con manzana.
+
+| Variante | abril | mayo | junio | julio | media \|err\| | corr. incrementos diarios |
+|---|---:|---:|---:|---:|---:|---:|
+| V0 4 bandas, sin dow (**producción**) | -12.6% | -8.7% | -2.6% | -5.0% | **7.22%** | 0.577 |
+| V1 4 bandas × dow binario | -12.4% | -10.1% | -2.7% | -4.4% | 7.40% | 0.781 |
+| V2 **3 bandas**, sin dow | -12.6% | -8.7% | -2.6% | -5.0% | **7.22%** | 0.576 |
+| V3 3 bandas × dow binario | -12.4% | -10.1% | -2.7% | -4.5% | 7.40% | 0.781 |
+| **V4 4 bandas × dow abierto** | -11.9% | -10.8% | -2.9% | -3.8% | 7.35% | **0.878** |
+| V5 3 bandas × dow abierto | -11.9% | -10.8% | -2.9% | -3.8% | 7.35% | 0.878 |
+| V6 4 bandas × tipo de día de entrada (3 regímenes) | -12.1% | -10.4% | -2.8% | -4.0% | 7.31% | 0.849 |
+
+**(1) El corte binario `finde`/`semana` de Fase 2/3 está mal puesto — ver bug 21.** Ninguna
+cuota vence domingo (0.00% del calendario Y de la calibración), así que `finde = {sáb,dom}`
+es en la práctica solo "venc. sábado", y manda "venc. viernes" —que entra **sábado**, día no
+hábil— al bucket `semana`. Los regímenes reales son entrada hábil (día 0: 37-42%), entrada
+sábado (27.4%) y entrada domingo (18.7%). Abierto a los 6 días que existen, el segmentador
+captura **0.878** de correlación contra 0.781 del binario.
+
+**(2) El error de fin de mes es la medida MENOS sensible a este refinamiento, y por eso casi
+no se mueve (7.22% → 7.35%).** Casi todo lo que el segmentador distingue se gasta en los
+primeros días: la dispersión entre días de semana (max-min de la curva ponderada) es
+**23.3pp en el día 0, 6.8pp en el día 3 y 2.0pp en el día 30** — o sea las curvas convergen
+~92% antes del día 3. Una cohorte que entra a principio de mes recorre la curva entera y
+termina casi donde habría terminado sin segmentar; el efecto sobre el total del mes entra
+**sobre todo por las cohortes del final del mes**, que alcanzan a recorrer nada más que los
+días 0-3 — justo donde la diferencia vive. Eso
+explica el signo mes a mes sin ninguna apelación al azar: en los últimos 5 días del mes el
+saldo con venc. de fin de semana es 45.8% en mayo (proyección baja, error empeora a -10.8%),
+32.4% en abril, 21.9% en junio y **0.0% en julio** (proyección sube, error mejora a -3.8%).
+
+**(3) Lo que el segmentador sí arregla es la TRAYECTORIA diaria — que es para lo que existe
+el proyecto (meta *diaria*).** La correlación entre incrementos diarios proyectados y reales
+sube en los **4 meses sin excepción**: 0.647→0.901 (abr), 0.318→0.875 (may), 0.620→0.887
+(jun), 0.720→0.849 (jul). En mayo —el peor mes de V0— el error absoluto medio del incremento
+diario cae de **S/132K a S/68K (-48%)**. V0 falla con patrón semanal reconocible: sobreproyecta
+los días de entrada domingo (+146/+173/+180/+153/+243 mil) y subproyecta los lunes
+(-331/-139/-219/-191 mil), que no tienen cohorte nueva pero concentran el repago rezagado del
+fin de semana. V4 corrige los dos, porque al segmentar por día de entrada la curva sabe que
+el "día 6" de una cohorte que entró martes cae lunes.
+
+**(4) Los 3 buckets de avance NO se adoptan.** El colapso c+d es numéricamente **nulo**: el
+efecto máximo sobre el total de un mes es **0.008%** (julio), y sobre el error, 0.007pp. No
+cuesta nada pero tampoco aporta nada, y **cuesta resolución de diagnóstico justo donde hay
+señal**: en agosto al 21-ago la banda 70%+ corre **+89.0%** sobre lo proyectado y la 40-70%
+**+22.3%** — colapsadas dan +28.6%, que esconde que el bucket chico va al doble. Per el
+criterio de `CLAUDE.md`, el colapso no hace la medición más fiel, la hace más gruesa. La
+observación original (que las dos bandas no se separan) es **correcta como enunciado sobre la
+forma de la curva** —difieren ≤3.9% en relativo y se cruzan en el día 14— pero `avance_band`
+no es solo segmentador de curva: también es el eje por el que se lee la desviación.
+
+**RECOMENDACIÓN (no decisión — es del usuario): adoptar V4** (4 bandas × día de semana del
+vencimiento abierto), y **no** colapsar `avance_band`. El razonamiento es el criterio de
+`CLAUDE.md` aplicado literal: cambia **cómo se mide** —cada día del calendario tiene un día de
+semana único, así que hoy el proyector le aplica a *todos* los días una curva mezclada que no
+corresponde a *ninguno*— y la trayectoria diaria queda medida más fiel en los 4 meses. El
++0.13pp de error de fin de mes no es información perdida: es el mismo sesgo de "nuevos" de
+18b, redistribuido. **Riesgo a mirar antes de adoptar:** V4 abre 24 celdas de calibración y la
+más chica queda en 1,241 entradas (banda 70%+ × venc. jueves). Si eso preocupa, V6 (3
+regímenes de día de entrada: hábil / sábado / domingo, 12 celdas) conserva **0.849** de los
+0.878 — pero **compra menos robustez de lo que parece**: solo engrosa el lado hábil (4 días
+en 1), que ya era el más gordo, y deja intactas las celdas realmente flacas, que son las de
+sábado y domingo. La celda mínima pasa de **1,241 a 1,519 entradas (+22%)**, no al doble.
+Como el 0.03 de correlación que se cede sí es real, V6 solo vale la pena si además se decide
+engrosar de otra forma la banda 70%+ (ej. no segmentarla por día de semana).
+
+**✅ 18a + 18f CERRADAS 2026-08-25 con un walk-forward de 7 meses sin leak
+(`backtest_tarea18f.py`).** Protocolo acordado con el usuario: **calibración de 12 meses
+rodantes** (`[M-12, M-1]`, la curva de nuevos nunca ve el mes que proyecta) y **7 meses de
+test** (202601-202607), que es lo que da la historia con piso de 3,000 entradas/mes — antes
+de 202501 la cartera es <20% de la actual y la dispersión de la curva se duplica (ver
+`tarea18_ventana_calibracion.sql`). Sale gratis en corridas de Athena porque las curvas se
+arman desde una **matriz cruda** al grano `(fecha_entrada, banda, día_primer_pago)`
+(`tarea18f_curva_cruda.sql` + `curvas_crudas.py`): recalibrar 7 ventanas × 4 variantes cuesta
+0 queries adicionales.
+
+| Variante | ene | feb | mar | abr | may | jun | jul | media \|err\| | corr. diaria | MAE inc. diario |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| W0 banda (**producción**) | -11.4% | -18.7% | -14.3% | -12.5% | -8.5% | -2.6% | -5.1% | 10.43% | 0.611 | S/124K |
+| **W1 banda × dow** | -11.8% | -18.6% | -14.3% | -11.8% | -10.7% | -2.9% | -3.8% | 10.54% | **0.875** | **S/75K** |
+| W2 banda + f | -10.7% | -19.6% | -14.3% | -12.7% | -8.0% | -3.1% | -4.7% | 10.44% | 0.622 | S/123K |
+| **W3 banda × dow + f** | -11.2% | -19.6% | -14.1% | -11.9% | -10.9% | -3.2% | -3.0% | 10.55% | **0.886** | **S/73K** |
+
+- **El día de semana (18a) se confirma en los 7 meses sin excepción**, ahora sin leak: la
+  correlación de incrementos diarios va de 0.611 a **0.875** y el error absoluto medio del
+  incremento diario cae **-39%** (S/124K → S/75K). Mejora los 7 meses, uno por uno.
+- **El factor por día del mes (18f) es real pero chico.** Encima del día de semana suma
+  +0.011 de correlación y -3% de MAE (mejora 5-6 de 7 meses). Solo, sin día de semana, casi
+  no hace nada (+0.011).
+- El error de fin de mes se mueve ±0.12pp entre las 4 variantes — sigue sin poder arbitrar
+  esta decisión (ver el cálculo de poder abajo, en 18c).
+
+**El factor `f` de 18f: 2 parámetros, no 31.** Calibrado con un parámetro por día del mes,
+`f` **sobreajusta**: entre dos mitades disjuntas de la ventana la correlación es solo +0.51.
+Lo que SÍ se reproduce son los días de pago de planilla — día 15 (1.140 / 1.195 en cada
+mitad) y días 30-31 (1.18-1.20 en ambas). El día 29 sale **bajo** en las dos (0.959 / 0.953),
+así que el efecto es de **fecha de pago**, no de "últimos días del mes". Con la agrupación
+estructural `{15,16} / {30,31} / resto` los parámetros son estables en 4 ventanas distintas:
+
+| ventana | quincena | fin de mes | resto |
+|---|---:|---:|---:|
+| 202501-202509 | 1.0746 | 1.1843 | 0.9829 |
+| 202510-202606 | 1.0856 | 1.1947 | 0.9809 |
+| 202503-202605 (producción) | 1.0938 | 1.1778 | 0.9812 |
+| 202507-202606 (12m) | 1.0855 | 1.1848 | 0.9812 |
+
+**Confirmación independiente del mecanismo:** la curva de **stock**, que ya está indexada por
+día del mes y por lo tanto SÍ puede ver el efecto, tiene la quincena **+12%** sobre su propia
+tendencia local (anomalía 1.119 en días 14-16 vs. 0.900 del resto, con el hazard detrendado
+contra una media móvil de 7 días). O sea el efecto no es un artefacto del ajuste: existe, y
+el componente de nuevos era el único ciego a él.
+
+`f` multiplica el **incremento diario**, no el acumulado, y se normaliza a media ponderada 1
+— **redistribuye** masa dentro del mes en vez de agregarla. Se calibró **solo sobre la
+ventana histórica**; los residuos del backtest se usaron para detectar el fenómeno, nunca
+para ajustar el factor (`CLAUDE.md`).
+
+**✅ ADOPTADO W3 EN PRODUCCIÓN 2026-08-26 (decisión del usuario), y la meta de agosto
+recalculada (también decisión del usuario).** Propagado a `motor_unificado.py` **v2** (el
+proyector aplica `f` sobre incrementos y acepta claves `(banda, dow)`),
+`generar_curvas_produccion.py` → `datos_capital_asegurado/curva_unificada_nuevos_dow_seg.csv` +
+`factor_dia_mes.csv`, `meta_agosto_capital_asegurado.py` **v8**,
+`backtest_capital_asegurado_unificado.py` reescrito a 7 meses con calibración rodante, y los
+**2 artifacts republicados** (URLs conservadas) vía `armar_proyectado_vs_real.py` y
+`armar_capital_asegurado.py`. **Meta de agosto: S/17,274,766 → S/17,117,628 (-0.9%)**; curvas
+calibradas `[202507, 202606]` — los 12 meses completamente observados al 1-ago, con julio
+afuera a propósito porque al fijar la meta sus cohortes no tenían los 31 días de seguimiento.
+Backtest oficial nuevo en `SEGUIMIENTO.md`.
+
+**RECOMENDACIÓN ORIGINAL (que el usuario adoptó): W3** (4 bandas × día de semana del
+vencimiento + factor de quincena/fin de mes), y **no** colapsar `avance_band` a 3 buckets.
+Criterio de `CLAUDE.md`: cambia **cómo se mide** —hoy el proyector aplica a cada día una curva
+mezclada que no corresponde a ninguno, y es ciego a la quincena— y la trayectoria diaria queda
+más fiel en los 7 meses. **Si se prefiere mínima complejidad, W1 captura ~96% de la ganancia
+con 0 parámetros nuevos** y es una decisión perfectamente defendible; `f` agrega 2 parámetros
+por un +0.011 de correlación.
+
+**Lo que la adopción implica** (no ejecutado — producción sigue intacta): propagar a
+`motor_unificado.py` (el proyector tiene que aplicar `f` sobre incrementos y aceptar claves
+`(banda, dow)`), regenerar `datos_capital_asegurado/curva_unificada_nuevos_seg.csv`,
+re-correr `backtest_capital_asegurado_unificado.py` y `meta_agosto_capital_asegurado.py`, y
+republicar los 2 artifacts.
+
 **18b — Explicar el sesgo de "nuevos", que ahora está expuesto entero.** Con el parche plano
 fuera, los 4 meses subestiman con **signo constante**: -16.4% (abr), -9.8% (may), -3.9%
 (jun), -5.1% (jul). Es aprox. la mitad de la magnitud que tenía con 3 componentes, pero ya
@@ -598,7 +776,106 @@ y en agosto el exceso es volumen y no efectividad condicional
 (`analisis_volumen_efectividad_agosto.md`). Conecta con tarea 9 y con el hallazgo de mix de
 agosto (avance 70%+ activando +89% sobre la curva). **Explicarlo, no ajustarlo.**
 
-**18c — Repetir la prueba de robustez fuera de muestra sobre el motor unificado.** La que
+**✅ 18b MEDIDA 2026-08-26, con los 7 meses del backtest oficial (W3) y sin Athena** (toda la
+evidencia sale de `datos_tarea18a/` + la matriz cruda). Detalle completo, con tablas y
+correlaciones, en `analisis_sesgo_nuevos_18b.md` (reproducible con
+`analisis_sesgo_nuevos_18b.py`). Dos hallazgos, cada uno con mecanismo propio — **diagnóstico,
+no ajuste de producción**:
+
+1. **`P_ENTRADA` (21.9918%) se calibró contando CRÉDITOS (`tarea17_fase4_tasa.sql`, el propio
+   comentario del archivo lo dice: "Salida en creditos, no soles") pero se aplica multiplicando
+   SALDO EN SOLES del calendario** (`motor_unificado.proyectar`, y también en producción vía
+   `meta_agosto_capital_asegurado.py`). Como el exceso de entrada a mora está concentrado en
+   créditos de saldo alto (ya medido en agosto: +8.5% por conteo vs. +26.3% en soles), la tasa
+   por conteo subestima estructuralmente la tasa que el modelo necesitaría. Medido mes a mes
+   con la misma matriz cruda que arma la curva: la tasa real ponderada por soles corre
+   **24.34%-27.22%**, siempre 11%-24% por encima de la fija, en los 6 meses medibles (jul queda
+   fuera del rango de la matriz cruda, 20250101-20260630). Sustituir solo la tasa (dejando todo
+   lo demás intacto) cierra **~78% de la magnitud del error de "nuevos" en 5 de 6 meses**
+   (71%-84%), de errores de dos dígitos a residuos de ±3-6%; correlación error-vs-tasa real
+   **r=-0.93**. Junio es la excepción (el residuo de forma pesa más ahí, ver el .md). **No
+   contradice** el "sin deriva mensual" de Fase 4 — esa medición es por conteo, ésta por
+   soles; son coherentes entre sí y con `analisis_volumen_efectividad_agosto.md`.
+2. **Febrero (el único mes de 28 días del test) es también el único mes donde STOCK falla
+   fuerte (-11.0%) porque el modelo indexa "fin de mes" por NÚMERO de día calendario (30/31,
+   ver `GRUPOS_DIA_MES`), no por cercanía real al cierre.** Un mes de 28 días nunca llega a
+   esos días, así que su cierre real (día 28) siempre cae en el grupo "resto" (factor 0.9812,
+   por debajo del promedio). El 28 de febrero, solo, explica **79.3%** del gap de stock del mes
+   entero — ningún otro mes concentra así su gap en el último día. **Corrección tras repregunta
+   del usuario:** el efecto real, medido reagrupando por días-para-fin-de-mes (0=último día real,
+   sea 28/30/31) sobre la muestra grande de "nuevos", es un **pico angosto en el último día**
+   (+63% sobre el baseline, `dpf=0`: 4.536% vs. baseline 2.786%) — el penúltimo día NO se
+   despega del baseline (`dpf=1`: 2.827%). No es "último o penúltimo", es solo el cierre real.
+   Esto también implica que el grupo `{30,31}` actual diluye el factor `f`: en un mes de 31
+   días el 31 es el pico y el 30 es casi-baseline, agruparlos junto sub-estima el verdadero pico
+   — afecta a TODOS los meses de 31 días, no solo a febrero.
+3. **Hipótesis del handoff descartada:** el tamaño del calendario del mes (en soles o en días)
+   correlaciona débil con el error (r=+0.48 / +0.47) — mucho más débil que la tasa de entrada
+   real (r=-0.93) y es sobre todo un proxy ruidoso de la tendencia temporal (la cartera crece
+   con el tiempo).
+
+**Ninguno de los dos hallazgos se llevó a producción.** Si el usuario decide actuar: el de
+`P_ENTRADA` requiere recalibrar con definición consistente (soles) y correr el backtest
+completo (patrón del bug 10, no parchar la constante); el de febrero requeriría re-indexar la
+curva de stock (y el factor `f`) por "días hasta fin de mes" en vez de número de día
+calendario — un cambio de forma que se arbitraría con métricas diarias, no con el error de
+cierre (mismo criterio que 18a/18f).
+
+**✅ 18g EJECUTADA Y PARCIALMENTE ADOPTADA 2026-08-26 — formalizó y probó el reindex por cierre
+real de 18b contra el walk-forward de 7 meses, para nuevos y stock.** Query nueva
+(`tarea18g_curva_cruda_stock.sql`, matriz cruda de stock 202501-202606, valida contra
+producción), código (`curvas_crudas_stock.py`, `backtest_tarea18g.py`), detalle completo en
+`analisis_tarea18g_cierre_real.md`. **Resultado — mejora real pero chica en stock, marginal en
+nuevos, y rodar la ventana de stock por separado EMPEORA las métricas diarias:**
+- **Stock + factor de cierre real (Y2): ✅ ADOPTADO EN `motor_unificado.py` v3** (decisión del
+  usuario). Corr. diaria stock 0.841→0.848, MAE 27.3K→26.7K. En **febrero específicamente** (el
+  caso que motivó esto): err. stock -11.0%→**-8.3%**, corr. 0.818→0.856 — mejora real y
+  dirigida, pero **no lo resuelve del todo** (sigue siendo el peor mes de stock por lejos).
+  `proyectar()` acepta ahora `f_dm_stock` (opcional, `None`=comportamiento idéntico a v2 —
+  verificado con regresión antes de tocar nada más). Curva nueva en
+  `datos_capital_asegurado/curva_unificada_stock_seg_v3.csv` + `factor_dia_mes_stock.csv`
+  (quincena=1.0068, cierre=1.8698, resto=0.9717), ventana FIJA 202504-202606 (igual que
+  siempre). Backtest oficial re-corrido (`backtest_capital_asegurado_unificado.py`) — media de
+  error 10.55%→**10.26%**, ver `SEGUIMIENTO.md`.
+- **Nuevos reindexado (Y1): documentado, NO adoptado.** Corr. 0.886→0.888, MAE 72.5K→72.1K —
+  casi sin efecto; el grupo `{30,31}` de producción, aunque diluido, ya capturaba la mayor
+  parte de la señal. Adoptarlo requeriría cambiar el esquema de agrupación compartido de
+  `grupo_dia_mes`, que también usa la meta de agosto ya publicada — no se justifica el riesgo
+  por un beneficio marginal. Queda para una pasada separada y deliberada, sin un mes en curso
+  que proteger.
+- **Rodar además la ventana de stock (Y4, bonus que también cerraría 18c): EMPEORA, NO
+  adoptado.** Corr. stock 0.848→0.820, MAE 26.7K→29.3K, y vuelve a empeorar febrero
+  (-8.3%→-9.0%). Stock es el componente de mayor varianza muestral (`BUGS.md`) — una ventana
+  rodante de 12 meses le da a los meses de test tempranos una historia de calibración
+  demasiado chica. **18c no sale gratis para stock como salió para nuevos** — sigue abierta,
+  necesita su propia evaluación (quizás ventana más larga que 12 meses).
+- **La meta de agosto (S/17,117,628, `meta_agosto_capital_asegurado.py`) NO se tocó** —
+  verificado con regresión (mismo `+1.0%` al 25-ago antes y después de este cambio). Sigue
+  leyendo los archivos originales (`curva_unificada_stock_seg.csv`, sin sufijo `_v3`). El
+  factor de cierre queda listo para la meta de **septiembre** — que además todavía no se puede
+  calibrar en su ventana propia [202508,202607] hasta que julio complete sus 31 días de
+  seguimiento (recién el 31-ago).
+
+**✅ 18c RESUELTA PARCIALMENTE 2026-08-25 (queda solo el stock).** El walk-forward de 18a/18f
+mide el leak directamente: calibrando rodante sin leak contra la ventana fija de producción,
+los 4 meses comparables se mueven **0.11 / 0.17 / 0.01 / -0.09 pp, media 0.10pp** — consistente
+con (y algo por debajo de) los 0.15-0.2pp que tarea 10 midió sobre la arquitectura de 3
+componentes. El mecanismo se sostiene en el motor unificado.
+
+**Lo que falta:** la curva de **stock** no rueda — sigue calibrada en 202504-202606, así que 6
+de los 7 meses de test están dentro de su ventana. Eso hace **optimista el nivel absoluto de
+error de ene-jun**, pero no afecta la comparación entre variantes (el componente de stock es
+idéntico en las 4 y se cancela). Para cerrar 18c del todo hay que emitir la matriz cruda
+equivalente para stock y rodar también esa curva.
+
+**Cálculo de poder, para no volver a discutirlo:** la diferencia pareada W1-W0 del error de
+fin de mes tiene media -0.13pp y **desvío 1.49pp** — el ruido es 10x el efecto, porque el
+signo lo fija la composición de fin de mes de cada mes. Detectar 0.13pp sobre el error de
+cierre necesitaría **~1,050 meses**. El error de fin de mes es el número de negocio y el
+insumo de 18b; **no es el árbitro de los refinamientos de forma** — eso se decide con métricas
+diarias, que aportan ~30 puntos por mes en vez de 1.
+
+**18c (original) — Repetir la prueba de robustez fuera de muestra sobre el motor unificado.** La que
 existe (tarea 10, movimiento de 0.15-0.2pp) se corrió sobre la arquitectura de 3 componentes
 con curvas `dayslate`; el artifact `proyectado_vs_real.html` ya lo aclara en su sección 05.
 Las curvas unificadas calibran con `periodo_meta 202504-202606` (stock) y
@@ -611,19 +888,341 @@ versiones atrás, ya estaban desactualizados antes de Fase 4. El builder mezcla 
 enfoques (recupero oficial + alfa); solo el lado alfa necesita rehacerse sobre
 `motor_unificado.py`. Ver tarea 5 (destino de artifacts desactualizados).
 
+**✅ 18d EJECUTADA 2026-08-26 — REHECHO, no retirado.** `armar_artifact_julio_agosto.py`
+reescrito de punta a punta sobre el motor unificado v3: julio usa el backtest oficial (stock
+con factor de cierre), agosto usa la meta v2/W3 ya fijada (no se retoca a mitad de mes — ver
+tarea 18g), y el recupero oficial usa `meta_agosto.py` v3 con el real refrescado (ya no
+hardcodeado, ver `tarea18d_real_agosto_recupero.sql` — nueva query, mismo patrón día-por-día
+que ya tenía capital asegurado). La sección 4 vieja ("Diferencias con la reconciliación —
+de dónde sale la capa fantasma") se reemplazó por "Cómo se afina la curva": día de semana +
+factor de quincena/cierre (18a/18f/18g), con la nota explícita de que el error de fin de mes
+no arbitra esa decisión. La trayectoria de agosto ahora grafica el REAL día a día (antes era
+una recta aproximada entre 0 y el corte — la única serie real que existía era un total
+único). Republicado en la misma URL (`949ab3c2-...`). `README.md` y `ESTADO.md`
+actualizados.
+
 **18e — Decidir si el motor de recupero oficial se migra a `dias_atraso_cuota`.** Sigue con
 `dayslate` (`fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`) y nunca tuvo capa
 fantasma, así que el punto ciego de bug 9 está ahí **sin compensar de ninguna forma**. No se
 decidió nada; el alcance de Fase 4 fue solo Enfoque alfa, a pedido del usuario. Si se hace,
 el patrón ya está probado — `motor_unificado.py` + las 9 queries `tarea17_fase4_*.sql`.
 
+**✅ 18e DECIDIDA 2026-08-26 (recomendación, NO ejecutada todavía) — SÍ migrar, pero como
+sesión dedicada aparte, no como agregado del mismo día.** Razonamiento:
+- **Por qué sí, en principio:** el mecanismo es idéntico al que justificó Fase 4 — bug 9 (el
+  punto ciego de ~1 día de `dayslate`, 95.7% de los pagos exactamente 1 día tarde no se
+  detectan) aplica igual acá, sin ninguna compensación. Es el mismo argumento de "universo
+  debe cuadrar contra una fuente fiel" de `CLAUDE.md`, no una mejora de error buscada.
+- **Por qué NO ahora mismo, en la misma pasada:** a diferencia de repetir un patrón ya armado,
+  esto necesita **queries nuevas desde cero** — Recupero Oficial mide **rebaje real en soles**
+  (`saldo_ant - saldo`, cuánto capital efectivamente bajó), no activación binaria como Capital
+  Asegurado (si hubo o no cualquier pago). Los scripts de hoy (`curvas_crudas.py`,
+  `curvas_crudas_stock.py`, `motor_unificado.py`) están armados para el concepto de
+  "activación", no de "monto pagado" — no se pueden reusar directo. El tamaño real es
+  comparable a la Fase 4 completa (curva de stock + curva de nuevos + tasa de entrada + 2-3
+  backtests de validación), no a una tarea chica.
+- **Contexto que baja la urgencia:** Recupero Oficial dejó de ser la meta principal reportada
+  desde 2026-07-13 (`ESTADO.md`) — se sigue trackeando en paralelo como "modelo validado", no
+  como el número que se comunica. Migrarlo mejora la fidelidad de un tracking secundario, no
+  de la meta vigente.
+**PLAN DE EJECUCIÓN (armado 2026-08-26, para una sesión dedicada — no ejecutado)**, en 4 fases,
+espejo de tarea 17 Fase 4 pero para rebaje en soles en vez de activación binaria:
+
+- **Fase A — Tasa de entrada unificada, en la MISMA definición que necesita 18b.** Reusar el
+  patrón de `tarea17_fase4_tasa.sql` (`dias_atraso_cuota` 0→1, calendario elegible = entrada
+  dentro del mes, excluye stock) pero — a diferencia de esa query original — calibrar **por
+  SOLES, no por conteo de créditos**. La tarea 18b (`analisis_sesgo_nuevos_18b.md`) ya mostró
+  que P_ENTRADA calibrada por conteo subestima la tasa real cuando se aplica a un calendario en
+  soles, porque el exceso de entrada se concentra en créditos de saldo alto — el mismo error no
+  se debe repetir acá. Salida esperada: una tasa (o su desglose mensual) directamente
+  comparable, en la misma unidad, con el calendario de soles que arma Recupero Oficial.
+- **Fase B — Curva de stock en REBAJE, indexada por `dias_atraso_cuota`.** `fase1_stock.sql`
+  YA calcula rebaje (`max(saldo_ant - saldo, 0)`) — el cambio es puntual: reemplazar
+  `coalesce(dayslate,0)` por `dias_atraso_cuota` de
+  `dts_cobranza_creditos_calendario_diario` (mismo join que ya usa
+  `tarea17_fase4_curva_stock.sql`) como fuente de `mora`/tramo. El resto del query (rebaje,
+  tramo × avance, ventana de calibración) no cambia de forma.
+- **Fase C — Curva de nuevos en REBAJE, indexada por `dias_atraso_cuota`.** Mismo cambio
+  puntual sobre `fase2_nuevos.sql`: la entrada (`mora_ant=0 → mora=1`) se redefine sobre
+  `dias_atraso_cuota` en vez de `dayslate`, arrastrando el punto ciego de bug 9 a la
+  reconstrucción en vez de dejarlo sin compensar. El "saldo_entrada" (fix de Fase 3, saldo del
+  día ANTERIOR a la entrada) se mantiene igual.
+- **Fase D — Backtest de al menos 2-3 meses cerrados, motor nuevo vs. motor vigente, antes de
+  decidir.** No se adopta por mejora de error (`CLAUDE.md`) — se adopta si el universo/medición
+  queda más fiel (cierra el punto ciego de bug 9), aunque el error suba, igual que se hizo con
+  Fase 4 y con W3 en Enfoque alfa.
+
+Nada de esto está bloqueado por otra tarea — se puede arrancar en cualquier momento. Queda
+anotado, no bloqueante para nada de lo demás.
+
+**✅ 18e FASES A-D EJECUTADAS 2026-08-26 (continuación 2) — motor completo de Recupero
+Oficial migrado a `dias_atraso_cuota` y respaldado con backtest de 7 meses. RECOMENDACIÓN
+armada, NO adoptado en producción — decisión pendiente del usuario.**
+
+**Fase A — tasa de entrada por SOLES, mismo mecanismo que 18b confirmado fuera del Enfoque
+alfa.** Query `tarea18e_fase_a_tasa_soles.sql` (reusa el patrón de `tarea17_fase4_tasa.sql` +
+`tarea18_calendario_7m.sql` para el saldo en la fecha exacta de vencimiento con dedup de bug
+11), datos en `datos_tarea18e/tasa_soles.csv`. Misma ventana que `P_NO_PAGA_DIA0` y
+`P_ENTRADA` (ago2025-may2026) para que las tres tasas sean comparables.
+
+- **Tasa por conteo: 21.9941%** (75,613/343,788) — prácticamente idéntica a `P_ENTRADA`
+  (21.9918%, 75,621/343,860) del Enfoque alfa. La diferencia mínima es el join a
+  `dts_mambu_loans_hist` en la fecha exacta de vencimiento (unos pocos créditos sin foto esa
+  fecha exacta quedan fuera). Confirma que el salto grande (13.38%→~22%) es casi todo el
+  cambio `dayslate`→`dias_atraso_cuota` (cierra el punto ciego de bug 9, ya medido en Fase 1
+  de tarea 17: cobertura 70.4%→96.3%), no la unidad de medida.
+- **Tasa por soles: 25.1924%** (S/112.8M / S/447.9M) — **+14.5% relativo** sobre la de conteo,
+  mismo signo y mecanismo que 18b (el exceso de entrada se concentra en créditos de saldo
+  alto). Por mes corre **23.4%-27.2%**, sin tendencia — mismo rango de dispersión que el
+  22.99%-27.22% que 18b midió para Enfoque alfa.
+
+**Fase B — curva de stock en REBAJE, indexada por `dias_atraso_cuota`.** Query
+`tarea18e_fase_b_curva_stock_rebaje.sql` (mismo cambio puntual que ya probó
+`tarea17_fase4_curva_stock.sql` para Enfoque alfa: `dias_atraso_cuota` en vez de `dayslate`
+para el tramo/stock, el rebaje sigue siendo deltas de `dts_mambu_loans_hist`), datos en
+`datos_tarea18e/curva_stock_rebaje_dac.csv`. Ventana idéntica a la vigente (`periodo_meta`
+202504-202606), 3 tramos × 4 bandas de avance.
+
+**Fase C — curva de nuevos en REBAJE, indexada por `dias_atraso_cuota`.** Query
+`tarea18e_fase_c_curva_nuevos_rebaje.sql` (mismo patrón que
+`tarea17_fase4_curva_nuevos.sql`: entrada = `dias_atraso_cuota` 0→1, curva arranca en el DÍA
+0, `saldo_entrada` = saldo del día ANTERIOR a la entrada — fix de Fase 3/bug 16, necesario
+porque la población que paga el mismo día que entra tiene su foto de "día de entrada" ya
+reflejando el pago), datos en `datos_tarea18e/curva_nuevos_rebaje_dac.csv`. Ventana idéntica
+a la vigente (20250301-20260531), 4 bandas de avance.
+
+**Fase D — backtest de 7 meses (202601-202607), motor nuevo vs. motor vigente.**
+`backtest_tarea18e_recupero_oficial_dac.py` reusa `motor_unificado.proyectar()` tal cual (es
+genérico — solo hace `stock×curva` y `saldo_riesgo×tasa×curva`, sin ningún supuesto de
+"activación" vs. "rebaje") con los insumos de Fases A-C, más `datos_tarea18a/stock_pob_7m.csv`
+/`calendario_7m.csv` (población idéntica, no depende del enfoque) y una query nueva de real en
+rebaje (`tarea18e_fase_d_real_rebaje_7m.sql` → `datos_tarea18e/real_rebaje_7m.csv`, análoga a
+Q-F1/Q-F2 de tarea 17 pero sumando rebaje diario en vez de activación). Log completo en
+`datos_tarea18e/backtest_recupero_oficial_dac.log`.
+
+| Mes | Proyectado | Real (dac) | error | err stock | err nuevos | corr. diaria | vigente (dayslate) |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Enero | S/2,302,148 | S/2,290,411 | +0.5% | +0.6% | +0.5% | 0.610 | sin backtest previo |
+| Febrero | S/2,091,201 | S/2,227,338 | -6.1% | -9.0% | -5.4% | 0.567 | sin backtest previo |
+| Marzo | S/2,938,022 | S/3,061,707 | -4.0% | -6.2% | -3.8% | 0.716 | sin backtest previo |
+| Abril | S/2,649,481 | S/2,614,085 | +1.4% | +10.6% | -1.0% | 0.562 | sin backtest previo |
+| Mayo | S/3,141,698 | S/2,893,212 | +8.6% | -2.4% | +10.6% | 0.389 | sin backtest previo |
+| Junio | S/2,965,487 | S/2,538,947 | +16.8% | +9.1% | +18.9% | 0.367 | err +5.4% (real S/1,713,815) |
+| Julio | S/3,888,900 | S/3,280,551 | +18.5% | -2.9% | +22.1% | 0.711 | err +17.6% (real S/2,088,911) |
+
+- **Magnitud media de error de fin de mes: 7.99%** — sin ningún refinamiento de forma (día de
+  semana, factor de quincena, ventana rodante: el equivalente a "W0", no a "W3"). Comparable
+  en orden de magnitud a los dos únicos puntos del motor vigente disponibles (5.4%/17.6%,
+  media 11.5% sobre solo 2 meses) — no concluyente con tan pocos puntos del lado vigente, pero
+  no es una regresión visible.
+- **Hallazgo principal — cobertura de universo, no error de cierre:** el real capturado con
+  `dias_atraso_cuota` es **148.1% (junio) y 157.0% (julio) del real capturado con `dayslate`**
+  (S/2.54M vs. S/1.71M; S/3.28M vs. S/2.09M) — **+48-57% de rebaje real que el motor vigente
+  nunca ve**, no +26-30% como la cobertura en CRÉDITOS que Fase 1 de tarea 17 ya midió
+  (70.4%→96.3%). Mecanismo coherente con lo ya conocido, no nuevo: la razón
+  `P_ENTRADA/P_NO_PAGA_DIA0 = 21.99%/13.38% = 1.643×` ya anticipaba un salto grande en
+  *entradas*, y bug 16 Fase 3 ya midió que la población que `dayslate` no ve (ex-"fantasma")
+  se activa **99.60% el mismo día** — population de pago casi instantáneo que aporta rebaje
+  ~1:1 de su saldo apenas se detecta. Un universo de entradas +64% más grande, concentrado en
+  población de altísima velocidad de pago, explica por qué el REBAJE capturado crece más que
+  proporcionalmente (+48-57%) respecto al conteo de créditos (+26-30%). **Punto ciego de bug 9
+  sin compensar** — exactamente el argumento por el que 18e recomendó migrar en principio.
+- **Nada de esto tocó producción.** Recupero Oficial sigue con `P_NO_PAGA_DIA0=13.38%` y
+  `dayslate` (`fase1_stock.sql`/`fase2_nuevos.sql`/`fase3_backtest.sql`, `meta_agosto.py`).
+
+**RECOMENDACIÓN (no decisión — es del usuario), mismo criterio de `CLAUDE.md` que ya se aplicó
+a Fase 4/18a: no se adopta por mejora de error — se adopta si el universo/medición queda más
+fiel, aunque el error de cierre suba.** El hallazgo de cobertura (+48-57% de rebaje real
+invisible hoy) es un argumento de universo, no de ajuste fino. **Antes de adoptar, conviene**:
+(1) decidir si se calibra la tasa/curvas con ventana rodante (mismo refinamiento que 18a/18f
+ya validó para Enfoque alfa — esta primera pasada usa ventana fija, igual que la vigente, así
+que la comparación de error es pareja pero deja mejora sobre la mesa); (2) decidir si
+corresponde recalcular `SEGUIMIENTO.md`/`meta_agosto.py` con el motor nuevo, lo que cambiaría
+el número de Recupero Oficial reportado (aunque ya no es la meta principal desde 2026-07-13).
+
+**✅ VALIDACIÓN TÉCNICA A NIVEL DE CASO 2026-08-26 (continuación 2), a pedido del usuario
+("¿hay que validar algo antes de implementar?") — el salto de cobertura (+48-57%) es un
+mecanismo real, no un artefacto de la query.** `tarea18e_validacion_casos_fantasma.sql` /
+`datos_tarea18e/validacion_casos_fantasma.csv`: 10 créditos reales de julio donde
+`dias_atraso_cuota` detecta la entrada en mora (`mora_ant=0→mora=1`) pero `dayslate` ese mismo
+día vale **0** (población "fantasma", invisible al motor vigente) — en los 10 casos el saldo
+efectivamente bajó ese mismo día (rebaje real de S/2,711 a S/7,749), y varios **cancelan el
+saldo completo del crédito** el mismo día que técnicamente entran en mora
+(ej. `dc69f32d-...`: S/7,749.55→S/0). Confirma a nivel de caso lo que bug 16 Fase 3 ya midió
+en agregado (activación día 0 = 99.60%): la población que `dayslate` no ve no es marginal ni
+rara, paga casi instantáneo y a veces con el saldo completo — coherente con que el REBAJE
+capturado crezca más que proporcionalmente al crecimiento en conteo de créditos.
+
+**Con esto, el hallazgo de Fase D queda validado técnicamente (no es un bug de query).** Lo
+que sigue pendiente antes de adoptar en producción sigue siendo lo de arriba: ventana rodante
++ forma (día de semana, quincena — refinamiento, no bloqueante para la validez del hallazgo) y
+la decisión de si/cuándo tocar `SEGUIMIENTO.md`/`meta_agosto.py`. Una validación adicional
+posible pero NO ejecutada (más cara, cruza contra `vw_seguimiento_diario_cohorte_tramo`/
+`dts_asignaciones_gestiones_cobranza`, mismo patrón que tarea 14/15/16/bug 19): confirmar que
+la población fantasma también aparece en la asignación real de negocio (TEMPRANA), no solo en
+Mambu — quedaría para si el usuario quiere blindar el número antes de publicarlo en
+`SEGUIMIENTO.md`.
+
+**✅ REFINAMIENTO DE FORMA (v2) EJECUTADO 2026-08-26 (continuación 2), a pedido del usuario
+("hagamos ambos") — mismo tratamiento que 18a/18f/18g ya validaron para el Enfoque alfa,
+aplicado al motor de Recupero Oficial.** `backtest_tarea18e_recupero_oficial_v2.py`, log en
+`datos_tarea18e/backtest_recupero_oficial_v2.log`.
+
+**Insumos nuevos — matrices CRUDAS de rebaje, reusando `curvas_crudas.py`/
+`curvas_crudas_stock.py` SIN TOCAR NINGUNA LÍNEA de esos módulos** (el IPF que calibran trata
+la columna `saldo` de cada celda como masa observada — no le importa si semánticamente es
+"activación del primer pago" o "rebaje sumado día a día", así que calibra igual de bien sobre
+cualquiera de las dos):
+- `tarea18e_matriz_cruda_nuevos_rebaje.sql` → `datos_tarea18e/curva_cruda_nuevos_rebaje.csv`
+  (grano `fecha_entrada × avance_band × dia_desde_entrada`, rango 20250101-20260630 — análoga
+  a `tarea18f_curva_cruda.sql` pero sumando TODO el rebaje diario, no solo el día del primer
+  pago).
+- `tarea18e_matriz_cruda_stock_rebaje.sql` → `datos_tarea18e/curva_cruda_stock_rebaje.csv`
+  (análoga a `tarea18g_curva_cruda_stock.sql`, rango 202501-202606).
+- `tarea18e_tasa_soles_18m.sql` → `datos_tarea18e/tasa_soles_18m.csv`: Fase A extendida a
+  desglose mensual 202501-202606 (18 meses) — permite rodar la tasa junto con la curva de
+  nuevos, sin leak, en vez de fijarla como hace `P_ENTRADA` en Enfoque alfa.
+
+**Decisiones de diseño (para no re-medir mecanismos ya resueltos):** NUEVOS rueda `[M-12,M-1]`
+(curva y tasa) — mismo leak ~0.10pp ya medido en 18a/18f. STOCK **NO** rueda — ventana FIJA
+202504-202606 igual que producción; rodar stock ya se probó en 18c/18g para Enfoque alfa y
+**empeora** (corr. 0.848→0.820, stock es el componente de mayor varianza muestral) — se aplica
+la misma decisión en vez de re-probar el mismo mecanismo. STOCK sí lleva el factor de cierre
+real (modo "real", como v3) — refinamiento independiente de rodar la ventana. NUEVOS con día
+de semana + factor de quincena, modo "estructural" (como W3).
+
+| Mes | Proyectado | Real (dac) | error | err stock | err nuevos | corr. diaria | p_entrada | v1 sin refinar | vigente |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| Enero | S/2,394,155 | S/2,290,411 | +4.5% | +3.1% | +4.9% | 0.862 | 25.26% | +0.5% | — |
+| Febrero | S/2,133,336 | S/2,227,338 | -4.2% | -5.6% | -3.8% | 0.773 | 25.00% | -6.1% | — |
+| Marzo | S/2,998,996 | S/3,061,707 | -2.0% | -4.2% | -1.8% | 0.933 | 25.08% | -4.0% | — |
+| Abril | S/2,715,849 | S/2,614,085 | +3.9% | +14.4% | +1.2% | 0.831 | 25.28% | +1.4% | — |
+| Mayo | S/3,067,507 | S/2,893,212 | +6.0% | -0.3% | +7.2% | 0.822 | 25.31% | +8.6% | — |
+| Junio | S/2,939,249 | S/2,538,947 | +15.8% | +12.6% | +16.6% | 0.801 | 25.26% | +16.8% | +5.4% |
+| Julio | S/3,882,039 | S/3,280,551 | +18.3% | -0.9% | +21.5% | 0.836 | 25.07% | +18.5% | +17.6% |
+
+- **Correlación media de incrementos diarios: 0.560 → 0.837** — mismo salto de calidad que el
+  refinamiento análogo logró en Enfoque alfa (0.611→0.886), mejora en los 7 meses.
+- **Magnitud media de error de cierre: 7.99% → 7.83%** — casi no se mueve, y es a propósito
+  (mismo principio de "qué métrica arbitra qué" de `CLAUDE.md`): el error de fin de mes no es
+  el árbitro de un refinamiento de forma.
+- **Tasa rodante estable: 25.00%-25.31%**, sin deriva — consistente con lo que 18b ya había
+  encontrado para la tasa por soles (23.4%-27.2%).
+
+**✅ 18e ADOPTADA 2026-08-26 (continuación 2), decisión explícita del usuario.**
+`SEGUIMIENTO.md` reemplazó la fila vigente de Recupero Oficial por el motor v2
+(`dias_atraso_cuota`, 7 meses enero-julio) — los números viejos (`dayslate`, junio +5.4%/julio
++17.6%) quedan como referencia histórica en el mismo archivo, no borrados. **`meta_agosto.py`
+NO se tocó** — mismo criterio que Capital Asegurado (18g): no se cambia el motor de un mes EN
+CURSO a mitad de mes; agosto sigue con `dayslate`/13.38% hasta que cierre. **Queda pendiente,
+no bloqueante, para cuando agosto cierre (31-ago):** calibrar la meta de **septiembre** de
+Recupero Oficial con este motor, ventana `[202508,202607]` (mismo patrón que la meta de
+septiembre de Capital Asegurado, que tampoco se puede fijar todavía) — requiere un
+`meta_septiembre.py` nuevo, análogo a `meta_agosto_capital_asegurado.py` pero con los insumos
+de 18e (`backtest_tarea18e_recupero_oficial_v2.py` tiene toda la maquinaria de calibración
+lista para reusar). Ver "LO QUE SIGUE" en `ESTADO.md`.
+
+**18f — Efecto "día del mes" en la curva de nuevos (quincena y fin de mes) — ✅ MEDIDA Y
+ADOPTADA 2026-08-26 como parte de W3. Abierta 2026-08-25 a partir de una pregunta del
+usuario; no estaba anotada.** El resultado y los parámetros están arriba, en el bloque de
+18a/18f; lo de abajo es el diagnóstico original que la abrió. El calendario ya está
+indexado por día del mes (el volumen que entra cada día se mide, no se estima) y la curva de
+stock también, así que ese eje está cubierto para esos dos componentes. Lo que queda ciego es
+la **curva de nuevos**, indexada por `dias_desde_entrada`: una cohorte que entró el 12 y otra
+que entró el 27 recorren la misma curva aunque solo la primera cruce la quincena temprano.
+
+Medido sobre el residuo de V4 (o sea ya descontado el día de semana), como % del real del mes
+y por día de la ventana:
+
+| ventana | abril | mayo | junio | julio | media |
+|---|---:|---:|---:|---:|---:|
+| quincena (14-16) | -0.95% | -0.71% | -0.43% | -1.44% | **-0.88%/día** |
+| fin de mes (últ. 3) | -0.75% | -0.39% | -0.18% | -0.57% | **-0.47%/día** |
+| resto del mes | -0.44% | -0.36% | -0.10% | +0.09% | -0.20%/día |
+
+Subproyecta la quincena en los **4 meses sin excepción**, a ~4x la tasa del resto (fin de mes,
+~2x). El nivel negativo general es el sesgo de 18b — lo que importa es la diferencia **entre
+ventanas**. No es el día de semana disfrazado: la ventana 14-16 cae en días distintos en cada
+mes (abril M-X-J, mayo J-V-S, junio D-L-M, julio M-X-J) y el efecto aparece igual en los 4.
+
+**Cómo modelarlo — y cómo NO.** No segmentar la curva por día del mes de entrada: la quincena
+le pega a *todas* las cohortes vivas ese día, hayan entrado el 2 o el 14. Es un efecto del
+**día en que llega la plata**, no del día de entrada de la cohorte; segmentarlo como cohorte
+daría ~30 curvas, con las tardías truncadas por el fin de mes, y no resolvería el mecanismo.
+La forma correcta es un **factor multiplicativo por día del mes aplicado al día de pago** —
+una dimensión, no 30. **Advertencia de `CLAUDE.md`:** ese factor se calibra sobre la ventana
+histórica como cualquier otra curva; ajustarlo contra el residuo del backtest de arriba lo
+convierte en un ajuste ex-post y destruye lo que hace útil al modelo como meta fijada al
+inicio del mes.
+
 **Menores que siguen abiertos:** el residual de 150 créditos sin explicar de Fase 1 (<1% del
 universo, patrón mixto) y el pendiente de bug 17 (por qué `jul_calendario.csv` tenía saldo
 promedio 11% más alto por crédito) — ninguno bloquea nada.
 
+### Tarea 19 — Ciclo de septiembre: cierre de agosto, tasa por soles adoptada, y la caída de activación — 2026-09-01
+
+**HECHO Y CERRADO en esta sesión:**
+- Agosto cerrado en los dos enfoques (tareas 4b y 8b).
+- **`P_ENTRADA` del Enfoque alfa migrada a SOLES** (24.9081%, rodante `[202508,202607]`) —
+  decisión del usuario, cierra lo que 18b diagnosticó. Verificado antes de correr nada: los dos
+  motores comparten la definición de entrada, y la query de 18e reproduce el `P_ENTRADA` del
+  alfa en créditos (21.9941% vs. 21.9918%) — **no hacía falta query nueva de tasa**.
+- **Metas de septiembre fijadas:** alfa **S/20,477,271**, recupero **S/3,928,776**.
+- **Protocolo de 12 meses reconfirmado**: 6m empeora las métricas diarias (0.886→0.876), 9m≈12m.
+
+**EL FRENTE ABIERTO PRINCIPAL — la activación real está cayendo y no sabemos por qué.**
+Medido: **-0.46pp/mes** (20.99% ene-mar → 18.50% jun-ago, r=-0.77) como % del calendario,
+mientras la tasa de entrada por soles no tiene tendencia y el calendario creció **+90%** en 9
+meses. **Está medido, no explicado.** Lo que hay que averiguar, en orden:
+1. **¿Es capacidad de gestión?** El volumen asignado por gestor, la cobertura de la cartera y
+   el ratio de contacto son medibles vía `dts_asignaciones_gestiones_cobranza` (existe desde
+   julio 2026, así que solo cubre los 2 últimos puntos — limitación real).
+2. **¿Es composición?** Si la cartera nueva entra con `avance_band` distinto, la caída podría
+   ser mix y no eficiencia. Se mide sin Athena nueva, desde la matriz cruda.
+3. **¿Es un artefacto del universo?** Descartado parcialmente: el mismo patrón aparece en los
+   dos enfoques y con las dos tasas, así que no es de la definición de entrada.
+**No ajustar nada mientras tanto** (`CLAUDE.md`) — la meta de septiembre lleva el caveat
+explícito de que corre ~10% alta si la tendencia sigue.
+
+**✅ ARTIFACT PUBLICADO 2026-09-02 — "De asignado a asegurado"**, en la URL **949ab3c2**
+(reemplaza a la guía julio→agosto que vivía ahí; `resumen_julio_agosto.html` queda en el repo
+como la versión anterior). Fuente: `asignado_a_asegurado.html` +
+`armar_asignado_a_asegurado.py` + `tarea19_agosto_cadena_segmentada.sql` +
+`datos_asignado_a_asegurado.json`.
+
+Está escrito para que lo entienda alguien que no siguió el proyecto, y su eje es la **cadena
+de capital asignado → capital asegurado** con los tres ratios nombrados y con su denominador
+explícito (ratio de activación de antiguos 66.7%, tasa de entrada en mora 22.8%, ratio de
+activación de nuevos 86.2%), todo abierto por tramo de atraso, banda de avance y día de semana
+del vencimiento. Cubre agosto cerrado (−1.2% vs. la meta publicada, **+9.8% vs. el enfoque
+actual**), septiembre proyectado (S/20,477,271) con la misma cadena, y la caída de activación.
+
+**Siguen pendientes de republicar, sin escribir todavía:** **Capital asegurado** (d4140b13) y
+**Proyectado vs. Real** (f80d3761) — los dos citan la meta de agosto ya superada.
+
+**PENDIENTE MENSUAL, ahora que el ciclo está armado:** fijar la meta de octubre es correr las 9
+queries `tarea19_*.sql` con las ventanas movidas un mes, `generar_curvas_septiembre.py` con
+`VENTANA_NUEVOS = ("202509","202608")`, y los dos `meta_septiembre_*.py`. Los archivos
+`tarea18*` quedan congelados como el registro de lo que produjo la meta de agosto; los
+`tarea19*` son la plantilla que se mueve.
+
+**LO QUE SIGUE SIN RESOLVER de antes:** 18c (rodar la curva de stock — probado, empeora, necesita
+su propio enfoque), el re-índice de nuevos por "días hasta fin de mes" (medido, no adoptado),
+tarea 5 (2 artifacts desactualizados, decisión de producto), tarea 12 (carpetas).
+
+Detalle completo en `analisis_tarea19_activacion_decreciente.md`.
+
 ### Tarea 12 (baja prioridad) — Reorganizar en carpetas
 Considerar `sql/`, `python/`, `docs/` si el root sigue creciendo. No bloquea nada; con la
 limpieza del 2026-07-15 el root ya bajó en 8 archivos + 2 carpetas de datos.
+
+**2026-09-01 — subió de prioridad, aunque sigue sin bloquear.** El root pasó de ~40 a ~110
+archivos entre las tareas 17/18/19, hay **~80 sin commitear**, y ya conviven 3 generaciones de
+scripts (backtests por mes de la arquitectura con capa fantasma, `tarea18*` congelados,
+`tarea19*` vigentes). El criterio de corte natural sería `sql/`, `python/`, `datos/` y un
+`historico/` para lo que quedó como referencia, pero **hacerlo rompe todas las rutas relativas
+hardcodeadas** en los scripts — no es un `git mv`, hay que tocar cada `DIR_*`. Conviene hacerlo
+justo después de fijar una meta, no antes.
 
 ---
 

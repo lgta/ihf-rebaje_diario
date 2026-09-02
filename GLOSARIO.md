@@ -65,7 +65,10 @@ días calendario — ver bug 16 en `BUGS.md`, actualización 2026-08-24.
 **P(no paga a tiempo)** — probabilidad de que un crédito "elegible" (con cuota venciendo,
 no ya en stock) entre en mora ese mes. Valor oficial: **13.38%**, medido a nivel crédito
 (`dayslate` 0→1), fuera de muestra. NO confundir con el complemento de "% paga a tiempo" a
-nivel cuota (~25-28%) — ver `DECISIONES.md`.
+nivel cuota (~25-28%) — ver `DECISIONES.md`. **Sigue vigente SOLO para la meta de agosto de
+Recupero Oficial** (mes en curso, sin recalcular — ver tarea 18e en `PENDIENTES.md`); desde
+julio hacia atrás y desde septiembre en adelante, Recupero Oficial usa la tasa por SOLES de
+18e (~25.2%, ver "Tasa por soles vs. por conteo" abajo), no esta.
 
 **Curva de recupero acumulado** — % del saldo capital inicial (o de entrada) que se espera
 recuperado, acumulado día a día. Hay una para stock (por tramo × avance × día del mes) y
@@ -111,3 +114,66 @@ bug 11 y `plan_analisis.md`.
 (`_motivo_apertura__motivo_apertura`, nombre duplicado por venir de un custom field
 anidado de Mambu), valores 1-4. Poblado en solo 0.4% de los créditos. Sin diccionario de
 datos confirmado, pero fuertemente asociado a "cura sin pago" — ver `enfoque_salida_mora.md`.
+
+---
+
+## Términos del motor unificado v2 (agregados 2026-08-26)
+
+**Día de entrada** — el día en que un crédito pasa a mora, siempre `fechavencimiento + 1`. Es
+el índice del **calendario** del Enfoque alfa (`dia_entrada` = día del mes de esa fecha) y el
+origen desde el que se mide la curva de nuevos. Indexar por acá —y no por el vencimiento— es
+lo que vuelve imposibles por construcción los bugs 12, 14/17, 18 y 20. No confundir con
+"día del mes", que es la posición dentro del mes calendario.
+
+**Día 0 de la curva de nuevos** — el día de entrada mismo, y **no vale cero**: entre 18.7% y
+42.0% del capital de la cohorte se resuelve ahí, según banda de avance y día de semana del
+vencimiento. Es exactamente la población que hasta el 2026-08-25 modelaba la "capa fantasma"
+con una tasa plana aparte.
+
+**Capa fantasma** — término **histórico**. Tercer componente aditivo (tasa plana 8.62%,
+activación instantánea) que parcheaba el punto ciego de `dayslate`. Eliminado el 2026-08-25:
+esa población es ahora el día 0 de la curva de nuevos. Si aparece en un archivo, ese archivo
+describe la arquitectura anterior.
+
+**Factor por día del mes (`f`)** — multiplicador sobre el **incremento diario** de la curva de
+nuevos, no sobre el acumulado. Tres niveles: quincena (días 15-16) 1.0855, días 30-31 1.1848,
+resto 0.9812. Normalizado a media ponderada 1, así que **redistribuye** masa dentro del mes en
+vez de agregarla. Captura el efecto de fecha de pago de planilla, que la curva indexada en
+días-desde-la-entrada no puede ver. Ojo: el día 29 **no** entra — el efecto es de fecha, no de
+"últimos días del mes".
+
+**Ventana rodante** — la calibración `[M-12, M-1]` que usa cada mes proyectado, de modo que la
+curva nunca ve el mes que proyecta. Para una meta prospectiva la ventana termina en el último
+mes **completamente observado** (31 días de seguimiento cumplidos), no en el mes anterior.
+
+**Matriz cruda** — `datos_tarea18a/curva_cruda.csv`, al grano
+`(fecha_entrada, avance_band, día_primer_pago)`. Fuente única de las curvas de nuevos: desde
+ahí se arma cualquier segmentación y cualquier ventana sin volver a Athena.
+
+**Correlación diaria** — correlación entre el **incremento diario** proyectado y el real del
+componente de nuevos, dentro de un mes. Es la métrica que arbitra los refinamientos de forma;
+el error de fin de mes no puede hacerlo (ver `DECISIONES.md`). No confundir con el error de
+cierre: un mes puede tener buen seguimiento diario y aun así terminar lejos de su meta.
+
+## Términos de tarea 18e (Recupero Oficial migrado, agregados 2026-08-26 continuación 2)
+
+**Tasa por soles vs. por conteo** — dos formas de calibrar "qué % de lo elegible entra en
+mora": contando CRÉDITOS (numerador y denominador en unidades de crédito) o sumando SOLES
+(numerador y denominador en saldo). Aplicar una tasa calibrada por conteo sobre un calendario
+en soles subestima, porque el exceso de entrada se concentra en créditos de saldo alto —
+hallazgo de tarea 18b (Capital Asegurado) y confirmado en 18e (Recupero Oficial): la tasa por
+soles corre 24-27% contra ~22% por conteo, mismo mecanismo en los dos enfoques.
+
+**Rebaje real vs. Capital asegurado** — misma "matriz cruda" y mismo motor
+(`motor_unificado.proyectar`, `curvas_crudas.py`) sirven para las dos métricas: Capital
+Asegurado mide ACTIVACIÓN (saldo completo del crédito que tuvo al menos 1 día de pago),
+Recupero Oficial mide REBAJE (soles efectivamente bajados, sumado día a día — puede haber
+varios eventos de rebaje por crédito, no solo el primero). El algoritmo de calibración (IPF)
+no distingue entre las dos: solo cambia qué se le pasa como masa observada por celda.
+
+**Motor migrado (tarea 18e)** — el motor de Recupero Oficial reescrito sobre
+`dias_atraso_cuota`, con el mismo tratamiento que Capital Asegurado (ventana rodante, día de
+semana, quincena, factor de cierre en stock) pero calibración propia (no comparte curvas ni
+tasa). Vigente para todo mes CERRADO desde julio 2026 en adelante y para la meta de
+SEPTIEMBRE; la meta de AGOSTO es la única excepción — sigue con el motor viejo (`dayslate`,
+`P_NO_PAGA_DIA0`) porque ya estaba en curso cuando se migró. Ver `DECISIONES.md`.

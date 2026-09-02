@@ -1,0 +1,135 @@
+PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
+Escrito 2026-09-02. Reemplaza a prompt_handoff_2026-08-26.txt (que quedó viejo: hablaba de
+"cerrar agosto" y del plan de 18e, los dos ya hechos).
+
+====================================================================
+ORDEN DE LECTURA
+====================================================================
+1. CLAUDE.md              — reglas de datos y los 4 principios no negociables.
+2. ESTADO.md              — bloque "2026-09-01/02" + sección "La meta vigente".
+3. PENDIENTES.md tarea 19 — lo que está abierto ahora.
+4. Solo si hace falta: analisis_tarea19_activacion_decreciente.md (el hallazgo del mes),
+   BUGS.md (para no repetir un error ya encontrado), IDEAS.md (para no re-probar algo
+   ya descartado).
+
+NO releer todo el historial. ESTADO.md y PENDIENTES.md alcanzan para operar.
+
+====================================================================
+DÓNDE ESTÁ EL PROYECTO AHORA
+====================================================================
+Agosto 2026 CERRADO en los dos enfoques:
+  Capital asegurado (meta principal): meta S/17,117,628 → real S/17,322,872 = -1.2%
+  Recupero oficial:                   meta S/2,108,435  → real S/2,178,078  = -3.2%
+  (el real del recupero se midió con `dayslate`, la MISMA definición con que se fijó la
+   meta; con dias_atraso_cuota daría S/3,174,012 = 146%, y eso es cambio de universo, no
+   de ejecución — no mezclar)
+
+Metas de SEPTIEMBRE 2026 fijadas el 1-sep (primer test prospectivo verdaderamente limpio
+del proyecto: ninguna decisión de modelo se tomó viendo datos de septiembre):
+  Capital asegurado: S/20,477,271  (stock S/2,241,903 + nuevos S/18,235,368)
+                     meta_septiembre_capital_asegurado.py, MODO_TASA="soles_rodante"
+  Recupero oficial:  S/3,928,776   (stock S/537,381 + nuevos S/3,391,395)
+                     meta_septiembre_recupero.py
+  Ventana de calibración de nuevos: [202508, 202607]. Stock: FIJA 202504-202606 (18c).
+
+CAMBIO DE MOTOR ADOPTADO (decisión del usuario, 2026-09-01): P_ENTRADA del Enfoque alfa
+pasó de 21.9918% (calibrada CONTANDO créditos) a la tasa por SOLES rodante (24.9081%).
+El motivo es consistencia definicional — se aplica multiplicando soles, así que se calibra
+en soles — NO que el error baje: para los últimos 3 meses SUBE. Precedente: bug 18.
+
+====================================================================
+EL HALLAZGO ABIERTO — es el frente principal
+====================================================================
+LA ACTIVACIÓN REAL ESTÁ CAYENDO: -0.46 pp/mes.
+
+    capital asegurado de nuevos ÷ capital del calendario del mes
+    ene-mar 2026: 20.99%   →   jun-ago 2026: 18.50%   (r = -0.77)
+
+Mientras tanto la tasa de entrada por soles NO tiene tendencia (23.3%-27.2%) y el
+calendario creció +90% en 9 meses (S/47M → S/90M). O sea: se cobra una tajada más chica
+de una torta que crece más rápido. Es señal de negocio, no defecto del modelo.
+
+Consecuencias que ya están medidas:
+  - La tasa por conteo (14.5% más baja de lo que su definición pide) venía COMPENSANDO
+    esa caída por accidente. Mismo patrón que bug 18 y la capa fantasma.
+  - Con la tasa correcta, el modelo sobreestima ~+9-10% en jun/jul/ago (alfa) y +13.5%
+    en agosto (recupero). La meta de septiembre probablemente corra ~10% alta, y eso
+    está escrito como caveat en ESTADO.md, en el docstring del script y en el artifact.
+  - Acortar la ventana de calibración NO lo arregla: 6m empeora las métricas diarias
+    (0.886→0.876), 9m≈12m. El protocolo de 12 meses queda confirmado. NO re-probar esto.
+
+QUÉ FALTA: explicarlo. Está medido, no explicado. En orden:
+  1. ¿Capacidad de gestión? Volumen por gestor, cobertura, ratio de contacto —
+     dts_asignaciones_gestiones_cobranza existe solo desde julio 2026 (limitación real).
+  2. ¿Composición? Si la cartera nueva entra con avance_band distinto, sería mix y no
+     eficiencia. Se mide SIN Athena nueva, desde la matriz cruda.
+  3. ¿Artefacto del universo? Parcialmente descartado: el patrón aparece en los dos
+     enfoques y con las dos tasas.
+
+NO AJUSTAR NADA MIENTRAS TANTO (principio de interpretación del error, CLAUDE.md).
+
+====================================================================
+YA RESUELTO — NO RE-PROBAR
+====================================================================
+- Tarea 2 (artifact capital_asegurado), tarea 9 (extender backtest: ya son 8 meses),
+  tarea 10 (recalibrar excluyendo el mes de prueba), tarea 13/14/15/16/17, 18a/18b/18d/
+  18e/18f/18g. Ver PENDIENTES.md.
+- Tarea 6 quedó MOOT: fase1_stock/fase2_nuevos/fase3_backtest son referencia histórica
+  desde que 18e migró el motor oficial.
+- Tarea 11: el diagnóstico se desplazó — el mes roto del stock es FEBRERO (único de 28
+  días), no junio, y 18g ya lo corrigió con el factor de cierre real.
+- Rodar la ventana de STOCK: probado en 18g, EMPEORA (corr. 0.848→0.820). Es tarea 18c y
+  necesita otro enfoque, no el mismo tratamiento que nuevos.
+- La tasa de 18e sirve tal cual para el alfa: los dos motores comparten la definición de
+  entrada. Verificado (reproduce P_ENTRADA en créditos al 0.002pp). No hace falta query
+  nueva de tasa para el alfa.
+
+====================================================================
+LO QUE SIGUE, EN ORDEN
+====================================================================
+1. REPUBLICAR 2 ARTIFACTS que todavía citan la meta vieja de agosto:
+     - Capital asegurado   d4140b13-4017-4313-b140-7d8f6356d5d7  (capital_asegurado.html)
+     - Proyectado vs. Real f80d3761-732c-483b-99ad-d85c95c896aa  (proyectado_vs_real.html)
+   Pasar url= para conservar las URLs. Los datos ya existen (datos_tarea19/).
+   YA PUBLICADO y vigente: 949ab3c2 = "De asignado a asegurado"
+   (asignado_a_asegurado.html + armar_asignado_a_asegurado.py) — es el artifact para
+   explicar el enfoque desde cero.
+
+2. EXPLICAR LA CAÍDA DE ACTIVACIÓN (arriba). Es el frente principal.
+
+3. SEGUIR SEPTIEMBRE contra la meta. Hace falta una query de "real de septiembre por día"
+   análoga a tarea19_real_agosto_cierre.sql con las fechas corridas.
+
+4. COMMITEAR: ~85 archivos sin commitear (sesiones 17/18/19). El último commit es 0e59879
+   del 26-ago. Hay código que produce la meta vigente sin respaldo en git.
+   OJO: el usuario controla explícitamente commit y push — no hacerlo sin que lo pida.
+
+5. Tarea 18c (rodar stock), tarea 5 (2 artifacts viejos, decisión de producto),
+   tarea 12 (carpetas — subió de prioridad, el root tiene ~110 archivos).
+
+====================================================================
+CICLO MENSUAL — cómo se fija la meta del mes que viene
+====================================================================
+Ya está armado y cuesta poco. Para OCTUBRE:
+  1. Correr las 10 queries tarea19_*.sql con las ventanas corridas un mes.
+     (las tarea18*.sql quedan congeladas: son el registro de la meta de agosto)
+  2. generar_curvas_septiembre.py con VENTANA_NUEVOS = ("202509","202608").
+  3. meta_septiembre_capital_asegurado.py y meta_septiembre_recupero.py (renombrar).
+  4. armar_asignado_a_asegurado.py + republicar 949ab3c2.
+REGLA: la ventana termina en el último mes COMPLETAMENTE OBSERVADO al fijar la meta —
+una cohorte necesita 31 días de seguimiento. Para octubre eso es [202509, 202608].
+
+====================================================================
+TRAMPAS CONOCIDAS
+====================================================================
+- dts_mambu_loans_hist SE RE-EXPRESA para días pasados: re-medir un corte viejo da
+  números levemente distintos (-0.4% a -0.6% en agosto). No es bug del modelo.
+- La foto del día en curso todavía está corriendo cuando se lee: el último día siempre
+  sale bajo. Usar el penúltimo como "último día completo".
+- Ninguna cuota vence domingo → nadie entra en mora un LUNES. En septiembre los días
+  7, 14, 21 y 28 no tienen ni una entrada. Es un buen chequeo de sanidad.
+- Athena: WHERE ... IN (...) en la MISMA query que SUM() OVER (ORDER BY ...) aplica el
+  WHERE ANTES de la window function. Acumular en una CTE y filtrar afuera (bug 4).
+- Hay 3 generaciones de scripts conviviendo en el root (backtests por mes con capa
+  fantasma → tarea18* congelados → tarea19* vigentes). Verificar cuál es el vigente en
+  ESTADO.md antes de tocar uno.

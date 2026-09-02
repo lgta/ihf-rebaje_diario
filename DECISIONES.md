@@ -101,3 +101,191 @@ anterior a esta limpieza — no se pierde el trabajo, solo deja de mantenerse. L
 artifacts ya publicados de ambos no se retiran de claude.ai, solo se sacan de las tablas
 de "vigente" en `README.md`/`ESTADO.md`. El plan de continuación para los 2 enfoques que
 quedan está en `PENDIENTES.md`.
+
+### La métrica que arbitra un refinamiento de forma es la trayectoria diaria, no el error de cierre (2026-08-26)
+
+**Decisión:** los cambios de **forma** del modelo (segmentadores, índices, factores) se
+evalúan con la **correlación entre incrementos diarios proyectados y reales** y el MAE del
+incremento diario. El **error de fin de mes** queda reservado para lo que sí mide: la meta
+contra la ejecución, y el insumo para explicar el sesgo.
+
+**Por qué, con números:** la diferencia pareada del error de cierre entre dos variantes de
+curva tiene media **-0.13pp** y desvío **1.49pp** — el ruido es 10x el efecto, porque el signo
+lo fija la composición de fin de mes de cada mes (en mayo el 45.8% del calendario de los
+últimos 5 días vence en fin de semana; en julio, 0.0%). Detectar 0.13pp sobre el cierre
+necesitaría **~1,050 meses**. No es que falten datos: el estadístico no tiene resolución para
+esa pregunta, y nunca la va a tener.
+
+Las métricas diarias aportan ~30 observaciones por mes en vez de 1, y ahí el mismo cambio se
+distingue sin ambigüedad: el día de semana del vencimiento mejora la correlación en los 7
+meses de test **sin excepción** (0.611 → 0.886) y baja el MAE del incremento diario 41%.
+
+**Consecuencia que hay que saber leer:** un cambio puede **empeorar el cierre y mejorar el
+seguimiento diario a la vez**. Mayo 2026 es el caso: -8.7% → -10.9% de error de cierre,
+correlación diaria 0.32 → 0.86. Las dos cosas son ciertas y miden cosas distintas. Reportar
+siempre las dos.
+
+Esto **no reemplaza** el "Principio de interpretación del error" — lo complementa: aquel dice
+que el error no se optimiza, este dice que además no sirve para arbitrar cambios de forma.
+
+### `avance_band` se queda en 4 buckets — no se colapsa a 3 (2026-08-26)
+
+**Decisión:** no fusionar `c. avance 40-70%` con `d. avance 70%+`, pese a que la observación
+que lo motivó era correcta.
+
+La observación original —que las dos bandas no se separan— **es cierta como enunciado sobre la
+curva**: difieren ≤3.9% en relativo y se **cruzan** en el día 14 (d es más lenta al principio y
+más rápida al final). Y el colapso es numéricamente gratis: mueve el total de un mes **0.008%**
+como máximo.
+
+**Se rechaza igual porque `avance_band` no es solo un segmentador de curva — es el eje por el
+que se lee la desviación.** En agosto 2026 la banda 70%+ corre **+89.5%** sobre lo proyectado y
+la 40-70% **+21.9%**; colapsadas dan +28.6%, que esconde que el bucket chico va al doble. Per
+el criterio de adopción, el colapso no hace la medición más fiel: la hace más gruesa.
+
+### Protocolo de calibración: 12 meses rodantes, 7 meses de test (2026-08-26)
+
+**Decisión:** las curvas de "nuevos" se calibran sobre una ventana **rodante de 12 meses**
+(`[M-12, M-1]`), y el backtest oficial corre sobre **7 meses** (202601-202607).
+
+**Por qué 12 y no más:** medido en `tarea18_ventana_calibracion.sql`. El ruido mes a mes del
+día 0 de la curva es ±2.8pp mirando desde 202501; estirar a 202401 lo **sube** a ±4.4pp, porque
+esos meses son carteras de <20% del tamaño actual. Doce meses es donde el ruido mensual ya se
+promedió y todavía no entra régimen viejo. La cola de la curva (día 30) es estable en todas las
+ventanas (±1.0pp), o sea la deriva vive en el arranque, no en el nivel.
+
+**Por qué 7 meses de test:** con piso de 3,000 entradas/mes la historia usable arranca en
+202501, y `[usable] - [ventana]` da 7 meses. Bajando el piso a 1,000 se llega a 13, pero a
+costa de meses cuya cartera es un tercio de la actual.
+
+**Para una meta prospectiva la ventana termina en el último mes COMPLETAMENTE OBSERVADO**, no
+en el mes anterior: una cohorte necesita 31 días de seguimiento. Para la meta de agosto la
+ventana es `[202507, 202606]` — julio queda afuera aunque ya haya pasado, porque al 1-ago sus
+cohortes no estaban cerradas. Meter julio sería usar información que la meta no podía tener.
+
+**Beneficio medido:** con la ventana rodante el leak de calibración queda **medido, no
+estimado**: 0.10pp (0.11 / 0.17 / 0.01 / -0.09 en los 4 meses comparables), consistente con los
+0.15-0.2pp que tarea 10 había medido sobre la arquitectura de 3 componentes.
+
+### Motor unificado v2 (W3): día de semana del vencimiento + factor por día del mes (2026-08-26)
+
+**Decisión del usuario:** adoptar W3 en producción y **recalcular la meta de agosto** a mitad
+de mes (no congelarla).
+
+Dos dimensiones nuevas en la curva de "nuevos", ambas medidas antes y probadas contra el
+backtest de 7 meses:
+
+1. **Día de la semana del vencimiento**, abierto a los 6 días que existen. El día 0 va de
+   18.7% (venc. sábado, entra domingo) a 42.0% (venc. martes, entra miércoles); antes se
+   aplicaba a todos los días el promedio ponderado, 34.3%, **que no corresponde a ninguno** —
+   cada día del calendario tiene un día de semana único, no es una mezcla.
+2. **Factor multiplicativo por día del mes** sobre el incremento diario: quincena 1.0855, días
+   30-31 1.1848, resto 0.9812. **2 parámetros, no 31**: con uno por día sobreajusta
+   (correlación entre mitades disjuntas de la ventana, solo +0.51). El día 29 sale bajo en
+   todas las ventanas, así que el efecto es de **fecha de pago** (planilla), no de "últimos
+   días del mes".
+
+**Confirmación independiente del mecanismo de (2):** la curva de **stock**, que ya estaba
+indexada por día del mes y por lo tanto sí puede verlo, tiene la quincena **+12%** sobre su
+propia tendencia local. El efecto existe en los datos; el componente de nuevos era el único
+ciego a él, por estar indexado en días-desde-la-entrada.
+
+**Criterio de adopción aplicado:** el error de cierre pasa de 10.43% a 10.55% — irrelevante y
+además no arbitrable (ver arriba). Se adopta porque cambia **cómo se mide**, y la trayectoria
+diaria queda más fiel en los 7 meses sin excepción.
+
+**Alternativas evaluadas y descartadas:** el corte binario `finde`/`semana` de Fase 2/3 (mal
+especificado, ver bug 21 — captura solo ~2/3 de la ganancia) y una agrupación de 3 regímenes de
+día de entrada (0.849 vs. 0.878 de correlación, y engrosa solo las celdas que ya eran gruesas:
+la celda mínima sube de 1,241 a 1,519 entradas, +22%, no al doble).
+
+### Recupero oficial migrado a `dias_atraso_cuota` (tarea 18e, 2026-08-26 continuación 2)
+
+**Decisión del usuario:** migrar el motor de Recupero Oficial (`fase1_stock.sql`/
+`fase2_nuevos.sql`/`fase3_backtest.sql`, hasta entonces con `dayslate`) al mismo universo que
+ya usa Capital Asegurado desde tarea 17 Fase 4. Alcance de Fase 4 había sido deliberadamente
+solo Capital Asegurado; esta decisión cierra esa asimetría.
+
+**Por qué:** mismo argumento que ya justificó Fase 4 — el punto ciego de `dayslate` (bug 9,
+~1 día) no tenía ninguna compensación acá (Recupero Oficial nunca tuvo capa fantasma). Medido
+en el backtest de 7 meses: el real capturado con `dias_atraso_cuota` es **148%-157% del real
+capturado con `dayslate`** en junio/julio — mucho más que el +26-30% ya conocido en conteo de
+créditos, porque la población invisible a `dayslate` paga casi instantáneo (99.60% el mismo
+día, bug 16 Fase 3) y aporta rebaje ~1:1 de su saldo apenas se detecta. Validado a nivel de
+caso (`tarea18e_validacion_casos_fantasma.sql`): créditos donde `dayslate` marca 0 el día
+exacto en que pagan, algunos cancelando el saldo completo ese mismo día.
+
+**Se corrigió la tasa de entrada por la misma razón que 18b encontró en Capital Asegurado**:
+calibrarla CONTANDO créditos pero aplicarla sobre un calendario en SOLES subestima, porque el
+exceso de entrada se concentra en créditos de saldo alto. La tasa de Recupero Oficial se
+calibró por SOLES desde el arranque (25.19% agregada, 23.4%-27.2% por mes rodante) — no se
+repitió el error para descubrirlo después del backtest, como pasó la primera vez.
+
+**Refinamiento de forma aplicado desde el arranque** (no como pasada separada): ventana rodante
+de 12 meses sin leak para nuevos, día de semana del vencimiento, factor de quincena, factor de
+cierre real en stock (ventana de stock fija — rodarla ya se había probado y empeora en Capital
+Asegurado, mismo mecanismo, no se repitió el experimento). Correlación de incrementos diarios
+0.560→0.837, mismo salto que el refinamiento análogo dio en Capital Asegurado.
+
+**Criterio de adopción aplicado:** no se adoptó por mejora de error (el error de cierre del
+motor nuevo, 7.83% de magnitud media, no es comparable uno a uno contra el viejo — universos
+distintos). Se adoptó porque el universo capturado queda más fiel — el mismo criterio ya
+aplicado en Fase 4 y en W3.
+
+**Excepción deliberada, mismo patrón que 18g con la meta de Capital Asegurado:** la meta de
+AGOSTO de Recupero Oficial (`meta_agosto.py`) NO se recalculó — sigue con `dayslate`/13.38%
+hasta que agosto cierre. Cambiar el motor de un mes ya en curso movería la lectura "real vs.
+proyectado" de los últimos días sin necesidad. La meta de **septiembre** es la primera en usar
+el motor nuevo, calibrable recién cuando julio complete sus 31 días de seguimiento (~31-ago,
+ver el protocolo de calibración de arriba) — no antes, y no por el cierre de agosto en sí.
+
+---
+
+### La tasa de entrada se calibra en SOLES, aunque eso empeore el error reciente (2026-09-01, tarea 19)
+
+`P_ENTRADA` se calibraba **contando créditos** (21.9918%) pero el motor la aplica
+**multiplicando el saldo en soles** del calendario. Los créditos que caen en mora tienen saldo
+por encima del promedio, así que la tasa correcta en soles corre **~14.5% más alta** (25%).
+18b ya había diagnosticado que esa mezcla explicaba ~78% del sesgo de "nuevos"; 18e ya lo había
+corregido en Recupero Oficial. Agosto cerró, así que dejó de aplicar la regla de "no cambiar el
+motor de un mes en curso".
+
+**No hacía falta una query nueva.** Los dos enfoques comparten la definición de entrada
+(`dias_atraso_cuota` 0→1, calendario elegible = entrada dentro del mes, excluye stock); lo que
+difiere aguas abajo es la curva (activación vs. rebaje), no quién entra. Verificado: la query de
+soles de 18e reproduce el `P_ENTRADA` del alfa en créditos con 8 créditos de diferencia sobre
+343,788 (21.9941% vs. 21.9918%).
+
+**Se probó con 3 variantes, no 2**, para no confundir dos cambios en uno: fija por conteo (A),
+rodante por conteo (B), rodante por soles (C). A→B mide el efecto de *rodar*; B→C el de cambiar
+de *unidad*. Rodar solo no aporta (10.26%→10.96%): el efecto es todo de la unidad.
+
+**Por qué se adoptó aunque el error sube en los últimos 3 meses** (jun/jul/ago pasan de ~-2% a
+~+9%): por el **principio de modelado** — tasa y curva deben calibrarse sobre la misma
+definición — y con el precedente directo de bug 18, que se corrigió aunque empeoró los 4 meses
+de entonces. Elegir la tasa de conteo *porque el error sale más chico* habría sido ajuste
+ex-post; y además su buen desempeño reciente no era mérito sino **compensación accidental** de
+la caída de activación (abajo).
+
+La correlación de incrementos diarios es **idéntica en las 3 variantes** (0.886). Era lo
+esperado: un cambio de tasa es de **nivel**, no de forma, y la correlación es invariante a
+escala. Acá el error de cierre sí es la métrica pertinente — no se está arbitrando una forma.
+
+### La caída de activación es hallazgo de negocio, no parámetro a ajustar (2026-09-01, tarea 19)
+
+Las dos variantes de tasa **derivan ~+10pp en paralelo** a lo largo de 8 meses. Una deriva que
+sobrevive al cambio de tasa no puede ser de la tasa. Medido directo: el capital asegurado de
+nuevos como % del calendario **cae -0.46pp/mes** (20.99% ene-mar → 18.50% jun-ago, r=-0.77),
+mientras la tasa de entrada por soles no tiene tendencia y el calendario **creció +90%** en 9
+meses. Se captura una porción decreciente de una cartera que crece rápido.
+
+**Qué NO se hizo, y por qué.** No se metió un factor correctivo ni se acortó la ventana para
+"seguir" la caída. Lo segundo se **midió**: 6 meses empeora las métricas diarias (0.886→0.876),
+9 ≈ 12, y jun/jul quedan en +8.2-9.3% con cualquier ventana. No es un problema de calibración:
+es un cambio de régimen que ninguna ventana ve venir. Ajustarlo convertiría el modelo en un
+ajuste ex-post y destruiría lo que lo hace útil como meta fijada al inicio del mes.
+
+**Qué se hizo en cambio.** La meta de septiembre se publica con el caveat explícito de que corre
+~10% por encima de lo alcanzable si la tendencia sigue — en `ESTADO.md`, en el docstring del
+script y en el artifact. La meta es la referencia contra la cual se lee la ejecución; la
+desviación se explica.

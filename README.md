@@ -4,8 +4,10 @@ Metodología y herramientas para estimar, **día a día**, la cartera de cobranz
 1–30 días — calibrada con 14 meses de historia real (dts_mambu_loans_hist,
 dts_okaapi_loans, dts_cobranza_creditos_cuotas en Athena, `dev_datalake_master`) y
 validada contra un mes real cerrado. **Desde 2026-07-13 la meta principal es capital
-asegurado** (Enfoque alfa: % de capital con actividad de pago, backtest -4.7% de error);
-el recupero oficial en soles (backtest +5.4% de error) se sigue trackeando en paralelo.
+asegurado** (Enfoque alfa: % de capital con actividad de pago; backtest de 8 meses cerrados
+con calibración rodante, magnitud media de error 4.54% y correlación diaria 0.889 — los dos
+números miden cosas distintas, ver `SEGUIMIENTO.md`); el recupero oficial en soles se sigue
+trackeando en paralelo.
 Ver [`ESTADO.md`](ESTADO.md) para el detalle.
 
 > **Desde 2026-07-15 el proyecto mantiene solo estos 2 enfoques.** "Reinicio del reloj" y
@@ -13,6 +15,11 @@ Ver [`ESTADO.md`](ESTADO.md) para el detalle.
 > `DECISIONES.md`. Sus archivos se eliminaron del repo (recuperables vía git history).
 
 ## Empezar por acá
+
+**[`prompt_handoff_2026-09-02.txt`](prompt_handoff_2026-09-02.txt)** — si vas a arrancar una
+sesión nueva, empieza por acá: orden de lectura, dónde está el proyecto, qué está resuelto y no
+hay que re-probar, las tareas abiertas en orden, el ciclo mensual para fijar la meta siguiente y
+las trampas conocidas. *(`prompt_handoff_2026-08-26.txt` queda como registro; está viejo.)*
 
 **[`ESTADO.md`](ESTADO.md)** — foto del momento: meta vigente, artifacts actualizados,
 qué está validado vs. experimental, pendientes. Es el archivo que se mantiene al día; todo
@@ -31,13 +38,13 @@ lo que falta sin releer todo el historial.
 | [Guía técnica](https://claude.ai/code/artifact/9df13c20-7758-4174-8346-ed6563d25c5d) — `guia_tecnica_recupero.md` | Técnico | Mismo contenido + SQL copiable para Athena |
 | [Detalle con curvas interactivas](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) — `meta_recupero_detalle.html` | Equipo | El más completo: composición, calendario, curvas por avance, cohortes, trayectoria — todo interactivo |
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) — `julio_25pct_no_recomendado.html` | Referencia | Registro de por qué la tasa oficial es 13.38%, no el complemento simple de "paga a tiempo" |
-| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) — `capital_asegurado.html` | Meta principal, ✓ vigente | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. 5 créditos reales de agosto, curvas por segmento, backtest de **4 meses cerrados** (abril a julio) y avance en vivo de agosto. Actualizado 2026-08-25 con el **motor unificado** (tarea 17 fase 4): sin capa fantasma, stock + nuevos calibrados con `dias_atraso_cuota`, meta de agosto **S/17.27M**. Ver `motor_unificado.py`. |
+| [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) — `capital_asegurado.html` | Meta principal, ✓ vigente (2026-09-02) | Enfoque alfa: % del capital asignado con actividad de pago, no soles recuperados. 5 créditos reales de agosto, curvas por segmento, backtest de **8 meses cerrados** (enero a agosto, calibración rodante de 12 meses sin fuga), **agosto cerrado** (-1.2% contra su meta) y la **meta de septiembre: S/20.48M**. Republicado 2026-09-02 con la tasa de entrada **por soles** (24.91%) — con el motor actual agosto habría dado +9.8%, de los cuales ~6.5pp son convención de anclaje del calendario. Ver `motor_unificado.py` v3 y `meta_septiembre_capital_asegurado.py`. |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85) — `curvas_matriz_alfa.html` | Equipo | Enfoque alfa: curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes de asignado/asegurado/%, ya con la definición corregida (bug 12). Ver `matriz_mensual_alfa.sql` |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) — `meta_julio_en_vivo.html` | Operativo, ⚠ desactualizado | Caso de uso real: cálculo de la meta del mes en curso |
 | [Deck completo](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) — `deck_meta_recupero.html` | Presentación, ⚠ desactualizado | De la asignación (antiguos/nuevos) a la meta, en 11 slides |
-| [De julio a agosto](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) — `resumen_julio_agosto.html` | Equipo, ⚠ desactualizado | Guía paso a paso: curvas, asignación de julio, walkthrough completo de la meta de agosto, ambos enfoques. **Quedó desactualizado el 2026-08-25**: describe el Enfoque alfa con la capa fantasma y `P_FANTASMA=8.5524%` (dos versiones atrás). Rehacerlo con el motor unificado es una tarea pendiente — tocaría también `armar_artifact_julio_agosto.py`. |
+| [🎯 De asignado a asegurado](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) — `asignado_a_asegurado.html` | **El recomendado para explicar el enfoque**, ✓ vigente (2026-09-02) | Escrito para que lo entienda alguien que no siguió el proyecto. Eje: la **cadena de capital asignado → capital asegurado**, con los tres ratios nombrados y con su denominador explícito — ratio de activación de antiguos (66.7%), tasa de entrada en mora (22.8%) y ratio de activación de nuevos (86.2%) — y la distinción entre antiguos (se asignan **todos el día 1**) y nuevos (**entran día a día** según vencimientos). Todo abierto por tramo de atraso, banda de avance y día de semana del vencimiento. Cubre **agosto 2026 cerrado** (−1.2% vs. la meta publicada, **+9.8%** vs. el enfoque actual) y **septiembre proyectado** (S/20,477,271) con la misma cadena, más el hallazgo de la caída de activación (−0.46pp/mes). Fuente: `armar_asignado_a_asegurado.py` + `tarea19_agosto_cadena_segmentada.sql`. **Reemplazó a "De julio a agosto"** (`resumen_julio_agosto.html`, que queda en el repo como la versión anterior). |
 | [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637) — `tasa_1338.html` | Técnico | Reconstruye paso a paso `P_NO_PAGA_DIA0=13.38%`: embudo elegibles/entradas, 2 créditos reales día por día, desglose mensual y diario, pruebas de robustez (dedup, ventanas 6/10/12 meses). |
-| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) — `proyectado_vs_real.html` | Técnico | Los **2 motores** del backtest mensual (stock + nuevos) explicados con julio y mayo 2026 día a día, más la prueba de robustez de las curvas y la tabla de los 4 meses cerrados. Actualizado 2026-08-25 con el motor unificado, sin capa fantasma (tarea 17 fase 4). |
+| [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) — `proyectado_vs_real.html` | Técnico, ✓ vigente (2026-09-02) | Los **2 motores** del backtest mensual (stock + nuevos) explicados con julio y mayo 2026 día a día, la fuga de calibración medida (0.10pp) y la tabla de los **8 meses cerrados**. Republicado 2026-09-02 con la tasa por soles y una sección nueva, **"Dos calendarios"**: por qué una meta y un backtest no miden el mismo mes, y cómo el desvío se parte en convención de anclaje (-6.5pp) y modelo (+2.7pp). |
 
 *(Los artifacts son privados hasta que se compartan explícitamente desde su menú de
 compartir en claude.ai. Los marcados ⚠ no tienen error, solo no incorporan el fix de
@@ -78,7 +85,7 @@ archivos de referencia de abajo para consultas puntuales.
 | [`SEGUIMIENTO.md`](SEGUIMIENTO.md) | Tabla mes a mes de proyectado vs. real |
 | [`CLAUDE.md`](CLAUDE.md) | Instrucciones para cualquier sesión de Claude Code en este repo |
 | [`enfoque_acumulado.md`](enfoque_acumulado.md) | Enfoque oficial (validado): resumen corto, apunta a `guia_tecnica_recupero.md` |
-| [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa (validado, backtest -4.7%): % de capital con actividad de pago |
+| [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa: % de capital con actividad de pago. **Ojo: describe la arquitectura anterior** — el motor vigente es `motor_unificado.py` v2, ver `ESTADO.md` |
 | [`avance_cobranza_fase.md`](avance_cobranza_fase.md) | Análisis puntual: avance de julio por fase de cobranza (Temprana/Especializada/Recovery), usando la asignación real del negocio |
 | [`reconciliacion_vw_seguimiento_temprana.md`](reconciliacion_vw_seguimiento_temprana.md) | **Pendiente activo** — reconciliación contra la vista oficial externa `vw_seguimiento_diario_cohorte_tramo`: cuadra casi exacto en la población compartida, pero cuantifica el punto ciego de `dayslate` en ~27% de TEMPRANA (bug 14, `BUGS.md`) |
 
@@ -93,11 +100,29 @@ fase3_backtest.sql           Backtest sobre un mes real y cerrado (junio 2026)
 ejemplo_cohorte_julio.sql    Ejemplo replicable de una sola cohorte, paso a paso
 investigacion_dayslate.sql   Investigación del punto ciego de 1 día en dayslate
 motor_cuota_vencimiento.sql  Motor alternativo por vencimiento de cuota (descartado, ver BUGS.md)
-enfoque_capital_asegurado.sql  Enfoque alfa: curvas de capital asegurado (validado, backtest -4.7%)
+enfoque_capital_asegurado.sql  Enfoque alfa: curvas con dayslate + capa fantasma (HISTORICO, reemplazado por el motor v2)
 enfoque_capital_asegurado_backtest.sql  Backtest de junio del enfoque alfa
 avance_cobranza_fase.sql     Análisis puntual: avance por fase de cobranza (Temprana/Especializada/Recovery)
 homologacion_tipo_mora_gestiones.sql  Homologación antiguo/nuevo contra tipo_mora del proyecto gestiones_cobranzas (bug 13)
 cierre_julio.sql             Cierre de julio 2026 (real final, ambos enfoques) vs. proyectado
+
+--- MOTOR VIGENTE DEL ENFOQUE ALFA (v2, W3 — 2026-08-26) ---------------------
+tarea18f_curva_cruda.sql     MATRIZ CRUDA (fecha_entrada, banda, dia_primer_pago). Fuente
+                             unica de las curvas de "nuevos": desde aca se arma cualquier
+                             segmentacion y cualquier ventana rodante SIN volver a Athena
+curvas_crudas.py             Calibracion desde la matriz cruda (curva + factor por dia del mes)
+motor_unificado.py           Proyector compartido: tasa, curvas, factor, segmentacion del calendario
+generar_curvas_produccion.py Escribe las curvas de produccion a datos_capital_asegurado/
+backtest_capital_asegurado_unificado.py  BACKTEST OFICIAL: 7 meses, calibracion rodante de 12m
+meta_agosto_capital_asegurado.py  Meta del mes en curso (v8)
+armar_proyectado_vs_real.py  Regenera los datos del artifact proyectado_vs_real.html
+armar_capital_asegurado.py   Regenera los datos del artifact capital_asegurado.html
+tarea18_ventana_calibracion.sql  Cuanta historia es usable y cuanto deriva la curva
+tarea18a_curva_nuevos_dow.sql / _dow7.sql  Curvas por dia de semana (binaria y abierta)
+tarea18_{calendario,stock_pob,real_stock,real_nuevos}_7m.sql  Insumos de los 7 meses de test
+backtest_tarea18a.py         Las 7 variantes de segmentacion que decidieron W3 (evidencia)
+backtest_tarea18f.py         Walk-forward de 7 meses, W0/W1/W2/W3 (evidencia de la decision)
+-----------------------------------------------------------------------------
 
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
 backtest_junio.py            Compara proyección vs. recupero real de junio (backtest)
@@ -106,16 +131,25 @@ backtest_motor_cuota.py      Backtest del motor alternativo (descartado)
 meta_julio.py                Meta de julio (histórico, mes ya cerrado — ver cierre_julio.sql)
 meta_julio_25pct.py          Meta de julio bajo el escenario 25% plano (no recomendado)
 meta_julio_capital_asegurado.py  Proyección de julio bajo el enfoque alfa (histórico)
-meta_agosto.py                Meta del mes en curso (recupero oficial), anclada al cierre de julio
-meta_agosto_capital_asegurado.py  Meta del mes en curso (enfoque alfa), anclada al cierre de julio
+meta_agosto.py                Meta de agosto (recupero oficial, motor viejo) — mes CERRADO, -3.2%
+meta_agosto_capital_asegurado.py  Meta de agosto (enfoque alfa, v8) — mes CERRADO, -1.2%
+meta_septiembre_capital_asegurado.py  META VIGENTE (enfoque alfa), tasa por SOLES, anclada al cierre de agosto
+meta_septiembre_recupero.py   META VIGENTE (recupero oficial), primera con el motor 18e
+generar_curvas_septiembre.py  Curvas de producción de septiembre, ventana [202508,202607]
+backtest_tarea19_tasa_soles.py  P_ENTRADA por conteo vs. por soles, 3 variantes sobre 8 meses
 avance_cobranza_fase.py      Agregación + cruce con curvas del análisis por fase de cobranza
 
 datos_backtest_junio/        Insumos (CSV) del backtest de junio (recupero + capital asegurado)
 datos_meta_julio/            Insumos (CSV) de la meta de julio (enfoque acumulado, histórico)
 datos_meta_agosto/            Insumos (CSV) de la meta de agosto (enfoque acumulado)
+datos_tarea19/                Insumos del ciclo de septiembre: matrices crudas a 202607, tasa
+                              por soles, cierre de agosto, insumos de la meta de septiembre
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
 datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado, curvas)
 datos_avance_capital_asegurado_agosto/  Insumos (CSV) de la meta de agosto (enfoque alfa)
+datos_tarea18a/              Matriz cruda + curvas por dia de semana + insumos de los 7 meses
+datos_tarea17_fase4/         Insumos del motor unificado (calendario, stock, real por mes)
+datos_backtest_unificado/    Series diarias del backtest oficial, un CSV por mes
 datos_avance_fase/           Insumos (CSV) del análisis de avance por fase de cobranza
 scripts/run_athena.sh        Helper para correr un .sql contra Athena y bajar el CSV
 
@@ -127,9 +161,13 @@ meta_julio_en_vivo.html      Caso de uso en vivo (copia del artifact, desactuali
 deck_meta_recupero.html      Deck de presentación (copia del artifact, desactualizado)
 meta_recupero_detalle.html   Detalle con curvas interactivas (copia del artifact)
 julio_25pct_no_recomendado.html  Por qué NO usar 25% (copia del artifact)
-capital_asegurado.html       Enfoque alfa: capital asegurado (copia del artifact, pendiente de refresco)
+capital_asegurado.html       Enfoque alfa: capital asegurado (copia del artifact)
 enfoque_capital_asegurado.md Doc dedicado del enfoque alfa: concepto, metodología, resultados
-resumen_julio_agosto.html    De julio a agosto: curvas + asignación + walkthrough de la meta (copia del artifact)
+resumen_julio_agosto.html    De julio a agosto (versión anterior del artifact 949ab3c2)
+asignado_a_asegurado.html    De asignado a asegurado: la cadena completa por segmento,
+                             agosto cerrado + septiembre proyectado. Publicado 2026-09-02
+                             en el artifact 949ab3c2 (reemplaza al anterior)
+armar_asignado_a_asegurado.py   Prepara e inyecta los datos de asignado_a_asegurado.html
 armar_artifact_julio_agosto.py  Prepara los datos embebidos de resumen_julio_agosto.html
 PENDIENTES.md                Plan de continuación accionable para los 2 enfoques vigentes
 ```

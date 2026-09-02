@@ -48,7 +48,7 @@ de vencimientos y para la validación en # de operaciones.
 
 | Campo | Notas |
 |---|---|
-| `fechavencimiento` | fecha de vencimiento de la cuota — el ÚLTIMO día para pagar (inclusive) |
+| `fechavencimiento` | fecha de vencimiento de la cuota — el ÚLTIMO día para pagar (inclusive). **Nunca cae en domingo**: 0.00% del calendario abr-jul 2026 y 0.00% de la ventana de calibración mar-2025 a may-2026. Como la entrada en mora es `vencimiento + 1`, tampoco existe ninguna entrada un lunes. Ver bug 21 — invalida cualquier corte "fin de semana" definido como `day_of_week(...) in (6,7)` |
 | `installmentstate` | `PAID` / `PENDING` / `LATE` / otros |
 | `dias_vencimiento_a_pago` | días entre vencimiento y pago real (a nivel cuota, no crédito) |
 | `flg_last_loan_in_chain` | 1 si es el último crédito de su cadena de reenganches. Constante por `id_ihfintech_loan` (verificado) — derivar a nivel crédito con `max(flg_last_loan_in_chain)` agrupado por `id_ihfintech_loan` y unir a `dts_mambu_loans_hist`/`dts_okaapi_loans` |
@@ -88,6 +88,14 @@ la curva debe representar TODA la mora que ocurre (no solo la que el negocio ges
 `dias_atraso_cuota` es de acá en adelante el universo correcto para calibrar curvas,
 reemplazando `dayslate`. Investigación completa, queries reproducibles y plan de migración
 en bug 16 (`BUGS.md`) y tarea 17 (`PENDIENTES.md`).
+
+**Desde 2026-08-26 no hace falta re-consultar esta tabla para recalibrar una curva de
+"nuevos".** `tarea18f_curva_cruda.sql` deja una **matriz cruda** al grano
+`(fecha_entrada, avance_band, día_primer_pago)` en `datos_tarea18a/curva_cruda.csv`, y
+`curvas_crudas.py` arma desde ahí cualquier segmentación (banda, día de semana del
+vencimiento, factor por día del mes) y cualquier ventana rodante, sin volver a Athena.
+Validada a 0.03pp contra la curva de producción. Re-correr la matriz solo cuando haya que
+extender el rango de fechas.
 
 ## `dts_asignaciones_gestiones_cobranza` (tabla viva — usar esta, no la de abajo)
 

@@ -1,0 +1,106 @@
+Contexto: sesión del 2026-08-26, con DOS continuaciones en paralelo el mismo día. La primera
+(esta conversación) diagnosticó por qué "nuevos" subestima (18b), adoptó un factor de cierre
+real para stock (18g → motor v3 de Capital Asegurado), y rehizo el artifact "De julio a agosto"
+(18d). Una SEGUNDA sesión, corriendo en paralelo sobre el mismo repo, ejecutó y ADOPTÓ la
+migración completa de Recupero Oficial a `dias_atraso_cuota` (18e) — algo que esta conversación
+había dejado como "plan de 4 fases, no ejecutar sin sesión dedicada". Se ejecutó igual, en la
+misma tarde, con el mismo rigor (backtest de 7 meses, validación a nivel de caso, refinamiento
+de forma, adopción explícita del usuario). NO hay que re-derivar NADA de esto — está
+documentado y corriendo. Si algo de este prompt contradice lo que ya está en el repo, confiar
+en el repo (`ESTADO.md`/`PENDIENTES.md`), no en este texto — puede haber pasado más después.
+
+LEER EN ESTE ORDEN antes de tocar algo:
+1. ESTADO.md — tiene TRES bloques del 2026-08-26. El más nuevo ("continuación 2") es la
+   migración de Recupero Oficial. Debajo, "continuación" es el factor de cierre de stock. Debajo
+   de eso, el bloque original (W3). "LO QUE SIGUE" resume las 7 sub-tareas de tarea 18.
+2. PENDIENTES.md tarea 18 — 18a/18f/18g(stock)/18e TODAS cerradas y adoptadas. 18b medida
+   (diagnóstico, no ajuste). 18c sigue abierta (rodar stock EMPEORA, medido dos veces — para los
+   dos enfoques — necesita otro enfoque, no "más de lo mismo"). 18d rehecho.
+3. analisis_sesgo_nuevos_18b.md y analisis_tarea18g_cierre_real.md (Capital asegurado) — la
+   sección de 18e en PENDIENTES.md tiene el equivalente para Recupero Oficial, no hay doc
+   separado.
+4. motor_unificado.py (docstring v3) — el proyector es GENÉRICO (stock×curva +
+   saldo_riesgo×tasa×curva), lo reusan los dos enfoques sin que le importe si la "curva" mide
+   activación o rebaje. `curvas_crudas.py`/`curvas_crudas_stock.py` también son agnósticos al
+   significado de la columna `saldo` — mismo motivo.
+
+QUÉ ESTÁ VIGENTE EN PRODUCCIÓN AHORA MISMO:
+
+**Capital asegurado (meta principal):**
+- Meta de agosto: S/17,117,628 (motor v2/W3), deliberadamente SIN el factor de cierre de stock
+  de v3 — mes en curso, no se retoca a mitad de camino. Avance al 25-ago: +1.0% sobre lo
+  proyectado al mismo día.
+- Backtest oficial: motor v3 (stock con factor de cierre real). Magnitud media 10.55%→10.26%.
+
+**Recupero oficial (se sigue trackeando en paralelo, no es la meta principal):**
+- SEGUIMIENTO.md YA ADOPTÓ el motor `dias_atraso_cuota` (7 meses ene-jul recalculados). El real
+  de junio/julio subió 48-57% respecto al motor viejo (`dayslate`) — punto ciego de bug 9 sin
+  compensar hasta ahora, validado a nivel de caso (10 créditos reales). Los números viejos
+  quedan en el mismo archivo como referencia histórica, no se borraron.
+- Meta de agosto: SIGUE con el motor viejo (`dayslate`/13.38%) a propósito — mismo criterio que
+  capital asegurado, no se cambia el motor de un mes en curso. Avance al 25-ago: +5.2% sobre lo
+  proyectado al mismo día (motor viejo).
+- `meta_agosto.py` v3: el "real a hoy" ya no está hardcodeado — sale de
+  `tarea18d_real_agosto_recupero.sql` → `datos_meta_agosto/real_agosto_recupero.csv`,
+  refrescable por día sin volver a Athena.
+
+**Artifact "De julio a agosto"** (https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde):
+reescrito dos veces el mismo día — primero sin capa fantasma (motor v3 de capital asegurado),
+después con Recupero Oficial también migrado. Julio recalculado con el motor nuevo en los dos
+enfoques; agosto en los dos casos usa el motor viejo (mes en curso). **Antes de tocarlo de
+nuevo: WebFetch la URL primero** — la plataforma avisa cuando otra sesión lo republicó y tu
+copia local puede estar vieja.
+
+LO QUE YA ESTÁ RESUELTO Y NO HAY QUE VOLVER A PROBAR:
+- El sesgo de "nuevos" en Capital asegurado: `P_ENTRADA` se calibró por CONTEO de créditos pero
+  se aplica sobre SOLES — la tasa real ponderada por soles corre 24-27%. Mismo mecanismo
+  confirmado en Recupero Oficial (`P_NO_PAGA_DIA0` por conteo: ~22%; por soles: 25.19%,
+  +14.5%). Es un patrón, no una coincidencia de un enfoque — si aparece un tercer motor en este
+  proyecto, hay que chequear esto desde el arranque, no al final.
+- Rodar la ventana de stock (12 meses) EMPEORA las métricas diarias — medido dos veces ahora
+  (Capital asegurado en 18c/18g, Recupero oficial en 18e v2). Stock es el componente de mayor
+  varianza muestral en los dos enfoques. No volver a probar "rodar stock" sin una idea nueva.
+- Migrar un motor de `dayslate` a `dias_atraso_cuota` es MÁS BARATO de lo que parece si ya
+  existe el patrón: `curvas_crudas.py`/`curvas_crudas_stock.py` no necesitan tocarse — el IPF
+  que calibran es agnóstico a qué representa la columna `saldo` (activación vs. rebaje). Lo
+  único que hace falta es una matriz cruda nueva con la definición de saldo correcta.
+- Un salto grande en el "real" reportado al migrar de fuente (`dayslate`→`dias_atraso_cuota`)
+  no es en sí mismo sospechoso en este proyecto — ya pasó con el stock de Capital asegurado
+  (Fase 4, +30.2%) y ahora con Recupero Oficial (+48-57%) — en los dos casos el mecanismo se
+  validó a nivel de caso antes de adoptar, no se aceptó por fe.
+
+QUÉ HACER — en orden de prioridad:
+
+(1) SI AGOSTO YA CERRÓ (31-ago): cerrar las DOS filas de agosto en SEGUIMIENTO.md para los DOS
+    enfoques — las 4 combinaciones ya tienen su real por día listo (real_agosto.csv,
+    real_agosto_recupero.csv), es sumar hasta el día 31, no volver a Athena. Después:
+    - Meta de septiembre, Capital asegurado: ventana [202508,202607], motor v3 completo (ya no
+      hay mes en curso que proteger). `generar_curvas_produccion.py` ya sabe producir la curva
+      v3 de stock.
+    - Meta de septiembre, Recupero oficial: mismo patrón, con
+      `backtest_tarea18e_recupero_oficial_v2.py` como base de la calibración — hace falta un
+      `meta_septiembre.py` nuevo (no existe todavía, análogo a `meta_agosto.py` pero con los
+      insumos de 18e).
+
+(2) TAREA 18c — rodar la curva de stock. Ya se probó DOS VECES (dos enfoques) que la ventana
+    rodante de 12 meses empeora. Pensar un enfoque distinto (¿ventana más larga, dado que stock
+    tiene menos masa por mes que nuevos en los dos enfoques?) en vez de repetir el experimento.
+
+(3) El reindex de "nuevos" por cierre real (parte de 18g/Capital asegurado que no se adoptó,
+    impacto marginal) — retomar solo si no hay un mes en curso que proteger. Baja prioridad.
+
+(4) Si hay más de una sesión trabajando el mismo repo en paralelo (como pasó hoy): antes de
+    escribir en ESTADO.md/PENDIENTES.md/SEGUIMIENTO.md, hacer `git status`/`git diff` para ver
+    si cambiaron desde la última lectura — evita pisar trabajo de la otra sesión. Los archivos
+    de datos (`datos_tarea18*/`) son más seguros de tocar en paralelo que los .md compartidos.
+
+CÓMO TRABAJAR:
+- `curvas_crudas.py`/`curvas_crudas_stock.py` sirven para CUALQUIER motor (activación o
+  rebaje) sobre CUALQUIER matriz cruda — no reinventar el IPF si aparece un tercer caso de uso.
+- `motor_unificado.proyectar()` es genérico — no asume qué mide la curva.
+- Al publicar un artifact desde una sesión nueva (o después de que otra sesión lo haya tocado):
+  WebFetch la URL primero, después publicar con `url` para actualizar en el mismo lugar.
+
+CRITERIO DE ADOPCIÓN (no negociable, CLAUDE.md): no se adopta por mejora de error. Se adopta si
+el universo o la medición quedan más fieles, aunque el error suba — ya pasó cinco veces (bug 18,
+Fase 4, W3, factor de cierre de stock, migración de Recupero Oficial).

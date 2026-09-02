@@ -25,10 +25,74 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   (bug 9) que `dias_atraso_cuota` cierra en ~97% al reconstruir día por día. Mismo patrón
   `coalesce(dias_atraso_cuota,0)`, `NULL` cuando está al día. **Desde 2026-08-25 las curvas de
   producción del Enfoque alfa ya están migradas a `dias_atraso_cuota`** (tarea 17 Fase 4,
-  motor unificado — ver `motor_unificado.py`): stock + nuevos con una sola tasa
-  `P_ENTRADA = 21.9918%`, sin capa fantasma. **El motor de recupero oficial
-  (`fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`) sigue con `dayslate`** —
-  migrarlo no se decidió.
+  motor unificado — ver `motor_unificado.py`): stock + nuevos, sin capa fantasma. **Desde
+  2026-08-26 (tarea 18e) el motor de recupero oficial también migró** —
+  `fase1_stock.sql`/`fase2_nuevos.sql`/`fase3_backtest.sql` quedan como referencia histórica;
+  el motor vigente es `backtest_tarea18e_recupero_oficial_v2.py` (rebaje real, no activación).
+  **Agosto 2026 cerró con los motores viejos a propósito** (era mes en curso cuando se migró);
+  las metas de **septiembre** son las primeras con los motores nuevos en los dos enfoques.
+- **La tasa de entrada se calibra en SOLES, no contando créditos** (adoptado 2026-09-01, tarea
+  19). Se aplica multiplicando el **saldo en soles** del calendario, así que tiene que
+  calibrarse sobre soles — los créditos que caen en mora tienen saldo por encima del promedio,
+  y la tasa en soles corre **~14.5% más alta** que la de conteo (25% vs. 22%). Los **dos**
+  enfoques usan la misma tasa, porque comparten la definición de entrada; lo que difiere aguas
+  abajo es la curva (activación vs. rebaje), no quién entra. Verificado: la query de soles
+  reproduce el viejo `P_ENTRADA` de conteo al 0.002pp. `motor_unificado.P_ENTRADA = 21.9918%`
+  sigue existiendo como default del módulo pero **la producción le pasa `p_entrada=` explícito**
+  — no usarla como si fuera la tasa vigente.
+- **Ninguna cuota vence domingo** (0.00% del calendario y de la calibración) — OKA no programa
+  vencimientos ese día. Como la entrada en mora es siempre `vencimiento + 1`, **tampoco existe
+  ninguna entrada un lunes**. Cualquier corte "fin de semana" definido sobre el vencimiento
+  tiene que tenerlo en cuenta: `in (6,7)` es en la práctica solo sábado, y deja "vence viernes"
+  (que entra **sábado**, día no hábil) del lado de los días hábiles. Ver bug 21.
+
+## No re-consultar Athena para recalibrar una curva de "nuevos"
+
+Existe una **matriz cruda** al grano `(fecha_entrada, avance_band, día_primer_pago)`. Desde ahí,
+`curvas_crudas.py` arma **cualquier** curva sin volver a Athena: por banda, por día de semana del
+vencimiento, con factor por día del mes, y sobre **cualquier ventana rodante**. Un walk-forward de
+8 meses × 4 variantes cuesta 0 corridas adicionales. Antes de escribir una query nueva de
+calibración de nuevos, revisar si sale de ahí.
+
+**Cuál es la vigente:** `datos_tarea19/curva_cruda_nuevos.csv` (alfa) y
+`curva_cruda_nuevos_rebaje.csv` (recupero), más las dos de stock — cubren hasta **202607**. Las de
+`datos_tarea18a/` cubren hasta 202606 y quedan congeladas: son el registro de lo que produjo la
+meta de agosto. **Cada mes hay que extenderlas un mes** corriendo las `tarea19_*.sql` con las
+ventanas movidas; ese es el único costo recurrente de Athena del ciclo.
+
+## Protocolo de calibración y test — vigente desde 2026-08-26
+
+- **Calibración: 12 meses rodantes**, `[M-12, M-1]` para cada mes proyectado. No estirar a 15-18
+  meses: eso mete meses de 2024, cuando la cartera es <20% de la actual, y la dispersión de la
+  curva **se duplica** (±4.4pp vs. ±2.8pp en el día 0). Medido en `tarea18_ventana_calibracion.sql`.
+  **Tampoco acortar:** 6 meses empeora las métricas diarias (0.886→0.876) y 9 ≈ 12 — probado en
+  tarea 19 contra la hipótesis de que una ventana corta seguiría la caída de activación. No lo hace.
+- **Test: 8 meses** (202601-202608), con piso de 3,000 entradas/mes.
+- **Para una meta prospectiva, la ventana termina en el último mes COMPLETAMENTE OBSERVADO** al
+  momento de fijarla — una cohorte necesita 31 días de seguimiento. Para la meta de septiembre eso
+  es `[202508, 202607]`: agosto queda afuera aunque el mes ya cerró. Usar datos que no existían
+  al fijar la meta es el mismo ajuste ex-post que prohíbe el principio de interpretación del error.
+- **La curva de STOCK es la excepción: ventana FIJA `202504-202606`, no rueda.** Rodarla se probó
+  en 18c/18g y **empeora** (corr. 0.848→0.820): stock tiene mucha menos masa que nuevos, así que
+  12 meses le dan una muestra ruidosa. Queda abierto como tarea 18c y **necesita otro enfoque**,
+  no el mismo tratamiento que nuevos.
+
+## Qué métrica arbitra qué — no negociable
+
+**El error de fin de mes NO puede decidir si una curva está mejor segmentada.** La diferencia
+pareada entre variantes tiene media -0.13pp y desvío **1.49pp** — el ruido es 10x el efecto,
+porque el signo lo fija la composición de fin de mes de cada mes. Resolver 0.13pp sobre el
+cierre necesitaría **~1,050 meses**. No hay cantidad realista de historia que lo arregle.
+
+- **Refinamientos de forma** (segmentadores, índices, factores) se deciden con **métricas
+  diarias** — correlación de incrementos diarios proyectado-vs-real, y MAE del incremento
+  diario. Aportan ~30 observaciones por mes en vez de 1.
+- **El error de fin de mes** es el número de negocio y el insumo para explicar el sesgo: es la
+  meta contra la ejecución, no un test estadístico.
+
+Corolario práctico: un cambio puede **empeorar el cierre y mejorar el seguimiento diario a la
+vez**, y eso no es contradicción (caso real: mayo 2026, -8.7%→-10.9% de cierre con la
+correlación diaria subiendo de 0.32 a 0.86). Reportar las dos cosas, nunca una sola.
 - Ver `FUENTES_DATOS.md` para el detalle completo de las tablas y `GLOSARIO.md` para los
   términos (tramo, avance, entrada en mora, etc.).
 

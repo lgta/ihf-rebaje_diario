@@ -13,11 +13,45 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 > Desde 2026-07-13 esta ya no es la meta principal reportada en `ESTADO.md` (ver sección
 > de capital asegurado abajo) — sigue siendo un modelo validado y se sigue calculando.
 
+> **2026-08-26 (continuación 2) — MOTOR MIGRADO A `dias_atraso_cuota` (tarea 18e, decisión
+> del usuario).** Reemplaza `dayslate`/`P_NO_PAGA_DIA0=13.38%` (filas de junio/julio con esa
+> metodología quedan como referencia histórica más abajo, no en la tabla vigente). Mismo
+> refinamiento de forma que ya está en producción en Capital Asegurado: ventana rodante de 12
+> meses sin leak (tasa por SOLES y curva de nuevos), día de semana del vencimiento, factor de
+> quincena, factor de cierre real en stock (ventana de stock FIJA — rodarla empeora, ya medido
+> en Enfoque alfa vía 18c/18g). Motivo: `dayslate` tiene el mismo punto ciego (bug 9) que ya se
+> corrigió en Capital Asegurado, y acá **nunca tuvo compensación** (no hay capa fantasma en
+> Recupero Oficial) — el real capturado con `dias_atraso_cuota` es **148%-157% del real
+> capturado con `dayslate`** en junio/julio (validado a nivel de caso: créditos donde
+> `dayslate` marca 0 el mismo día que pagan, a veces cancelando el saldo completo). Detalle
+> completo (Fases A-D + refinamiento v2) en `PENDIENTES.md` tarea 18e. **La meta de AGOSTO
+> (fila de abajo) sigue con el motor viejo, sin tocar** — mismo criterio que Capital Asegurado:
+> no se cambia el motor de un mes EN CURSO a mitad de mes. La meta de **septiembre** será la
+> primera calibrada con este motor, en cuanto agosto cierre (31-ago, ventana `[202508,202607]`).
+
+| Mes | Meta proyectada | Real | Error total | Error stock | Error nuevos | Tasa de entrada | Notas |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Enero 2026 | S/2,394,155 | S/2,290,411 | **+4.5%** | +3.1% | +4.9% | 25.26% | `dias_atraso_cuota`, rodante. |
+| Febrero 2026 | S/2,133,336 | S/2,227,338 | **-4.2%** | -5.6% | -3.8% | 25.00% | `dias_atraso_cuota`, rodante. |
+| Marzo 2026 | S/2,998,996 | S/3,061,707 | **-2.0%** | -4.2% | -1.8% | 25.08% | `dias_atraso_cuota`, rodante. |
+| Abril 2026 | S/2,715,849 | S/2,614,085 | **+3.9%** | +14.4% | +1.2% | 25.28% | `dias_atraso_cuota`, rodante. |
+| Mayo 2026 | S/3,067,507 | S/2,893,212 | **+6.0%** | -0.3% | +7.2% | 25.31% | `dias_atraso_cuota`, rodante. |
+| Junio 2026 | S/2,939,249 | S/2,538,947 | **+15.8%** | +12.6% | +16.6% | 25.26% | `dias_atraso_cuota`, rodante. Motor viejo (`dayslate`): +5.4% (ver histórico abajo). |
+| Julio 2026 | S/3,882,039 | S/3,280,551 | **+18.3%** | -0.9% | +21.5% | 25.07% | `dias_atraso_cuota`, rodante. Motor viejo (`dayslate`): +17.6% (ver histórico abajo). |
+| Agosto 2026 | S/2,108,435 | S/2,178,078 | **-3.2%** | +7.7% | -7.9% | 13.38% (fijo) | **CERRADA 2026-09-01.** Motor viejo (`dayslate`) a propósito — era un mes en curso cuando se migró el motor (18e). **Real medido también con `dayslate`, la misma definición que la meta** (`tarea19_real_agosto_recupero_cierre.sql`): compararla contra el real de `dias_atraso_cuota` inflaría el error por cambio de universo, no por ejecución. Ese real, como referencia, es S/3,174,012 = **146%** del de `dayslate` — en línea con el 148-157% que 18e midió en junio/julio. Stock S/711,160 + nuevos S/1,397,275. Ver `meta_agosto.py` v3. |
+
+Magnitud media de error de cierre (7 meses, motor nuevo): 7.83%. Correlación media de
+incrementos diarios: **0.837** (vs. 0.560 antes del refinamiento v2). Calibración: nuevos
+rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. Código:
+`backtest_tarea18e_recupero_oficial_v2.py`, series diarias en
+`datos_tarea18e/serie_diaria_recupero_v2_*.csv`.
+
+**Histórico — motor anterior (`dayslate`, `P_NO_PAGA_DIA0=13.38%`), reemplazado 2026-08-26:**
+
 | Mes | Meta proyectada | Real | Error total | Error stock | Error nuevos | Motivo principal | Notas |
 |---|---:|---:|---:|---:|---:|---|---|
 | Junio 2026 | S/1,806,299 | S/1,713,815 | **+5.4%** | +16.2% | +0.7% | Stock sobreestimado — la curva de maduración de stock corre por encima de lo real ese mes; nuevos casi exacto. | Primer backtest. Curvas calibradas sobre 14 meses (incluyen junio, peso ~1/14 — no es estrictamente fuera de muestra, solo la tasa de entrada lo es). Ver `fase3_backtest.sql`, `backtest_junio.py`. |
-| Julio 2026 | S/1,776,174 | S/2,088,911 | **+17.6%** | +2.0% | +22.5% | Nuevos sobreestimado — la tasa/curva de nuevos corre muy por encima de lo real ese mes (fuente principal del error, no el stock). No es el mismo mecanismo que bug 14 (esa reconciliación es solo del enfoque alfa, no de este). | Cerrado 2026-08-18 (mes completo). Un solo mes adicional todavía no alcanza para saber si es varianza normal o degradación — ver tarea 9 de `PENDIENTES.md`. Ver `cierre_julio.sql` (bloques J3/J4). |
-| Agosto 2026 | S/2,108,435 | *(mes en curso, corte 18-ago: S/1,147,110, -1.5% vs. proyectado al mismo día)* | — | — | — | — (mes en curso) | Stock S/711,160 + nuevos S/1,397,275. Ver `meta_agosto.py`. Cerrar esta fila cuando termine agosto. |
+| Julio 2026 | S/1,776,174 | S/2,088,911 | **+17.6%** | +2.0% | +22.5% | Nuevos sobreestimado — la tasa/curva de nuevos corre muy por encima de lo real ese mes (fuente principal del error, no el stock). No es el mismo mecanismo que bug 14 (esa reconciliación es solo del enfoque alfa, no de este). | Cerrado 2026-08-18 (mes completo). Ver `cierre_julio.sql` (bloques J3/J4). |
 
 ## Capital asegurado (enfoque alfa) — meta principal desde 2026-07-13
 
@@ -99,24 +133,64 @@ recupero real vía `dts_mambu_loans_hist`) ajustando las fechas, y anotar el res
 > republicados. **El error medio sube de 6.20% a 7.22% y se adoptó igual** — Principio de
 > interpretación del error de `CLAUDE.md`. Ver `BUGS.md` bug 16 (Fase 4) y bug 20.
 
-| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Motivo de diferencia | Notas |
-|---|---:|---:|---:|---:|---:|---|---|
-| Abril 2026 | S/11,708,992 | S/13,390,788 | **-12.6%** | +5.3% | -16.4% | El error más grande de los 4, mismo signo que el resto. Con la arquitectura anterior figuraba en -19.0%, pero ese número tenía un denominador inconsistente (**bug 20**): corregido daba -13.4%, muy cerca del -12.6% del motor unificado. | Recalculado 2026-08-25 con el motor unificado. Ver `backtest_capital_asegurado_unificado.py`. |
-| Mayo 2026 | S/13,485,767 | S/14,767,586 | **-8.7%** | -1.3% | -9.8% | El mes que más empeora al pasar al motor unificado (-6.5% → -8.7%): con 3 componentes, el fantasma sobreestimaba +8.2% y compensaba parte del -20.1% de nuevos. Sin ese parche, el sesgo queda a la vista completo — aunque su magnitud baja a la mitad (-9.8%). | Idem. |
-| Junio 2026 | S/13,191,522 | S/13,543,570 | **-2.6%** | +3.1% | -3.9% | Cambia de signo respecto de la arquitectura anterior (+1.9% → -2.6%) por la misma razón: el fantasma sobreestimaba +13.2% y empujaba el total por encima de lo real. | Idem. |
-| Julio 2026 | S/16,454,855 | S/17,327,495 | **-5.0%** | -4.5% | -5.1% | El mes más parejo entre componentes — stock y nuevos se desvían casi lo mismo. Con 3 componentes: nuevos -19.2% contra fantasma +16.3%. | Idem. Este julio es el cuarto número que tiene el mes: +2.17% (calendario huérfano, bug 17), -0.2% (reconstruido), -3.0% (fix de índice, bug 18) y ahora -5.0%. |
-| Agosto 2026 | S/17,274,766 | *(mes en curso, corte 21-ago: S/11,600,930, **-0.3%** vs. proyectado al mismo día; al 24-ago **-1.4%**)* | — | — | — | — (mes en curso, sin cerrar) | Meta con motor unificado: stock S/3,795,022 + nuevos S/13,479,744. La meta sube de S/16,257,325 a S/17,274,766 (+6.3%) — casi todo por el stock, que con `dias_atraso_cuota` resulta 30.2% mayor al cierre de julio (S/5.81M vs S/4.46M). El **real** casi no se mueve (S/11,600,930 vs S/11,620,780, -0.2%): es la misma realidad medida sin partir la población en tres. Ver `meta_agosto_capital_asegurado.py` v7. Cerrar esta fila cuando termine agosto. |
+> **2026-08-26 (continuación) — MOTOR UNIFICADO v3 (tarea 18g): factor de CIERRE REAL para
+> STOCK.** Mismo mecanismo que 18f ya había corregido para nuevos, aplicado a stock por
+> primera vez: el "cierre" de cada mes es su ÚLTIMO DÍA REAL (28/29/30/31 según corresponda),
+> no un número de día fijo — ver `analisis_sesgo_nuevos_18b.md` sección 2 y
+> `analisis_tarea18g_cierre_real.md`. Corrige exactamente el mes que lo necesitaba: **febrero
+> (el único mes de 28 días del test) es el único mes donde stock también fallaba fuerte**
+> porque su cierre real nunca caía en el grupo "30/31". Error de stock de febrero
+> **-11.0% → -8.3%**, correlación diaria de stock 0.818 → 0.856 (mejora real, no resuelve el
+> mes del todo). Ventana de stock sigue **FIJA** (202504-202606) — se probó rodarla (cerraría
+> tarea 18c) y **empeora las métricas diarias** (correlación 0.848 → 0.820), así que se
+> descarta esa parte. El reindex análogo para nuevos se probó pero **no se adoptó** — impacto
+> marginal (0.886 → 0.888) frente al riesgo de tocar el esquema que ya usa la meta de agosto
+> publicada. **La meta de agosto (S/17,117,628) no se tocó** — sigue leyendo exactamente los
+> mismos archivos que ya tenía; el factor de cierre vive en
+> `curva_unificada_stock_seg_v3.csv` + `factor_dia_mes_stock.csv`, aparte.
 
-**Magnitud media de error, 4 meses: 7.22%** (arquitectura anterior con bug 20 corregido:
-6.20%). El modelo unificado es ~1pp peor y se adoptó igual — ver la nota de arriba y
-`BUGS.md` bug 16 (Fase 4): el parche plano enmascaraba el sesgo de "nuevos" por ser
-sistemáticamente generoso, y el criterio de adopción es la fidelidad del universo, no el
-error.
+| Mes | Proyectado | Real | Error total | Error stock | Error nuevos | Corr. diaria | Motivo de diferencia | Notas |
+|---|---:|---:|---:|---:|---:|---:|---|---|
+| Enero 2026 | S/10,162,760 | S/11,429,495 | **-11.1%** | -0.6% | -13.4% | 0.950 | Mes nuevo, agregado al extender el backtest de 4 a 7 meses. El mejor seguimiento diario de los 7. | Calibración rodante [202501-202512]. |
+| Febrero 2026 | S/9,404,912 | S/11,620,886 | **-19.1%** | -8.3% | -21.6% | 0.837 | **El peor de los 7.** Con el factor de cierre real (v3) el stock mejora de -11.0% a -8.3% — es el único mes de 28 días, así que es el que más se beneficia. Sigue siendo el dato que más pesa para tarea 18b: con 4 meses el sesgo de nuevos parecía tocar techo en -16%, y acá llega a -21.6%. | Idem. Mes corto (28 días). |
+| Marzo 2026 | S/12,440,972 | S/14,466,133 | **-14.0%** | +5.7% | -16.1% | 0.874 | Mes nuevo. Mismo patrón que abril: stock sobreestima, nuevos subestima más fuerte. | Idem. |
+| Abril 2026 | S/11,867,742 | S/13,389,034 | **-11.4%** | +8.1% | -15.5% | 0.907 | Con la arquitectura de 3 componentes figuraba en -19.0%, pero ese número tenía un denominador inconsistente (**bug 20**): corregido daba -13.4%. | Recalculado 2026-08-26 con el motor v3 (W3 nuevos + cierre real stock) y calibración rodante. |
+| Mayo 2026 | S/13,179,165 | S/14,763,546 | **-10.7%** | -0.4% | -12.3% | 0.857 | **El mes donde más se nota el día de la semana:** era el peor de los 7 en seguimiento diario (0.32) y pasó a 0.86. El error de cierre en cambio empeoró (-8.7% → -10.9%) porque su calendario de fin de mes es 45.8% de vencimientos de fin de semana. Las dos cosas son ciertas a la vez. | Idem. |
+| Junio 2026 | S/13,177,167 | S/13,539,856 | **-2.7%** | +5.8% | -4.7% | 0.900 | Junto con julio, el mes más cerca de su meta. | Idem. |
+| Julio 2026 | S/16,816,807 | S/17,323,922 | **-2.9%** | -3.5% | -2.8% | 0.880 | El mes más parejo entre componentes. Su calendario de fin de mes no tiene ningún vencimiento de fin de semana, y por eso es el que más mejora con la curva por día de semana (-5.0% → -2.9%). | Idem. |
+| Agosto 2026 | S/17,117,628 | S/17,322,872 | **-1.2%** | -1.3% | -1.1% | — | El mes más ajustado de todo el proyecto, y el más parejo entre componentes (stock -1.3%, nuevos -1.1%). Rompe la racha: "nuevos" venía subestimando en los 7 meses anteriores entre -2.8% y -21.6%. | **CERRADA 2026-09-01.** Meta con motor v2 (W3), sin el factor de cierre de stock (v3) — deliberado, ver bloque 2026-08-26: stock S/3,795,022 + nuevos S/13,322,607. Curvas [202507-202606]. `meta_agosto_capital_asegurado.py` v8; real de `tarea19_real_agosto_cierre.sql`. **Caveat de honestidad:** las curvas nunca vieron agosto, pero la ADOPCIÓN de W3 se decidió el 26-ago con 25 días del mes ya visibles — no es un test prospectivo limpio como lo será septiembre. Los cortes publicados se movieron al re-medir (21-ago S/11,595,123→S/11,547,707, -0.4%; 25-ago S/13,484,959→S/13,398,433, -0.6%): `dts_mambu_loans_hist` se re-expresa para días pasados. |
+
+**Magnitud media de error de fin de mes, 7 meses: 10.26%** (10.55% antes del factor de cierre
+de stock). **Correlación media de incrementos diarios de nuevos: 0.886** (sin cambios — el
+reindex de nuevos no se adoptó); **de stock: 0.848** (0.841 antes). Los números de error y de
+correlación miden cosas distintas y hay que leerlos juntos — ver abajo.
+**Cómo leer las dos métricas — no son intercambiables.** El error de fin de mes ES la meta
+contra la ejecución: es el número de negocio y el insumo de tarea 18b. Pero **no puede
+arbitrar** si una curva está mejor segmentada que otra: la diferencia pareada entre variantes
+tiene media -0.13pp y desvío **1.49pp**, o sea el ruido es 10x el efecto, porque el signo lo
+fija la composición de fin de mes de cada mes. Resolver 0.13pp sobre el cierre necesitaría
+~1,050 meses. La correlación de incrementos diarios aporta ~30 observaciones por mes en vez
+de 1, y ahí los refinamientos de forma sí se distinguen — el día de semana del vencimiento
+mejora los 7 meses sin excepción.
+
+**Dos advertencias sobre el nivel de esta tabla.** (1) La curva de **stock** todavía no rueda
+(sigue calibrada en 202504-202606), así que 6 de los 7 meses están dentro de su ventana y su
+error de ene-jun está subestimado — es lo que queda abierto de tarea 18c. La curva de nuevos
+sí rueda en los 7. (2) El motor unificado es ~1pp peor en error de cierre que la arquitectura
+de 3 componentes y se adoptó igual — ver `BUGS.md` bug 16 (Fase 4): el parche plano
+enmascaraba el sesgo de "nuevos" por ser sistemáticamente generoso, y el criterio de adopción
+es la fidelidad del universo y de la medición, no el error.
 
 ## Qué mirar si el error crece
 
-1. ¿El error es de stock o de nuevos? (la tabla ya los separa — en junio casi todo el
-   error vino del stock, +16.2%, mientras nuevos acertó casi exacto).
+1. ¿El error es de stock o de nuevos? (la tabla ya los separa — en los 7 meses de 2026 el
+   sesgo vive en nuevos, que subestima entre -2.8% y -21.6%, mientras el stock oscila entre
+   -11.0% y +5.3% sin signo fijo. Febrero es el único donde los dos fallan en la misma
+   dirección y fuerte).
+1b. ¿El seguimiento **diario** también se degradó, o solo el cierre? Son cosas distintas: un
+   mes puede terminar lejos de la meta y aun así haber sido seguido bien día a día (mayo:
+   -10.9% de cierre con 0.857 de correlación diaria). Si lo que cae es la correlación, el
+   problema es de forma de la curva; si lo que cae es solo el cierre, es volumen o gestión.
 2. ¿Está dentro del rango de volatilidad mensual ya observado en la calibración? (ej. el
    tramo 9-15 del stock osciló 9.8%-18.8% entre meses en los 14 de historia — un +16% de
    error en un mes puntual puede ser varianza normal, no necesariamente un problema).

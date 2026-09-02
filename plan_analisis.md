@@ -1,5 +1,12 @@
 # Plan de análisis — Meta de recupero de cartera en cobranza (tramo 1–30)
 
+> **ESTE ARCHIVO ESTÁ CONGELADO EN JULIO 2026.** Cubre el diseño y la construcción inicial
+> del modelo. Todo lo posterior (motor unificado, `dias_atraso_cuota`, día de semana del
+> vencimiento, factor de quincena, calibración rodante) vive en los bloques fechados de
+> `ESTADO.md`, con el porqué en `DECISIONES.md` y los hallazgos en `BUGS.md`. Los "próximos
+> pasos" del final son de julio y varios ya están resueltos — no usarlos como lista de tareas;
+> para eso está `PENDIENTES.md`.
+
 > **Este archivo es el historial cronológico crudo** (hasta 2026-07-09). Para lo que está
 > vigente HOY, ir a [`ESTADO.md`](ESTADO.md). Para bugs, ideas, decisiones, glosario y
 > fuentes de datos ya extraídos de acá en forma consultable, ver los archivos listados en

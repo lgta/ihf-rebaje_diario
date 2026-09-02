@@ -1630,3 +1630,87 @@ reconstruir la serie vieja.
 alto, causa de fondo sin explicar): acá la causa SÍ está identificada y es una línea de
 código, y la diferencia está en el CONTEO de créditos (35,639 vs. 41,348, +16%), no en el
 saldo promedio (S/1,223 vs. S/1,261, +3%).
+
+### 21. Ninguna cuota vence domingo — el corte binario `finde`/`semana` de Fase 2/3 parte mal justo la población que quiere aislar
+
+**Encontrado 2026-08-25** al ejecutar tarea 18a (probar contra el backtest la segmentación
+de la curva de "nuevos" por día de semana del vencimiento, medida en Fase 2/3 pero nunca
+backtesteada). No es un bug de código: es un hecho de los datos que invalida el
+**segmentador** propuesto, no la medición que lo motivó.
+
+**El hecho, verificado por dos vías independientes:**
+
+| | vencimientos en domingo |
+|---|---:|
+| Calendario unificado abr-jul 2026 (`datos_tarea17_fase4/calendario.csv`) | **0.00%** del saldo |
+| Ventana de calibración mar-2025 a may-2026 (`tarea18a_curva_nuevos_dow7.sql`) | **0.00%** del saldo |
+
+OKA no programa vencimientos en domingo. Como el día de entrada es siempre
+`vencimiento + 1` (bug 16 Fase 4), la consecuencia es que **tampoco existe ninguna entrada en
+mora un lunes** — 0.00% del calendario, en los 4 meses.
+
+**Por qué eso rompe el corte binario:** `tipo_venc = finde` se definió como
+`day_of_week(fechavencimiento) in (6,7)` (`tarea17_fase3_curva_fantasma.sql` líneas 178/264).
+Con 0% de domingos, ese bucket es en la práctica **solo "vencimiento sábado"**. Y deja
+"vencimiento viernes" — que entra **sábado**, día no hábil — del lado de `semana`. El
+mecanismo real que Fase 2/3 midió es que el día 0 se activa mucho menos cuando el **día de
+entrada** no es hábil, y el corte lo parte al revés:
+
+| venc | entra | día 0 de la curva (ponderado) | qué bucket le toca en el corte binario |
+|---|---|---:|---|
+| lunes | martes | 37.20% | `semana` ✔ |
+| martes | miércoles | 42.04% | `semana` ✔ |
+| miércoles | jueves | 40.85% | `semana` ✔ |
+| jueves | viernes | 39.26% | `semana` ✔ |
+| **viernes** | **sábado** | **27.36%** | `semana` ✘ — entra en día no hábil |
+| **sábado** | **domingo** | **18.72%** | `finde` ✔ |
+| domingo | lunes | — | no existe |
+
+Los tres regímenes son entrada hábil (37-42%), entrada sábado (27.4%) y entrada domingo
+(18.7%). El corte binario junta el segundo con el primero.
+
+**Cuánto cuesta:** ver tarea 18a en `PENDIENTES.md` para la tabla completa. En una línea, la
+correlación entre incrementos diarios proyectados y reales (media de los 4 meses cerrados)
+va de **0.577** (sin segmentar) a **0.781** con el corte binario, y a **0.878** con el día de
+semana abierto a los 6 días que existen. El corte binario captura ~2/3 de la ganancia
+disponible.
+
+**No confundir con el hallazgo de fin de semana de bug 16 Fase 1**, que es de otra tabla y
+otro mecanismo: ahí `dts_asignaciones_gestiones_cobranza` no tiene ninguna fila
+sábado/domingo porque el negocio **asigna** de lunes a viernes. Acá el hueco está en
+`fechavencimiento` (`dts_cobranza_creditos_cuotas`), o sea en cómo se **originan** los
+créditos, y es un hecho de producto, no de operación de cobranza. Los dos hechos son
+compatibles y ninguno implica al otro.
+
+### 22. La Q-B de producción colapsa los créditos que entran en mora dos veces con la misma banda y el mismo saldo (impacto 0.01-0.04%, no amerita republicar)
+
+**Encontrado 2026-08-25** al construir la matriz cruda de tarea 18f
+(`tarea18f_curva_cruda.sql`) y validarla contra la curva de producción.
+
+`tarea17_fase4_curva_nuevos.sql` (Q-B) arma `primer_pago` con
+`group by id_loan, avance_band, saldo_entrada`. La `fecha_entrada` **no** viaja en el grano,
+así que dos episodios de mora distintos del mismo crédito se colapsan en uno cuando además
+coinciden en banda y en saldo de referencia — y el `min(dia_desde_entrada)` se toma sobre la
+unión de las dos ventanas de seguimiento. Cuando el saldo difiere entre episodios (el caso
+normal) la agrupación los separa bien, por eso el impacto es chico.
+
+**Cuantificado** reconstruyendo la misma ventana (20250301-20260531) desde la matriz cruda,
+que sí lleva `fecha_entrada` en el grano:
+
+| banda | saldo Q-B | saldo crudo | dif | día 30 Q-B | día 30 crudo |
+|---|---:|---:|---:|---:|---:|
+| a. avance <10% | 64,677,702 | 64,673,400 | -0.01% | 88.205% | 88.292% |
+| b. avance 10-40% | 67,717,216 | 67,703,102 | -0.02% | 92.897% | 92.912% |
+| c. avance 40-70% | 24,552,680 | 24,541,692 | -0.04% | 94.412% | 94.411% |
+| d. avance 70%+ | 4,005,917 | 4,004,339 | -0.04% | 95.328% | 95.326% |
+
+El día 0 coincide dentro de 0.03pp en las 4 bandas. **No se corrigió la Q-B ni se republicó
+nada** — el impacto está 2 órdenes de magnitud por debajo de cualquier decisión del proyecto.
+Queda anotado porque quien reconstruya la curva desde `curvas_crudas.py` va a ver esa
+diferencia y tiene que saber que es el fix, no una regresión. Si alguna vez se re-corre Q-B,
+agregar `fecha_entrada` al `group by` y al join.
+
+**Primera versión de la query cruda tenía el error inverso y peor** (cruzaba `primer_pago`
+por `id_loan` solo, sin `fecha_entrada`): daba celdas con más créditos activados que en la
+base. Detectado con un chequeo explícito `activados <= base` por celda, que quedó en la
+validación de `curvas_crudas.py`.
