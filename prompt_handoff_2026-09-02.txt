@@ -69,6 +69,40 @@ QUÉ FALTA: explicarlo. Está medido, no explicado. En orden:
 NO AJUSTAR NADA MIENTRAS TANTO (principio de interpretación del error, CLAUDE.md).
 
 ====================================================================
+EL OTRO HALLAZGO — y este SÍ es corregible
+====================================================================
+UNA META Y UN BACKTEST NO MIDEN EL MISMO MES. Agosto da +2.7% en el backtest
+pero +9.8% como meta. Los dos son correctos; usan calendarios distintos:
+
+  meta      saldo anclado al cierre del mes anterior, status='ACTIVE'
+            calendario de agosto S/73,990,868  ->  proy S/19,028,522  (+9.8%)
+  backtest  saldo del día del vencimiento, ACTIVE+COMPLETED
+            calendario de agosto S/68,408,838  ->  proy S/17,795,255  (+2.7%)
+
+El calendario anclado corre +8.2% por encima del real, y el exceso CRECE a lo
+largo del mes: +4.2% (vence del 1 al 5) -> +11.5% (vence del 21 al 25). Es
+AMORTIZACIÓN: cuanto más lejos el vencimiento del ancla, más pagó el cliente
+en el medio. Monótono, con la forma que predice el mecanismo.
+
+Así que el desvío de una meta se parte en dos:
+    -6.5pp   convención (el ancla no descuenta la amortización)
+    +2.7pp   el modelo (la caída de activación)
+
+POR QUÉ ESTE SÍ SE CORRIGE: la amortización entre el ancla y el vencimiento es
+conocida y medible, no una sorpresa de comportamiento. Un factor de decaimiento
+por "días entre el ancla y el vencimiento", calibrado sobre historia, haría que
+el calendario proyectado represente lo que de verdad estará en riesgo. Es una
+corrección de MEDICIÓN — hoy el calendario no mide lo que dice medir — y cae del
+lado que CLAUDE.md manda corregir.
+
+LA TRAMPA A EVITAR: ese factor NO se calibra contra el residuo del backtest (eso
+sería ajuste ex-post). Se calibra midiendo, sobre meses históricos, cuánto cae
+el saldo de una cuota entre el cierre del mes anterior y su fecha de vencimiento,
+abierto por días de distancia. Después se corre el backtest para ver el efecto.
+
+Detalle completo en el addendum de analisis_tarea19_activacion_decreciente.md.
+
+====================================================================
 YA RESUELTO — NO RE-PROBAR
 ====================================================================
 - Tarea 2 (artifact capital_asegurado), tarea 9 (extender backtest: ya son 8 meses),

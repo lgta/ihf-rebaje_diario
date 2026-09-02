@@ -1054,103 +1054,28 @@ crosswalk dni+producto), y cuadrar cualquier población nueva contra una fuente 
 de confiar en ella -- ver BUGS.md antes de escribir queries nuevas.
 ```
 
-## Pendiente de git
+## Estado de git
 
-> **AL 2026-09-02: 94 archivos sin commitear** (26 modificados + 68 nuevos). Último commit:
-> `0e59879`, del 26-ago. **Hay código que produce la meta vigente de septiembre sin respaldo en
-> git** — conviene commitear. El usuario controla explícitamente commit y push (`CLAUDE.md`), así
-> que no se hizo. Agrupación sugerida, en 4 commits coherentes:
+> **✔ 2026-09-02 — TODO COMMITEADO. Working tree limpio.** Se cerró el hueco que venía desde el
+> 26-ago (99 archivos sin commitear, con código que producía la meta vigente sin respaldo).
+> **No se pusheó** — el usuario controla el push (`CLAUDE.md`). Hay 2 remotos: `origin` y
+> `rebaje_diario`.
 >
-> 1. **Ciclo de septiembre — queries y datos:** las 10 `tarea19_*.sql` + `datos_tarea19/`.
-> 2. **Motor de septiembre:** `generar_curvas_septiembre.py`, `meta_septiembre_capital_asegurado.py`,
->    `meta_septiembre_recupero.py`, `backtest_tarea19_tasa_soles.py`, curvas nuevas en
->    `datos_capital_asegurado/`.
-> 3. **Cierre de agosto + hallazgo:** `SEGUIMIENTO.md`, `analisis_tarea19_activacion_decreciente.md`,
->    `ESTADO.md`, `PENDIENTES.md`, `README.md`, `CLAUDE.md`, `prompt_handoff_2026-09-02.txt`.
-> 4. **Artifact:** `asignado_a_asegurado.html`, `armar_asignado_a_asegurado.py`,
->    `datos_asignado_a_asegurado.json`.
+> Cinco commits, agrupados por unidad de trabajo:
 >
-> Lo de abajo es el detalle histórico de qué quedó pendiente en cada sesión previa; sigue siendo
-> válido como registro, pero todo eso está incluido en los 94 archivos de arriba.
+> | commit | qué |
+> |---|---|
+> | `9d7fbb2` | Motor unificado v2/v3 — día de semana, factor de quincena y cierre real (18a/18b/18f/18g) |
+> | `e08a22d` | Migración del motor de Recupero Oficial a `dias_atraso_cuota` (18e) |
+> | `b692de8` | Cierre de agosto, `P_ENTRADA` por soles, metas de septiembre (19) |
+> | `0d21736` | Republicación de los 3 artifacts |
+> | `052928f` | Documentación al día |
+>
+> **`.gitignore` ganó `*.log`** — son los logs de las corridas de Athena (QID + estado), no
+> datos. El repo ya tenía 0 `.log` trackeados; ahora la regla es explícita.
 
-**Sí hay pendiente:** la sesión del 2026-08-22 (investigación de `dias_atraso_cuota`, bug 16)
-modificó `CLAUDE.md` (principio de universo nuevo), `BUGS.md` (bug 16), `ESTADO.md` (esta
-sección y "Prompt de continuación") y `README.md` (URL nueva del artifact de curvas). Las
-queries de esa investigación (`sc_A` a `sc_AE`) quedaron solo en el scratchpad de la sesión,
-no se copiaron al repo — ver la nota de "Archivos de esta investigación" en bug 16 si se
-retoma. El artifact `curvas_matriz_alfa.html` se republicó dos veces (URL nueva por
-necesidad, la vieja ya no existía; luego corrección de julio/agosto) — el archivo fuente en
-el repo ya refleja la versión publicada.
-
-**Continuación 2026-08-22 (misma fecha, sesión nueva, volumen vs. efectividad):** agregó
-`analisis_volumen_efectividad_agosto.md`/`.sql` (nuevos) y
-`datos_volumen_efectividad_agosto/` (nuevo, CSVs + script de proyección segmentada), y
-modificó `meta_agosto_capital_asegurado.py` (v5, corte 21-ago), `BUGS.md` (cierre del
-pendiente de bug 16) y `ESTADO.md` (esta sección, "La meta vigente", "Prompt de
-continuación", índice de documentos). Ítem 1 (artifact `curvas_matriz_alfa.html`) sigue sin
-tocar — no se modificó ni se republicó en esta sesión.
-
-**Continuación 2026-08-22/23 (misma sesión extendida, backtest + artifacts):** agregó
-`tasa_1338.html`, `proyectado_vs_real.html` (fuentes de los 2 artifacts nuevos),
-`backtest_capital_asegurado_mayo.py`, `backtest_capital_asegurado_julio_diario.py`,
-`enfoque_capital_asegurado_backtest_mayo.sql`, `datos_backtest_mayo/`,
-`datos_backtest_julio_diario/`, `datos_capital_asegurado_recal/` (curvas fuera de muestra
-de tarea 10). Modificó `capital_asegurado.html` (reconstrucción completa, tarea 2 CERRADA),
-`BUGS.md` (bug 17), `SEGUIMIENTO.md` (fila de mayo agregada, fila de julio corregida a
--0.2%), `PENDIENTES.md` (tareas 2, 9, 10), `README.md`/`ESTADO.md` (tablas de artifacts,
-URLs nuevas de `capital_asegurado.html` y los 2 artifacts nuevos).
-
-**COMMITEADO 2026-08-23 (sesión nueva) — todo el bloque de "volumen vs. efectividad" en
-adelante quedó en el commit `60390dc`.** No se pusheó (el usuario controla explícitamente el
-push, no se pidió).
-
-**Pendiente después de ese commit** (sesiones 2026-08-23 continuación y 2026-08-24):
-- Backtest de abril: `enfoque_capital_asegurado_backtest_abril.sql` y
-  `backtest_capital_asegurado_abril.py` (nuevos), `datos_backtest_abril/` (nuevo, 6 CSVs),
-  fila de abril en `SEGUIMIENTO.md`, tarea 9 en `PENDIENTES.md`.
-- Confirmación de `grupo_control` (aleatorización estratificada) en
-  `analisis_volumen_efectividad_agosto.md`, `BUGS.md`, `ESTADO.md`.
-- **Sesión 2026-08-24:** `validacion_universo_ejecucion.sql` (nuevo, queries V0/V1/V2),
-  `BUGS.md` (bugs 18 y 19), `CLAUDE.md` (principio de interpretación del error),
-  `PENDIENTES.md` (tareas 13-16 nuevas + pista nueva en tarea 11), `ESTADO.md` (bloque de
-  sesión, prompt de continuación reescrito, tabla de artifacts).
-- **Sesión 2026-08-24 (continuación, fix de bug 18):** `backtest_capital_asegurado_abril.py`,
-  `_mayo.py`, `_junio.py`, `_julio_diario.py` y `meta_agosto_capital_asegurado.py` (índice
-  `d - dd - 1`; en junio y meta-agosto además se desacopló el guard de la capa fantasma),
-  `proyectado_vs_real.html` y `capital_asegurado.html` (fuentes de los 2 artifacts
-  republicados), `SEGUIMIENTO.md` (nota nueva + 5 filas), `BUGS.md` (bug 18 cerrado con nota
-  de implementación), `PENDIENTES.md` (tarea 13 cerrada), `ESTADO.md` y `README.md`.
-- **Sesión 2026-08-24 (continuación 2, tarea 14):** `tarea14_no_aparece_asignaciones.sql`
-  (nuevo, 3 queries), `BUGS.md` (bug 19, actualización con el hallazgo), `PENDIENTES.md`
-  (tarea 14 cerrada), `ESTADO.md` (bloque de sesión nuevo, prompt de continuación).
-- **Sesión 2026-08-24 (continuación 3, tareas 15/16):**
-  `tarea15_16_sesgo_gestionado_julio.sql` (nuevo), `BUGS.md` (bug 19, segunda actualización),
-  `PENDIENTES.md` (tareas 15/16 medidas, decisión sigue abierta), `ESTADO.md` (bloque de
-  sesión nuevo, prompt de continuación reescrito).
-
-**COMMITEADO 2026-08-24 (a pedido del usuario) — los 3 bloques de arriba (fix de bug 18,
-tarea 14, tareas 15/16) quedaron en el commit `207cd06`.** No se pusheó (el usuario controla
-explícitamente el push, no se pidió).
-
-- **Sesión 2026-08-24 (continuación 4, casos individuales de tareas 14/15/16):**
-  `tarea14_casos_agosto.sql`, `tarea15_16_casos_julio.sql` (nuevos),
-  `datos_tareas14_15_16/` (nuevo, 2 CSV), `BUGS.md` (pointers a los casos). **COMMITEADO en
-  `665721f`** (a pedido del usuario).
-- **Sesión 2026-08-24 (continuación 4, validación de universo en CAPITAL, julio y agosto):**
-  `validacion_universo_capital_julio_agosto.sql` (nuevo), `datos_validacion_universo_
-  capital/` (nuevo, 2 CSV), `BUGS.md` (bug 19, tercera actualización — cobertura en soles
-  87.6%/89.1%), `ESTADO.md` (bloque de sesión).
-- **Sesión 2026-08-24 (continuación 5, replanteo — tarea 17 nueva, NADA ejecutado):** no
-  generó SQL ni CSV nuevos (una sola query de verificación puntual, la del usuario, corrida
-  pero no guardada — es trivial de re-correr si hace falta). Solo documentación:
-  `PENDIENTES.md` (tarea 17, plan completo en 4 fases), `BUGS.md` (bug 16, actualización con
-  el mecanismo horario y las 3 correcciones del usuario; bug 19, nota cruzada corta),
-  `ESTADO.md` (bloque de sesión, "Prompt de continuación" reescrito por completo — tarea 17
-  pasa a ser la prioridad #1, tareas 15/16 quedan en pausa explícita).
-
-**COMMITEADO 2026-08-24 (a pedido del usuario) — continuación 4 y continuación 5 (arriba)
-quedaron juntas en el commit `9e499aa`.** No se pusheó (el usuario controla explícitamente
-el push, no se pidió).
+Lo de abajo es el detalle histórico de qué quedó pendiente en cada sesión previa, desde antes
+del commit `60390dc`. Se conserva como registro; **ya no hay nada pendiente de esa lista**.
 
 ## Índice de los demás documentos
 
