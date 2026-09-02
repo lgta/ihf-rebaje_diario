@@ -22,6 +22,20 @@ de bug 11 -- tarea 6 de PENDIENTES.md, pendiente para el motor oficial,
 fuera de alcance de este refresco puntual), anclado a julio->agosto:
   RECUP_STOCK  rebaje_real=473,452.25 (2,682 creditos)
   RECUP_NUEVOS rebaje_real=859,026.81 (4,954 creditos)
+
+v3 (2026-08-26, tarea 18d): corte movido a 25-ago. Ya no hardcodea un solo
+numero -- `tarea18d_real_agosto_recupero.sql` da el rebaje real POR DIA
+(`datos_meta_agosto/real_agosto_recupero.csv`), asi que refrescar esto en
+el futuro es sumar hasta el dia que se quiera sin volver a tocar este
+archivo (mismo patron que ya usa Capital Asegurado con `real_agosto.csv`).
+El dia 26 en la query salio en 0/casi 0 (mismo mecanismo de "foto del dia
+en curso todavia corriendo" que ya se ve en el resto del proyecto) -- 25
+sigue siendo el ultimo dia completo.
+
+OJO -- LIMITACION QUE QUEDA IGUAL: `ago_calendario.csv` (el calendario de
+vencimientos que arma la PROYECCION, no el real) sigue con el mismo saldo
+del 18-ago repetido como proxy para los dias 19-31 -- no se reconstruyo
+esta pasada. Afecta la proyeccion de esos dias, no el real.
 """
 import csv
 from datetime import date, timedelta
@@ -62,12 +76,19 @@ AVANCES = ["a. avance <10%", "b. avance 10-40%", "c. avance 40-70%", "d. avance 
 TRAMOS = ["a. 1-8", "b. 9-15", "c. 16-30"]
 
 INICIO = date(2026, 8, 1)
-HOY = date(2026, 8, 20)
+HOY = date(2026, 8, 25)
 N_DIAS = 31
 saldo_stock_inicial = sum(stock_agosto.values())
 
-REAL_STOCK_A_HOY = 473452.25
-REAL_NUEVOS_A_HOY = 859026.81
+REAL_STOCK_A_HOY, REAL_NUEVOS_A_HOY = 0.0, 0.0
+with open(f"{DIR_AGO}/real_agosto_recupero.csv") as f:
+    for row in csv.DictReader(f):
+        if int(row["dia"]) > HOY.day:
+            continue
+        if row["componente"] == "stock":
+            REAL_STOCK_A_HOY += float(row["rebaje_dia"])
+        else:
+            REAL_NUEVOS_A_HOY += float(row["rebaje_dia"])
 
 filas = []
 for d in range(1, N_DIAS + 1):
