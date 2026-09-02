@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .claude/settings.local.json
 .venv/
+
+# Logs de las corridas de Athena (QID + estado) -- no son datos, no se versionan
+*.log
