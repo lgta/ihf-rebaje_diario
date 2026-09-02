@@ -1,0 +1,843 @@
+<title>De asignado a asegurado</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F5F7F9; --surface:#FFFFFF; --sunk:#EDF1F5;
+  --ink:#141C24; --ink-2:#3D4A57; --muted:#5C6976; --faint:#8A96A2;
+  --hair:#DDE3E9; --hair-2:#C8D2DB;
+  --antiguos:#1F5FA8; --nuevos:#C1751A; --asegurado:#00907F;
+  --antiguos-soft:#E3ECF7; --nuevos-soft:#F8EEDE; --asegurado-soft:#DDF0ED;
+  --alerta:#9A4A1E; --alerta-soft:#F7E9E1;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --col:min(68ch,100%); --wide:min(1080px,100%);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0F151B; --surface:#131A21; --sunk:#19222B;
+  --ink:#DFE6ED; --ink-2:#B7C2CD; --muted:#8B99A6; --faint:#6B7885;
+  --hair:#26313B; --hair-2:#33404C;
+  --antiguos:#4A86C8; --nuevos:#BC7F22; --asegurado:#12A895;
+  --antiguos-soft:#182634; --nuevos-soft:#2A2317; --asegurado-soft:#12261F;
+  --alerta:#D08A5E; --alerta-soft:#2A1D16;
+}}
+:root[data-theme="dark"]{
+  --ground:#0F151B; --surface:#131A21; --sunk:#19222B;
+  --ink:#DFE6ED; --ink-2:#B7C2CD; --muted:#8B99A6; --faint:#6B7885;
+  --hair:#26313B; --hair-2:#33404C;
+  --antiguos:#4A86C8; --nuevos:#BC7F22; --asegurado:#12A895;
+  --antiguos-soft:#182634; --nuevos-soft:#2A2317; --asegurado-soft:#12261F;
+  --alerta:#D08A5E; --alerta-soft:#2A1D16;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.page{display:grid;grid-template-columns:1fr var(--col) 1fr;padding:0 20px 96px}
+.page>*{grid-column:2}
+.bleed{grid-column:1/-1;width:var(--wide);justify-self:center}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;font-weight:600;line-height:1.18;margin:0}
+h2{font-size:1.72rem;margin:3.4rem 0 .2rem;letter-spacing:-.01em}
+h3{font-size:1.16rem;margin:2rem 0 .5rem;font-weight:600}
+p{margin:.85rem 0}
+a{color:var(--asegurado)}
+strong{font-weight:600}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-weight:500;display:block;margin-bottom:.5rem}
+.lede{font-size:1.12rem;color:var(--ink-2);line-height:1.6}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:500}
+
+/* ---------- hero ---------- */
+header{padding:4.5rem 0 .5rem}
+header h1{font-size:clamp(2.3rem,6vw,3.4rem);letter-spacing:-.025em}
+header .sub{font-size:1.15rem;color:var(--muted);margin-top:.9rem;max-width:56ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;
+  background:var(--hair);border:1px solid var(--hair);border-radius:10px;overflow:hidden;margin:2.4rem 0 .5rem}
+.kpi{background:var(--surface);padding:1.05rem 1.15rem}
+.kpi .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.kpi .v{font-family:var(--mono);font-size:1.5rem;font-weight:600;margin-top:.3rem;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.kpi .n{font-size:.82rem;color:var(--muted);margin-top:.2rem;line-height:1.4}
+.kpi.ok .v{color:var(--asegurado)} .kpi.warn .v{color:var(--alerta)}
+
+/* ---------- panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--hair);border-radius:12px;
+  padding:1.5rem 1.6rem;margin:1.5rem 0}
+.panel>h3:first-child{margin-top:0}
+.note{background:var(--sunk);border-left:3px solid var(--hair-2);border-radius:0 8px 8px 0;
+  padding:.9rem 1.1rem;margin:1.3rem 0;font-size:.93rem;color:var(--ink-2)}
+.note.alerta{background:var(--alerta-soft);border-left-color:var(--alerta)}
+.note b{color:var(--ink)}
+
+/* ---------- ratio cards ---------- */
+.ratios{display:grid;gap:1px;background:var(--hair);border:1px solid var(--hair);
+  border-radius:12px;overflow:hidden;margin:1.6rem 0}
+.ratio{background:var(--surface);padding:1.25rem 1.4rem;display:grid;
+  grid-template-columns:1fr auto;gap:.4rem 1.5rem;align-items:start}
+.ratio .who{font-family:var(--mono);font-size:.66rem;letter-spacing:.11em;text-transform:uppercase;
+  grid-column:1/-1;font-weight:600}
+.ratio.a .who{color:var(--antiguos)} .ratio.n .who{color:var(--nuevos)}
+.ratio .name{font-family:var(--serif);font-size:1.14rem;font-weight:600}
+.ratio .val{font-family:var(--mono);font-size:1.35rem;font-weight:600;
+  font-variant-numeric:tabular-nums;grid-row:2/4;align-self:center;text-align:right}
+.ratio .frm{font-family:var(--mono);font-size:.83rem;color:var(--muted);grid-column:1}
+.ratio .desc{grid-column:1/-1;font-size:.93rem;color:var(--ink-2);margin-top:.35rem}
+
+/* ---------- cadena ---------- */
+.cadena{display:flex;flex-direction:column;gap:.5rem;margin:1.4rem 0}
+.paso{display:grid;grid-template-columns:2.1rem 1fr;gap:1rem;align-items:stretch}
+.paso .idx{font-family:var(--mono);font-size:.75rem;font-weight:600;color:var(--faint);
+  padding-top:.85rem;text-align:right}
+.barra{border:1px solid var(--hair);border-radius:8px;background:var(--surface);
+  padding:.75rem .95rem;position:relative;overflow:hidden}
+.barra .fill{position:absolute;inset:0 auto 0 0;opacity:.5}
+.barra .row{position:relative;display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
+.barra .lbl{font-size:.9rem;font-weight:500}
+.barra .amt{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.barra .sub{position:relative;font-size:.8rem;color:var(--muted);margin-top:.15rem}
+.flecha{display:grid;grid-template-columns:2.1rem 1fr;gap:1rem;align-items:center}
+.flecha .op{grid-column:2;font-family:var(--mono);font-size:.82rem;color:var(--muted);
+  padding-left:.95rem;display:flex;align-items:center;gap:.55rem}
+.flecha .op b{color:var(--ink);font-weight:600}
+.chip{display:inline-block;font-family:var(--mono);font-size:.72rem;padding:.12rem .5rem;
+  border-radius:999px;border:1px solid currentColor;font-weight:500}
+
+/* ---------- tablas ---------- */
+.tabla-wrap{overflow-x:auto;border:1px solid var(--hair);border-radius:12px;background:var(--surface);margin:1.3rem 0}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+caption{text-align:left;padding:1rem 1.1rem .3rem;font-family:var(--serif);font-size:1.05rem;font-weight:600}
+caption .cap-n{display:block;font-family:var(--sans);font-size:.85rem;font-weight:400;color:var(--muted);margin-top:.2rem}
+th,td{padding:.5rem .7rem;text-align:right;border-bottom:1px solid var(--hair);white-space:nowrap}
+th{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--faint);font-weight:600;border-bottom:1px solid var(--hair-2)}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--sunk)}
+tfoot td{font-weight:600;border-bottom:none;border-top:1px solid var(--hair-2);background:var(--sunk)}
+.bar-cell{position:relative;min-width:118px}
+.bar-cell .b{position:absolute;left:.7rem;bottom:.42rem;height:4px;border-radius:2px}
+.bar-cell span{position:relative}
+.grp td{background:var(--sunk);font-weight:600;font-family:var(--mono);font-size:.75rem;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+
+/* ---------- charts ---------- */
+figure{margin:1.4rem 0}
+figcaption{font-size:.86rem;color:var(--muted);margin-top:.55rem}
+.leyenda{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.82rem;color:var(--ink-2);margin-bottom:.6rem}
+.leyenda i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.35rem;
+  vertical-align:-1px;font-style:normal}
+.smalls{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:.9rem}
+.sm{border:1px solid var(--hair);border-radius:10px;padding:.7rem .8rem;background:var(--surface)}
+.sm .t{font-family:var(--mono);font-size:.7rem;color:var(--faint);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:.35rem}
+svg{display:block;max-width:100%;overflow:visible}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--ground);
+  font-family:var(--mono);font-size:.76rem;padding:.45rem .6rem;border-radius:6px;
+  opacity:0;transition:opacity .1s;z-index:50;white-space:pre;line-height:1.5}
+.tip.on{opacity:1}
+footer{margin-top:4rem;padding-top:1.4rem;border-top:1px solid var(--hair);
+  font-size:.84rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <span class="eyebrow">Cobranza · mora 1–30 días · OKA</span>
+  <h1>De asignado a asegurado</h1>
+  <p class="sub">Cómo se convierte una cartera en mora en una meta mensual: qué se
+  asigna, qué porcentaje se recupera, y por qué antiguos y nuevos se calculan distinto.
+  Con agosto 2026 ya cerrado y septiembre proyectado.</p>
+
+  <div class="kpis">
+    <div class="kpi ok">
+      <div class="k">Agosto 2026 · real</div>
+      <div class="v" id="k-ago-real">—</div>
+      <div class="n">capital asegurado, mes cerrado</div>
+    </div>
+    <div class="kpi">
+      <div class="k">Agosto · lo que decía el modelo</div>
+      <div class="v" id="k-ago-mod">—</div>
+      <div class="n" id="k-ago-err">—</div>
+    </div>
+    <div class="kpi">
+      <div class="k">Septiembre 2026 · meta</div>
+      <div class="v" id="k-sep">—</div>
+      <div class="n">proyección al 30 de septiembre</div>
+    </div>
+  </div>
+</header>
+
+<h2>Qué es «capital asegurado»</h2>
+<p class="lede">Un crédito está <strong>asegurado</strong> cuando hizo <strong>al menos un
+pago</strong> durante el mes. El capital asegurado es la suma del saldo de esos créditos.</p>
+
+<p>No es lo mismo que soles cobrados. Si un crédito con saldo de S/5,000 paga S/300, aporta
+<strong>los S/5,000 completos</strong> al capital asegurado — porque lo que mide el indicador es
+si la gestión logró <em>reactivar</em> al cliente, no cuánto entró en caja. El recupero en soles
+se mide aparte, con su propio modelo.</p>
+
+<p>El universo son los créditos con <strong>1 a 30 días de atraso</strong>. Por debajo de 1 día
+están al día; por encima de 30 salen de cobranza temprana y pasan a otra área.</p>
+
+<div class="note">
+  <b>Cuándo entra un crédito en mora.</b> La fecha de vencimiento es el último día en que el
+  cliente puede pagar sin atrasarse. Si no paga ese día, entra en mora <b>al día siguiente</b>.
+  Por eso a lo largo de toda esta página la fecha que importa es la de <b>entrada</b>
+  (vencimiento + 1), no la de vencimiento.
+</div>
+
+<h2>Dos poblaciones que no se comportan igual</h2>
+
+<p>El mes arranca con una foto y se va llenando. Esa es toda la diferencia entre los dos
+motores del modelo, y es la razón por la que cada uno usa ratios distintos.</p>
+
+<div class="ratios bleed" style="grid-template-columns:1fr 1fr">
+  <div class="ratio a" style="display:block">
+    <div class="who">Antiguos · el stock</div>
+    <div class="name" style="margin-bottom:.5rem">Ya están todos el día 1</div>
+    <p style="margin:0;font-size:.95rem;color:var(--ink-2)">Son los créditos que <b>ya venían en
+    mora</b> al cerrar el mes anterior. Se conocen desde el minuto cero: la cartera entera se
+    <b>asigna de una sola vez</b> el día 1, y de ahí en adelante solo puede achicarse a medida
+    que los clientes pagan. No entra nadie nuevo a este grupo durante el mes.</p>
+  </div>
+  <div class="ratio n" style="display:block">
+    <div class="who">Nuevos · el flujo</div>
+    <div class="name" style="margin-bottom:.5rem">Van apareciendo día a día</div>
+    <p style="margin:0;font-size:.95rem;color:var(--ink-2)">El día 1 <b>no existen</b>. Cada día
+    vence un grupo de cuotas; los que no pagan entran en mora al día siguiente y recién ahí se
+    asignan a cobranza. Un crédito que entra el 28 tiene 2 días para activar; uno que entró el 3
+    tiene 27. <b>Por eso el calendario de vencimientos es el insumo central</b> de este motor.</p>
+  </div>
+</div>
+
+<p>Hay una consecuencia práctica que conviene tener presente: <strong>ninguna cuota vence
+domingo</strong> — OKA no programa vencimientos ese día. Y como la entrada es siempre
+vencimiento + 1, <strong>tampoco entra nadie en mora un lunes</strong>. En el calendario de
+septiembre eso se ve directo: los días 7, 14, 21 y 28 no tienen ni una entrada.</p>
+
+<h2>Los tres ratios, con nombre y apellido</h2>
+
+<p>Acá está el punto que más se presta a confusión, y que ya costó caro una vez en este
+proyecto: <strong>son tres ratios distintos, con denominadores distintos</strong>. Aplicar uno
+donde va otro cambia el resultado en dos dígitos.</p>
+
+<div class="ratios">
+  <div class="ratio a">
+    <div class="who">Antiguos</div>
+    <div class="name">Ratio de activación de antiguos</div>
+    <div class="val" id="r-ant">—</div>
+    <div class="frm">capital asegurado ÷ capital asignado el día 1</div>
+    <div class="desc">De todo el stock que arrancó el mes en mora, qué porción hizo al menos un
+    pago. Es el único ratio que necesitan los antiguos: <b>no hay tasa de entrada, porque ya
+    están todos adentro</b>.</div>
+  </div>
+  <div class="ratio n">
+    <div class="who">Nuevos · paso 1</div>
+    <div class="name">Tasa de entrada en mora</div>
+    <div class="val" id="r-ent">—</div>
+    <div class="frm">capital que entra en mora ÷ capital del calendario</div>
+    <div class="desc">De todo el capital cuya cuota vence en el mes, qué porción efectivamente
+    <b>no paga a tiempo</b> y cae en mora. <b>El calendario no es capital asignado</b>: es el
+    universo de cuotas que vencen, y la gran mayoría paga puntual y nunca llega a cobranza.</div>
+  </div>
+  <div class="ratio n">
+    <div class="who">Nuevos · paso 2</div>
+    <div class="name">Ratio de activación de nuevos</div>
+    <div class="val" id="r-act">—</div>
+    <div class="frm">capital asegurado ÷ capital que entró en mora</div>
+    <div class="desc">De los que sí entraron en mora, qué porción hizo al menos un pago antes de
+    fin de mes. Corre muy por encima del de antiguos —  son clientes recién atrasados, muchos
+    por olvido, y el primer contacto suele bastar.</div>
+  </div>
+</div>
+
+<div class="note alerta">
+  <b>El error clásico.</b> La tasa de entrada se puede medir <b>contando créditos</b> o
+  <b>sumando soles</b>, y no dan lo mismo: los créditos que caen en mora tienen saldo más alto
+  que el promedio, así que la tasa en soles corre ~14% por encima de la tasa en créditos. Como
+  el modelo la aplica multiplicando <b>soles</b> del calendario, tiene que calibrarse en soles.
+  Durante meses se usó la de créditos, y eso subestimaba la meta de forma sistemática.
+</div>
+
+<h2>Los segmentos</h2>
+<p>Ningún ratio se aplica plano sobre toda la cartera. Todo se abre por segmento, porque las
+diferencias entre segmentos son enormes — más grandes que casi cualquier otro efecto del modelo.</p>
+
+<div class="ratios bleed" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+  <div class="ratio a" style="display:block">
+    <div class="who">Aplica a antiguos</div>
+    <div class="name" style="margin-bottom:.4rem">Tramo de atraso</div>
+    <p style="margin:0;font-size:.93rem;color:var(--ink-2)"><span class="mono">1–8</span>,
+    <span class="mono">9–15</span> y <span class="mono">16–30</span> días. Cuánto más tiempo
+    lleva atrasado, más difícil de recuperar. Es el segmentador más potente de todos.</p>
+  </div>
+  <div class="ratio" style="display:block"><div class="who" style="color:var(--muted)">Aplica a los dos</div>
+    <div class="name" style="margin-bottom:.4rem">Banda de avance</div>
+    <p style="margin:0;font-size:.93rem;color:var(--ink-2)">Qué porción del préstamo ya pagó:
+    <span class="mono">&lt;10%</span>, <span class="mono">10–40%</span>,
+    <span class="mono">40–70%</span>, <span class="mono">70%+</span>. Quien ya pagó casi todo
+    tiene mucho que perder y paga más.</p>
+  </div>
+  <div class="ratio n" style="display:block">
+    <div class="who">Aplica a nuevos</div>
+    <div class="name" style="margin-bottom:.4rem">Día de semana del vencimiento</div>
+    <p style="margin:0;font-size:.93rem;color:var(--ink-2)">Los seis días que existen (nunca
+    domingo). Marca el ritmo de los primeros días: quien vence sábado entra domingo, sin gestión
+    activa, y arranca mucho más lento que quien vence martes.</p>
+  </div>
+</div>
+
+<h2>Agosto 2026, la cadena real</h2>
+<p class="lede">Mes cerrado, todo medido. Así se llegó de la cartera al capital asegurado.</p>
+
+<div class="bleed">
+<h3 style="color:var(--antiguos)">Antiguos — una sola asignación, el día 1</h3>
+<div class="cadena" id="cad-ant"></div>
+
+<h3 style="color:var(--nuevos);margin-top:2.2rem">Nuevos — el calendario se convierte en cartera</h3>
+<div class="cadena" id="cad-nue"></div>
+</div>
+
+<div class="bleed">
+<figure>
+  <div class="leyenda">
+    <span><i style="background:var(--nuevos)"></i>Capital que vence (calendario)</span>
+    <span><i style="background:var(--asegurado)"></i>Capital asegurado</span>
+  </div>
+  <div id="ch-dia"></div>
+  <figcaption>Agosto, día por día. Las barras altas son los días de vencimiento masivo; los
+  huecos regulares son los <strong>lunes</strong>, donde por construcción no entra nadie.</figcaption>
+</figure>
+</div>
+
+<div class="bleed"><div class="tabla-wrap"><table id="t-ant">
+  <caption>Antiguos: ratio de activación por tramo y banda de avance
+  <span class="cap-n">El gradiente por tramo es brutal: del 1–8 al 16–30 el ratio se parte a la mitad.</span></caption>
+</table></div></div>
+
+<div class="bleed"><div class="tabla-wrap"><table id="t-nue">
+  <caption>Nuevos: la cadena completa por banda de avance
+  <span class="cap-n">Dos ratios encadenados. Ojo que se mueven en direcciones distintas.</span></caption>
+</table></div></div>
+
+<div class="bleed"><div class="tabla-wrap"><table id="t-dow">
+  <caption>Nuevos: por día de la semana del vencimiento
+  <span class="cap-n">El sábado es el día con más capital venciendo y el de mejor activación.</span></caption>
+</table></div></div>
+
+<h2>Qué habría dicho el modelo para agosto</h2>
+<p>Agosto se cerró contra una meta que se fijó con la versión anterior del motor. Corrido con el
+<strong>enfoque actual</strong> — el mismo que se usa para septiembre, con la tasa de entrada en
+soles — sobre los insumos que se conocían el 1 de agosto, el modelo habría dicho esto:</p>
+
+<div class="bleed"><div class="tabla-wrap"><table id="t-comp">
+  <caption>Agosto 2026: enfoque actual vs. lo que realmente pasó
+  <span class="cap-n">Proyectado con la ventana de calibración honesta [jul-2025, jun-2026] — el modelo nunca vio agosto.</span></caption>
+</table></div></div>
+
+<div class="note alerta">
+  <b>El modelo se pasó por 9.8%, y eso tiene una explicación medible.</b> La <b>tasa de entrada</b>
+  que el modelo usó (25.10%, promedio de los 12 meses previos) fue más alta que la que realmente
+  ocurrió en agosto (<span class="mono">22.84%</span>). Y el <b>ratio de activación de nuevos</b>
+  real (<span class="mono">86.2%</span>) también corrió por debajo del histórico. No es ruido:
+  es la tendencia que está abajo.
+</div>
+
+<h2>Septiembre 2026, la proyección</h2>
+<p class="lede">Misma cadena, hacia adelante. Fijada el 1 de septiembre, sin mirar ni un día del mes.</p>
+
+<div class="bleed">
+<h3 style="color:var(--antiguos)">Antiguos</h3>
+<div class="cadena" id="cad-ant-sep"></div>
+<h3 style="color:var(--nuevos);margin-top:2.2rem">Nuevos</h3>
+<div class="cadena" id="cad-nue-sep"></div>
+</div>
+
+<div class="note">
+  <b>El stock inicial cayó fuerte y el calendario subió.</b> Los antiguos arrancan septiembre en
+  S/3.77M contra S/5.77M en agosto (−35%), porque agosto limpió bien. El calendario, en cambio,
+  sube a S/89.6M (+21%). Por eso la meta crece aunque el stock se achique: <b>casi todo el
+  movimiento está en nuevos</b>.
+</div>
+
+<div class="bleed"><div class="tabla-wrap"><table id="t-sep-ant">
+  <caption>Septiembre proyectado: antiguos por tramo y banda</caption>
+</table></div></div>
+
+<div class="bleed"><div class="tabla-wrap"><table id="t-sep-nue">
+  <caption>Septiembre proyectado: nuevos por banda de avance
+  <span class="cap-n">La tasa de entrada es única para todo el calendario (24.91%); lo que cambia por banda es la forma de la curva.</span></caption>
+</table></div></div>
+
+<h2>Cómo se proyecta el día a día</h2>
+<p>Los ratios de arriba dicen <em>cuánto</em> se asegura al cierre del mes. Para saber
+<em>cuándo</em>, cada segmento tiene una <strong>curva de maduración</strong>: el porcentaje
+acumulado que ya activó, día a día.</p>
+
+<p>Las dos curvas se indexan distinto, y esto importa. La de <strong>antiguos</strong> va por
+<strong>día del mes</strong> (todos arrancan el día 1, así que comparten reloj). La de
+<strong>nuevos</strong> va por <strong>días desde la entrada</strong> — cada cohorte tiene su
+propio reloj, que arranca el día en que entró.</p>
+
+<div class="bleed">
+<figure>
+  <div class="leyenda" id="lg-cs"></div>
+  <div class="smalls" id="ch-cs"></div>
+  <figcaption>Curva de antiguos, por tramo de atraso (banda 10–40% de avance). Cuanto más
+  atrasado el tramo, más plana la curva: no solo activa menos, también activa más tarde.</figcaption>
+</figure>
+
+<figure style="margin-top:2rem">
+  <div class="leyenda" id="lg-cn"></div>
+  <div class="smalls" id="ch-cn"></div>
+  <figcaption>Curva de nuevos, por día de semana del vencimiento (banda 10–40%). El día 0 —
+  activar el mismo día en que se entra — va del <span class="mono">18%</span> de quien vence
+  sábado al <span class="mono">42%</span> de quien vence martes.</figcaption>
+</figure>
+</div>
+
+<div class="panel">
+  <h3>Y un ajuste más: el día del mes en que llega la plata</h3>
+  <p style="margin-bottom:.6rem">Sobre el incremento de cada día se aplica un multiplicador,
+  porque los cobros no se reparten parejo: <strong>la quincena y el cierre de mes son días de
+  pago</strong>. Son dos parámetros, no treinta — con uno por día el modelo sobreajusta.</p>
+  <div id="factores"></div>
+</div>
+
+<h2>El caveat que acompaña a esta meta</h2>
+<p>Hay una tendencia de fondo que conviene mirar antes de tomar la meta de septiembre como un
+número fijo. Es la división más simple posible: <strong>de todo el capital que vence en el mes,
+qué porción termina asegurada</strong>.</p>
+
+<div class="bleed">
+<figure>
+  <div id="ch-tend"></div>
+  <figcaption>Capital asegurado de nuevos ÷ capital del calendario, por mes. La línea punteada
+  es la tendencia lineal.</figcaption>
+</figure>
+</div>
+
+<p>La cartera <strong>casi se duplicó</strong> en nueve meses — el calendario pasó de S/47M en
+enero a S/90M en septiembre — y la porción que se asegura <strong>bajó de 21.0% a 18.5%</strong>,
+a un ritmo de −0.46 puntos por mes. No se cobra menos: se cobra <strong>una tajada más chica de
+una torta que crece más rápido</strong>.</p>
+
+<p>Eso apunta a capacidad de gestión que no escala al ritmo de la cartera, o a un cambio en la
+composición de lo que entra. <strong>Está medido, no explicado</strong> — y es la pregunta
+abierta principal del proyecto ahora mismo.</p>
+
+<div class="note alerta">
+  <b>Qué significa para la meta de septiembre.</b> El modelo calibra sus curvas con los 12 meses
+  previos, donde la activación era más alta. Si la caída sigue al mismo ritmo, la meta de
+  <b>S/20.5M corre alrededor de 10% por encima de lo alcanzable</b> — es exactamente lo que pasó
+  con agosto. Se publica igual, y con esta lectura al lado: la meta es la referencia contra la
+  cual se lee la ejecución, y una desviación se explica, no se corrige moviendo el número.
+</div>
+
+<footer>
+  <p>Capital asegurado, cartera de cobranza temprana (mora 1–30 días), OKA. Agosto 2026 cerrado
+  al 31-ago; septiembre proyectado al 1-sep con curvas calibradas sobre
+  <span class="mono">[ago-2025, jul-2026]</span>.</p>
+  <p>Fuentes: <span class="mono">meta_septiembre_capital_asegurado.py</span>,
+  <span class="mono">tarea19_agosto_cadena_segmentada.sql</span>,
+  <span class="mono">motor_unificado.py</span>. Datos al 1 de septiembre de 2026.</p>
+</footer>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const DATOS = /*DATOS*/{"agosto_real":{"stock":[{"tramo":"a. 1-8","banda":"a. avance <10%","cred_asignado":498,"asignado":1483276.46,"cred_asegurado":375,"asegurado":1056780.47,"ratio":71.24635888848394},{"tramo":"a. 1-8","banda":"b. avance 10-40%","cred_asignado":921,"asignado":1752315.83,"cred_asegurado":727,"asegurado":1318798.15,"ratio":75.26029996544628},{"tramo":"a. 1-8","banda":"c. avance 40-70%","cred_asignado":763,"asignado":741090.4,"cred_asegurado":632,"asegurado":611535.1,"ratio":82.51828656800843},{"tramo":"a. 1-8","banda":"d. avance 70%+","cred_asignado":274,"asignado":124829.57,"cred_asegurado":234,"asegurado":101714.07,"ratio":81.48235229841775},{"tramo":"b. 9-15","banda":"a. avance <10%","cred_asignado":87,"asignado":199656.06,"cred_asegurado":40,"asegurado":98826.62,"ratio":49.498432454291645},{"tramo":"b. 9-15","banda":"b. avance 10-40%","cred_asignado":162,"asignado":282529.8,"cred_asegurado":107,"asegurado":174745.45,"ratio":61.85027207749413},{"tramo":"b. 9-15","banda":"c. avance 40-70%","cred_asignado":155,"asignado":131862.44,"cred_asegurado":102,"asegurado":84697.38,"ratio":64.2316189507793},{"tramo":"b. 9-15","banda":"d. avance 70%+","cred_asignado":48,"asignado":26921.79,"cred_asegurado":35,"asegurado":22121.64,"ratio":82.17001915548705},{"tramo":"c. 16-30","banda":"a. avance <10%","cred_asignado":160,"asignado":448719.91,"cred_asegurado":41,"asegurado":139657.33,"ratio":31.123497506495752},{"tramo":"c. 16-30","banda":"b. avance 10-40%","cred_asignado":218,"asignado":392817.15,"cred_asegurado":90,"asegurado":146525.96,"ratio":37.301314364711416},{"tramo":"c. 16-30","banda":"c. avance 40-70%","cred_asignado":153,"asignado":154244.98,"cred_asegurado":72,"asegurado":73607.72,"ratio":47.72130671610836},{"tramo":"c. 16-30","banda":"d. avance 70%+","cred_asignado":62,"asignado":29779.58,"cred_asegurado":33,"asegurado":17468.33,"ratio":58.65875207105003}],"nuevos_banda":[{"banda":"a. avance <10%","calendario":22882784.71,"entran":6269405.930000001,"asegurado":5256900.5,"cred_cal":7800,"cred_ent":2671,"cred_act":2278,"tasa_entrada":27.39791511153015,"ratio_activacion":83.85005786345693},{"banda":"b. avance 10-40%","calendario":33081508.19,"entran":6621539.679999999,"asegurado":5791732.390000001,"cred_cal":19043,"cred_ent":3828,"cred_act":3395,"tasa_entrada":20.015833746061137,"ratio_activacion":87.46806135578427},{"banda":"c. avance 40-70%","calendario":10727256.329999998,"entran":2369403.31,"asegurado":2092952.8299999998,"cred_cal":13093,"cred_ent":2865,"cred_act":2542,"tasa_entrada":22.087691736923382,"ratio_activacion":88.33248527875145},{"banda":"d. avance 70%+","calendario":1784648.2500000002,"entran":380223.86000000004,"asegurado":334807.98,"cred_cal":4541,"cred_ent":977,"cred_act":851,"tasa_entrada":21.305254971112657,"ratio_activacion":88.05548920575367}],"nuevos_dow":[{"dow":1,"vence":"lunes","entra":"martes","calendario":17199311.09,"entran":3666390.1199999996,"asegurado":3153840.84,"tasa_entrada":21.31707543874654,"ratio_activacion":86.02032890051538},{"dow":2,"vence":"martes","entra":"miércoles","calendario":11420733.9,"entran":2560211.2800000003,"asegurado":2182472.67,"tasa_entrada":22.417222066613427,"ratio_activacion":85.24580322917723},{"dow":3,"vence":"miércoles","entra":"jueves","calendario":9333936.969999999,"entran":2238864.3500000006,"asegurado":1915809.5599999998,"tasa_entrada":23.98628100013837,"ratio_activacion":85.57059564595771},{"dow":4,"vence":"jueves","entra":"viernes","calendario":6573265.879999999,"entran":1523454.08,"asegurado":1275492.4200000004,"tasa_entrada":23.176516937118027,"ratio_activacion":83.72371945730063},{"dow":5,"vence":"viernes","entra":"sábado","calendario":10081097.0,"entran":2287356.5100000002,"asegurado":1956687.7499999998,"tasa_entrada":22.689559578684744,"ratio_activacion":85.5436282645769},{"dow":6,"vence":"sábado","entra":"domingo","calendario":13867852.64,"entran":3364296.4399999995,"asegurado":2992090.4599999995,"tasa_entrada":24.25967831743559,"ratio_activacion":88.93658788284424}],"nuevos_dia":[{"dia":1,"calendario":140193.33,"entran":13373.78,"asegurado":12690.94,"dow":5},{"dia":2,"calendario":3453743.88,"entran":882739.33,"asegurado":814329.76,"dow":6},{"dia":4,"calendario":4932034.550000001,"entran":1089043.57,"asegurado":918144.1900000001,"dow":1},{"dia":5,"calendario":2557978.21,"entran":607407.42,"asegurado":560036.4500000001,"dow":2},{"dia":6,"calendario":3840474.8800000004,"entran":913767.89,"asegurado":814408.39,"dow":3},{"dia":8,"calendario":4170455.1900000004,"entran":960893.9500000001,"asegurado":859291.9400000001,"dow":5},{"dia":9,"calendario":2116070.6700000004,"entran":505442.03,"asegurado":455168.69000000006,"dow":6},{"dia":11,"calendario":4206946.47,"entran":922355.44,"asegurado":808458.5100000001,"dow":1},{"dia":12,"calendario":1890023.97,"entran":493985.51,"asegurado":438662.46,"dow":2},{"dia":13,"calendario":1730925.95,"entran":484553.06000000006,"asegurado":411509.1399999999,"dow":3},{"dia":14,"calendario":1925286.75,"entran":506227.8,"asegurado":442096.4199999999,"dow":4},{"dia":15,"calendario":1638244.68,"entran":426898.31,"asegurado":386784.52,"dow":5},{"dia":16,"calendario":5013449.42,"entran":1242432.56,"asegurado":1140576.7100000002,"dow":6},{"dia":18,"calendario":4268504.59,"entran":921113.0300000001,"asegurado":795463.7999999999,"dow":1},{"dia":19,"calendario":2061495.3599999999,"entran":455352.77999999997,"asegurado":375052.42,"dow":2},{"dia":20,"calendario":1723816.01,"entran":427064.43,"asegurado":370724.84,"dow":3},{"dia":21,"calendario":2453759.6799999997,"entran":541834.4,"asegurado":472706.73,"dow":4},{"dia":22,"calendario":1983774.07,"entran":453302.05,"asegurado":381739.57,"dow":5},{"dia":23,"calendario":1819292.98,"entran":430552.53,"asegurado":372575.28,"dow":6},{"dia":25,"calendario":3791825.4799999995,"entran":733878.0800000001,"asegurado":631774.34,"dow":1},{"dia":26,"calendario":4911236.36,"entran":1003465.5700000001,"asegurado":808721.3400000001,"dow":2},{"dia":27,"calendario":2038720.1300000001,"entran":413478.97000000003,"asegurado":319167.19000000006,"dow":3},{"dia":28,"calendario":2194219.45,"entran":475391.88,"asegurado":360689.27,"dow":4},{"dia":29,"calendario":2148429.7300000004,"entran":432888.42000000004,"asegurado":316180.77999999997,"dow":5},{"dia":30,"calendario":1465295.69,"entran":303129.99,"asegurado":209440.02,"dow":6}],"totales":{"stock_base":[3501,5768043.97],"stock_act":[2488,3846478.2199999997],"nuevos_cal":[44477,68476197.48],"nuevos_ent":[10341,15640572.78],"nuevos_act":[9066,13476393.7]},"serie":[{"dia":1,"stock":552990.21,"nuevos":3556.95},{"dia":2,"stock":224883.22,"nuevos":188039.07},{"dia":3,"stock":535167.03,"nuevos":273472.38},{"dia":4,"stock":274033.48,"nuevos":449224.98},{"dia":5,"stock":255242.21,"nuevos":496023.68},{"dia":6,"stock":61054.45,"nuevos":297107.06},{"dia":7,"stock":98368.94,"nuevos":400170.63},{"dia":8,"stock":57172.88,"nuevos":406058.51},{"dia":9,"stock":28241.74,"nuevos":229319.3},{"dia":10,"stock":96437.99,"nuevos":525399.36},{"dia":11,"stock":111126.85,"nuevos":540480.4},{"dia":12,"stock":74440.33,"nuevos":446997.08},{"dia":13,"stock":50029.36,"nuevos":404730.16},{"dia":14,"stock":71989.56,"nuevos":481042.51},{"dia":15,"stock":40310.23,"nuevos":352137.79},{"dia":16,"stock":35605.56,"nuevos":317900.85},{"dia":17,"stock":28685.33,"nuevos":624152.25},{"dia":18,"stock":45649.06,"nuevos":724489.86},{"dia":19,"stock":43407.07,"nuevos":506185.93},{"dia":20,"stock":40768.71,"nuevos":535408.12},{"dia":21,"stock":44657.3,"nuevos":575548.98},{"dia":22,"stock":37118.63,"nuevos":348346.7},{"dia":23,"stock":25697.1,"nuevos":286188.33},{"dia":24,"stock":48461.26,"nuevos":406129.16},{"dia":25,"stock":79549.35,"nuevos":619234.71},{"dia":26,"stock":63120.55,"nuevos":768490.03},{"dia":27,"stock":100634.53,"nuevos":565526.65},{"dia":28,"stock":109724.35,"nuevos":569782.15},{"dia":29,"stock":130206.54,"nuevos":358868.32},{"dia":30,"stock":103823.79,"nuevos":205187.36},{"dia":31,"stock":377880.61,"nuevos":571194.44}]},"agosto_modelo":{"tasa_entrada":25.10429748621432,"stock":[{"tramo":"a. 1-8","banda":"a. avance <10%","asignado":1498246.92,"asegurado":1010026.4205009872,"ratio":67.41388265300003},{"tramo":"a. 1-8","banda":"b. avance 10-40%","asignado":1773540.1,"asegurado":1383638.1325577868,"ratio":78.01561027899999},{"tramo":"a. 1-8","banda":"c. avance 40-70%","asignado":746906.72,"asegurado":600338.0662719565,"ratio":80.37657852000001},{"tramo":"a. 1-8","banda":"d. avance 70%+","asignado":124829.57,"asegurado":106377.57528992904,"ratio":85.21825020300001},{"tramo":"b. 9-15","banda":"a. avance <10%","asignado":199656.06,"asegurado":81265.06999040392,"ratio":40.70253113799998},{"tramo":"b. 9-15","banda":"b. avance 10-40%","asignado":282529.8,"asegurado":176289.9901729296,"ratio":62.396954294000004},{"tramo":"b. 9-15","banda":"c. avance 40-70%","asignado":131862.44,"asegurado":86448.9643563246,"ratio":65.55996109},{"tramo":"b. 9-15","banda":"d. avance 70%+","asignado":26921.79,"asegurado":20703.06295840052,"ratio":76.90076684499996},{"tramo":"c. 16-30","banda":"a. avance <10%","asignado":448719.91,"asegurado":98777.05324491189,"ratio":22.013075649999998},{"tramo":"c. 16-30","banda":"b. avance 10-40%","asignado":391787.98,"asegurado":166579.01772884701,"ratio":42.517643785},{"tramo":"c. 16-30","banda":"c. avance 40-70%","asignado":154664.45,"asegurado":80544.08920654142,"ratio":52.07666610300002},{"tramo":"c. 16-30","banda":"d. avance 70%+","asignado":29779.58,"asegurado":16850.501847039483,"ratio":56.58408159899999}],"nuevos_banda":[{"banda":"a. avance <10%","calendario":32994329.65,"entran":8282994.668918217,"asegurado":6630179.6023551235,"ratio_activacion":80.04568235730912},{"banda":"b. avance 10-40%","calendario":30664912.980000008,"entran":7698210.978387951,"asegurado":6406795.176038618,"ratio_activacion":83.22446856841324},{"banda":"c. avance 40-70%","calendario":9328265.14,"entran":2341795.4310484272,"asegurado":1955721.1965612934,"ratio_activacion":83.51375063046017},{"banda":"d. avance 70%+","calendario":1003360.5499999999,"entran":251886.61733131617,"asegurado":207988.31326235455,"ratio_activacion":82.57219675501041}],"nuevos_dow":[{"dow":1,"vence":"lunes","entra":"martes","calendario":18582688.210000005,"entran":4665053.329174076,"asegurado":3867738.5968298186,"ratio_activacion":82.90877561124434},{"dow":2,"vence":"martes","entra":"miércoles","calendario":12271118.670000002,"entran":3080578.135803187,"asegurado":2542834.107035876,"ratio_activacion":82.54405487990951},{"dow":3,"vence":"miércoles","entra":"jueves","calendario":10018990.28,"entran":2515197.125006097,"asegurado":2083434.0714399978,"ratio_activacion":82.83382843938912},{"dow":4,"vence":"jueves","entra":"viernes","calendario":7290843.6899999995,"entran":1830315.0891924854,"asegurado":1420075.3183549761,"ratio_activacion":77.58638535737022},{"dow":5,"vence":"viernes","entra":"sábado","calendario":10983336.299999999,"entran":2757289.418663365,"asegurado":2177656.6425736016,"ratio_activacion":78.9781670300411},{"dow":6,"vence":"sábado","entra":"domingo","calendario":14843891.170000002,"entran":3726454.5978467003,"asegurado":3108945.55198312,"ratio_activacion":83.42904684199284}],"nuevos_dia":[{"dia":1,"calendario":139950.29,"asegurado":31361.523382815867,"dow":5},{"dia":2,"calendario":3527520.64,"asegurado":791595.0306601906,"dow":6},{"dia":4,"calendario":5151816.66,"asegurado":1139475.8698738546,"dow":1},{"dia":5,"calendario":2700447.6900000004,"asegurado":607476.3699510058,"dow":2},{"dia":6,"calendario":3977436.75,"asegurado":880335.8914450144,"dow":3},{"dia":8,"calendario":4449576.68,"asegurado":969879.5338300813,"dow":5},{"dia":9,"calendario":2247095.4400000004,"asegurado":494240.62930849753,"dow":6},{"dia":11,"calendario":4501037.6899999995,"asegurado":974486.4961523579,"dow":1},{"dia":12,"calendario":2022653.69,"asegurado":448990.8507840073,"dow":2},{"dia":13,"calendario":1882085.0599999998,"asegurado":410550.526016324,"dow":3},{"dia":14,"calendario":2094485.97,"asegurado":455336.9750570105,"dow":4},{"dia":15,"calendario":1781643.1400000001,"asegurado":393714.8438207154,"dow":5},{"dia":16,"calendario":5368055.859999999,"asegurado":1169458.070420121,"dow":6},{"dia":18,"calendario":4674614.649999999,"asegurado":966236.4157203268,"dow":1},{"dia":19,"calendario":2260621.46,"asegurado":479343.36216816475,"dow":2},{"dia":20,"calendario":1881003.83,"asegurado":388237.5769359096,"dow":3},{"dia":21,"calendario":2734972.43,"asegurado":548632.2174522574,"dow":4},{"dia":22,"calendario":2180891.55,"asegurado":431592.5597022658,"dow":5},{"dia":23,"calendario":2017558.7799999998,"asegurado":404358.690869779,"dow":6},{"dia":25,"calendario":4255219.21,"asegurado":787539.8150832789,"dow":1},{"dia":26,"calendario":5287395.83,"asegurado":1007023.5241326977,"dow":2},{"dia":27,"calendario":2278464.64,"asegurado":404310.07704274956,"dow":3},{"dia":28,"calendario":2461385.2900000005,"asegurado":416106.1258457082,"dow":4},{"dia":29,"calendario":2431274.64,"asegurado":351108.18183772283,"dow":5},{"dia":30,"calendario":1683660.45,"asegurado":249293.1307245315,"dow":6}]},"septiembre":{"tasa_entrada":24.90807213437529,"stock":[{"tramo":"a. 1-8","banda":"a. avance <10%","asignado":665480.62,"asegurado":453703.77889876347,"ratio":68.17685823800001},{"tramo":"a. 1-8","banda":"b. avance 10-40%","asignado":812546.92,"asegurado":634232.1085607442,"ratio":78.054828952},{"tramo":"a. 1-8","banda":"c. avance 40-70%","asignado":383888.61,"asegurado":311873.7605552499,"ratio":81.24069129200001},{"tramo":"a. 1-8","banda":"d. avance 70%+","asignado":64746.9,"asegurado":54824.21564982049,"ratio":84.674657242},{"tramo":"b. 9-15","banda":"a. avance <10%","asignado":227589.51,"asegurado":90484.860890135,"ratio":39.75792245},{"tramo":"b. 9-15","banda":"b. avance 10-40%","asignado":285685.14,"asegurado":172653.58547949325,"ratio":60.434919884},{"tramo":"b. 9-15","banda":"c. avance 40-70%","asignado":133824.13,"asegurado":88302.21811962237,"ratio":65.98377894899998},{"tramo":"b. 9-15","banda":"d. avance 70%+","asignado":24457.01,"asegurado":18442.352291168238,"ratio":75.407223905},{"tramo":"c. 16-30","banda":"a. avance <10%","asignado":443967.71,"asegurado":97576.58663984391,"ratio":21.97830708000001},{"tramo":"c. 16-30","banda":"b. avance 10-40%","asignado":509812.89,"asegurado":206863.48180636278,"ratio":40.576353768999994},{"tramo":"c. 16-30","banda":"c. avance 40-70%","asignado":177609.0,"asegurado":92536.40785050474,"ratio":52.101192986},{"tramo":"c. 16-30","banda":"d. avance 70%+","asignado":35735.69,"asegurado":20409.47353323157,"ratio":57.11229735099999}],"nuevos_banda":[{"banda":"a. avance <10%","calendario":38841759.64000001,"entran":9674733.50939187,"asegurado":7768698.753307567,"ratio_activacion":80.29883971239109},{"banda":"b. avance 10-40%","calendario":36848493.78000001,"entran":9178249.411153194,"asegurado":7582193.1612515915,"ratio_activacion":82.6104502241777},{"banda":"c. avance 40-70%","calendario":11934134.51,"entran":2972562.832364175,"asegurado":2475416.7945057703,"ratio_activacion":83.27550783971121},{"banda":"d. avance 70%+","calendario":1984197.1800000002,"entran":494225.26488264033,"asegurado":409059.00071690395,"ratio_activacion":82.76772350236686}],"nuevos_dow":[{"dow":1,"vence":"lunes","entra":"martes","calendario":28525965.039999995,"entran":7105267.949189875,"asegurado":5740804.79960433,"ratio_activacion":80.79645751092163},{"dow":2,"vence":"martes","entra":"miércoles","calendario":16963102.32,"entran":4225181.762093488,"asegurado":3523347.2581469617,"ratio_activacion":83.38924705575785},{"dow":3,"vence":"miércoles","entra":"jueves","calendario":10735125.13,"entran":2673912.711095849,"asegurado":2258366.3143367134,"ratio_activacion":84.45923851460236},{"dow":4,"vence":"jueves","entra":"viernes","calendario":9678540.169999998,"entran":2410737.7670980883,"asegurado":1965730.9570418636,"ratio_activacion":81.5406380515663},{"dow":5,"vence":"viernes","entra":"sábado","calendario":12969348.1,"entran":3230414.580106231,"asegurado":2536288.762327102,"ratio_activacion":78.51279454798949},{"dow":6,"vence":"sábado","entra":"domingo","calendario":10736504.350000001,"entran":2674256.248208341,"asegurado":2210829.618324862,"ratio_activacion":82.67082183339913}],"nuevos_dia":[{"dia":1,"calendario":9410502.8,"asegurado":2071734.2715593511,"dow":1},{"dia":2,"calendario":4177589.24,"asegurado":930336.6623399508,"dow":2},{"dia":3,"calendario":3229658.81,"asegurado":718160.1898316741,"dow":3},{"dia":4,"calendario":2426227.24,"asegurado":523263.1074794072,"dow":4},{"dia":5,"calendario":2880941.09,"asegurado":628668.0236300206,"dow":5},{"dia":6,"calendario":4218477.5600000005,"asegurado":926697.2915706667,"dow":6},{"dia":8,"calendario":4773879.97,"asegurado":1031855.6566695645,"dow":1},{"dia":9,"calendario":2498237.18,"asegurado":549736.7065769112,"dow":2},{"dia":10,"calendario":2242882.13,"asegurado":491624.7902885955,"dow":3},{"dia":11,"calendario":2650384.63,"asegurado":564149.075150996,"dow":4},{"dia":12,"calendario":2061647.2799999998,"asegurado":447261.8805393617,"dow":5},{"dia":13,"calendario":1940061.1500000001,"asegurado":425246.0901055633,"dow":6},{"dia":15,"calendario":4025709.42,"asegurado":902427.1411641616,"dow":1},{"dia":16,"calendario":5835817.26,"asegurado":1303233.128689274,"dow":2},{"dia":17,"calendario":2696676.67,"asegurado":565342.8848298922,"dow":3},{"dia":18,"calendario":2382668.77,"asegurado":477726.2809885441,"dow":4},{"dia":19,"calendario":2403601.96,"asegurado":486677.71859979845,"dow":5},{"dia":20,"calendario":2090397.16,"asegurado":426970.7534880274,"dow":6},{"dia":22,"calendario":5199617.5,"asegurado":1010332.2915236272,"dow":1},{"dia":23,"calendario":2476206.45,"asegurado":483561.78766573267,"dow":2},{"dia":24,"calendario":2565907.5199999996,"asegurado":483238.4493865525,"dow":3},{"dia":25,"calendario":2219259.53,"asegurado":400592.4934229166,"dow":4},{"dia":26,"calendario":5623157.7700000005,"asegurado":973681.1395579213,"dow":5},{"dia":27,"calendario":2487568.4799999995,"asegurado":431915.4831606045,"dow":6},{"dia":29,"calendario":5116255.35,"asegurado":724455.4386876248,"dow":1},{"dia":30,"calendario":1975252.1900000002,"asegurado":256478.97287509276,"dow":2}]},"curvas_stock":{"a. 1-8|a. avance <10%":[{"dia":1,"pct":14.208},{"dia":2,"pct":24.421},{"dia":3,"pct":30.012},{"dia":4,"pct":34.105},{"dia":5,"pct":37.694},{"dia":6,"pct":39.512},{"dia":7,"pct":41.608},{"dia":8,"pct":43.457},{"dia":9,"pct":44.913},{"dia":10,"pct":46.118},{"dia":11,"pct":47.641},{"dia":12,"pct":48.628},{"dia":13,"pct":49.637},{"dia":14,"pct":50.761},{"dia":15,"pct":52.321},{"dia":16,"pct":53.62},{"dia":17,"pct":54.192},{"dia":18,"pct":54.654},{"dia":19,"pct":55.157},{"dia":20,"pct":55.898},{"dia":21,"pct":56.394},{"dia":22,"pct":56.5},{"dia":23,"pct":57.272},{"dia":24,"pct":57.87},{"dia":25,"pct":58.192},{"dia":26,"pct":59.069},{"dia":27,"pct":60.161},{"dia":28,"pct":62.334},{"dia":29,"pct":65.074},{"dia":30,"pct":67.666},{"dia":31,"pct":68.503}],"a. 1-8|b. avance 10-40%":[{"dia":1,"pct":13.879},{"dia":2,"pct":23.876},{"dia":3,"pct":30.547},{"dia":4,"pct":34.249},{"dia":5,"pct":38.145},{"dia":6,"pct":40.44},{"dia":7,"pct":41.851},{"dia":8,"pct":43.776},{"dia":9,"pct":45.389},{"dia":10,"pct":46.426},{"dia":11,"pct":47.654},{"dia":12,"pct":48.991},{"dia":13,"pct":50.402},{"dia":14,"pct":51.533},{"dia":15,"pct":52.677},{"dia":16,"pct":53.558},{"dia":17,"pct":54.334},{"dia":18,"pct":54.931},{"dia":19,"pct":56.052},{"dia":20,"pct":57.3},{"dia":21,"pct":58.336},{"dia":22,"pct":59.517},{"dia":23,"pct":60.092},{"dia":24,"pct":60.962},{"dia":25,"pct":61.853},{"dia":26,"pct":63.274},{"dia":27,"pct":65.444},{"dia":28,"pct":68.728},{"dia":29,"pct":72.326},{"dia":30,"pct":76.448},{"dia":31,"pct":78.407}],"a. 1-8|c. avance 40-70%":[{"dia":1,"pct":14.825},{"dia":2,"pct":26.107},{"dia":3,"pct":32.754},{"dia":4,"pct":36.514},{"dia":5,"pct":40.77},{"dia":6,"pct":44.199},{"dia":7,"pct":46.134},{"dia":8,"pct":47.942},{"dia":9,"pct":49.612},{"dia":10,"pct":51.005},{"dia":11,"pct":52.391},{"dia":12,"pct":53.437},{"dia":13,"pct":54.39},{"dia":14,"pct":55.205},{"dia":15,"pct":56.116},{"dia":16,"pct":56.771},{"dia":17,"pct":57.406},{"dia":18,"pct":58.319},{"dia":19,"pct":59.393},{"dia":20,"pct":60.682},{"dia":21,"pct":61.095},{"dia":22,"pct":61.884},{"dia":23,"pct":62.802},{"dia":24,"pct":63.937},{"dia":25,"pct":64.952},{"dia":26,"pct":66.099},{"dia":27,"pct":68.348},{"dia":28,"pct":71.108},{"dia":29,"pct":75.148},{"dia":30,"pct":79.516},{"dia":31,"pct":81.152}],"a. 1-8|d. avance 70%+":[{"dia":1,"pct":13.467},{"dia":2,"pct":24.68},{"dia":3,"pct":31.071},{"dia":4,"pct":35.456},{"dia":5,"pct":38.3},{"dia":6,"pct":41.563},{"dia":7,"pct":42.943},{"dia":8,"pct":45.462},{"dia":9,"pct":47.853},{"dia":10,"pct":49.751},{"dia":11,"pct":52.475},{"dia":12,"pct":54.605},{"dia":13,"pct":55.936},{"dia":14,"pct":57.163},{"dia":15,"pct":58.169},{"dia":16,"pct":59.081},{"dia":17,"pct":60.041},{"dia":18,"pct":60.912},{"dia":19,"pct":61.789},{"dia":20,"pct":63.19},{"dia":21,"pct":64.427},{"dia":22,"pct":65.106},{"dia":23,"pct":65.836},{"dia":24,"pct":67.234},{"dia":25,"pct":68.561},{"dia":26,"pct":70.078},{"dia":27,"pct":72.729},{"dia":28,"pct":75.471},{"dia":29,"pct":78.781},{"dia":30,"pct":83.091},{"dia":31,"pct":85.452}],"b. 9-15|a. avance <10%":[{"dia":1,"pct":5.638},{"dia":2,"pct":9.491},{"dia":3,"pct":12.072},{"dia":4,"pct":14.307},{"dia":5,"pct":17.141},{"dia":6,"pct":18.704},{"dia":7,"pct":19.671},{"dia":8,"pct":22.01},{"dia":9,"pct":22.56},{"dia":10,"pct":24.37},{"dia":11,"pct":26.237},{"dia":12,"pct":27.083},{"dia":13,"pct":27.978},{"dia":14,"pct":28.679},{"dia":15,"pct":29.919},{"dia":16,"pct":31.208},{"dia":17,"pct":32.397},{"dia":18,"pct":33.703},{"dia":19,"pct":35.001},{"dia":20,"pct":36.049},{"dia":21,"pct":36.708},{"dia":22,"pct":37.187},{"dia":23,"pct":37.954},{"dia":24,"pct":38.408},{"dia":25,"pct":38.733},{"dia":26,"pct":38.995},{"dia":27,"pct":39.312},{"dia":28,"pct":39.487},{"dia":29,"pct":40.318},{"dia":30,"pct":40.582},{"dia":31,"pct":41.214}],"b. 9-15|b. avance 10-40%":[{"dia":1,"pct":6.074},{"dia":2,"pct":11.534},{"dia":3,"pct":15.185},{"dia":4,"pct":18.234},{"dia":5,"pct":21.376},{"dia":6,"pct":25.256},{"dia":7,"pct":26.221},{"dia":8,"pct":28.148},{"dia":9,"pct":29.818},{"dia":10,"pct":31.979},{"dia":11,"pct":33.686},{"dia":12,"pct":35.221},{"dia":13,"pct":36.764},{"dia":14,"pct":38.886},{"dia":15,"pct":41.538},{"dia":16,"pct":43.258},{"dia":17,"pct":45.034},{"dia":18,"pct":46.712},{"dia":19,"pct":47.978},{"dia":20,"pct":49.229},{"dia":21,"pct":51.688},{"dia":22,"pct":53.033},{"dia":23,"pct":54.581},{"dia":24,"pct":56.087},{"dia":25,"pct":57.572},{"dia":26,"pct":58.515},{"dia":27,"pct":58.814},{"dia":28,"pct":59.209},{"dia":29,"pct":60.931},{"dia":30,"pct":61.507},{"dia":31,"pct":62.833}],"b. 9-15|c. avance 40-70%":[{"dia":1,"pct":8.188},{"dia":2,"pct":13.9},{"dia":3,"pct":18.119},{"dia":4,"pct":20.715},{"dia":5,"pct":25.004},{"dia":6,"pct":28.608},{"dia":7,"pct":30.628},{"dia":8,"pct":33.657},{"dia":9,"pct":36.398},{"dia":10,"pct":37.329},{"dia":11,"pct":38.883},{"dia":12,"pct":40.097},{"dia":13,"pct":42.614},{"dia":14,"pct":44.892},{"dia":15,"pct":46.36},{"dia":16,"pct":48.88},{"dia":17,"pct":50.42},{"dia":18,"pct":52.631},{"dia":19,"pct":53.752},{"dia":20,"pct":54.32},{"dia":21,"pct":55.168},{"dia":22,"pct":56.479},{"dia":23,"pct":58.163},{"dia":24,"pct":59.318},{"dia":25,"pct":60.439},{"dia":26,"pct":61.906},{"dia":27,"pct":62.533},{"dia":28,"pct":64.25},{"dia":29,"pct":64.941},{"dia":30,"pct":66.408},{"dia":31,"pct":66.886}],"b. 9-15|d. avance 70%+":[{"dia":1,"pct":8.97},{"dia":2,"pct":13.571},{"dia":3,"pct":20.358},{"dia":4,"pct":23.485},{"dia":5,"pct":28.614},{"dia":6,"pct":31.383},{"dia":7,"pct":35.189},{"dia":8,"pct":36.937},{"dia":9,"pct":38.893},{"dia":10,"pct":39.103},{"dia":11,"pct":40.134},{"dia":12,"pct":40.713},{"dia":13,"pct":42.475},{"dia":14,"pct":47.675},{"dia":15,"pct":49.988},{"dia":16,"pct":51.66},{"dia":17,"pct":52.784},{"dia":18,"pct":54.488},{"dia":19,"pct":56.422},{"dia":20,"pct":59.534},{"dia":21,"pct":60.878},{"dia":22,"pct":65.038},{"dia":23,"pct":65.863},{"dia":24,"pct":67.216},{"dia":25,"pct":68.287},{"dia":26,"pct":68.872},{"dia":27,"pct":69.979},{"dia":28,"pct":72.804},{"dia":29,"pct":73.912},{"dia":30,"pct":75.757},{"dia":31,"pct":77.442}],"c. 16-30|a. avance <10%":[{"dia":1,"pct":2.457},{"dia":2,"pct":3.578},{"dia":3,"pct":4.509},{"dia":4,"pct":5.582},{"dia":5,"pct":7.345},{"dia":6,"pct":8.111},{"dia":7,"pct":8.457},{"dia":8,"pct":9.689},{"dia":9,"pct":10.803},{"dia":10,"pct":11.954},{"dia":11,"pct":12.415},{"dia":12,"pct":12.94},{"dia":13,"pct":13.434},{"dia":14,"pct":14.186},{"dia":15,"pct":14.81},{"dia":16,"pct":16.268},{"dia":17,"pct":17.319},{"dia":18,"pct":17.834},{"dia":19,"pct":18.2},{"dia":20,"pct":18.692},{"dia":21,"pct":19.352},{"dia":22,"pct":19.606},{"dia":23,"pct":20.562},{"dia":24,"pct":20.855},{"dia":25,"pct":21.055},{"dia":26,"pct":21.652},{"dia":27,"pct":21.98},{"dia":28,"pct":22.215},{"dia":29,"pct":22.29},{"dia":30,"pct":22.422},{"dia":31,"pct":22.504}],"c. 16-30|b. avance 10-40%":[{"dia":1,"pct":3.598},{"dia":2,"pct":5.517},{"dia":3,"pct":8.025},{"dia":4,"pct":9.718},{"dia":5,"pct":12.071},{"dia":6,"pct":14.973},{"dia":7,"pct":16.378},{"dia":8,"pct":17.795},{"dia":9,"pct":19.213},{"dia":10,"pct":20.835},{"dia":11,"pct":22.613},{"dia":12,"pct":24.607},{"dia":13,"pct":25.799},{"dia":14,"pct":26.641},{"dia":15,"pct":28.17},{"dia":16,"pct":29.853},{"dia":17,"pct":31.044},{"dia":18,"pct":31.679},{"dia":19,"pct":32.605},{"dia":20,"pct":33.042},{"dia":21,"pct":34.176},{"dia":22,"pct":35.01},{"dia":23,"pct":35.358},{"dia":24,"pct":36.06},{"dia":25,"pct":36.717},{"dia":26,"pct":38.269},{"dia":27,"pct":38.843},{"dia":28,"pct":39.719},{"dia":29,"pct":40.006},{"dia":30,"pct":40.857},{"dia":31,"pct":42.304}],"c. 16-30|c. avance 40-70%":[{"dia":1,"pct":4.967},{"dia":2,"pct":10.562},{"dia":3,"pct":13.127},{"dia":4,"pct":16.747},{"dia":5,"pct":20.024},{"dia":6,"pct":22.793},{"dia":7,"pct":25.397},{"dia":8,"pct":27.13},{"dia":9,"pct":28.578},{"dia":10,"pct":29.479},{"dia":11,"pct":30.72},{"dia":12,"pct":32.056},{"dia":13,"pct":33.925},{"dia":14,"pct":35.684},{"dia":15,"pct":38.476},{"dia":16,"pct":40.381},{"dia":17,"pct":41.486},{"dia":18,"pct":42.314},{"dia":19,"pct":44.054},{"dia":20,"pct":45.063},{"dia":21,"pct":45.678},{"dia":22,"pct":46.027},{"dia":23,"pct":46.961},{"dia":24,"pct":47.925},{"dia":25,"pct":48.573},{"dia":26,"pct":48.9},{"dia":27,"pct":49.408},{"dia":28,"pct":50.368},{"dia":29,"pct":51.896},{"dia":30,"pct":52.704},{"dia":31,"pct":53.079}],"c. 16-30|d. avance 70%+":[{"dia":1,"pct":6.578},{"dia":2,"pct":9.879},{"dia":3,"pct":12.607},{"dia":4,"pct":15.205},{"dia":5,"pct":18.81},{"dia":6,"pct":20.237},{"dia":7,"pct":23.359},{"dia":8,"pct":26.911},{"dia":9,"pct":29.164},{"dia":10,"pct":30.172},{"dia":11,"pct":31.495},{"dia":12,"pct":33.317},{"dia":13,"pct":36.413},{"dia":14,"pct":37.43},{"dia":15,"pct":38.448},{"dia":16,"pct":39.904},{"dia":17,"pct":40.49},{"dia":18,"pct":43.432},{"dia":19,"pct":44.244},{"dia":20,"pct":46.425},{"dia":21,"pct":48.133},{"dia":22,"pct":49.121},{"dia":23,"pct":49.945},{"dia":24,"pct":50.668},{"dia":25,"pct":50.881},{"dia":26,"pct":51.911},{"dia":27,"pct":54.515},{"dia":28,"pct":56.263},{"dia":29,"pct":57.024},{"dia":30,"pct":57.889},{"dia":31,"pct":58.022}]},"curvas_nuevos":{"a. avance <10%|1":[{"dia":0,"pct":40.15},{"dia":1,"pct":57.072},{"dia":2,"pct":63.774},{"dia":3,"pct":70.22},{"dia":4,"pct":72.363},{"dia":5,"pct":73.008},{"dia":6,"pct":74.947},{"dia":7,"pct":76.726},{"dia":8,"pct":78.954},{"dia":9,"pct":79.967},{"dia":10,"pct":81.052},{"dia":11,"pct":81.744},{"dia":12,"pct":81.988},{"dia":13,"pct":82.726},{"dia":14,"pct":83.263},{"dia":15,"pct":83.917},{"dia":16,"pct":84.234},{"dia":17,"pct":84.655},{"dia":18,"pct":84.814},{"dia":19,"pct":84.941},{"dia":20,"pct":85.294},{"dia":21,"pct":85.46},{"dia":22,"pct":85.584},{"dia":23,"pct":85.724},{"dia":24,"pct":86.346},{"dia":25,"pct":86.493},{"dia":26,"pct":86.519},{"dia":27,"pct":86.747},{"dia":28,"pct":86.924},{"dia":29,"pct":87.229},{"dia":30,"pct":87.516},{"dia":31,"pct":87.601}],"a. avance <10%|2":[{"dia":0,"pct":45.82},{"dia":1,"pct":61.024},{"dia":2,"pct":70.102},{"dia":3,"pct":73.648},{"dia":4,"pct":74.698},{"dia":5,"pct":77.302},{"dia":6,"pct":78.495},{"dia":7,"pct":80.281},{"dia":8,"pct":81.6},{"dia":9,"pct":82.743},{"dia":10,"pct":83.211},{"dia":11,"pct":83.535},{"dia":12,"pct":84.414},{"dia":13,"pct":85.144},{"dia":14,"pct":85.727},{"dia":15,"pct":86.28},{"dia":16,"pct":87.177},{"dia":17,"pct":87.279},{"dia":18,"pct":87.484},{"dia":19,"pct":87.769},{"dia":20,"pct":87.883},{"dia":21,"pct":88.396},{"dia":22,"pct":88.556},{"dia":23,"pct":88.907},{"dia":24,"pct":89.234},{"dia":25,"pct":89.272},{"dia":26,"pct":89.451},{"dia":27,"pct":89.591},{"dia":28,"pct":89.689},{"dia":29,"pct":89.991},{"dia":30,"pct":90.265},{"dia":31,"pct":90.339}],"a. avance <10%|3":[{"dia":0,"pct":45.236},{"dia":1,"pct":61.64},{"dia":2,"pct":66.568},{"dia":3,"pct":68.009},{"dia":4,"pct":71.957},{"dia":5,"pct":75.018},{"dia":6,"pct":77.256},{"dia":7,"pct":78.755},{"dia":8,"pct":81.162},{"dia":9,"pct":82.197},{"dia":10,"pct":82.691},{"dia":11,"pct":83.307},{"dia":12,"pct":83.747},{"dia":13,"pct":84.506},{"dia":14,"pct":85.461},{"dia":15,"pct":85.948},{"dia":16,"pct":86.298},{"dia":17,"pct":86.41},{"dia":18,"pct":86.634},{"dia":19,"pct":86.807},{"dia":20,"pct":87.053},{"dia":21,"pct":87.39},{"dia":22,"pct":87.704},{"dia":23,"pct":87.856},{"dia":24,"pct":87.905},{"dia":25,"pct":88.163},{"dia":26,"pct":88.46},{"dia":27,"pct":88.761},{"dia":28,"pct":89.146},{"dia":29,"pct":89.304},{"dia":30,"pct":89.804},{"dia":31,"pct":90.073}],"a. avance <10%|4":[{"dia":0,"pct":41.67},{"dia":1,"pct":52.588},{"dia":2,"pct":56.014},{"dia":3,"pct":64.824},{"dia":4,"pct":70.445},{"dia":5,"pct":73.691},{"dia":6,"pct":75.692},{"dia":7,"pct":77.507},{"dia":8,"pct":78.509},{"dia":9,"pct":78.782},{"dia":10,"pct":79.521},{"dia":11,"pct":80.496},{"dia":12,"pct":81.175},{"dia":13,"pct":81.609},{"dia":14,"pct":83.132},{"dia":15,"pct":83.461},{"dia":16,"pct":83.555},{"dia":17,"pct":83.741},{"dia":18,"pct":84.031},{"dia":19,"pct":84.481},{"dia":20,"pct":84.71},{"dia":21,"pct":84.762},{"dia":22,"pct":84.876},{"dia":23,"pct":85.001},{"dia":24,"pct":85.197},{"dia":25,"pct":85.392},{"dia":26,"pct":85.609},{"dia":27,"pct":85.756},{"dia":28,"pct":85.949},{"dia":29,"pct":86.356},{"dia":30,"pct":86.681},{"dia":31,"pct":86.75}],"a. avance <10%|5":[{"dia":0,"pct":25.753},{"dia":1,"pct":34.173},{"dia":2,"pct":53.957},{"dia":3,"pct":64.248},{"dia":4,"pct":69.484},{"dia":5,"pct":72.382},{"dia":6,"pct":74.714},{"dia":7,"pct":76.042},{"dia":8,"pct":76.547},{"dia":9,"pct":78.259},{"dia":10,"pct":79.796},{"dia":11,"pct":81.083},{"dia":12,"pct":81.747},{"dia":13,"pct":82.448},{"dia":14,"pct":82.719},{"dia":15,"pct":82.808},{"dia":16,"pct":83.237},{"dia":17,"pct":83.604},{"dia":18,"pct":83.947},{"dia":19,"pct":84.266},{"dia":20,"pct":84.353},{"dia":21,"pct":84.441},{"dia":22,"pct":84.464},{"dia":23,"pct":84.686},{"dia":24,"pct":85.037},{"dia":25,"pct":85.459},{"dia":26,"pct":85.67},{"dia":27,"pct":85.928},{"dia":28,"pct":86.066},{"dia":29,"pct":86.373},{"dia":30,"pct":86.768},{"dia":31,"pct":86.897}],"a. avance <10%|6":[{"dia":0,"pct":19.182},{"dia":1,"pct":51.51},{"dia":2,"pct":62.297},{"dia":3,"pct":69.618},{"dia":4,"pct":73.784},{"dia":5,"pct":76.131},{"dia":6,"pct":77.316},{"dia":7,"pct":77.79},{"dia":8,"pct":79.094},{"dia":9,"pct":80.032},{"dia":10,"pct":81.799},{"dia":11,"pct":82.45},{"dia":12,"pct":83.115},{"dia":13,"pct":83.336},{"dia":14,"pct":83.404},{"dia":15,"pct":83.928},{"dia":16,"pct":84.463},{"dia":17,"pct":84.881},{"dia":18,"pct":85.201},{"dia":19,"pct":85.796},{"dia":20,"pct":86.084},{"dia":21,"pct":86.178},{"dia":22,"pct":86.429},{"dia":23,"pct":86.749},{"dia":24,"pct":86.977},{"dia":25,"pct":87.323},{"dia":26,"pct":87.401},{"dia":27,"pct":87.482},{"dia":28,"pct":87.629},{"dia":29,"pct":88.138},{"dia":30,"pct":88.376},{"dia":31,"pct":88.66}],"b. avance 10-40%|1":[{"dia":0,"pct":34.708},{"dia":1,"pct":51.707},{"dia":2,"pct":60.459},{"dia":3,"pct":67.263},{"dia":4,"pct":70.225},{"dia":5,"pct":71.314},{"dia":6,"pct":74.449},{"dia":7,"pct":76.686},{"dia":8,"pct":79.097},{"dia":9,"pct":80.691},{"dia":10,"pct":82.113},{"dia":11,"pct":83.413},{"dia":12,"pct":83.869},{"dia":13,"pct":84.67},{"dia":14,"pct":85.624},{"dia":15,"pct":86.868},{"dia":16,"pct":87.398},{"dia":17,"pct":87.823},{"dia":18,"pct":88.164},{"dia":19,"pct":88.383},{"dia":20,"pct":88.908},{"dia":21,"pct":89.121},{"dia":22,"pct":89.493},{"dia":23,"pct":89.944},{"dia":24,"pct":90.652},{"dia":25,"pct":90.896},{"dia":26,"pct":91.031},{"dia":27,"pct":91.479},{"dia":28,"pct":91.933},{"dia":29,"pct":92.164},{"dia":30,"pct":92.418},{"dia":31,"pct":92.613}],"b. avance 10-40%|2":[{"dia":0,"pct":39.827},{"dia":1,"pct":55.797},{"dia":2,"pct":65.38},{"dia":3,"pct":69.295},{"dia":4,"pct":71.012},{"dia":5,"pct":74.279},{"dia":6,"pct":76.773},{"dia":7,"pct":79.053},{"dia":8,"pct":81.625},{"dia":9,"pct":83.575},{"dia":10,"pct":84.38},{"dia":11,"pct":84.845},{"dia":12,"pct":85.69},{"dia":13,"pct":86.358},{"dia":14,"pct":87.238},{"dia":15,"pct":88.106},{"dia":16,"pct":88.801},{"dia":17,"pct":89.05},{"dia":18,"pct":89.08},{"dia":19,"pct":89.452},{"dia":20,"pct":89.784},{"dia":21,"pct":90.039},{"dia":22,"pct":90.332},{"dia":23,"pct":90.729},{"dia":24,"pct":90.926},{"dia":25,"pct":91.058},{"dia":26,"pct":91.352},{"dia":27,"pct":91.542},{"dia":28,"pct":91.812},{"dia":29,"pct":92.403},{"dia":30,"pct":92.657},{"dia":31,"pct":92.827}],"b. avance 10-40%|3":[{"dia":0,"pct":39.368},{"dia":1,"pct":55.495},{"dia":2,"pct":62.038},{"dia":3,"pct":64.776},{"dia":4,"pct":70.134},{"dia":5,"pct":73.452},{"dia":6,"pct":75.958},{"dia":7,"pct":78.463},{"dia":8,"pct":81.845},{"dia":9,"pct":82.981},{"dia":10,"pct":83.324},{"dia":11,"pct":84.635},{"dia":12,"pct":85.559},{"dia":13,"pct":86.702},{"dia":14,"pct":87.694},{"dia":15,"pct":88.365},{"dia":16,"pct":88.859},{"dia":17,"pct":88.978},{"dia":18,"pct":89.341},{"dia":19,"pct":89.701},{"dia":20,"pct":90.109},{"dia":21,"pct":90.353},{"dia":22,"pct":90.764},{"dia":23,"pct":91.037},{"dia":24,"pct":91.142},{"dia":25,"pct":91.436},{"dia":26,"pct":91.852},{"dia":27,"pct":92.095},{"dia":28,"pct":92.536},{"dia":29,"pct":92.835},{"dia":30,"pct":93.128},{"dia":31,"pct":93.193}],"b. avance 10-40%|4":[{"dia":0,"pct":35.974},{"dia":1,"pct":48.012},{"dia":2,"pct":52.554},{"dia":3,"pct":64.229},{"dia":4,"pct":69.187},{"dia":5,"pct":72.443},{"dia":6,"pct":74.61},{"dia":7,"pct":76.693},{"dia":8,"pct":77.937},{"dia":9,"pct":78.517},{"dia":10,"pct":80.085},{"dia":11,"pct":81.01},{"dia":12,"pct":81.9},{"dia":13,"pct":82.888},{"dia":14,"pct":83.987},{"dia":15,"pct":85.226},{"dia":16,"pct":85.355},{"dia":17,"pct":85.769},{"dia":18,"pct":86.424},{"dia":19,"pct":86.996},{"dia":20,"pct":87.493},{"dia":21,"pct":87.99},{"dia":22,"pct":88.432},{"dia":23,"pct":88.496},{"dia":24,"pct":88.746},{"dia":25,"pct":89.168},{"dia":26,"pct":89.478},{"dia":27,"pct":89.721},{"dia":28,"pct":90.248},{"dia":29,"pct":90.439},{"dia":30,"pct":90.652},{"dia":31,"pct":90.798}],"b. avance 10-40%|5":[{"dia":0,"pct":26.697},{"dia":1,"pct":36.0},{"dia":2,"pct":53.769},{"dia":3,"pct":64.835},{"dia":4,"pct":70.119},{"dia":5,"pct":73.835},{"dia":6,"pct":76.685},{"dia":7,"pct":78.174},{"dia":8,"pct":78.927},{"dia":9,"pct":80.855},{"dia":10,"pct":82.342},{"dia":11,"pct":83.612},{"dia":12,"pct":84.648},{"dia":13,"pct":85.387},{"dia":14,"pct":85.881},{"dia":15,"pct":86.285},{"dia":16,"pct":87.163},{"dia":17,"pct":88.004},{"dia":18,"pct":88.532},{"dia":19,"pct":89.059},{"dia":20,"pct":89.627},{"dia":21,"pct":89.892},{"dia":22,"pct":89.998},{"dia":23,"pct":90.407},{"dia":24,"pct":90.776},{"dia":25,"pct":91.255},{"dia":26,"pct":91.551},{"dia":27,"pct":91.856},{"dia":28,"pct":92.097},{"dia":29,"pct":92.312},{"dia":30,"pct":92.481},{"dia":31,"pct":92.834}],"b. avance 10-40%|6":[{"dia":0,"pct":19.012},{"dia":1,"pct":48.229},{"dia":2,"pct":59.066},{"dia":3,"pct":68.823},{"dia":4,"pct":73.12},{"dia":5,"pct":76.902},{"dia":6,"pct":78.611},{"dia":7,"pct":79.467},{"dia":8,"pct":82.105},{"dia":9,"pct":83.63},{"dia":10,"pct":84.731},{"dia":11,"pct":85.541},{"dia":12,"pct":86.663},{"dia":13,"pct":87.216},{"dia":14,"pct":87.515},{"dia":15,"pct":88.324},{"dia":16,"pct":88.9},{"dia":17,"pct":89.411},{"dia":18,"pct":89.907},{"dia":19,"pct":90.117},{"dia":20,"pct":90.303},{"dia":21,"pct":90.409},{"dia":22,"pct":90.643},{"dia":23,"pct":91.01},{"dia":24,"pct":91.412},{"dia":25,"pct":91.67},{"dia":26,"pct":92.096},{"dia":27,"pct":92.374},{"dia":28,"pct":92.514},{"dia":29,"pct":92.955},{"dia":30,"pct":93.172},{"dia":31,"pct":93.417}],"c. avance 40-70%|1":[{"dia":0,"pct":34.247},{"dia":1,"pct":50.625},{"dia":2,"pct":58.711},{"dia":3,"pct":66.578},{"dia":4,"pct":69.641},{"dia":5,"pct":70.941},{"dia":6,"pct":74.444},{"dia":7,"pct":77.344},{"dia":8,"pct":79.84},{"dia":9,"pct":81.513},{"dia":10,"pct":83.004},{"dia":11,"pct":83.746},{"dia":12,"pct":84.192},{"dia":13,"pct":85.299},{"dia":14,"pct":86.185},{"dia":15,"pct":86.957},{"dia":16,"pct":87.707},{"dia":17,"pct":88.373},{"dia":18,"pct":88.751},{"dia":19,"pct":88.919},{"dia":20,"pct":89.381},{"dia":21,"pct":89.823},{"dia":22,"pct":90.277},{"dia":23,"pct":90.644},{"dia":24,"pct":91.346},{"dia":25,"pct":91.577},{"dia":26,"pct":91.762},{"dia":27,"pct":92.088},{"dia":28,"pct":92.352},{"dia":29,"pct":92.887},{"dia":30,"pct":93.088},{"dia":31,"pct":93.196}],"c. avance 40-70%|2":[{"dia":0,"pct":36.009},{"dia":1,"pct":52.316},{"dia":2,"pct":61.51},{"dia":3,"pct":66.502},{"dia":4,"pct":68.726},{"dia":5,"pct":73.079},{"dia":6,"pct":75.854},{"dia":7,"pct":78.852},{"dia":8,"pct":82.12},{"dia":9,"pct":83.902},{"dia":10,"pct":84.975},{"dia":11,"pct":85.777},{"dia":12,"pct":86.896},{"dia":13,"pct":87.612},{"dia":14,"pct":88.9},{"dia":15,"pct":89.799},{"dia":16,"pct":90.527},{"dia":17,"pct":90.686},{"dia":18,"pct":90.754},{"dia":19,"pct":91.302},{"dia":20,"pct":91.662},{"dia":21,"pct":92.127},{"dia":22,"pct":92.526},{"dia":23,"pct":92.914},{"dia":24,"pct":93.117},{"dia":25,"pct":93.295},{"dia":26,"pct":93.47},{"dia":27,"pct":93.789},{"dia":28,"pct":93.939},{"dia":29,"pct":94.082},{"dia":30,"pct":94.592},{"dia":31,"pct":94.683}],"c. avance 40-70%|3":[{"dia":0,"pct":36.818},{"dia":1,"pct":54.516},{"dia":2,"pct":61.447},{"dia":3,"pct":64.833},{"dia":4,"pct":70.579},{"dia":5,"pct":74.001},{"dia":6,"pct":77.27},{"dia":7,"pct":79.63},{"dia":8,"pct":82.707},{"dia":9,"pct":83.839},{"dia":10,"pct":84.376},{"dia":11,"pct":85.494},{"dia":12,"pct":86.626},{"dia":13,"pct":87.597},{"dia":14,"pct":88.442},{"dia":15,"pct":89.178},{"dia":16,"pct":89.663},{"dia":17,"pct":89.848},{"dia":18,"pct":90.606},{"dia":19,"pct":91.285},{"dia":20,"pct":91.452},{"dia":21,"pct":92.025},{"dia":22,"pct":92.429},{"dia":23,"pct":92.559},{"dia":24,"pct":92.792},{"dia":25,"pct":93.1},{"dia":26,"pct":93.376},{"dia":27,"pct":93.638},{"dia":28,"pct":93.984},{"dia":29,"pct":94.345},{"dia":30,"pct":94.603},{"dia":31,"pct":94.759}],"c. avance 40-70%|4":[{"dia":0,"pct":35.996},{"dia":1,"pct":49.134},{"dia":2,"pct":53.726},{"dia":3,"pct":64.995},{"dia":4,"pct":70.635},{"dia":5,"pct":74.123},{"dia":6,"pct":76.486},{"dia":7,"pct":78.913},{"dia":8,"pct":80.51},{"dia":9,"pct":81.033},{"dia":10,"pct":82.865},{"dia":11,"pct":84.144},{"dia":12,"pct":85.286},{"dia":13,"pct":86.084},{"dia":14,"pct":86.994},{"dia":15,"pct":87.711},{"dia":16,"pct":88.013},{"dia":17,"pct":88.72},{"dia":18,"pct":89.476},{"dia":19,"pct":89.863},{"dia":20,"pct":90.342},{"dia":21,"pct":90.909},{"dia":22,"pct":91.149},{"dia":23,"pct":91.287},{"dia":24,"pct":91.62},{"dia":25,"pct":92.208},{"dia":26,"pct":92.302},{"dia":27,"pct":92.631},{"dia":28,"pct":92.862},{"dia":29,"pct":93.26},{"dia":30,"pct":93.408},{"dia":31,"pct":93.611}],"c. avance 40-70%|5":[{"dia":0,"pct":24.351},{"dia":1,"pct":33.323},{"dia":2,"pct":50.985},{"dia":3,"pct":62.553},{"dia":4,"pct":69.34},{"dia":5,"pct":73.184},{"dia":6,"pct":77.047},{"dia":7,"pct":78.787},{"dia":8,"pct":79.675},{"dia":9,"pct":81.627},{"dia":10,"pct":83.81},{"dia":11,"pct":85.297},{"dia":12,"pct":86.149},{"dia":13,"pct":87.26},{"dia":14,"pct":87.726},{"dia":15,"pct":87.928},{"dia":16,"pct":88.528},{"dia":17,"pct":89.352},{"dia":18,"pct":89.854},{"dia":19,"pct":90.423},{"dia":20,"pct":91.166},{"dia":21,"pct":91.39},{"dia":22,"pct":91.544},{"dia":23,"pct":92.024},{"dia":24,"pct":92.541},{"dia":25,"pct":92.825},{"dia":26,"pct":93.131},{"dia":27,"pct":93.495},{"dia":28,"pct":93.873},{"dia":29,"pct":94.105},{"dia":30,"pct":94.302},{"dia":31,"pct":94.531}],"c. avance 40-70%|6":[{"dia":0,"pct":18.982},{"dia":1,"pct":46.67},{"dia":2,"pct":59.459},{"dia":3,"pct":68.741},{"dia":4,"pct":73.557},{"dia":5,"pct":77.115},{"dia":6,"pct":78.964},{"dia":7,"pct":79.831},{"dia":8,"pct":82.705},{"dia":9,"pct":84.117},{"dia":10,"pct":85.41},{"dia":11,"pct":86.623},{"dia":12,"pct":87.816},{"dia":13,"pct":88.322},{"dia":14,"pct":88.912},{"dia":15,"pct":89.503},{"dia":16,"pct":90.165},{"dia":17,"pct":90.637},{"dia":18,"pct":90.908},{"dia":19,"pct":91.353},{"dia":20,"pct":91.509},{"dia":21,"pct":91.573},{"dia":22,"pct":92.083},{"dia":23,"pct":92.302},{"dia":24,"pct":92.837},{"dia":25,"pct":93.105},{"dia":26,"pct":93.701},{"dia":27,"pct":93.856},{"dia":28,"pct":94.004},{"dia":29,"pct":94.112},{"dia":30,"pct":94.546},{"dia":31,"pct":94.613}],"d. avance 70%+|1":[{"dia":0,"pct":32.991},{"dia":1,"pct":48.972},{"dia":2,"pct":57.472},{"dia":3,"pct":65.023},{"dia":4,"pct":68.082},{"dia":5,"pct":69.829},{"dia":6,"pct":73.49},{"dia":7,"pct":76.929},{"dia":8,"pct":79.772},{"dia":9,"pct":82.412},{"dia":10,"pct":84.144},{"dia":11,"pct":84.934},{"dia":12,"pct":85.435},{"dia":13,"pct":86.759},{"dia":14,"pct":88.217},{"dia":15,"pct":89.058},{"dia":16,"pct":89.892},{"dia":17,"pct":90.594},{"dia":18,"pct":90.961},{"dia":19,"pct":91.014},{"dia":20,"pct":91.322},{"dia":21,"pct":91.662},{"dia":22,"pct":92.15},{"dia":23,"pct":92.567},{"dia":24,"pct":93.031},{"dia":25,"pct":93.228},{"dia":26,"pct":93.367},{"dia":27,"pct":93.577},{"dia":28,"pct":93.928},{"dia":29,"pct":94.373},{"dia":30,"pct":94.444},{"dia":31,"pct":94.643}],"d. avance 70%+|2":[{"dia":0,"pct":35.047},{"dia":1,"pct":51.098},{"dia":2,"pct":61.634},{"dia":3,"pct":66.37},{"dia":4,"pct":67.554},{"dia":5,"pct":73.022},{"dia":6,"pct":76.192},{"dia":7,"pct":78.905},{"dia":8,"pct":82.169},{"dia":9,"pct":83.942},{"dia":10,"pct":84.402},{"dia":11,"pct":84.832},{"dia":12,"pct":86.367},{"dia":13,"pct":87.324},{"dia":14,"pct":88.607},{"dia":15,"pct":89.826},{"dia":16,"pct":90.867},{"dia":17,"pct":91.609},{"dia":18,"pct":91.74},{"dia":19,"pct":92.405},{"dia":20,"pct":92.903},{"dia":21,"pct":93.546},{"dia":22,"pct":94.145},{"dia":23,"pct":94.44},{"dia":24,"pct":94.554},{"dia":25,"pct":94.69},{"dia":26,"pct":94.885},{"dia":27,"pct":95.031},{"dia":28,"pct":95.169},{"dia":29,"pct":95.422},{"dia":30,"pct":95.66},{"dia":31,"pct":95.71}],"d. avance 70%+|3":[{"dia":0,"pct":32.969},{"dia":1,"pct":50.881},{"dia":2,"pct":57.825},{"dia":3,"pct":59.915},{"dia":4,"pct":65.527},{"dia":5,"pct":70.358},{"dia":6,"pct":74.183},{"dia":7,"pct":76.633},{"dia":8,"pct":79.466},{"dia":9,"pct":80.641},{"dia":10,"pct":81.425},{"dia":11,"pct":83.23},{"dia":12,"pct":85.342},{"dia":13,"pct":86.993},{"dia":14,"pct":88.314},{"dia":15,"pct":88.776},{"dia":16,"pct":89.699},{"dia":17,"pct":89.847},{"dia":18,"pct":90.377},{"dia":19,"pct":91.355},{"dia":20,"pct":92.8},{"dia":21,"pct":93.072},{"dia":22,"pct":93.719},{"dia":23,"pct":93.905},{"dia":24,"pct":94.138},{"dia":25,"pct":94.229},{"dia":26,"pct":94.784},{"dia":27,"pct":95.371},{"dia":28,"pct":95.753},{"dia":29,"pct":96.009},{"dia":30,"pct":96.425},{"dia":31,"pct":96.442}],"d. avance 70%+|4":[{"dia":0,"pct":33.472},{"dia":1,"pct":44.289},{"dia":2,"pct":48.437},{"dia":3,"pct":62.573},{"dia":4,"pct":69.521},{"dia":5,"pct":72.029},{"dia":6,"pct":75.167},{"dia":7,"pct":76.759},{"dia":8,"pct":77.924},{"dia":9,"pct":79.01},{"dia":10,"pct":80.553},{"dia":11,"pct":82.812},{"dia":12,"pct":83.352},{"dia":13,"pct":84.14},{"dia":14,"pct":85.083},{"dia":15,"pct":85.99},{"dia":16,"pct":87.167},{"dia":17,"pct":87.815},{"dia":18,"pct":88.706},{"dia":19,"pct":89.853},{"dia":20,"pct":90.514},{"dia":21,"pct":90.753},{"dia":22,"pct":91.114},{"dia":23,"pct":91.114},{"dia":24,"pct":91.155},{"dia":25,"pct":91.769},{"dia":26,"pct":92.392},{"dia":27,"pct":92.845},{"dia":28,"pct":93.053},{"dia":29,"pct":93.154},{"dia":30,"pct":93.221},{"dia":31,"pct":93.373}],"d. avance 70%+|5":[{"dia":0,"pct":22.449},{"dia":1,"pct":30.856},{"dia":2,"pct":47.067},{"dia":3,"pct":60.661},{"dia":4,"pct":67.268},{"dia":5,"pct":71.161},{"dia":6,"pct":74.029},{"dia":7,"pct":75.481},{"dia":8,"pct":76.261},{"dia":9,"pct":79.477},{"dia":10,"pct":81.378},{"dia":11,"pct":83.499},{"dia":12,"pct":84.662},{"dia":13,"pct":86.104},{"dia":14,"pct":86.727},{"dia":15,"pct":87.35},{"dia":16,"pct":88.274},{"dia":17,"pct":89.485},{"dia":18,"pct":90.668},{"dia":19,"pct":91.054},{"dia":20,"pct":91.375},{"dia":21,"pct":91.631},{"dia":22,"pct":92.146},{"dia":23,"pct":92.609},{"dia":24,"pct":93.672},{"dia":25,"pct":94.271},{"dia":26,"pct":94.548},{"dia":27,"pct":94.717},{"dia":28,"pct":95.05},{"dia":29,"pct":95.188},{"dia":30,"pct":95.354},{"dia":31,"pct":95.533}],"d. avance 70%+|6":[{"dia":0,"pct":17.811},{"dia":1,"pct":43.093},{"dia":2,"pct":55.473},{"dia":3,"pct":65.782},{"dia":4,"pct":69.697},{"dia":5,"pct":72.309},{"dia":6,"pct":74.152},{"dia":7,"pct":74.971},{"dia":8,"pct":77.974},{"dia":9,"pct":79.852},{"dia":10,"pct":82.713},{"dia":11,"pct":84.534},{"dia":12,"pct":85.602},{"dia":13,"pct":86.093},{"dia":14,"pct":86.43},{"dia":15,"pct":86.888},{"dia":16,"pct":87.255},{"dia":17,"pct":88.096},{"dia":18,"pct":89.118},{"dia":19,"pct":90.291},{"dia":20,"pct":90.291},{"dia":21,"pct":90.361},{"dia":22,"pct":91.034},{"dia":23,"pct":91.844},{"dia":24,"pct":92.133},{"dia":25,"pct":92.471},{"dia":26,"pct":92.862},{"dia":27,"pct":92.974},{"dia":28,"pct":93.029},{"dia":29,"pct":94.349},{"dia":30,"pct":94.519},{"dia":31,"pct":94.629}]},"factores":{"nuevos_sep":{"quincena":1.087129,"fin de mes":1.225022,"resto":0.978146},"stock":{"quincena":1.006814,"cierre":1.869811,"resto":0.97166}}}/*/DATOS*/;
+const NS = "http://www.w3.org/2000/svg";
+const tip = document.getElementById("tip");
+const S = n => "S/" + Math.round(n).toLocaleString("es-PE");
+const Sc = n => n >= 1e6 ? "S/" + (n/1e6).toFixed(2) + "M" : "S/" + Math.round(n/1e3) + "K";
+const P = n => n.toFixed(1) + "%";
+const el = (t, a = {}, kids = []) => {
+  const e = document.createElementNS(NS, t);
+  for (const k in a) e.setAttribute(k, a[k]);
+  for (const c of [].concat(kids)) e.appendChild(c);
+  return e;
+};
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function hov(node, text) {
+  node.addEventListener("pointerenter", e => { tip.textContent = text; tip.classList.add("on"); });
+  node.addEventListener("pointermove", e => {
+    tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px";
+    tip.style.top = (e.clientY - tip.offsetHeight - 12) + "px";
+  });
+  node.addEventListener("pointerleave", () => tip.classList.remove("on"));
+}
+const banda = b => b.replace(/^[a-d]\. avance /, "");
+const tramo = t => t.replace(/^[a-c]\. /, "") + " días";
+
+/* ---------------- KPIs ---------------- */
+const AR = DATOS.agosto_real, AM = DATOS.agosto_modelo, SE = DATOS.septiembre;
+const T = AR.totales;
+const realTot = T.stock_act[1] + T.nuevos_act[1];
+const modTot = AM.stock.reduce((s, r) => s + r.asegurado, 0) + AM.nuevos_banda.reduce((s, r) => s + r.asegurado, 0);
+const sepTot = SE.stock.reduce((s, r) => s + r.asegurado, 0) + SE.nuevos_banda.reduce((s, r) => s + r.asegurado, 0);
+document.getElementById("k-ago-real").textContent = Sc(realTot);
+document.getElementById("k-ago-mod").textContent = Sc(modTot);
+document.getElementById("k-ago-err").textContent =
+  ((modTot / realTot - 1) * 100).toFixed(1) + "% por encima del real";
+document.getElementById("k-sep").textContent = Sc(sepTot);
+
+document.getElementById("r-ant").textContent = P(100 * T.stock_act[1] / T.stock_base[1]);
+document.getElementById("r-ent").textContent = P(100 * T.nuevos_ent[1] / T.nuevos_cal[1]);
+document.getElementById("r-act").textContent = P(100 * T.nuevos_act[1] / T.nuevos_ent[1]);
+
+/* ---------------- cadenas ---------------- */
+function cadena(host, pasos, color) {
+  const max = Math.max(...pasos.map(p => p.v));
+  host.innerHTML = "";
+  pasos.forEach((p, i) => {
+    if (p.op) {
+      const f = document.createElement("div"); f.className = "flecha";
+      f.innerHTML = `<div class="op">↓ &nbsp;<span class="chip" style="color:${color}">${p.op}</span>
+        <b>${p.opv}</b> ${p.opn || ""}</div>`;
+      host.appendChild(f);
+    }
+    const d = document.createElement("div"); d.className = "paso";
+    d.innerHTML = `<div class="idx">${p.idx || ""}</div>
+      <div class="barra">
+        <div class="fill" style="width:${(100 * p.v / max).toFixed(1)}%;background:${p.soft}"></div>
+        <div class="row"><span class="lbl">${p.lbl}</span><span class="amt">${S(p.v)}</span></div>
+        <div class="sub">${p.sub}</div>
+      </div>`;
+    host.appendChild(d);
+  });
+}
+
+const cA = css("--antiguos"), cN = css("--nuevos"), cS = css("--asegurado");
+cadena(document.getElementById("cad-ant"), [
+  { lbl: "Capital asignado el 1 de agosto", v: T.stock_base[1], soft: css("--antiguos-soft"),
+    sub: T.stock_base[0].toLocaleString("es-PE") + " créditos en mora 1–30 al cerrar julio" },
+  { op: "ratio de activación de antiguos", opv: P(100 * T.stock_act[1] / T.stock_base[1]),
+    lbl: "Capital asegurado", v: T.stock_act[1], soft: css("--asegurado-soft"),
+    sub: T.stock_act[0].toLocaleString("es-PE") + " créditos hicieron al menos un pago" },
+], cA);
+
+cadena(document.getElementById("cad-nue"), [
+  { idx: "1", lbl: "Calendario del mes — capital que vence", v: T.nuevos_cal[1], soft: css("--nuevos-soft"),
+    sub: T.nuevos_cal[0].toLocaleString("es-PE") + " cuotas con vencimiento entre el 31-jul y el 30-ago" },
+  { idx: "2", op: "tasa de entrada en mora", opv: P(100 * T.nuevos_ent[1] / T.nuevos_cal[1]),
+    opn: "— el resto pagó a tiempo",
+    lbl: "Capital que entró en mora — esto es lo asignado", v: T.nuevos_ent[1], soft: css("--nuevos-soft"),
+    sub: T.nuevos_ent[0].toLocaleString("es-PE") + " créditos entraron a cobranza durante agosto" },
+  { idx: "3", op: "ratio de activación de nuevos", opv: P(100 * T.nuevos_act[1] / T.nuevos_ent[1]),
+    lbl: "Capital asegurado", v: T.nuevos_act[1], soft: css("--asegurado-soft"),
+    sub: T.nuevos_act[0].toLocaleString("es-PE") + " créditos hicieron al menos un pago" },
+], cN);
+
+function cadenaProy(hostA, hostN, D, mes, nCred) {
+  const asigA = D.stock.reduce((s, r) => s + r.asignado, 0);
+  const asegA = D.stock.reduce((s, r) => s + r.asegurado, 0);
+  const cal = D.nuevos_banda.reduce((s, r) => s + r.calendario, 0);
+  const ent = D.nuevos_banda.reduce((s, r) => s + r.entran, 0);
+  const aseg = D.nuevos_banda.reduce((s, r) => s + r.asegurado, 0);
+  cadena(hostA, [
+    { lbl: `Capital asignado el 1 de ${mes}`, v: asigA, soft: css("--antiguos-soft"),
+      sub: nCred + " créditos en mora 1–30 al cerrar el mes anterior" },
+    { op: "ratio de activación proyectado", opv: P(100 * asegA / asigA),
+      lbl: "Capital asegurado proyectado", v: asegA, soft: css("--asegurado-soft"),
+      sub: "según la curva de maduración de cada tramo × banda" },
+  ], cA);
+  cadena(hostN, [
+    { idx: "1", lbl: "Calendario del mes — capital que vence", v: cal, soft: css("--nuevos-soft"),
+      sub: "saldo anclado al cierre del mes anterior · solo créditos vigentes" },
+    { idx: "2", op: "tasa de entrada en mora", opv: P(D.tasa_entrada),
+      opn: "— calibrada sobre los 12 meses previos, en soles",
+      lbl: "Capital que se proyecta entrar en mora", v: ent, soft: css("--nuevos-soft"),
+      sub: "repartido por día de entrada según el calendario real de vencimientos" },
+    { idx: "3", op: "ratio de activación proyectado", opv: P(100 * aseg / ent),
+      lbl: "Capital asegurado proyectado", v: aseg, soft: css("--asegurado-soft"),
+      sub: "cada cohorte recorre su curva desde el día en que entra" },
+  ], cN);
+}
+cadenaProy(document.getElementById("cad-ant-sep"), document.getElementById("cad-nue-sep"),
+  SE, "septiembre", "2,403");
+
+/* ---------------- tablas ---------------- */
+function tabla(id, cols, filas, foot) {
+  const t = document.getElementById(id);
+  const th = el2("thead"), tr = el2("tr");
+  cols.forEach(c => { const h = el2("th"); h.textContent = c.h; if (c.l) h.className = "l"; tr.appendChild(h); });
+  th.appendChild(tr); t.appendChild(th);
+  const tb = el2("tbody");
+  filas.forEach(f => {
+    const r = el2("tr");
+    if (f.__grp) { r.className = "grp"; const td = el2("td"); td.colSpan = cols.length;
+      td.textContent = f.__grp; r.appendChild(td); tb.appendChild(r); return; }
+    cols.forEach(c => {
+      const td = el2("td");
+      const v = f[c.k];
+      if (c.bar) {
+        td.className = "bar-cell n";
+        td.innerHTML = `<span>${c.f ? c.f(v) : v}</span>
+          <i class="b" style="width:${Math.max(2, 96 * v / c.bar)}px;background:${c.color}"></i>`;
+      } else { td.className = c.l ? "l" : "n"; td.textContent = c.f ? c.f(v) : v; }
+      r.appendChild(td);
+    });
+    tb.appendChild(r);
+  });
+  t.appendChild(tb);
+  if (foot) {
+    const tf = el2("tfoot"), r = el2("tr");
+    cols.forEach(c => { const td = el2("td"); if (c.l) td.className = "l"; else td.className = "n";
+      td.textContent = foot[c.k] !== undefined ? (c.f ? c.f(foot[c.k]) : foot[c.k]) : ""; r.appendChild(td); });
+    tf.appendChild(r); t.appendChild(tf);
+  }
+}
+function el2(t) { return document.createElement(t); }
+
+/* antiguos agosto */
+(() => {
+  const f = [];
+  let cur = null;
+  AR.stock.forEach(r => {
+    if (r.tramo !== cur) { cur = r.tramo; f.push({ __grp: "Tramo " + tramo(r.tramo) }); }
+    f.push({ b: banda(r.banda), asig: r.asignado, cred: r.cred_asignado,
+             aseg: r.asegurado, ratio: r.ratio });
+  });
+  tabla("t-ant", [
+    { h: "Banda de avance", k: "b", l: 1 },
+    { h: "Créditos", k: "cred", f: v => v.toLocaleString("es-PE") },
+    { h: "Asignado", k: "asig", f: S },
+    { h: "Asegurado", k: "aseg", f: S },
+    { h: "Ratio de activación", k: "ratio", f: P, bar: 100, color: cA },
+  ], f, { b: "Total antiguos", cred: T.stock_base[0], asig: T.stock_base[1],
+          aseg: T.stock_act[1], ratio: 100 * T.stock_act[1] / T.stock_base[1] });
+})();
+
+/* nuevos agosto por banda */
+tabla("t-nue", [
+  { h: "Banda de avance", k: "b", l: 1 },
+  { h: "Calendario", k: "cal", f: S },
+  { h: "Tasa de entrada", k: "te", f: P, bar: 30, color: cN },
+  { h: "Entró en mora", k: "ent", f: S },
+  { h: "Ratio de activación", k: "ra", f: P, bar: 100, color: cS },
+  { h: "Asegurado", k: "aseg", f: S },
+], AR.nuevos_banda.map(r => ({ b: banda(r.banda), cal: r.calendario, te: r.tasa_entrada,
+    ent: r.entran, ra: r.ratio_activacion, aseg: r.asegurado })),
+  { b: "Total nuevos", cal: T.nuevos_cal[1], te: 100 * T.nuevos_ent[1] / T.nuevos_cal[1],
+    ent: T.nuevos_ent[1], ra: 100 * T.nuevos_act[1] / T.nuevos_ent[1], aseg: T.nuevos_act[1] });
+
+/* nuevos agosto por dow */
+tabla("t-dow", [
+  { h: "Vence", k: "v", l: 1 }, { h: "Entra en mora", k: "e", l: 1 },
+  { h: "Calendario", k: "cal", f: S },
+  { h: "Tasa de entrada", k: "te", f: P, bar: 30, color: cN },
+  { h: "Ratio de activación", k: "ra", f: P, bar: 100, color: cS },
+  { h: "Asegurado", k: "aseg", f: S },
+], AR.nuevos_dow.map(r => ({ v: r.vence, e: r.entra, cal: r.calendario, te: r.tasa_entrada,
+    ra: r.ratio_activacion, aseg: r.asegurado })));
+
+/* comparacion agosto */
+(() => {
+  const mS = AM.stock.reduce((s, r) => s + r.asegurado, 0);
+  const mN = AM.nuevos_banda.reduce((s, r) => s + r.asegurado, 0);
+  tabla("t-comp", [
+    { h: "Componente", k: "c", l: 1 },
+    { h: "Modelo (enfoque actual)", k: "m", f: S },
+    { h: "Real", k: "r", f: S },
+    { h: "Diferencia", k: "d", f: v => (v > 0 ? "+" : "") + v.toFixed(1) + "%" },
+  ], [
+    { c: "Antiguos", m: mS, r: T.stock_act[1], d: 100 * (mS / T.stock_act[1] - 1) },
+    { c: "Nuevos", m: mN, r: T.nuevos_act[1], d: 100 * (mN / T.nuevos_act[1] - 1) },
+  ], { c: "Total agosto", m: mS + mN, r: realTot, d: 100 * ((mS + mN) / realTot - 1) });
+})();
+
+/* septiembre */
+(() => {
+  const f = []; let cur = null;
+  SE.stock.forEach(r => {
+    if (r.tramo !== cur) { cur = r.tramo; f.push({ __grp: "Tramo " + tramo(r.tramo) }); }
+    f.push({ b: banda(r.banda), asig: r.asignado, aseg: r.asegurado, ratio: r.ratio });
+  });
+  const ta = SE.stock.reduce((s, r) => s + r.asignado, 0), tg = SE.stock.reduce((s, r) => s + r.asegurado, 0);
+  tabla("t-sep-ant", [
+    { h: "Banda de avance", k: "b", l: 1 },
+    { h: "Asignado el 1-sep", k: "asig", f: S },
+    { h: "Asegurado proyectado", k: "aseg", f: S },
+    { h: "Ratio proyectado", k: "ratio", f: P, bar: 100, color: cA },
+  ], f, { b: "Total antiguos", asig: ta, aseg: tg, ratio: 100 * tg / ta });
+})();
+
+tabla("t-sep-nue", [
+  { h: "Banda de avance", k: "b", l: 1 },
+  { h: "Calendario", k: "cal", f: S },
+  { h: "Entra en mora", k: "ent", f: S },
+  { h: "Ratio de activación", k: "ra", f: P, bar: 100, color: cS },
+  { h: "Asegurado proyectado", k: "aseg", f: S },
+], SE.nuevos_banda.map(r => ({ b: banda(r.banda), cal: r.calendario, ent: r.entran,
+    ra: r.ratio_activacion, aseg: r.asegurado })),
+  (() => { const c = SE.nuevos_banda.reduce((s, r) => s + r.calendario, 0),
+    e = SE.nuevos_banda.reduce((s, r) => s + r.entran, 0),
+    a = SE.nuevos_banda.reduce((s, r) => s + r.asegurado, 0);
+    return { b: "Total nuevos", cal: c, ent: e, ra: 100 * a / e, aseg: a }; })());
+
+/* ---------------- barras por dia ---------------- */
+(() => {
+  const W = 1040, H = 210, ml = 52, mr = 8, mt = 10, mb = 26;
+  const d = AR.nuevos_dia;
+  const max = Math.max(...d.map(r => r.calendario));
+  const bw = (W - ml - mr) / 31 - 3;
+  const g = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img",
+    "aria-label": "Capital que vence y capital asegurado por día de agosto" });
+  [0, .25, .5, .75, 1].forEach(f => {
+    const y = mt + (1 - f) * (H - mt - mb);
+    g.appendChild(el("line", { x1: ml, x2: W - mr, y1: y, y2: y, stroke: css("--hair") }));
+    const t = el("text", { x: ml - 8, y: y + 4, "text-anchor": "end", fill: css("--faint"),
+      "font-size": 10, "font-family": "IBM Plex Mono, monospace" });
+    t.textContent = Sc(max * f); g.appendChild(t);
+  });
+  for (let dia = 1; dia <= 31; dia++) {
+    const r = d.find(x => x.dia === dia);
+    const x = ml + (dia - 1) * ((W - ml - mr) / 31) + 1.5;
+    if (!r) {
+      const t = el("text", { x: x + bw / 2, y: H - mb - 4, "text-anchor": "middle",
+        fill: css("--faint"), "font-size": 9 });
+      t.textContent = "·"; g.appendChild(t); continue;
+    }
+    const hc = (r.calendario / max) * (H - mt - mb);
+    const ha = (r.asegurado / max) * (H - mt - mb);
+    const gg = el("g");
+    gg.appendChild(el("rect", { x, y: H - mb - hc, width: bw, height: hc, rx: 3, fill: cN, opacity: .32 }));
+    gg.appendChild(el("rect", { x, y: H - mb - ha, width: bw, height: ha, rx: 3, fill: cS }));
+    hov(gg, `${dia} de agosto\nvence      ${S(r.calendario)}\nentra      ${S(r.entran)}\nasegurado  ${S(r.asegurado)}`);
+    gg.style.cursor = "crosshair";
+    g.appendChild(gg);
+    if (dia % 5 === 0 || dia === 1) {
+      const t = el("text", { x: x + bw / 2, y: H - 8, "text-anchor": "middle",
+        fill: css("--faint"), "font-size": 10, "font-family": "IBM Plex Mono, monospace" });
+      t.textContent = dia; g.appendChild(t);
+    }
+  }
+  document.getElementById("ch-dia").appendChild(g);
+})();
+
+/* ---------------- curvas ---------------- */
+function curvita(pts, color, maxX) {
+  const W = 200, H = 96, m = 6;
+  const g = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%" });
+  [25, 50, 75, 100].forEach(p => {
+    const y = m + (1 - p / 100) * (H - 2 * m);
+    g.appendChild(el("line", { x1: m, x2: W - m, y1: y, y2: y, stroke: css("--hair") }));
+  });
+  const x = d => m + (d / maxX) * (W - 2 * m);
+  const y = v => m + (1 - v / 100) * (H - 2 * m);
+  let path = "";
+  pts.forEach((p, i) => { path += (i ? "L" : "M") + x(p.dia).toFixed(1) + " " + y(p.pct).toFixed(1) + " "; });
+  g.appendChild(el("path", { d: path, fill: "none", stroke: color, "stroke-width": 2,
+    "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  const last = pts[pts.length - 1];
+  g.appendChild(el("circle", { cx: x(last.dia), cy: y(last.pct), r: 3.2, fill: color,
+    stroke: css("--surface"), "stroke-width": 2 }));
+  return { svg: g, fin: last.pct };
+}
+(() => {
+  const host = document.getElementById("ch-cs"), lg = document.getElementById("lg-cs");
+  lg.innerHTML = `<span><i style="background:${cA}"></i>% acumulado del capital asignado que ya activó</span>`;
+  ["a. 1-8", "b. 9-15", "c. 16-30"].forEach(tr => {
+    const pts = DATOS.curvas_stock[tr + "|b. avance 10-40%"];
+    if (!pts) return;
+    const c = curvita(pts, cA, 31);
+    const box = document.createElement("div"); box.className = "sm";
+    box.innerHTML = `<div class="t">${tramo(tr)}</div>`;
+    box.appendChild(c.svg);
+    const f = document.createElement("div");
+    f.className = "num"; f.style.cssText = "font-size:.95rem;margin-top:.3rem;color:" + cA;
+    f.textContent = "cierra en " + P(c.fin);
+    box.appendChild(f); host.appendChild(box);
+  });
+})();
+(() => {
+  const host = document.getElementById("ch-cn"), lg = document.getElementById("lg-cn");
+  lg.innerHTML = `<span><i style="background:${cN}"></i>% acumulado del capital entrado que ya activó, desde el día de entrada</span>`;
+  const nom = { 1: "vence lunes", 2: "vence martes", 3: "vence miércoles", 4: "vence jueves",
+    5: "vence viernes", 6: "vence sábado" };
+  [2, 4, 6].forEach(dw => {
+    const pts = DATOS.curvas_nuevos["b. avance 10-40%|" + dw];
+    if (!pts) return;
+    const c = curvita(pts, cN, 31);
+    const box = document.createElement("div"); box.className = "sm";
+    box.innerHTML = `<div class="t">${nom[dw]}</div>`;
+    box.appendChild(c.svg);
+    const f = document.createElement("div");
+    f.className = "num"; f.style.cssText = "font-size:.95rem;margin-top:.3rem;color:" + cN;
+    f.textContent = "día 0: " + P(pts[0].pct) + " · cierra " + P(c.fin);
+    box.appendChild(f); host.appendChild(box);
+  });
+})();
+
+/* ---------------- factores ---------------- */
+(() => {
+  const F = DATOS.factores.nuevos_sep, FS = DATOS.factores.stock;
+  const filas = [
+    ["Quincena (15 y 16)", F["quincena"], FS["quincena"]],
+    ["Cierre de mes", F["fin de mes"], FS["cierre"]],
+    ["El resto de los días", F["resto"], FS["resto"]],
+  ];
+  const h = document.createElement("div");
+  h.innerHTML = `<div class="tabla-wrap" style="margin:.4rem 0 0"><table>
+    <thead><tr><th class="l">Día del mes</th><th>Factor en nuevos</th><th>Factor en antiguos</th></tr></thead>
+    <tbody>${filas.map(f => `<tr><td class="l">${f[0]}</td>
+      <td class="n" style="color:${f[1] > 1 ? cS : "var(--muted)"}">×${f[1].toFixed(3)}</td>
+      <td class="n" style="color:${f[2] > 1 ? cS : "var(--muted)"}">×${f[2].toFixed(3)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+  document.getElementById("factores").appendChild(h);
+})();
+
+/* ---------------- tendencia ---------------- */
+(() => {
+  const D = [["ene", 19.80], ["feb", 22.00], ["mar", 21.16], ["abr", 21.28], ["may", 19.37],
+             ["jun", 19.16], ["jul", 18.13], ["ago", 18.21]];
+  const W = 1040, H = 250, ml = 46, mr = 90, mt = 16, mb = 30;
+  const lo = 17, hi = 23;
+  const x = i => ml + i * (W - ml - mr) / (D.length - 1);
+  const y = v => mt + (1 - (v - lo) / (hi - lo)) * (H - mt - mb);
+  const g = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img",
+    "aria-label": "Porcentaje del calendario que termina asegurado, enero a agosto 2026" });
+  for (let v = 18; v <= 22; v++) {
+    g.appendChild(el("line", { x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: css("--hair") }));
+    const t = el("text", { x: ml - 8, y: y(v) + 4, "text-anchor": "end", fill: css("--faint"),
+      "font-size": 10, "font-family": "IBM Plex Mono, monospace" });
+    t.textContent = v + "%"; g.appendChild(t);
+  }
+  const n = D.length, sx = D.reduce((s, _, i) => s + i, 0), sy = D.reduce((s, d) => s + d[1], 0);
+  const sxy = D.reduce((s, d, i) => s + i * d[1], 0), sxx = D.reduce((s, _, i) => s + i * i, 0);
+  const b = (n * sxy - sx * sy) / (n * sxx - sx * sx), a = (sy - b * sx) / n;
+  g.appendChild(el("line", { x1: x(0), y1: y(a), x2: x(n - 1), y2: y(a + b * (n - 1)),
+    stroke: css("--alerta"), "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: .85 }));
+  let path = "";
+  D.forEach((d, i) => { path += (i ? "L" : "M") + x(i).toFixed(1) + " " + y(d[1]).toFixed(1) + " "; });
+  g.appendChild(el("path", { d: path, fill: "none", stroke: cS, "stroke-width": 2.5,
+    "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  D.forEach((d, i) => {
+    const c = el("circle", { cx: x(i), cy: y(d[1]), r: 4.5, fill: cS,
+      stroke: css("--surface"), "stroke-width": 2 });
+    c.style.cursor = "crosshair";
+    hov(c, `${d[0]} 2026\n${d[1].toFixed(2)}% del calendario asegurado`);
+    g.appendChild(c);
+    const t = el("text", { x: x(i), y: H - 10, "text-anchor": "middle", fill: css("--faint"),
+      "font-size": 11, "font-family": "IBM Plex Mono, monospace" });
+    t.textContent = d[0]; g.appendChild(t);
+  });
+  const anot = (yv, txt, color) => {
+    const t = el("text", { x: W - mr + 12, y: y(yv) + 4, fill: color, "font-size": 12,
+      "font-weight": 600, "font-family": "IBM Plex Mono, monospace" });
+    t.textContent = txt; g.appendChild(t);
+  };
+  anot(D[n - 1][1], "18.21%", cS);
+  const lab = el("text", { x: W - mr + 12, y: y(D[n - 1][1]) + 22, fill: css("--alerta"),
+    "font-size": 11, "font-family": "IBM Plex Sans, sans-serif" });
+  lab.textContent = "− 0.46 pp / mes"; g.appendChild(lab);
+  const lab2 = el("text", { x: x(0) + 6, y: y(D[0][1]) - 14, fill: css("--muted"),
+    "font-size": 11, "font-family": "IBM Plex Sans, sans-serif" });
+  lab2.textContent = "media ene–mar 20.99%"; g.appendChild(lab2);
+  document.getElementById("ch-tend").appendChild(g);
+})();
+</script>

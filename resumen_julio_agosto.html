@@ -137,27 +137,29 @@
     <p class="sub">Guía paso a paso, pensada para alguien que ve este modelo por primera vez: qué
     curvas usamos, cómo quedó la cartera asignada en julio, cómo se comparó lo proyectado contra
     lo real, y cómo se construye — de punta a punta — la meta de agosto que estamos siguiendo hoy.
-    Corte de datos: <b>20 de agosto de 2026</b>.</p>
+    Corte de datos: <b>25 de agosto de 2026</b>.</p>
     <nav class="toc">
       <a href="#curvas">1. Las curvas</a>
       <a href="#julio">2. Julio: asignación y resultado</a>
       <a href="#agosto">3. Agosto: de vencimientos a proyección</a>
-      <a href="#reconciliacion">4. Diferencias con la reconciliación</a>
+      <a href="#afinacion">4. Cómo se afina la curva</a>
     </nav>
   </header>
 
   <div class="enfoque-toggle" id="toggle">
     <button data-enfoque="asegurado" class="active">Capital asegurado (meta principal)</button>
     <button data-enfoque="recupero">Recupero oficial (soles)</button>
-    <span class="hint">cambia las curvas y la meta de agosto de las secciones 1 y 3 — la cartera de julio (sección 2) es casi idéntica en ambos, se muestra una sola vez</span>
+    <span class="hint">cambia las curvas, la asignación y la meta de las tres secciones — cada enfoque tiene su propio calendario y su propia cartera</span>
   </div>
 
   <section id="curvas">
     <h2><span class="step">1</span>Las curvas con las que se arma la proyección</h2>
-    <p class="lead">Todo el modelo se reduce a dos curvas de maduración, calibradas sobre 14 meses
-    de historia real (mar-2025 a jun-2026) y validadas contra un mes cerrado antes de usarse.
-    Miden <b><span id="curva-def">% del saldo con al menos 1 día de pago en el mes</span></b>,
-    acumulado día a día. No cambian mes a mes — son las mismas para julio y para agosto.</p>
+    <p class="lead">Todo el modelo se reduce a dos curvas de maduración, calibradas con
+    <code>dias_atraso_cuota</code> (12 meses rodantes, sin fuga de calibración) en los dos
+    enfoques por igual desde el 26-ago-2026 — capital asegurado desde tarea 17 Fase 4, recupero
+    oficial recién migrado (tarea 18e). Miden
+    <b><span id="curva-def">% del saldo con al menos 1 día de pago en el mes</span></b>,
+    acumulado día a día.</p>
 
     <h3 style="font-size:15px;margin:18px 0 8px;">Curva de <b>stock</b> — créditos que ya venían en mora, por tramo × avance</h3>
     <p class="note" style="margin:-4px 0 10px;">El <b>tramo</b> (mora al momento de asignación) separa los 3 paneles — predice con qué frecuencia paga.
@@ -165,7 +167,7 @@
     <div class="grid3" id="chart-stock"></div>
 
     <h3 style="font-size:15px;margin:24px 0 8px;">Curva de <b>nuevos</b> — créditos que caen en mora durante el mes, por avance</h3>
-    <p class="note" style="margin:-4px 0 10px;">Indexada a "días desde que entró en mora", no al día calendario — cada cohorte diaria madura con la misma forma, solo que arranca en un día distinto.</p>
+    <p class="note" style="margin:-4px 0 10px;" id="nuevos-nota">Indexada a "días desde que entró en mora", no al día calendario — cada cohorte diaria madura con la misma forma, solo que arranca en un día distinto.</p>
     <div class="card"><div id="chart-nuevos"></div></div>
   </section>
 
@@ -181,29 +183,25 @@
         <div id="chart-stock-julio"></div>
       </div>
       <div class="card">
-        <h3>Nuevos — calendario de vencimientos de julio</h3>
-        <p class="note">Saldo en riesgo por día de vencimiento (no todo entra en mora — ver la tasa histórica en la sección 3).</p>
+        <h3 id="titulo-cal-julio">Nuevos — calendario de julio</h3>
+        <p class="note" id="nota-cal-julio">Saldo en riesgo por día (no todo entra en mora — ver la tasa histórica en la sección 3).</p>
         <div id="chart-cal-julio"></div>
       </div>
     </div>
 
     <h3 style="font-size:15px;margin:24px 0 4px;">Resultado: proyectado vs. real, mes completo</h3>
-    <p class="note" style="margin:0 0 10px;">Los dos enfoques se calculan en paralelo, con el mismo mecanismo — cambia solo qué mide la curva (soles recuperados vs. saldo activado).</p>
+    <p class="note" style="margin:0 0 10px;">Los dos enfoques se calculan por separado, con el mismo mecanismo — cambia solo qué mide la curva (soles recuperados vs. saldo activado) y, en capital asegurado, el motor usado (ver sección 4).</p>
     <div style="display:flex;flex-direction:column;gap:14px;" id="julio-resultado"></div>
     <div id="julio-callout"></div>
   </section>
 
   <section id="agosto">
     <h2><span class="step">3</span>Agosto: de vencimientos a proyección, paso a paso</h2>
-    <p class="lead">Mismo mecanismo exacto que julio, ancladas al cierre real de julio en vez de junio. Nada de esto cambió: mismas curvas, misma tasa histórica.</p>
+    <p class="lead">Mismo mecanismo exacto que julio, anclado al cierre real de julio en vez de junio.
+    La meta de agosto que se muestra acá es la que <b>ya está fija y publicada</b> desde el 26-ago — no
+    se retoca a mitad de mes aunque el motor haya mejorado después (ver sección 4).</p>
 
-    <div class="formula">
-      <div class="box">1. Stock (cierre de julio)</div><span class="op">×</span><div class="box">curva de stock</div>
-      <span class="arrow">＋</span>
-      <div class="box">2. Calendario de vencimientos</div><span class="op">×</span><div class="box"><span id="tasa-label">13.38%</span> (tasa histórica)</div><span class="op">×</span><div class="box">curva de nuevos</div>
-      <span class="arrow">＝</span>
-      <div class="box" style="background:var(--blue);color:#fff;">Meta de agosto</div>
-    </div>
+    <div class="formula" id="formula-agosto"></div>
 
     <div class="grid2">
       <div class="card">
@@ -212,96 +210,110 @@
         <div id="chart-stock-agosto"></div>
       </div>
       <div class="card">
-        <h3>2. El calendario de vencimientos de agosto</h3>
-        <p class="note">Días 1-18 con saldo exacto (ya pasaron); días 19-31 con el saldo vigente al 18-ago como aproximación (todavía no se fotografían). Este calendario es el que arma la <b>meta</b> — se fija una sola vez al inicio del mes y no se recalcula día a día (a diferencia del "real a la fecha" de la sección 4, que sí se refresca).</p>
+        <h3 id="titulo-cal-agosto">2. El calendario de agosto</h3>
+        <p class="note" id="nota-cal-agosto">Este calendario es el que arma la <b>meta</b> — se fija una sola vez al inicio del mes y no se recalcula día a día (a diferencia del "real a la fecha" de más abajo, que sí se refresca).</p>
         <div id="chart-cal-agosto"></div>
       </div>
     </div>
 
-    <h3 style="font-size:15px;margin:24px 0 4px;">3. Aplicar la tasa histórica y la curva — segmento por segmento</h3>
-    <p class="note" style="margin:0 0 10px;">
-      <span id="tasa-explicacion">De cada sol que vence, históricamente el <b><span class="tasa-inline">13.38%</span></b> no se paga a tiempo y entra en mora — esa es la única constante del calendario. El resto de la meta depende 100% de las curvas de arriba.</span>
-    </p>
+    <h3 style="font-size:15px;margin:24px 0 4px;">3. Aplicar la tasa y la curva — segmento por segmento</h3>
+    <p class="note" style="margin:0 0 10px;" id="tasa-explicacion"></p>
     <div class="card" style="padding-bottom:16px;">
       <div id="tabla-agosto"></div>
     </div>
 
     <h3 style="font-size:15px;margin:24px 0 8px;">4. La meta resultante, día a día — proyectado vs. real al corte</h3>
+    <p class="note" style="margin:0 0 10px;">A diferencia de una versión anterior de este artifact, la línea "real" de abajo <b>ya no es una recta aproximada entre 0 y el corte</b> — es el dato real de cada día, con el mismo corte que <code>real_agosto.csv</code>.</p>
     <div class="card"><div id="chart-trayectoria"></div></div>
     <div class="statrow" id="agosto-resumen" style="margin-top:14px;"></div>
   </section>
 
-  <section id="reconciliacion">
-    <h2><span class="step">4</span>Diferencias con la reconciliación — de dónde sale la capa fantasma</h2>
-    <p class="lead">Solo aplica al <b>capital asegurado</b> (no al recupero oficial). El usuario compartió una
-    vista externa "oficial" (<code>vw_seguimiento_diario_cohorte_tramo</code>) con el detalle de asignación a
-    nivel crédito. Al reconciliar nuestra población de mora 1-30 contra ella, encontramos que <code>dayslate</code>
-    tiene un punto ciego que explica buena parte de la diferencia — esto es lo que resultó, y por qué mueve el
-    error de julio.</p>
+  <section id="afinacion">
+    <h2><span class="step">4</span>Cómo se afina la curva — día de semana y cierre de mes</h2>
+    <p class="lead">Aplica a los dos enfoques por igual desde el 26-ago-2026. El motor unificado
+    (tarea 17 Fase 4, capital asegurado) reemplazó la arquitectura de 3 componentes (stock +
+    nuevos + una capa correctiva llamada "fantasma") por 2 — stock y nuevos, calibrados con
+    <code>dias_atraso_cuota</code> en vez de <code>dayslate</code>. Recupero oficial migró
+    después (tarea 18e) al mismo patrón, pero mide REBAJE real (soles efectivamente cobrados)
+    en vez de activación — sus curvas y su tasa de entrada son propias, no compartidas con
+    capital asegurado. Sobre esa base, los mismos dos refinamientos de forma (no de tasa)
+    mejoran cuánto de cada día el modelo entiende bien, en ambos enfoques.</p>
 
     <div class="grid2">
       <div class="card">
-        <h3>El punto ciego de <code>dayslate</code> (bug 9/14)</h3>
-        <p class="note">Un crédito que paga una cuota <b>exactamente 1 día tarde</b> nunca hace que
-        <code>dayslate</code> muestre mora — la foto nocturna ya ve el pago aplicado. Al reconciliar contra la
-        vista oficial, esto explicaba <b>~27% de toda la población real de mora 1-30/TEMPRANA</b> en julio — no
-        es un caso de borde, es sistemático, todos los meses.</p>
+        <h3>Día de la semana del vencimiento</h3>
+        <p class="note">Antes, el modelo le aplicaba a <b>todos</b> los días la misma curva promedio.
+        Pero el día 0 (el propio día de entrada) varía fuerte según qué día de la semana venció la
+        cuota: de <b>18.7%</b> (venció sábado, entra domingo — fin de semana sin gestión preventiva)
+        a <b>42.0%</b> (venció martes, entra miércoles). Segmentar por día de semana subió la
+        correlación de los incrementos diarios proyectado-vs-real de 0.611 a <b>0.886</b> en el
+        backtest de 7 meses — la trayectoria <i>dentro</i> del mes queda mucho más fiel, aunque el
+        error de fin de mes casi no se mueva (no es casualidad — ver la nota de abajo).</p>
       </div>
       <div class="card">
-        <h3>La corrección: capa "fantasma"</h3>
-        <p class="note">Una capa <b>independiente</b> (no reemplaza ni mezcla la tasa <code>13.38%</code> ni la
-        curva de nuevos): detecta el pago-1-día-tarde no visto por <code>dayslate</code>, y se activa
-        <b>100% del saldo el día siguiente al vencimiento</b> — sin curva propia, porque si se detecta el evento
-        es porque ya se pagó. Tasa propia: <b>P_FANTASMA = 8.5524%</b> (346,396 elegibles / 29,625 entradas,
-        fuera de muestra ago-2025 a may-2026) — casi tan grande como el propio 13.38%.</p>
+        <h3>Factor por día del mes (quincena y cierre)</h3>
+        <p class="note">Los pagos de planilla en Perú se concentran en fechas fijas. Sobre nuevos:
+        <b>quincena ×1.0855</b>, <b>cierre real del mes ×1.1848</b>*, resto ×0.9812 — factor
+        multiplicativo sobre el incremento diario, no sobre el acumulado (redistribuye masa dentro
+        del mes, no la agrega). *Reindexado 2026-08-26 (tarea 18g): el "cierre" es el <b>último día
+        real</b> de cada mes (28, 29, 30 o 31 según corresponda), no el número de día 30/31 fijo —
+        eso es lo que hace que <b>stock</b>, por primera vez, tenga también su propio factor de
+        cierre (<b>×1.87</b>): antes, un mes de 28 días (como febrero) nunca llegaba al grupo
+        "30/31" y su cierre real quedaba sin ningún ajuste.</p>
       </div>
     </div>
 
     <div class="callout" style="margin-top:14px;">
-      <span class="ic">🔍</span>
-      <span><b>La capa fantasma original solo cubría 90.7% del punto ciego</b> — quedaba un hueco de frontera de
-      mes: una cuota vencida el <b>último día de un mes</b> (ej. 30-jun), pagada 1 día tarde, "ocurre" el 1 del
-      mes siguiente, y el filtro original (por fecha de vencimiento) la dejaba fuera de ambos meses. Corregido
-      filtrando por <b>fecha de pago</b> (vencimiento + 1 día) en vez de por vencimiento directo — la cobertura
-      sube a <b>99.7%</b>. Como la tasa y el calendario deben compartir la misma definición de "a qué mes
-      pertenece" (no se puede mezclar una tasa calibrada con una definición distinta a la del calendario que la
-      usa), <code>P_FANTASMA</code> se recalibró junto con el fix: de 8.4534% a 8.5524%.</span>
+      <span class="ic">🧮</span>
+      <span><b>Recupero oficial repite un error que ya se había visto en capital asegurado, corregido
+      desde el arranque de la migración.</b> La tasa de entrada a mora se calibra CONTANDO créditos,
+      pero el calendario al que se aplica está en SOLES — como el exceso de entrada se concentra en
+      créditos de saldo alto, la tasa por conteo (~22%) subestima la que corresponde aplicar sobre
+      soles. La tasa de recupero oficial para julio (ventana <code>[202507,202606]</code>) se calibró
+      directamente por SOLES: <b>25.07%</b>, no por conteo — evita repetir el hallazgo de la tarea
+      18b (que en capital asegurado se detectó recién después del backtest).</span>
     </div>
 
-    <h3 style="font-size:15px;margin:24px 0 8px;">Impacto en el backtest — por qué julio sube más que junio</h3>
-    <table class="datatable">
-      <thead><tr><th>Mes</th><th>Proyectado</th><th>Real</th><th>Error total</th><th>Error fantasma</th><th>Motivo de la diferencia</th></tr></thead>
-      <tbody>
-        <tr><td>Junio 2026</td><td>S/13,947,775</td><td>S/13,587,829</td><td>+2.65%</td><td>+12.4%</td>
-          <td style="text-align:left;font-weight:400;">El 31-may no tiene ninguna cuota vencida — el hueco de
-          frontera no aporta nada este mes. El alza (de +2.2% a +2.65%) es 100% el efecto de subir la tasa.</td></tr>
-        <tr><td>Julio 2026</td><td>S/17,599,707</td><td>S/17,225,178</td><td>+2.17%</td><td>+13.0%</td>
-          <td style="text-align:left;font-weight:400;"><b>Dilución por solapamiento:</b> de los 7,468 créditos
-          del cohorte del 30-jun, solo 8.03% paga 1 día tarde (≈ tasa histórica), pero el 25% de esos ya estaba
-          contado por otro evento real de mora en julio y se excluye para no duplicar — el neto (6.03%) queda
-          por debajo del promedio, así que la tasa global sobreproyecta esta cohorte puntual. No es un error de
-          cálculo.</td></tr>
-      </tbody>
-    </table>
-    <p class="note" style="margin-top:10px;">Ambos números finales (+2.65%/+2.17%) siguen siendo buenos backtests
-    — muy lejos de intentos descartados como la tasa plana 25% (+66% a +81% de error, ver <code>BUGS.md</code>
-    bug 10). Con solo 2 meses cerrados todavía no hay base para saber si esto tiende a crecer o es varianza
-    normal de un cohorte puntual — se sigue extendiendo el backtest a más meses antes de sacar conclusiones.</p>
+    <div class="callout" style="margin-top:14px;">
+      <span class="ic">🔍</span>
+      <span><b>El error de fin de mes no puede arbitrar si esto es una mejora</b> — la diferencia
+      pareada entre variantes con y sin estos refinamientos tiene un desvío 10 veces más grande que
+      su media (haría falta un backtest de ~1,050 meses para distinguirlo del ruido). Por eso estos
+      dos cambios se decidieron con <b>métricas diarias</b> — correlación de incrementos y error
+      absoluto medio del incremento — que dan ~30 observaciones por mes en vez de 1. El error de
+      fin de mes sigue siendo el número de negocio, pero mide otra cosa: qué tan bien la ejecución
+      del mes siguió al histórico, no si la curva tiene la forma correcta.</span>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 8px;">Por qué julio (sección 2) y agosto (sección 3) no usan exactamente el mismo motor</h3>
+    <p class="note" style="margin:0 0 10px;">Julio es un mes <b>cerrado</b>: su número usa siempre el
+    backtest oficial más reciente, con el factor de cierre de stock incluido. Agosto es un mes
+    <b>en curso</b>, con una meta que ya se fijó y se está siguiendo día a día — cambiar el modelo a
+    mitad de mes movería la comparación "real vs. proyectado" de los últimos días sin que el total
+    del mes se mueva casi nada, así que se decidió NO tocarla. Lo mismo aplica, con un salto más
+    grande, a <b>recupero oficial</b>: julio ya usa el motor migrado (<code>dias_atraso_cuota</code>,
+    tarea 18e), pero agosto sigue con el motor viejo (<code>dayslate</code>,
+    <code>P_NO_PAGA_DIA0=13.38%</code>) hasta que cierre — la meta de <b>septiembre</b> será la
+    primera de recupero oficial calibrada con el motor nuevo. El factor de cierre de stock queda
+    listo para la meta de <b>septiembre</b>.</p>
+
+    <h3 style="font-size:15px;margin:24px 0 4px;">Backtest de 7 meses — capital asegurado (motor v3)</h3>
+    <table class="datatable" id="tabla-backtest"></table>
+
+    <h3 style="font-size:15px;margin:24px 0 4px;">Backtest de 7 meses — recupero oficial (motor migrado, tarea 18e)</h3>
+    <p class="note" style="margin:0 0 10px;">Calibración propia (no comparte curvas ni tasa con capital
+    asegurado): ventana rodante de 12 meses sin fuga para nuevos, ventana fija 202504-202606 para
+    stock — mismo criterio ya validado arriba, aplicado a la medición de rebaje real en vez de
+    activación.</p>
+    <table class="datatable" id="tabla-backtest-recup"></table>
   </section>
 
-  <footer class="foot">
-    Generado 2026-08-19, actualizado 2026-08-21 con el fix de frontera de mes + tasa
-    <code>P_FANTASMA</code> recalibrada (bug 14) a partir de <code>datos_artifact_julio_agosto.json</code>
-    (<code>armar_artifact_julio_agosto.py</code>). Fuente completa: <code>cierre_julio.sql</code>,
-    <code>meta_agosto.py</code>, <code>meta_agosto_capital_asegurado.py</code>,
-    <code>enfoque_capital_asegurado.md</code>, <code>guia_tecnica_recupero.md</code>,
-    <code>investigacion_frontera_mes_fantasma.sql</code>. Metodología y decisiones en
-    <code>DECISIONES.md</code> / <code>CLAUDE.md</code> del repo REBAJE_DIARIO.
-  </footer>
+  <footer class="foot" id="footer-fuentes"></footer>
 
 </div>
 
-<script id="data-json" type="application/json">{"curvas":{"recupero":{"stock":{"a. 1-8":{"a. avance <10%":[[1,1.518],[2,2.662],[3,3.428],[4,4.035],[5,4.412],[6,4.649],[7,4.999],[8,5.225],[9,5.432],[10,5.581],[11,5.826],[12,6.0],[13,6.084],[14,6.203],[15,6.352],[16,6.533],[17,6.616],[18,6.765],[19,6.857],[20,7.004],[21,7.087],[22,7.13],[23,7.262],[24,7.407],[25,7.554],[26,7.935],[27,8.472],[28,8.857],[29,9.455],[30,9.996],[31,10.251]],"b. avance 10-40%":[[1,2.439],[2,4.335],[3,5.601],[4,6.25],[5,6.875],[6,7.312],[7,7.617],[8,7.965],[9,8.29],[10,8.44],[11,8.693],[12,8.869],[13,9.273],[14,9.417],[15,9.627],[16,9.777],[17,9.978],[18,10.153],[19,10.4],[20,10.684],[21,10.94],[22,11.319],[23,11.595],[24,11.823],[25,12.219],[26,12.654],[27,13.233],[28,13.977],[29,14.66],[30,15.487],[31,15.919]],"c. avance 40-70%":[[1,6.053],[2,10.762],[3,13.459],[4,15.219],[5,16.893],[6,18.306],[7,19.218],[8,20.248],[9,20.955],[10,21.48],[11,22.034],[12,22.418],[13,22.726],[14,23.1],[15,23.582],[16,23.888],[17,24.165],[18,24.397],[19,24.843],[20,25.415],[21,25.698],[22,26.169],[23,26.666],[24,27.266],[25,27.995],[26,28.98],[27,29.873],[28,30.934],[29,32.035],[30,33.895],[31,34.691]],"d. avance 70%+":[[1,12.165],[2,21.936],[3,27.897],[4,31.814],[5,34.492],[6,37.141],[7,38.375],[8,40.761],[9,42.674],[10,44.439],[11,46.877],[12,48.317],[13,49.385],[14,50.321],[15,51.205],[16,51.795],[17,52.635],[18,53.507],[19,53.98],[20,55.044],[21,56.081],[22,56.706],[23,57.537],[24,58.539],[25,59.159],[26,60.132],[27,61.501],[28,62.83],[29,64.68],[30,66.662],[31,67.583]]},"b. 9-15":{"a. avance <10%":[[1,0.498],[2,0.855],[3,1.069],[4,1.268],[5,1.47],[6,1.642],[7,1.75],[8,1.863],[9,2.07],[10,2.937],[11,3.087],[12,3.189],[13,3.319],[14,3.393],[15,3.558],[16,3.685],[17,3.838],[18,3.964],[19,4.156],[20,4.56],[21,4.715],[22,4.85],[23,5.031],[24,5.272],[25,5.543],[26,5.681],[27,5.784],[28,5.834],[29,6.263],[30,6.541],[31,6.686]],"b. avance 10-40%":[[1,0.94],[2,1.823],[3,2.36],[4,2.73],[5,3.357],[6,3.825],[7,4.042],[8,4.268],[9,4.498],[10,4.888],[11,5.092],[12,5.301],[13,5.618],[14,5.857],[15,6.327],[16,6.747],[17,7.348],[18,7.763],[19,8.002],[20,8.74],[21,9.253],[22,9.494],[23,9.786],[24,10.159],[25,10.587],[26,10.978],[27,11.3],[28,11.443],[29,11.801],[30,12.035],[31,12.193]],"c. avance 40-70%":[[1,2.811],[2,4.631],[3,5.941],[4,6.933],[5,8.663],[6,10.126],[7,10.939],[8,12.04],[9,13.601],[10,14.154],[11,14.647],[12,15.03],[13,15.89],[14,16.71],[15,17.211],[16,17.621],[17,18.627],[18,19.468],[19,20.151],[20,20.976],[21,21.717],[22,22.543],[23,23.383],[24,23.813],[25,24.269],[26,24.649],[27,25.217],[28,26.023],[29,26.316],[30,27.167],[31,27.537]],"d. avance 70%+":[[1,6.13],[2,9.726],[3,13.977],[4,16.044],[5,19.974],[6,22.311],[7,25.269],[8,26.72],[9,28.029],[10,28.102],[11,29.285],[12,29.89],[13,31.328],[14,34.082],[15,36.406],[16,38.042],[17,39.465],[18,40.321],[19,41.618],[20,44.197],[21,44.77],[22,46.593],[23,47.78],[24,50.368],[25,51.223],[26,51.768],[27,52.746],[28,53.867],[29,54.081],[30,55.076],[31,56.388]]},"c. 16-30":{"a. avance <10%":[[1,0.22],[2,0.362],[3,0.458],[4,0.586],[5,0.833],[6,0.952],[7,1.027],[8,1.137],[9,1.413],[10,1.51],[11,1.68],[12,1.74],[13,1.827],[14,1.894],[15,1.994],[16,2.081],[17,2.15],[18,2.253],[19,2.324],[20,2.362],[21,2.457],[22,2.505],[23,2.606],[24,2.647],[25,2.698],[26,2.758],[27,2.822],[28,2.83],[29,2.884],[30,2.942],[31,2.978]],"b. avance 10-40%":[[1,0.477],[2,0.786],[3,1.124],[4,1.377],[5,1.763],[6,2.346],[7,2.536],[8,2.802],[9,2.992],[10,3.39],[11,3.721],[12,4.07],[13,4.252],[14,4.471],[15,4.704],[16,5.058],[17,5.332],[18,5.432],[19,5.649],[20,5.807],[21,5.995],[22,6.171],[23,6.264],[24,6.391],[25,7.014],[26,7.371],[27,7.505],[28,7.668],[29,7.773],[30,7.906],[31,8.014]],"c. avance 40-70%":[[1,1.519],[2,3.209],[3,3.982],[4,5.097],[5,6.176],[6,6.89],[7,7.56],[8,8.177],[9,8.706],[10,9.054],[11,9.841],[12,10.478],[13,11.602],[14,12.178],[15,13.144],[16,13.811],[17,14.434],[18,14.843],[19,15.535],[20,15.892],[21,16.201],[22,16.509],[23,17.097],[24,17.913],[25,18.586],[26,18.798],[27,19.292],[28,19.848],[29,20.298],[30,20.691],[31,20.833]],"d. avance 70%+":[[1,4.514],[2,7.243],[3,8.709],[4,10.472],[5,13.124],[6,13.915],[7,16.409],[8,19.416],[9,21.288],[10,22.705],[11,24.207],[12,25.587],[13,28.117],[14,28.893],[15,30.009],[16,30.895],[17,31.161],[18,33.741],[19,34.772],[20,35.763],[21,37.099],[22,37.912],[23,38.458],[24,38.988],[25,39.521],[26,39.94],[27,42.1],[28,43.073],[29,43.796],[30,44.791],[31,45.499]]}},"nuevos":{"a. avance <10%":[[1,3.13],[2,4.784],[3,5.952],[4,6.684],[5,7.122],[6,7.564],[7,7.798],[8,8.063],[9,8.266],[10,8.45],[11,8.65],[12,8.787],[13,8.89],[14,9.028],[15,9.162],[16,9.297],[17,9.413],[18,9.503],[19,9.615],[20,9.726],[21,9.801],[22,9.887],[23,10.018],[24,10.237],[25,10.41],[26,10.634],[27,11.042],[28,11.473],[29,12.282],[30,13.369],[31,14.362]],"b. avance 10-40%":[[1,3.644],[2,5.697],[3,7.433],[4,8.416],[5,9.044],[6,9.649],[7,10.067],[8,10.591],[9,10.966],[10,11.289],[11,11.525],[12,11.715],[13,11.929],[14,12.111],[15,12.326],[16,12.486],[17,12.669],[18,12.82],[19,12.937],[20,13.108],[21,13.221],[22,13.378],[23,13.55],[24,13.794],[25,14.081],[26,14.39],[27,14.956],[28,15.631],[29,16.818],[30,18.32],[31,19.8]],"c. avance 40-70%":[[1,8.704],[2,13.658],[3,17.667],[4,19.752],[5,21.315],[6,22.688],[7,23.734],[8,24.993],[9,25.769],[10,26.475],[11,27.014],[12,27.499],[13,27.918],[14,28.326],[15,28.737],[16,29.029],[17,29.283],[18,29.625],[19,29.89],[20,30.186],[21,30.466],[22,30.712],[23,31.014],[24,31.434],[25,31.832],[26,32.351],[27,33.206],[28,34.184],[29,35.895],[30,38.365],[31,40.876]],"d. avance 70%+":[[1,16.07],[2,26.155],[3,34.371],[4,38.864],[5,42.171],[6,45.429],[7,47.383],[8,49.727],[9,51.795],[10,53.339],[11,54.408],[12,55.286],[13,56.424],[14,57.503],[15,58.222],[16,59.149],[17,59.818],[18,60.302],[19,60.931],[20,61.408],[21,61.788],[22,62.32],[23,62.9],[24,63.548],[25,64.001],[26,64.69],[27,65.975],[28,66.99],[29,68.933],[30,71.572],[31,74.189]]}},"asegurado":{"stock":{"a. 1-8":{"a. avance <10%":[[1,12.439],[2,27.522],[3,34.897],[4,40.657],[5,45.232],[6,47.897],[7,50.496],[8,52.526],[9,54.415],[10,55.845],[11,57.35],[12,58.574],[13,59.792],[14,60.759],[15,62.336],[16,63.734],[17,64.571],[18,65.142],[19,65.726],[20,66.539],[21,66.965],[22,67.262],[23,67.928],[24,68.22],[25,68.783],[26,69.267],[27,69.709],[28,70.041],[29,70.775],[30,71.571],[31,71.716]],"b. avance 10-40%":[[1,14.169],[2,30.465],[3,39.701],[4,45.824],[5,50.889],[6,53.907],[7,56.044],[8,58.466],[9,60.58],[10,61.963],[11,63.604],[12,65.231],[13,66.737],[14,68.262],[15,69.599],[16,70.904],[17,71.781],[18,72.508],[19,73.761],[20,74.98],[21,75.889],[22,76.995],[23,77.455],[24,77.978],[25,78.581],[26,79.286],[27,79.875],[28,80.731],[29,81.761],[30,82.539],[31,82.767]],"c. avance 40-70%":[[1,15.409],[2,32.637],[3,42.291],[4,48.312],[5,54.109],[6,58.226],[7,60.866],[8,63.151],[9,65.745],[10,67.419],[11,69.184],[12,70.576],[13,71.703],[14,72.755],[15,73.959],[16,74.79],[17,75.691],[18,76.381],[19,77.308],[20,78.719],[21,79.188],[22,79.938],[23,80.756],[24,81.649],[25,82.256],[26,82.795],[27,83.599],[28,84.268],[29,85.2],[30,85.926],[31,86.217]],"d. avance 70%+":[[1,13.779],[2,30.304],[3,40.479],[4,47.523],[5,52.187],[6,56.308],[7,58.627],[8,61.915],[9,65.086],[10,67.485],[11,70.896],[12,73.686],[13,75.237],[14,76.871],[15,78.292],[16,79.192],[17,80.324],[18,81.131],[19,81.941],[20,83.223],[21,84.573],[22,85.034],[23,86.109],[24,87.282],[25,87.64],[26,88.446],[27,89.093],[28,89.787],[29,90.575],[30,90.948],[31,91.073]]},"b. 9-15":{"a. avance <10%":[[1,5.617],[2,9.966],[3,12.579],[4,14.687],[5,18.112],[6,19.675],[7,20.667],[8,23.001],[9,23.662],[10,25.369],[11,27.177],[12,28.022],[13,28.867],[14,29.509],[15,30.719],[16,31.904],[17,33.768],[18,35.058],[19,36.327],[20,37.395],[21,38.079],[22,38.46],[23,38.794],[24,39.155],[25,39.396],[26,39.644],[27,39.82],[28,39.993],[29,40.73],[30,40.928],[31,41.547]],"b. avance 10-40%":[[1,6.373],[2,12.038],[3,15.78],[4,18.944],[5,22.09],[6,26.115],[7,27.26],[8,29.108],[9,30.841],[10,33.083],[11,34.854],[12,36.447],[13,38.174],[14,40.317],[15,42.645],[16,44.197],[17,45.596],[18,46.978],[19,48.069],[20,48.889],[21,50.465],[22,51.257],[23,52.941],[24,53.97],[25,55.116],[26,55.978],[27,56.457],[28,56.842],[29,57.611],[30,58.032],[31,58.397]],"c. avance 40-70%":[[1,9.262],[2,15.626],[3,20.101],[4,22.994],[5,28.072],[6,32.088],[7,34.375],[8,37.873],[9,40.927],[10,41.965],[11,43.696],[12,45.049],[13,47.679],[14,50.195],[15,51.531],[16,53.092],[17,54.651],[18,56.888],[19,57.647],[20,58.177],[21,58.77],[22,59.987],[23,61.458],[24,61.843],[25,62.477],[26,63.034],[27,63.282],[28,64.278],[30,64.506],[31,64.604]],"d. avance 70%+":[[1,9.797],[2,14.822],[3,22.235],[4,25.65],[5,31.252],[6,34.875],[7,39.296],[8,41.206],[9,43.342],[10,43.571],[11,44.697],[12,45.486],[13,47.41],[14,50.531],[15,53.011],[16,54.899],[17,56.127],[18,57.489],[19,59.506],[20,62.693],[21,64.161],[22,67.963],[23,68.722],[24,69.975],[25,71.145],[26,71.616],[27,72.489],[28,73.456],[29,73.524],[30,74.142],[31,74.554]]},"c. 16-30":{"a. avance <10%":[[1,2.565],[2,4.608],[3,5.799],[4,7.055],[5,8.771],[6,9.604],[7,10.007],[8,11.222],[9,12.325],[10,13.426],[11,14.003],[12,14.542],[13,15.047],[14,15.569],[15,16.063],[16,17.312],[17,18.244],[18,18.736],[19,19.086],[20,19.564],[21,20.195],[22,20.438],[23,21.023],[24,21.304],[25,21.424],[26,21.995],[27,22.309],[29,22.533],[30,22.701],[31,22.773]],"b. avance 10-40%":[[1,3.657],[2,5.547],[3,8.016],[4,9.999],[5,12.167],[6,15.679],[7,17.052],[8,18.404],[9,19.756],[10,21.231],[11,22.86],[12,24.762],[13,25.845],[14,26.403],[15,27.649],[16,29.082],[17,30.208],[18,30.813],[19,31.634],[20,32.092],[21,33.174],[22,33.968],[23,34.301],[24,34.928],[25,35.41],[26,37.313],[27,37.764],[28,38.07],[29,38.216],[30,39.088],[31,39.885]],"c. avance 40-70%":[[1,5.082],[2,10.969],[3,13.829],[4,17.638],[5,21.086],[6,23.942],[7,26.983],[8,28.807],[9,30.33],[10,31.278],[11,32.485],[12,33.891],[13,35.428],[14,37.047],[15,40.006],[16,41.841],[17,42.847],[18,43.672],[19,44.75],[20,45.621],[21,46.268],[22,46.522],[23,47.455],[24,48.349],[25,48.796],[26,49.078],[27,49.612],[28,50.472],[29,51.35],[30,51.878],[31,52.024]],"d. avance 70%+":[[1,6.728],[2,9.97],[3,12.76],[4,15.418],[5,19.106],[6,20.532],[7,23.726],[8,27.358],[9,29.663],[10,30.868],[11,31.97],[12,33.641],[13,36.661],[14,37.7],[15,38.778],[16,40.318],[17,40.724],[18,43.733],[19,44.818],[20,46.134],[21,47.881],[22,48.892],[23,49.734],[24,50.474],[25,50.801],[26,50.967],[27,53.439],[28,55.169],[29,55.892],[30,56.187],[31,56.331]]}},"nuevos":{"a. avance <10%":[[1,26.273],[2,40.07],[3,49.841],[4,55.173],[5,58.855],[6,61.87],[7,64.133],[8,66.824],[9,68.601],[10,70.255],[11,71.509],[12,72.663],[13,73.729],[14,74.654],[15,75.558],[16,76.293],[17,76.839],[18,77.264],[19,77.841],[20,78.301],[21,78.605],[22,78.844],[23,79.12],[24,79.5],[25,79.898],[26,80.135],[27,80.432],[28,80.74],[29,81.266],[30,81.697],[31,81.921]],"b. avance 10-40%":[[1,24.693],[2,38.757],[3,49.951],[4,56.139],[5,60.474],[6,64.372],[7,66.98],[8,70.197],[9,72.517],[10,74.301],[11,75.739],[12,76.957],[13,78.136],[14,79.345],[15,80.591],[16,81.368],[17,82.0],[18,82.652],[19,83.183],[20,83.76],[21,84.139],[22,84.638],[23,85.07],[24,85.638],[25,86.156],[26,86.538],[27,87.039],[28,87.574],[29,88.082],[30,88.483],[31,88.756]],"c. avance 40-70%":[[1,24.722],[2,39.249],[3,50.834],[4,57.145],[5,61.86],[6,66.206],[7,69.464],[8,73.109],[9,75.419],[10,77.476],[11,78.96],[12,80.402],[13,81.679],[14,82.855],[15,83.815],[16,84.665],[17,85.466],[18,86.088],[19,86.656],[20,87.202],[21,87.653],[22,88.155],[23,88.55],[24,89.171],[25,89.601],[26,89.925],[27,90.366],[28,90.726],[29,91.22],[30,91.641],[31,91.838]],"d. avance 70%+":[[1,23.374],[2,37.395],[3,49.399],[4,55.877],[5,60.524],[6,65.222],[7,68.356],[8,71.626],[9,74.726],[10,76.73],[11,78.372],[12,79.712],[13,81.375],[14,83.07],[15,84.219],[16,85.452],[17,86.415],[18,87.183],[19,88.001],[20,88.65],[21,89.093],[22,89.698],[23,90.116],[24,90.617],[25,90.814],[26,91.168],[27,91.674],[28,92.012],[29,92.474],[30,92.821],[31,93.016]]}}},"julio":{"stock_recup":{"a. 1-8":{"a. avance <10%":435607.0,"b. avance 10-40%":584314.0,"c. avance 40-70%":230976.0,"d. avance 70%+":45357.0},"b. 9-15":{"a. avance <10%":319360.0,"b. avance 10-40%":309239.0,"c. avance 40-70%":115577.0,"d. avance 70%+":22503.0},"c. 16-30":{"a. avance <10%":387518.0,"b. avance 10-40%":350919.0,"c. avance 40-70%":121277.0,"d. avance 70%+":21311.0}},"stock_aseg":{"a. 1-8":{"a. avance <10%":1111310.0,"b. avance 10-40%":1305997.0,"c. avance 40-70%":497599.0,"d. avance 70%+":93448.0},"b. 9-15":{"a. avance <10%":319360.0,"b. avance 10-40%":309239.0,"c. avance 40-70%":115577.0,"d. avance 70%+":22503.0},"c. 16-30":{"a. avance <10%":387518.0,"b. avance 10-40%":350919.0,"c. avance 40-70%":121277.0,"d. avance 70%+":21311.0}},"calendario":{"2026-07-01":{"a. avance <10%":1488908.0,"b. avance 10-40%":1705999.0,"c. avance 40-70%":453551.0,"d. avance 70%+":104487.0},"2026-07-02":{"a. avance <10%":832370.0,"b. avance 10-40%":1510639.0,"c. avance 40-70%":401889.0,"d. avance 70%+":75073.0},"2026-07-03":{"a. avance <10%":675678.0,"b. avance 10-40%":975735.0,"c. avance 40-70%":328790.0,"d. avance 70%+":47086.0},"2026-07-04":{"a. avance <10%":863261.0,"b. avance 10-40%":1230547.0,"c. avance 40-70%":352124.0,"d. avance 70%+":47532.0},"2026-07-06":{"a. avance <10%":1887565.0,"b. avance 10-40%":2958027.0,"c. avance 40-70%":913123.0,"d. avance 70%+":135991.0},"2026-07-07":{"a. avance <10%":577410.0,"b. avance 10-40%":1147285.0,"c. avance 40-70%":330612.0,"d. avance 70%+":53950.0},"2026-07-08":{"a. avance <10%":605004.0,"b. avance 10-40%":1060223.0,"c. avance 40-70%":370036.0,"d. avance 70%+":50769.0},"2026-07-09":{"a. avance <10%":710704.0,"b. avance 10-40%":1131285.0,"c. avance 40-70%":305427.0,"d. avance 70%+":41103.0},"2026-07-10":{"a. avance <10%":744530.0,"b. avance 10-40%":624308.0,"c. avance 40-70%":185317.0,"d. avance 70%+":27599.0},"2026-07-11":{"a. avance <10%":655352.0,"b. avance 10-40%":650126.0,"c. avance 40-70%":210495.0,"d. avance 70%+":31352.0},"2026-07-13":{"a. avance <10%":1491861.0,"b. avance 10-40%":1274588.0,"c. avance 40-70%":385510.0,"d. avance 70%+":68209.0},"2026-07-14":{"a. avance <10%":806771.0,"b. avance 10-40%":620933.0,"c. avance 40-70%":264868.0,"d. avance 70%+":30509.0},"2026-07-15":{"a. avance <10%":2410647.0,"b. avance 10-40%":1872466.0,"c. avance 40-70%":619762.0,"d. avance 70%+":74199.0},"2026-07-16":{"a. avance <10%":1010046.0,"b. avance 10-40%":829172.0,"c. avance 40-70%":299567.0,"d. avance 70%+":36083.0},"2026-07-17":{"a. avance <10%":921322.0,"b. avance 10-40%":810865.0,"c. avance 40-70%":286931.0,"d. avance 70%+":31353.0},"2026-07-18":{"a. avance <10%":916860.0,"b. avance 10-40%":766514.0,"c. avance 40-70%":278826.0,"d. avance 70%+":38863.0},"2026-07-20":{"a. avance <10%":2010928.0,"b. avance 10-40%":1739795.0,"c. avance 40-70%":628196.0,"d. avance 70%+":91883.0},"2026-07-21":{"a. avance <10%":791707.0,"b. avance 10-40%":914779.0,"c. avance 40-70%":333994.0,"d. avance 70%+":32595.0},"2026-07-22":{"a. avance <10%":853436.0,"b. avance 10-40%":874176.0,"c. avance 40-70%":295228.0,"d. avance 70%+":37472.0},"2026-07-24":{"a. avance <10%":1803990.0,"b. avance 10-40%":1686458.0,"c. avance 40-70%":648048.0,"d. avance 70%+":76923.0},"2026-07-25":{"a. avance <10%":2450908.0,"b. avance 10-40%":1885787.0,"c. avance 40-70%":590803.0,"d. avance 70%+":90897.0},"2026-07-27":{"a. avance <10%":1989111.0,"b. avance 10-40%":1733335.0,"c. avance 40-70%":648728.0,"d. avance 70%+":86761.0},"2026-07-30":{"a. avance <10%":7257818.0,"b. avance 10-40%":5022982.0,"c. avance 40-70%":1822899.0,"d. avance 70%+":264048.0},"2026-07-31":{"a. avance <10%":50185.0,"b. avance 10-40%":61300.0,"c. avance 40-70%":31687.0,"d. avance 70%+":4764.0}},"comparacion":{"asegurado":{"asignado":{"stock":4656058.0,"nuevos":9567714.05,"total":14223772.05},"proyectado":{"stock":3105418,"nuevos":7200813,"fantasma":7293475.672077622,"total":17599706.67},"real":{"stock":3137199.21,"nuevos":7633719.13,"fantasma":6454259.84,"total":17225178.18}},"recupero":{"asignado":{"stock":2943958.0,"nuevos":13116158.27,"total":16060116.27},"proyectado":{"stock":426651,"nuevos":1349523,"total":1776174},"real":{"stock":435390.98,"nuevos":1653520.25,"total":2088911.23}}}},"agosto":{"stock_recup":{"a. 1-8":{"a. avance <10%":1138797.25,"b. avance 10-40%":1134409.39,"c. avance 40-70%":514804.28,"d. avance 70%+":85644.33},"b. 9-15":{"a. avance <10%":192370.22,"b. avance 10-40%":250160.48,"c. avance 40-70%":124336.02,"d. avance 70%+":24846.27},"c. 16-30":{"a. avance <10%":438208.6,"b. avance 10-40%":378804.0,"c. avance 40-70%":142762.86,"d. avance 70%+":27698.01}},"stock_aseg":{"a. 1-8":{"a. avance <10%":1138797.25,"b. avance 10-40%":1140103.49,"c. avance 40-70%":517995.68,"d. avance 70%+":86575.66},"b. 9-15":{"a. avance <10%":192370.22,"b. avance 10-40%":250160.48,"c. avance 40-70%":124336.02,"d. avance 70%+":24846.27},"c. 16-30":{"a. avance <10%":438208.6,"b. avance 10-40%":378804.0,"c. avance 40-70%":142762.86,"d. avance 70%+":27698.01}},"calendario":{"2026-08-01":{"a. avance <10%":1276347.64,"b. avance 10-40%":1605156.75,"c. avance 40-70%":488824.64,"d. avance 70%+":82100.35},"2026-08-03":{"a. avance <10%":1713507.49,"b. avance 10-40%":2400731.33,"c. avance 40-70%":724453.67,"d. avance 70%+":93736.67},"2026-08-04":{"a. avance <10%":874170.07,"b. avance 10-40%":1254420.97,"c. avance 40-70%":378430.17,"d. avance 70%+":45846.18},"2026-08-05":{"a. avance <10%":1352232.45,"b. avance 10-40%":1829544.94,"c. avance 40-70%":558922.56,"d. avance 70%+":85178.37},"2026-08-07":{"a. avance <10%":1206759.46,"b. avance 10-40%":2171787.79,"c. avance 40-70%":683094.76,"d. avance 70%+":101615.43},"2026-08-08":{"a. avance <10%":664534.36,"b. avance 10-40%":1020344.04,"c. avance 40-70%":364413.57,"d. avance 70%+":61511.94},"2026-08-10":{"a. avance <10%":1327840.55,"b. avance 10-40%":2080945.98,"c. avance 40-70%":711526.69,"d. avance 70%+":86417.29},"2026-08-11":{"a. avance <10%":582298.98,"b. avance 10-40%":955541.13,"c. avance 40-70%":297607.07,"d. avance 70%+":44951.35},"2026-08-12":{"a. avance <10%":611487.06,"b. avance 10-40%":826353.2,"c. avance 40-70%":265018.31,"d. avance 70%+":41586.39},"2026-08-13":{"a. avance <10%":591951.09,"b. avance 10-40%":1008795.32,"c. avance 40-70%":303073.8,"d. avance 70%+":36246.89},"2026-08-14":{"a. avance <10%":474044.17,"b. avance 10-40%":837866.38,"c. avance 40-70%":305650.71,"d. avance 70%+":52622.42},"2026-08-15":{"a. avance <10%":1960384.99,"b. avance 10-40%":2217246.69,"c. avance 40-70%":776200.15,"d. avance 70%+":117966.03},"2026-08-17":{"a. avance <10%":1479487.11,"b. avance 10-40%":2075495.87,"c. avance 40-70%":677474.34,"d. avance 70%+":111954.29},"2026-08-18":{"a. avance <10%":830514.68,"b. avance 10-40%":988123.54,"c. avance 40-70%":311067.21,"d. avance 70%+":46471.89},"2026-08-19":{"a. avance <10%":742517.05,"b. avance 10-40%":816053.86,"c. avance 40-70%":280283.92,"d. avance 70%+":49634.18},"2026-08-20":{"a. avance <10%":1069818.33,"b. avance 10-40%":1196998.55,"c. avance 40-70%":371132.22,"d. avance 70%+":70338.73},"2026-08-21":{"a. avance <10%":791710.17,"b. avance 10-40%":1033429.26,"c. avance 40-70%":340072.64,"d. avance 70%+":51893.3},"2026-08-22":{"a. avance <10%":820339.74,"b. avance 10-40%":883250.63,"c. avance 40-70%":319373.3,"d. avance 70%+":54445.48},"2026-08-24":{"a. avance <10%":1811849.88,"b. avance 10-40%":1780850.14,"c. avance 40-70%":704232.01,"d. avance 70%+":96512.68},"2026-08-25":{"a. avance <10%":2671764.41,"b. avance 10-40%":2150422.86,"c. avance 40-70%":648218.3,"d. avance 70%+":93480.96},"2026-08-26":{"a. avance <10%":1036930.41,"b. avance 10-40%":926469.61,"c. avance 40-70%":347633.87,"d. avance 70%+":50375.09},"2026-08-27":{"a. avance <10%":1214665.27,"b. avance 10-40%":938508.36,"c. avance 40-70%":327574.73,"d. avance 70%+":47237.68},"2026-08-28":{"a. avance <10%":1069080.61,"b. avance 10-40%":1039919.22,"c. avance 40-70%":462818.02,"d. avance 70%+":45811.71},"2026-08-29":{"a. avance <10%":893205.19,"b. avance 10-40%":670596.96,"c. avance 40-70%":197456.83,"d. avance 70%+":39137.35},"2026-08-31":{"a. avance <10%":5206329.57,"b. avance 10-40%":3233919.71,"c. avance 40-70%":806750.15,"d. avance 70%+":144595.94}},"corte_real":"2026-08-20","tasa_no_paga":13.38,"tasa_fantasma":8.5524,"proyeccion_diaria":{"recupero":[{"dia":1,"fecha":"2026-08-01","stock":101052.41,"nuevos":0.0,"total":101052.41},{"dia":2,"fecha":"2026-08-02","stock":179212.49,"nuevos":20624.45,"total":199836.93},{"dia":3,"fecha":"2026-08-03","stock":228937.53,"nuevos":32203.39,"total":261140.92},{"dia":4,"fecha":"2026-08-04","stock":262282.39,"nuevos":70775.1,"total":333057.48},{"dia":5,"fecha":"2026-08-05","stock":294481.18,"nuevos":107608.0,"total":402089.18},{"dia":6,"fecha":"2026-08-06","stock":319550.03,"nuevos":155680.31,"total":475230.34},{"dia":7,"fecha":"2026-08-07","stock":337939.73,"nuevos":186089.23,"total":524028.96},{"dia":8,"fecha":"2026-08-08","stock":357522.69,"nuevos":233142.48,"total":590665.17},{"dia":9,"fecha":"2026-08-09","stock":375287.48,"nuevos":276709.13,"total":651996.61},{"dia":10,"fecha":"2026-08-10","stock":389071.43,"nuevos":307260.06,"total":696331.5},{"dia":11,"fecha":"2026-08-11","stock":404915.72,"nuevos":356441.54,"total":761357.26},{"dia":12,"fecha":"2026-08-12","stock":416326.08,"nuevos":398709.81,"total":815035.89},{"dia":13,"fecha":"2026-08-13","stock":430211.71,"nuevos":441638.72,"total":871850.43},{"dia":14,"fecha":"2026-08-14","stock":440531.92,"nuevos":482227.33,"total":922759.25},{"dia":15,"fecha":"2026-08-15","stock":453551.98,"nuevos":521818.61,"total":975370.59},{"dia":16,"fecha":"2026-08-16","stock":464526.5,"nuevos":581493.13,"total":1046019.63},{"dia":17,"fecha":"2026-08-17","stock":475602.84,"nuevos":620545.07,"total":1096147.91},{"dia":18,"fecha":"2026-08-18","stock":485893.6,"nuevos":678822.74,"total":1164716.34},{"dia":19,"fecha":"2026-08-19","stock":496989.73,"nuevos":729242.92,"total":1226232.65},{"dia":20,"fecha":"2026-08-20","stock":511580.52,"nuevos":778259.35,"total":1289839.87},{"dia":21,"fecha":"2026-08-21","stock":522359.66,"nuevos":829904.74,"total":1352264.4},{"dia":22,"fecha":"2026-08-22","stock":533993.24,"nuevos":878981.26,"total":1412974.5},{"dia":23,"fecha":"2026-08-23","stock":546101.27,"nuevos":929111.64,"total":1475212.91},{"dia":24,"fecha":"2026-08-24","stock":558832.83,"nuevos":964626.01,"total":1523458.83},{"dia":25,"fecha":"2026-08-25","stock":575346.32,"nuevos":1020795.79,"total":1596142.11},{"dia":26,"fecha":"2026-08-26","stock":594409.41,"nuevos":1090506.45,"total":1684915.86},{"dia":27,"fecha":"2026-08-27","stock":616907.12,"nuevos":1155276.6,"total":1772183.71},{"dia":28,"fecha":"2026-08-28","stock":639782.14,"nuevos":1219238.15,"total":1859020.29},{"dia":29,"fecha":"2026-08-29","stock":665207.96,"nuevos":1282172.27,"total":1947380.23},{"dia":30,"fecha":"2026-08-30","stock":696043.36,"nuevos":1344521.95,"total":2040565.31},{"dia":31,"fecha":"2026-08-31","stock":711160.47,"nuevos":1397274.98,"total":2108435.46}],"asegurado":[{"dia":1,"fecha":"2026-08-01","stock":469853.47,"nuevos":0.0,"fantasma":11989.88,"total":481843.35},{"dia":2,"fecha":"2026-08-02","stock":988069.9,"nuevos":116608.76,"fantasma":307253.74,"total":1411932.41},{"dia":3,"fecha":"2026-08-03","stock":1277393.59,"nuevos":181401.23,"fantasma":307253.74,"total":1766048.56},{"dia":4,"fecha":"2026-08-04","stock":1485689.17,"nuevos":397419.54,"fantasma":729092.37,"total":2612201.09},{"dia":5,"fecha":"2026-08-05","stock":1673441.98,"nuevos":603377.49,"fantasma":947422.54,"total":3224242.01},{"dia":6,"fecha":"2026-08-06","stock":1803488.3,"nuevos":870689.6,"fantasma":1274625.06,"total":3948802.96},{"dia":7,"fecha":"2026-08-07","stock":1894040.14,"nuevos":1035230.2,"fantasma":1274625.06,"total":4203895.4},{"dia":8,"fecha":"2026-08-08","stock":1987446.22,"nuevos":1289904.1,"fantasma":1630681.43,"total":4908031.75},{"dia":9,"fecha":"2026-08-09","stock":2071944.38,"nuevos":1522215.7,"fantasma":1811204.78,"total":5405364.86},{"dia":10,"fecha":"2026-08-10","stock":2137084.07,"nuevos":1683278.3,"fantasma":1811204.78,"total":5631567.15},{"dia":11,"fecha":"2026-08-11","stock":2206095.76,"nuevos":1945045.26,"fantasma":2170979.12,"total":6322120.14},{"dia":12,"fecha":"2026-08-12","stock":2267735.85,"nuevos":2172083.76,"fantasma":2331797.39,"total":6771617.01},{"dia":13,"fecha":"2026-08-13","stock":2324996.99,"nuevos":2400492.96,"fantasma":2480988.44,"total":7206478.38},{"dia":14,"fecha":"2026-08-14","stock":2377759.68,"nuevos":2615947.25,"fantasma":2646909.77,"total":7640616.71},{"dia":15,"fecha":"2026-08-15","stock":2440264.93,"nuevos":2824235.26,"fantasma":2789749.74,"total":8054249.92},{"dia":16,"fecha":"2026-08-16","stock":2498667.18,"nuevos":3145443.16,"fantasma":3223507.67,"total":8867618.01},{"dia":17,"fecha":"2026-08-17","stock":2543071.92,"nuevos":3351593.91,"fantasma":3223507.67,"total":9118173.5},{"dia":18,"fecha":"2026-08-18","stock":2577653.42,"nuevos":3660479.44,"fantasma":3595056.97,"total":9833189.84},{"dia":19,"fecha":"2026-08-19","stock":2617191.08,"nuevos":3928768.42,"fantasma":3781171.28,"total":10327130.79},{"dia":20,"fecha":"2026-08-20","stock":2659760.37,"nuevos":4187286.37,"fantasma":3942681.48,"total":10789728.23},{"dia":21,"fecha":"2026-08-21","stock":2693205.07,"nuevos":4458074.84,"fantasma":4174303.75,"total":11325583.66},{"dia":22,"fecha":"2026-08-22","stock":2723368.15,"nuevos":4716876.78,"fantasma":4363918.37,"total":11804163.3},{"dia":23,"fecha":"2026-08-23","stock":2753627.83,"nuevos":4976947.28,"fantasma":4541585.69,"total":12272160.79},{"dia":24,"fecha":"2026-08-24","stock":2777703.45,"nuevos":5154168.41,"fantasma":4541585.69,"total":12473457.55},{"dia":25,"fecha":"2026-08-25","stock":2801933.73,"nuevos":5444188.07,"fantasma":4917328.48,"total":13163450.27},{"dia":26,"fecha":"2026-08-26","stock":2832575.45,"nuevos":5823260.09,"fantasma":5393171.55,"total":14049007.09},{"dia":27,"fecha":"2026-08-27","stock":2855642.5,"nuevos":6161183.81,"fantasma":5595127.52,"total":14611953.84},{"dia":28,"fecha":"2026-08-28","stock":2878889.47,"nuevos":6484226.47,"fantasma":5811329.75,"total":15174445.69},{"dia":29,"fecha":"2026-08-29","stock":2910848.0,"nuevos":6790723.59,"fantasma":6035198.61,"total":15736770.19},{"dia":30,"fecha":"2026-08-30","stock":2939612.37,"nuevos":7070450.72,"fantasma":6189174.81,"total":16199237.9},{"dia":31,"fecha":"2026-08-31","stock":2951389.62,"nuevos":7269629.49,"fantasma":6189174.81,"total":16410193.91}]},"real_a_hoy":{"asegurado":{"stock":2690562.16,"nuevos":5173860.76,"fantasma":3134320.83,"total":10998743.75},"recupero":{"stock":473452.25,"nuevos":859026.81,"total":1332479.06}}}}</script>
+<script id="data-json" type="application/json">{"curvas":{"recupero":{"stock":{"a. 1-8":{"a. avance <10%":[[1,1.3511775409244813],[2,2.3777470859665066],[3,2.9786511476258015],[4,3.48026886235507],[5,3.7847181012021696],[6,4.000284130518774],[7,4.317419028619593],[8,4.517009143926515],[9,4.702968221560462],[10,4.7856770952002305],[11,5.048758482318855],[12,5.188372901349505],[13,5.261458192833368],[14,5.417691199364861],[15,5.543788432246622],[16,5.703739947867943],[17,5.76703123817196],[18,5.906779185227927],[19,5.986816132028045],[20,6.115682103975082],[21,6.18872988339974],[22,6.213885445460689],[23,6.317272158570983],[24,6.4599541200325765],[25,6.588756743800161],[26,6.955926518275614],[27,7.3970988907158395],[28,7.839756678460683],[29,8.519304185882296],[30,9.034091967669962],[31,9.364295839626482]],"b. avance 10-40%":[[1,1.9175865997363495],[2,3.3951261720189123],[3,4.3847384995531815],[4,4.89283840380195],[5,5.3760904825001825],[6,5.718501830754683],[7,5.95331318229497],[8,6.234649490640994],[9,6.543936118278441],[10,6.700652963504633],[11,6.903548981508508],[12,7.056572893008524],[13,7.387773369169528],[14,7.515202677090248],[15,7.698616090974902],[16,7.8100189431693074],[17,7.980288122646093],[18,8.108224514318886],[19,8.284203866408182],[20,8.537205099689329],[21,8.747613823742855],[22,9.061705072186497],[23,9.24657521454474],[24,9.47914677327299],[25,9.789614461305764],[26,10.233840216117626],[27,10.88102811460322],[28,11.751702904614987],[29,12.754473308362412],[30,13.744405298928918],[31,14.444102676361407]],"c. avance 40-70%":[[1,4.68515880693828],[2,8.332016955993506],[3,10.43276772744649],[4,11.759440778504231],[5,13.07431915151207],[6,14.184255958550612],[7,14.899393365443618],[8,15.712875537365763],[9,16.261872117925495],[10,16.66994876943737],[11,17.100982153630923],[12,17.39882429704198],[13,17.670778127911632],[14,18.00993925398405],[15,18.40046413041098],[16,18.641183035936557],[17,18.887897103524203],[18,19.15964267339254],[19,19.660185494398718],[20,20.266000576376676],[21,20.515707232046783],[22,20.931628707958865],[23,21.412420055600105],[24,21.971001297466348],[25,22.755390877582116],[26,23.77988187097429],[27,25.10630868402459],[28,26.771959266407215],[29,28.75261896820388],[30,31.09605186162419],[31,32.453003919615384]],"d. avance 70%+":[[1,9.162451962746005],[2,16.551515029824905],[3,21.025454929989625],[4,24.00304179171492],[5,26.037878792436587],[6,28.033978457167102],[7,28.963321635477936],[8,30.775108326068214],[9,32.21639492029975],[10,33.545793095004214],[11,35.36307323387771],[12,36.58742422262562],[13,37.46835685128817],[14,38.221467836334206],[15,38.91428231555605],[16,39.5245744358113],[17,40.26219701039406],[18,41.07264447185354],[19,41.659085273885374],[20,42.66296587153369],[21,43.70898662941337],[22,44.36792167352647],[23,45.100077488643585],[24,46.23153063427776],[25,47.416048562802054],[26,49.14691327580721],[27,51.60942523368356],[28,54.24902022662065],[29,57.6051532627747],[30,62.01926830930711],[31,64.53648393398456]]},"b. 9-15":{"a. avance <10%":[[1,0.4552307527161568],[2,0.7990699102542549],[3,1.0054381236628571],[4,1.215303518904729],[5,1.404794275153095],[6,1.5769446216278786],[7,1.6795755471992933],[8,1.7746329459368593],[9,1.9784374411488985],[10,2.8905542383742393],[11,3.0435170886283127],[12,3.145998735601954],[13,3.283250485841049],[14,3.335468233822156],[15,3.5021228208464326],[16,3.6239034604289064],[17,3.7613115752751622],[18,3.883662864973261],[19,4.069427325084813],[20,4.479914180121654],[21,4.622736950941562],[22,4.772157741302908],[23,4.927105146586235],[24,5.093697227297104],[25,5.302423664630019],[26,5.36797964428239],[27,5.403527791378641],[28,5.454025824878976],[29,5.849423005297632],[30,6.032324924911765],[31,6.069146779227991]],"b. avance 10-40%":[[1,0.9976751539372112],[2,1.8522726730071457],[3,2.4055792695688596],[4,2.7707405500758093],[5,3.3606735950494935],[6,3.8142818144390875],[7,3.99910513404968],[8,4.238251721212322],[9,4.465879694872135],[10,4.851326828498889],[11,5.0537288616502805],[12,5.260274322323983],[13,5.51284248286999],[14,5.739917970037291],[15,6.23402284671092],[16,6.629233655738028],[17,7.288551307401926],[18,7.73566991163407],[19,8.007793616893846],[20,8.788358830653205],[21,9.352418344866235],[22,9.602663319616664],[23,9.876782876801354],[24,10.303925268061619],[25,10.765831843415617],[26,11.183262150264664],[27,11.493385336820925],[28,11.716999285065082],[29,12.146165127875403],[30,12.371017896476404],[31,12.618912730770848]],"c. avance 40-70%":[[1,2.5010276846046104],[2,4.146237085725529],[3,5.4011075899348295],[4,6.298065180625434],[5,7.811746804211126],[6,9.134295762940473],[7,9.861047181414532],[8,10.806291612250936],[9,12.217804373216225],[10,12.717154571671125],[11,13.16291708945541],[12,13.509518675931295],[13,14.317687187831247],[14,15.07970317367095],[15,15.583961185581959],[16,16.315009557549562],[17,17.333346181657017],[18,18.157323133276257],[19,18.917539467629467],[20,19.684748771873807],[21,20.442493441489408],[22,21.217313967815905],[23,22.106634799920812],[24,22.706354209509623],[25,23.429799322788185],[26,24.04180179058092],[27,24.77569805394086],[28,25.864829441231684],[29,26.465945090236374],[30,27.52387673351086],[31,27.951618663773672]],"d. avance 70%+":[[1,5.653226630937442],[2,8.969517432239675],[3,12.889282302096685],[4,14.795788246985182],[5,18.419773724356578],[6,20.305979556473112],[7,22.789610958070426],[8,24.127670479971457],[9,25.33458400478302],[10,25.40265774185763],[11,26.49290186321464],[12,26.907669683120236],[13,28.233476451532304],[14,31.929368977980857],[15,34.04433935357279],[16,35.49194177294767],[17,36.80416321439811],[18,37.7445447385268],[19,38.85747722121718],[20,41.43245913028833],[21,41.96091104294672],[22,44.32480985271724],[23,45.54967850711185],[24,48.145592203393306],[25,48.93408631086118],[26,49.591382502792605],[27,50.801662073583834],[28,52.97670629443134],[29,53.90460771641322],[30,56.0210749567727],[31,57.9506822442349]]},"c. 16-30":{"a. avance <10%":[[1,0.2018865132069044],[2,0.3034207409827756],[3,0.3928593372607283],[4,0.5026552602059612],[5,0.7520545167853467],[6,0.8610872724267383],[7,0.9300894483499758],[8,1.0387408682820405],[9,1.2020633822133575],[10,1.3007093267135799],[11,1.4450967126958862],[12,1.5041911025692545],[13,1.59022569497637],[14,1.6777707536651623],[15,1.78810817143807],[16,1.8592359412606183],[17,1.937652745414576],[18,2.045368182054893],[19,2.120368833150915],[20,2.157289220971933],[21,2.257404473283255],[22,2.3077566552403983],[23,2.4409573672738056],[24,2.479481199849191],[25,2.6077049601964366],[26,2.6710984267044062],[27,2.7292855946269117],[28,2.741400711621804],[29,2.759909981445581],[30,2.808831784544147],[31,2.853358274204313]],"b. avance 10-40%":[[1,0.48714899900660064],[2,0.766653126145274],[3,1.0729148310278238],[4,1.3062357339115636],[5,1.733720335849737],[6,2.351236979419043],[7,2.559980151750925],[8,2.8418974373666157],[9,3.042460132768244],[10,3.3594733925315543],[11,3.7088098831525507],[12,4.078069668291436],[13,4.305090545971484],[14,4.563165714142672],[15,4.846248726291571],[16,5.213548086073829],[17,5.490252788046891],[18,5.579428890887027],[19,5.807855531110064],[20,5.965174662396865],[21,6.164888501846691],[22,6.3321667983574885],[23,6.430205627483877],[24,6.569210753661414],[25,6.711679559607197],[26,7.072945330691207],[27,7.219565960594234],[28,7.382538295254808],[29,7.496368033423705],[30,7.6481134068607615],[31,7.814541512740178]],"c. avance 40-70%":[[1,1.4571128885129059],[2,3.075159963534997],[3,3.72972581711941],[4,4.797734198082218],[5,5.8312671035453425],[6,6.559340130235393],[7,7.199791299001339],[8,7.790656845870179],[9,8.296834283828213],[10,8.630707295553819],[11,9.414029363309549],[12,10.024769974708835],[13,11.15580086201713],[14,11.772512396022647],[15,12.67065311077206],[16,13.468106628443127],[17,14.144271597363096],[18,14.512243323619726],[19,15.330307739227939],[20,15.706312415647202],[21,16.001629298146412],[22,16.331805804583936],[23,16.9100609402077],[24,17.440034342384713],[25,18.14508985950426],[26,18.358199899570074],[27,18.800259638759023],[28,19.350906587916594],[29,20.02043513376029],[30,20.408050883412162],[31,20.63983071566863]],"d. avance 70%+":[[1,4.4448979661539285],[2,7.264254353668346],[3,8.708127966507412],[4,10.444522232652359],[5,13.055883283363142],[6,13.95760996815747],[7,16.413767012247412],[8,19.374634441697484],[9,21.218529293851784],[10,22.44320164824751],[11,24.124516732254783],[12,25.649421280749586],[13,28.212219543572296],[14,28.976578361115433],[15,30.03092274676901],[16,30.86872852742347],[17,31.32003293580696],[18,33.624167339551626],[19,34.51653773426181],[20,35.76872691503031],[21,37.08456049483224],[22,37.88493875272972],[23,38.42249290334264],[24,38.945045119246444],[25,39.36216833648312],[26,40.206061310915494],[27,42.521845547873205],[28,43.484758828397126],[29,44.40819022789724],[30,45.7077788545755],[31,46.430032698412695]]}},"nuevos":{"a. avance <10%":[[0,4.558526272827108],[1,6.570853353503336],[2,7.596913183674443],[3,8.298061668881768],[4,8.740449091178832],[5,8.990774723705279],[6,9.255111077458182],[7,9.428389412567384],[8,9.607165014980236],[9,9.797718322437543],[10,9.935249043258684],[11,10.097832820102592],[12,10.181015357245956],[13,10.249449453927982],[14,10.385066602645441],[15,10.480453413116914],[16,10.585064960045989],[17,10.686896189435656],[18,10.778500443606841],[19,10.89700308650077],[20,10.993109725461023],[21,11.106098330060801],[22,11.224302344321437],[23,11.37929539145783],[24,11.618230601675121],[25,11.818114334954974],[26,12.11849748575902],[27,12.67398796135291],[28,13.42472761002755],[29,14.627237653818906],[30,16.0849281122058],[31,17.310767154928026]],"b. avance 10-40%":[[0,4.856126054597523],[1,7.325270207999271],[2,8.656774969697835],[3,9.822288224835445],[4,10.480044016693126],[5,10.89862262650675],[6,11.290974569436521],[7,11.620017940999858],[8,11.966154811177448],[9,12.215337060755358],[10,12.4526582004875],[11,12.645450380828047],[12,12.786823350027928],[13,12.974526114103417],[14,13.106452252540882],[15,13.265480182536654],[16,13.393151457816742],[17,13.536318384210722],[18,13.679670182541997],[19,13.780898391206511],[20,13.922446991093876],[21,14.022941221375161],[22,14.166702523167013],[23,14.340832631140943],[24,14.590122154706757],[25,14.849045475827785],[26,15.15790210537769],[27,15.913934644515042],[28,16.812859235715703],[29,18.38186779390677],[30,20.380749147213677],[31,22.08379575894838]],"c. avance 40-70%":[[0,10.728414816753524],[1,16.52374015421924],[2,19.802560443725774],[3,22.516418840701416],[4,23.944744007195823],[5,24.994845627448964],[6,25.955412020949733],[7,26.682428205731966],[8,27.49213605242522],[9,27.992017457427625],[10,28.493797766462972],[11,28.871692189508522],[12,29.232503272317462],[13,29.52639560695251],[14,29.804523642820435],[15,30.09781118296959],[16,30.313583578420783],[17,30.494763994340722],[18,30.778228647524042],[19,31.024392854118265],[20,31.26343884566216],[21,31.497173211091923],[22,31.753351087656746],[23,32.06815933938989],[24,32.45749492227738],[25,32.87095344601488],[26,33.43950902756976],[27,34.47519538471835],[28,35.90890111765126],[29,38.338033924308675],[30,41.56091968759051],[31,44.43519050129631]],"d. avance 70%+":[[0,21.07829453194176],[1,32.09573700428983],[2,39.12063125325663],[3,44.80268061446986],[4,47.827115390062716],[5,50.0079185219452],[6,52.30713464358033],[7,53.70434470254345],[8,55.585912371451634],[9,56.97441681775277],[10,58.102304613718175],[11,58.87656657027352],[12,59.5406969243155],[13,60.40853735271884],[14,61.160799126747705],[15,61.6973848367911],[16,62.40698302956997],[17,62.88708226239206],[18,63.316770272803275],[19,63.87141011151653],[20,64.30849388614715],[21,64.61897949628715],[22,65.031630124849],[23,65.55283522622325],[24,66.13735216417726],[25,66.66073049054403],[26,67.34115927517188],[27,68.59706902717072],[28,69.8709125577345],[29,72.26669758391573],[30,75.22934551262382],[31,77.99905727188124]]}},"asegurado":{"stock":{"a. 1-8":{"a. avance <10%":[[1,13.82],[2,23.753],[3,29.192],[4,33.173],[5,36.664],[6,38.432],[7,40.471],[8,42.269],[9,43.686],[10,44.857],[11,46.339],[12,47.299],[13,48.28],[14,49.374],[15,50.943],[16,52.25],[17,52.806],[18,53.255],[19,53.745],[20,54.466],[21,54.948],[22,55.051],[23,55.802],[24,56.384],[25,56.697],[26,57.55],[27,58.612],[28,60.891],[29,63.316],[30,66.516],[31,67.266]],"b. avance 10-40%":[[1,13.497],[2,23.219],[3,29.706],[4,33.306],[5,37.095],[6,39.327],[7,40.699],[8,42.571],[9,44.14],[10,45.148],[11,46.343],[12,47.642],[13,49.015],[14,50.114],[15,51.265],[16,52.151],[17,52.906],[18,53.487],[19,54.576],[20,55.79],[21,56.797],[22,57.947],[23,58.505],[24,59.352],[25,60.218],[26,61.6],[27,63.71],[28,67.192],[29,70.336],[30,75.413],[31,77.079]],"c. avance 40-70%":[[1,14.42],[2,25.393],[3,31.859],[4,35.516],[5,39.656],[6,42.991],[7,44.873],[8,46.631],[9,48.256],[10,49.611],[11,50.959],[12,51.977],[13,52.903],[14,53.696],[15,54.613],[16,55.272],[17,55.889],[18,56.777],[19,57.822],[20,59.076],[21,59.478],[22,60.245],[23,61.138],[24,62.242],[25,63.23],[26,64.345],[27,66.533],[28,69.439],[29,72.992],[30,78.452],[31,79.828]],"d. avance 70%+":[[1,13.099],[2,24.006],[3,30.222],[4,34.487],[5,37.253],[6,40.427],[7,41.769],[8,44.22],[9,46.545],[10,48.391],[11,51.041],[12,53.113],[13,54.407],[14,55.601],[15,56.613],[16,57.53],[17,58.464],[18,59.311],[19,60.164],[20,61.527],[21,62.73],[22,63.39],[23,64.101],[24,65.46],[25,66.751],[26,68.227],[27,70.806],[28,73.708],[29,76.599],[30,82.05],[31,83.899]]},"b. 9-15":{"a. avance <10%":[[1,5.484],[2,9.232],[3,11.742],[4,13.916],[5,16.673],[6,18.193],[7,19.134],[8,21.408],[9,21.943],[10,23.704],[11,25.52],[12,26.342],[13,27.214],[14,27.895],[15,29.142],[16,30.439],[17,31.596],[18,32.867],[19,34.129],[20,35.148],[21,35.789],[22,36.255],[23,37.001],[24,37.442],[25,37.759],[26,38.014],[27,38.322],[28,38.501],[29,39.261],[30,39.587],[31,40.226]],"b. avance 10-40%":[[1,5.908],[2,11.219],[3,14.77],[4,17.736],[5,20.792],[6,24.566],[7,25.505],[8,27.378],[9,29.003],[10,31.105],[11,32.765],[12,34.258],[13,35.759],[14,37.823],[15,40.491],[16,42.222],[17,43.949],[18,45.582],[19,46.812],[20,48.029],[21,50.421],[22,51.729],[23,53.235],[24,54.7],[25,56.145],[26,57.062],[27,57.352],[28,57.754],[29,59.341],[30,60.066],[31,61.377]],"c. avance 40-70%":[[1,7.964],[2,13.52],[3,17.624],[4,20.149],[5,24.321],[6,27.826],[7,29.791],[8,32.737],[9,35.403],[10,36.309],[11,37.82],[12,39.001],[13,41.449],[14,43.665],[15,45.142],[16,47.677],[17,49.175],[18,51.326],[19,52.417],[20,52.968],[21,53.793],[22,55.068],[23,56.706],[24,57.83],[25,58.92],[26,60.347],[27,60.957],[28,62.746],[29,63.363],[30,65.114],[31,65.598]],"d. avance 70%+":[[1,8.724],[2,13.2],[3,19.802],[4,22.843],[5,27.832],[6,30.525],[7,34.227],[8,35.927],[9,37.83],[10,38.034],[11,39.037],[12,39.601],[13,41.314],[14,46.372],[15,48.7],[16,50.381],[17,51.475],[18,53.132],[19,55.013],[20,58.04],[21,59.348],[22,63.394],[23,64.196],[24,65.512],[25,66.554],[26,67.123],[27,68.199],[28,71.098],[29,72.108],[30,74.437],[31,76.02]]},"c. 16-30":{"a. avance <10%":[[1,2.389],[2,3.48],[3,4.385],[4,5.429],[5,7.145],[6,7.889],[7,8.226],[8,9.425],[9,10.507],[10,11.627],[11,12.075],[12,12.587],[13,13.067],[14,13.799],[15,14.426],[16,15.892],[17,16.915],[18,17.416],[19,17.772],[20,18.25],[21,18.892],[22,19.139],[23,20.069],[24,20.355],[25,20.549],[26,21.13],[27,21.449],[28,21.688],[29,21.757],[30,21.928],[31,22.002]],"b. avance 10-40%":[[1,3.5],[2,5.366],[3,7.805],[4,9.453],[5,11.741],[6,14.563],[7,15.93],[8,17.309],[9,18.688],[10,20.265],[11,21.995],[12,23.935],[13,25.094],[14,25.913],[15,27.452],[16,29.145],[17,30.303],[18,30.92],[19,31.821],[20,32.246],[21,33.349],[22,34.16],[23,34.499],[24,35.182],[25,35.821],[26,37.33],[27,37.889],[28,38.805],[29,39.06],[30,40.084],[31,41.494]],"c. avance 40-70%":[[1,4.832],[2,10.273],[3,12.768],[4,16.289],[5,19.477],[6,22.17],[7,24.703],[8,26.389],[9,27.797],[10,28.673],[11,29.88],[12,31.18],[13,32.998],[14,34.709],[15,37.517],[16,39.434],[17,40.509],[18,41.315],[19,43.007],[20,43.989],[21,44.587],[22,44.926],[23,45.834],[24,46.772],[25,47.403],[26,47.721],[27,48.214],[28,49.212],[29,50.581],[30,51.596],[31,51.932]],"d. avance 70%+":[[1,6.398],[2,9.609],[3,12.262],[4,14.789],[5,18.296],[6,19.684],[7,22.721],[8,26.175],[9,28.367],[10,29.348],[11,30.634],[12,32.406],[13,35.418],[14,36.407],[15,37.431],[16,38.896],[17,39.466],[18,42.328],[19,43.118],[20,45.239],[21,46.9],[22,47.862],[23,48.662],[24,49.366],[25,49.573],[26,50.575],[27,53.108],[28,54.912],[29,55.6],[30,56.645],[31,56.782]]}},"nuevos":{"a. avance <10%":[[0,37.29119296880268],[1,54.29909835523516],[2,62.7203839957827],[3,68.93419184211587],[4,72.25214547339922],[5,74.40685111027685],[6,76.11286279498371],[7,77.59549540409701],[8,79.15624870423707],[9,80.11845674279749],[10,81.18720637901293],[11,81.93012834765078],[12,82.57077826740681],[13,83.14467539107046],[14,83.83258844760648],[15,84.30794921583181],[16,84.76413439332306],[17,85.05598409368021],[18,85.32571289337852],[19,85.66344521963705],[20,85.86799338498277],[21,86.09588570894289],[22,86.26450629946639],[23,86.46392438787659],[24,86.80565488863752],[25,87.04597514890628],[26,87.18533989856968],[27,87.3711331691747],[28,87.57742149001548],[29,87.94579373144089],[30,88.25342046499497],[31,88.3929035447006]],"b. avance 10-40%":[[0,32.88376170925059],[1,49.938045830837176],[2,59.35562880190558],[3,66.94159193536524],[4,70.9409438059315],[5,73.80358122069335],[6,76.33791789439708],[7,78.24107007810417],[8,80.4313184891015],[9,81.91719977833407],[10,83.12676305342207],[11,84.11850793227046],[12,84.94010562793207],[13,85.76974564599396],[14,86.5788343354194],[15,87.4467089851981],[16,87.95428490022108],[17,88.34698869440096],[18,88.7559139335401],[19,89.088082303554],[20,89.48637526348733],[21,89.77386055520039],[22,90.09973331843038],[23,90.43528469295346],[24,90.82204633028321],[25,91.15348745283147],[26,91.40759735490658],[27,91.74792294258236],[28,92.13028825360902],[29,92.46118224516002],[30,92.6953296761419],[31,92.8732014852975]],"c. avance 40-70%":[[0,31.612126093709726],[1,48.591790397889724],[2,58.45510059843387],[3,66.42990245288965],[4,70.91812300983072],[5,74.02355886849402],[6,76.99353207776134],[7,79.27128759058537],[8,81.65434825012832],[9,83.10665862049979],[10,84.48829092357622],[11,85.50591314793397],[12,86.46941741492218],[13,87.32276820033103],[14,88.15193096870411],[15,88.73980071455127],[16,89.33873789966421],[17,89.85451685922693],[18,90.28283810941227],[19,90.704072879843],[20,91.10670284768408],[21,91.4585318032609],[22,91.82607359811595],[23,92.11837021600653],[24,92.55516284517452],[25,92.86268277358963],[26,93.14031175708767],[27,93.44307829882393],[28,93.6922140658024],[29,94.03337086362085],[30,94.29567598779786],[31,94.42101138468334]],"d. avance 70%+":[[0,29.89131797937884],[1,45.977797441120345],[2,55.78005793129112],[3,64.11166512294417],[4,68.52077548557631],[5,71.68746205688153],[6,74.97664993989613],[7,77.13476010165267],[8,79.6773552752382],[9,81.72372341994192],[10,83.23299912227364],[11,84.51613716208824],[12,85.49296925679128],[13,86.69209663841616],[14,87.7986825149729],[15,88.5980727258055],[16,89.47693550455597],[17,90.12547790426039],[18,90.75839174857825],[19,91.48468616826685],[20,92.0211947427091],[21,92.30721066248152],[22,92.78015423054585],[23,93.139433249561],[24,93.53674772064586],[25,93.80678860560796],[26,94.10893113279432],[27,94.383737444095],[28,94.64959541971132],[29,95.04401667166225],[30,95.21275834783587],[31,95.32081308494706]]}}},"julio":{"stock_seg":{"asegurado":{"a. 1-8":{"a. avance <10%":498584.83,"b. avance 10-40%":713733.48,"c. avance 40-70%":288446.74,"d. avance 70%+":57968.93},"b. 9-15":{"a. avance <10%":333761.04,"b. avance 10-40%":317135.6,"c. avance 40-70%":121933.9,"d. avance 70%+":26373.36},"c. 16-30":{"a. avance <10%":389846.77,"b. avance 10-40%":377204.46,"c. avance 40-70%":127707.79,"d. avance 70%+":22705.68}},"recupero":{"a. 1-8":{"a. avance <10%":498584.83,"b. avance 10-40%":713733.48,"c. avance 40-70%":288446.74,"d. avance 70%+":57968.93},"b. 9-15":{"a. avance <10%":333761.04,"b. avance 10-40%":317135.6,"c. avance 40-70%":121933.9,"d. avance 70%+":26373.36},"c. 16-30":{"a. avance <10%":389846.77,"b. avance 10-40%":377204.46,"c. avance 40-70%":127707.79,"d. avance 70%+":22705.68}}},"calendario":{"asegurado":{"2026-07-01":{"a. avance <10%":4632473.48,"b. avance 10-40%":4933836.8,"c. avance 40-70%":1747549.8,"d. avance 70%+":275435.89},"2026-07-02":{"a. avance <10%":1430704.94,"b. avance 10-40%":1608848.45,"c. avance 40-70%":416381.47,"d. avance 70%+":100986.31},"2026-07-03":{"a. avance <10%":816360.4,"b. avance 10-40%":1416799.63,"c. avance 40-70%":361772.12,"d. avance 70%+":64512.46},"2026-07-04":{"a. avance <10%":649858.03,"b. avance 10-40%":907213.51,"c. avance 40-70%":301615.06,"d. avance 70%+":46272.57},"2026-07-05":{"a. avance <10%":836678.6,"b. avance 10-40%":1155538.45,"c. avance 40-70%":330939.66,"d. avance 70%+":43981.26},"2026-07-07":{"a. avance <10%":1842030.36,"b. avance 10-40%":2765020.62,"c. avance 40-70%":845170.2,"d. avance 70%+":124581.57},"2026-07-08":{"a. avance <10%":531703.12,"b. avance 10-40%":1073660.53,"c. avance 40-70%":305151.91,"d. avance 70%+":52716.58},"2026-07-09":{"a. avance <10%":592175.27,"b. avance 10-40%":1007517.3,"c. avance 40-70%":351590.43,"d. avance 70%+":45472.56},"2026-07-10":{"a. avance <10%":568350.53,"b. avance 10-40%":1091072.98,"c. avance 40-70%":291815.79,"d. avance 70%+":44264.73},"2026-07-11":{"a. avance <10%":718516.32,"b. avance 10-40%":953376.16,"c. avance 40-70%":346038.14,"d. avance 70%+":41014.07},"2026-07-12":{"a. avance <10%":488888.49,"b. avance 10-40%":887596.71,"c. avance 40-70%":287248.05,"d. avance 70%+":49496.21},"2026-07-14":{"a. avance <10%":1235852.08,"b. avance 10-40%":1566414.58,"c. avance 40-70%":492422.92,"d. avance 70%+":85500.48},"2026-07-15":{"a. avance <10%":523046.21,"b. avance 10-40%":809526.85,"c. avance 40-70%":284894.72,"d. avance 70%+":42558.34},"2026-07-16":{"a. avance <10%":1806593.19,"b. avance 10-40%":2115675.29,"c. avance 40-70%":675177.67,"d. avance 70%+":100655.47},"2026-07-17":{"a. avance <10%":644284.21,"b. avance 10-40%":960618.02,"c. avance 40-70%":318429.58,"d. avance 70%+":48295.34},"2026-07-18":{"a. avance <10%":572629.32,"b. avance 10-40%":907578.68,"c. avance 40-70%":325092.32,"d. avance 70%+":37994.37},"2026-07-19":{"a. avance <10%":597782.64,"b. avance 10-40%":862687.54,"c. avance 40-70%":310993.42,"d. avance 70%+":45768.05},"2026-07-21":{"a. avance <10%":1235602.15,"b. avance 10-40%":1924265.22,"c. avance 40-70%":653538.35,"d. avance 70%+":110489.13},"2026-07-22":{"a. avance <10%":439888.37,"b. avance 10-40%":1014827.83,"c. avance 40-70%":337728.39,"d. avance 70%+":42363.82},"2026-07-23":{"a. avance <10%":545131.65,"b. avance 10-40%":856100.79,"c. avance 40-70%":330532.42,"d. avance 70%+":43481.56},"2026-07-25":{"a. avance <10%":1092861.51,"b. avance 10-40%":1753843.17,"c. avance 40-70%":684525.62,"d. avance 70%+":92071.91},"2026-07-26":{"a. avance <10%":1610570.2,"b. avance 10-40%":2044695.08,"c. avance 40-70%":606140.62,"d. avance 70%+":95826.0},"2026-07-28":{"a. avance <10%":1245339.37,"b. avance 10-40%":1730480.88,"c. avance 40-70%":645702.08,"d. avance 70%+":82201.47},"2026-07-31":{"a. avance <10%":5006331.22,"b. avance 10-40%":5492161.09,"c. avance 40-70%":1754571.99,"d. avance 70%+":273605.71}},"recupero":{"2026-07-01":{"a. avance <10%":4632473.48,"b. avance 10-40%":4933836.8,"c. avance 40-70%":1747549.8,"d. avance 70%+":275435.89},"2026-07-02":{"a. avance <10%":1430704.94,"b. avance 10-40%":1608848.45,"c. avance 40-70%":416381.47,"d. avance 70%+":100986.31},"2026-07-03":{"a. avance <10%":816360.4,"b. avance 10-40%":1416799.63,"c. avance 40-70%":361772.12,"d. avance 70%+":64512.46},"2026-07-04":{"a. avance <10%":649858.03,"b. avance 10-40%":907213.51,"c. avance 40-70%":301615.06,"d. avance 70%+":46272.57},"2026-07-05":{"a. avance <10%":836678.6,"b. avance 10-40%":1155538.45,"c. avance 40-70%":330939.66,"d. avance 70%+":43981.26},"2026-07-07":{"a. avance <10%":1842030.36,"b. avance 10-40%":2765020.62,"c. avance 40-70%":845170.2,"d. avance 70%+":124581.57},"2026-07-08":{"a. avance <10%":531703.12,"b. avance 10-40%":1073660.53,"c. avance 40-70%":305151.91,"d. avance 70%+":52716.58},"2026-07-09":{"a. avance <10%":592175.27,"b. avance 10-40%":1007517.3,"c. avance 40-70%":351590.43,"d. avance 70%+":45472.56},"2026-07-10":{"a. avance <10%":568350.53,"b. avance 10-40%":1091072.98,"c. avance 40-70%":291815.79,"d. avance 70%+":44264.73},"2026-07-11":{"a. avance <10%":718516.32,"b. avance 10-40%":953376.16,"c. avance 40-70%":346038.14,"d. avance 70%+":41014.07},"2026-07-12":{"a. avance <10%":488888.49,"b. avance 10-40%":887596.71,"c. avance 40-70%":287248.05,"d. avance 70%+":49496.21},"2026-07-14":{"a. avance <10%":1235852.08,"b. avance 10-40%":1566414.58,"c. avance 40-70%":492422.92,"d. avance 70%+":85500.48},"2026-07-15":{"a. avance <10%":523046.21,"b. avance 10-40%":809526.85,"c. avance 40-70%":284894.72,"d. avance 70%+":42558.34},"2026-07-16":{"a. avance <10%":1806593.19,"b. avance 10-40%":2115675.29,"c. avance 40-70%":675177.67,"d. avance 70%+":100655.47},"2026-07-17":{"a. avance <10%":644284.21,"b. avance 10-40%":960618.02,"c. avance 40-70%":318429.58,"d. avance 70%+":48295.34},"2026-07-18":{"a. avance <10%":572629.32,"b. avance 10-40%":907578.68,"c. avance 40-70%":325092.32,"d. avance 70%+":37994.37},"2026-07-19":{"a. avance <10%":597782.64,"b. avance 10-40%":862687.54,"c. avance 40-70%":310993.42,"d. avance 70%+":45768.05},"2026-07-21":{"a. avance <10%":1235602.15,"b. avance 10-40%":1924265.22,"c. avance 40-70%":653538.35,"d. avance 70%+":110489.13},"2026-07-22":{"a. avance <10%":439888.37,"b. avance 10-40%":1014827.83,"c. avance 40-70%":337728.39,"d. avance 70%+":42363.82},"2026-07-23":{"a. avance <10%":545131.65,"b. avance 10-40%":856100.79,"c. avance 40-70%":330532.42,"d. avance 70%+":43481.56},"2026-07-25":{"a. avance <10%":1092861.51,"b. avance 10-40%":1753843.17,"c. avance 40-70%":684525.62,"d. avance 70%+":92071.91},"2026-07-26":{"a. avance <10%":1610570.2,"b. avance 10-40%":2044695.08,"c. avance 40-70%":606140.62,"d. avance 70%+":95826.0},"2026-07-28":{"a. avance <10%":1245339.37,"b. avance 10-40%":1730480.88,"c. avance 40-70%":645702.08,"d. avance 70%+":82201.47},"2026-07-31":{"a. avance <10%":5006331.22,"b. avance 10-40%":5492161.09,"c. avance 40-70%":1754571.99,"d. avance 70%+":273605.71}}},"comparacion":{"asegurado":{"asignado":{"stock":3275402.58,"nuevos":84497576.41,"total":87772978.99},"proyectado":{"stock":1933685.4,"nuevos":14883122.06,"total":16816807.46},"real":{"stock":2004193.55,"nuevos":15319728.31,"total":17323921.86}},"recupero":{"asignado":{"stock":3275402.58,"nuevos":84497576.41,"total":87772978.99},"proyectado":{"stock":463033.61,"nuevos":3419005.72,"total":3882039.33},"real":{"stock":467438.75,"nuevos":2813112.23,"total":3280550.98}}}},"agosto":{"corte":"2026-08-25","asegurado":{"stock_seg":{"a. 1-8":{"a. avance <10%":1498246.92,"b. avance 10-40%":1773540.1,"c. avance 40-70%":746906.72,"d. avance 70%+":124829.57},"b. 9-15":{"a. avance <10%":199656.06,"b. avance 10-40%":282529.8,"c. avance 40-70%":131862.44,"d. avance 70%+":26921.79},"c. 16-30":{"a. avance <10%":448719.91,"b. avance 10-40%":391787.98,"c. avance 40-70%":154664.45,"d. avance 70%+":29779.58}},"calendario":{"2026-08-01":{"a. avance <10%":52928.1,"b. avance 10-40%":56251.95,"c. avance 40-70%":23452.7,"d. avance 70%+":7317.54},"2026-08-02":{"a. avance <10%":1462597.12,"b. avance 10-40%":1577338.23,"c. avance 40-70%":422554.11,"d. avance 70%+":65031.18},"2026-08-04":{"a. avance <10%":2176164.0,"b. avance 10-40%":2314214.43,"c. avance 40-70%":603348.04,"d. avance 70%+":58090.19},"2026-08-05":{"a. avance <10%":1155994.6,"b. avance 10-40%":1192582.97,"c. avance 40-70%":320192.44,"d. avance 70%+":31677.68},"2026-08-06":{"a. avance <10%":1694490.92,"b. avance 10-40%":1730286.97,"c. avance 40-70%":494699.14,"d. avance 70%+":57959.72},"2026-08-08":{"a. avance <10%":1763357.34,"b. avance 10-40%":2055459.8,"c. avance 40-70%":581008.37,"d. avance 70%+":49751.17},"2026-08-09":{"a. avance <10%":917139.05,"b. avance 10-40%":984454.46,"c. avance 40-70%":309155.02,"d. avance 70%+":36346.91},"2026-08-11":{"a. avance <10%":1898284.04,"b. avance 10-40%":2002087.26,"c. avance 40-70%":554617.97,"d. avance 70%+":46048.42},"2026-08-12":{"a. avance <10%":839768.03,"b. avance 10-40%":885987.23,"c. avance 40-70%":266170.19,"d. avance 70%+":30728.24},"2026-08-13":{"a. avance <10%":887639.27,"b. avance 10-40%":743522.32,"c. avance 40-70%":225717.63,"d. avance 70%+":25205.84},"2026-08-14":{"a. avance <10%":949473.29,"b. avance 10-40%":884472.2,"c. avance 40-70%":243047.41,"d. avance 70%+":17493.07},"2026-08-15":{"a. avance <10%":715612.67,"b. avance 10-40%":774194.42,"c. avance 40-70%":270608.34,"d. avance 70%+":21227.71},"2026-08-16":{"a. avance <10%":2656758.47,"b. avance 10-40%":2022636.46,"c. avance 40-70%":621435.0,"d. avance 70%+":67225.93},"2026-08-18":{"a. avance <10%":2222265.66,"b. avance 10-40%":1845944.59,"c. avance 40-70%":550359.77,"d. avance 70%+":56044.63},"2026-08-19":{"a. avance <10%":1109914.49,"b. avance 10-40%":846351.48,"c. avance 40-70%":281022.17,"d. avance 70%+":23333.32},"2026-08-20":{"a. avance <10%":864402.31,"b. avance 10-40%":740078.37,"c. avance 40-70%":243806.98,"d. avance 70%+":32716.17},"2026-08-21":{"a. avance <10%":1204519.12,"b. avance 10-40%":1133935.55,"c. avance 40-70%":346300.12,"d. avance 70%+":50217.64},"2026-08-22":{"a. avance <10%":841745.37,"b. avance 10-40%":998892.01,"c. avance 40-70%":314113.58,"d. avance 70%+":26140.59},"2026-08-23":{"a. avance <10%":863496.88,"b. avance 10-40%":841696.96,"c. avance 40-70%":278760.01,"d. avance 70%+":33604.93},"2026-08-25":{"a. avance <10%":1865230.59,"b. avance 10-40%":1731218.6,"c. avance 40-70%":598540.01,"d. avance 70%+":60230.01},"2026-08-26":{"a. avance <10%":2624824.36,"b. avance 10-40%":2001950.23,"c. avance 40-70%":586839.91,"d. avance 70%+":73781.33},"2026-08-27":{"a. avance <10%":1047425.97,"b. avance 10-40%":874689.45,"c. avance 40-70%":318845.49,"d. avance 70%+":37503.73},"2026-08-28":{"a. avance <10%":1221945.81,"b. avance 10-40%":898674.51,"c. avance 40-70%":311233.98,"d. avance 70%+":29530.99},"2026-08-29":{"a. avance <10%":1078113.21,"b. avance 10-40%":922170.98,"c. avance 40-70%":395587.97,"d. avance 70%+":35402.48},"2026-08-30":{"a. avance <10%":880238.98,"b. avance 10-40%":605821.55,"c. avance 40-70%":166848.79,"d. avance 70%+":30751.13}},"proyeccion_diaria":[{"dia":1,"fecha":"2026-08-01","stock":644790.17,"nuevos":7814.16,"total":652604.33},{"dia":2,"fecha":"2026-08-02","stock":1114205.22,"nuevos":157358.06,"total":1271563.27},{"dia":3,"fecha":"2026-08-03","stock":1407297.37,"nuevos":392221.49,"total":1799518.86},{"dia":4,"fecha":"2026-08-04","stock":1597636.53,"nuevos":898126.93,"total":2495763.45},{"dia":5,"fecha":"2026-08-05","stock":1795136.76,"nuevos":1404066.12,"total":3199202.88},{"dia":6,"fecha":"2026-08-06","stock":1928100.02,"nuevos":1965907.97,"total":3894007.99},{"dia":7,"fecha":"2026-08-07","stock":2018523.69,"nuevos":2256003.87,"total":4274527.56},{"dia":8,"fecha":"2026-08-08","stock":2123446.47,"nuevos":2621705.86,"total":4745152.33},{"dia":9,"fecha":"2026-08-09","stock":2210318.39,"nuevos":2843845.24,"total":5054163.62},{"dia":10,"fecha":"2026-08-10","stock":2281720.56,"nuevos":3267369.59,"total":5549090.15},{"dia":11,"fecha":"2026-08-11","stock":2360110.84,"nuevos":3861707.52,"total":6221818.37},{"dia":12,"fecha":"2026-08-12","stock":2427727.22,"nuevos":4378949.44,"total":6806676.66},{"dia":13,"fecha":"2026-08-13","stock":2495381.75,"nuevos":4798844.31,"total":7294226.06},{"dia":14,"fecha":"2026-08-14","stock":2559586.27,"nuevos":5244786.59,"total":7804372.86},{"dia":15,"fecha":"2026-08-15","stock":2637712.58,"nuevos":5540336.15,"total":8178048.73},{"dia":16,"fecha":"2026-08-16","stock":2706962.83,"nuevos":5897017.25,"total":8603980.08},{"dia":17,"fecha":"2026-08-17","stock":2754876.46,"nuevos":6477211.08,"total":9232087.54},{"dia":18,"fecha":"2026-08-18","stock":2796795.8,"nuevos":7137562.0,"total":9934357.8},{"dia":19,"fecha":"2026-08-19","stock":2848240.46,"nuevos":7742288.35,"total":10590528.8},{"dia":20,"fecha":"2026-08-20","stock":2904616.01,"nuevos":8200870.83,"total":11105486.85},{"dia":21,"fecha":"2026-08-21","stock":2952301.02,"nuevos":8727304.02,"total":11679605.04},{"dia":22,"fecha":"2026-08-22","stock":2993285.5,"nuevos":9045824.38,"total":12039109.87},{"dia":23,"fecha":"2026-08-23","stock":3037255.1,"nuevos":9246769.01,"total":12284024.11},{"dia":24,"fecha":"2026-08-24","stock":3083414.68,"nuevos":9656150.08,"total":12739564.77},{"dia":25,"fecha":"2026-08-25","stock":3123298.95,"nuevos":10229910.13,"total":13353209.08},{"dia":26,"fecha":"2026-08-26","stock":3185203.97,"nuevos":11060501.72,"total":14245705.68},{"dia":27,"fecha":"2026-08-27","stock":3265765.36,"nuevos":11642740.15,"total":14908505.51},{"dia":28,"fecha":"2026-08-28","stock":3398367.37,"nuevos":12221219.7,"total":15619587.07},{"dia":29,"fecha":"2026-08-29","stock":3531323.92,"nuevos":12578535.56,"total":16109859.49},{"dia":30,"fecha":"2026-08-30","stock":3729191.42,"nuevos":12820556.79,"total":16549748.21},{"dia":31,"fecha":"2026-08-31","stock":3795021.88,"nuevos":13322606.61,"total":17117628.49}],"real_diaria":[{"dia":1,"stock":553639.48,"nuevos":3556.95,"total":557196.43},{"dia":2,"stock":787362.18,"nuevos":192752.31,"total":980114.49},{"dia":3,"stock":1323213.92,"nuevos":466224.69,"total":1789438.61},{"dia":4,"stock":1597247.4,"nuevos":918359.71,"total":2515607.11},{"dia":5,"stock":1852489.61,"nuevos":1417410.86,"total":3269900.47},{"dia":6,"stock":1913544.06,"nuevos":1714517.92,"total":3628061.98},{"dia":7,"stock":2011913.0,"nuevos":2114688.55,"total":4126601.55},{"dia":8,"stock":2069085.88,"nuevos":2520747.06,"total":4589832.94},{"dia":9,"stock":2098194.18,"nuevos":2750724.24,"total":4848918.42},{"dia":10,"stock":2194632.17,"nuevos":3278928.19,"total":5473560.36},{"dia":11,"stock":2305759.02,"nuevos":3819776.63,"total":6125535.65},{"dia":12,"stock":2380199.35,"nuevos":4267180.61,"total":6647379.96},{"dia":13,"stock":2430228.71,"nuevos":4673898.01,"total":7104126.72},{"dia":14,"stock":2502218.27,"nuevos":5156546.05,"total":7658764.32},{"dia":15,"stock":2542528.5,"nuevos":5510781.8,"total":8053310.3},{"dia":16,"stock":2578134.06,"nuevos":5829323.07,"total":8407457.13},{"dia":17,"stock":2606819.39,"nuevos":6454169.38,"total":9060988.77},{"dia":18,"stock":2652468.45,"nuevos":7179450.01,"total":9831918.46},{"dia":19,"stock":2695875.52,"nuevos":7689424.17,"total":10385299.69},{"dia":20,"stock":2736644.23,"nuevos":8229257.27,"total":10965901.5},{"dia":21,"stock":2781301.53,"nuevos":8813821.16,"total":11595122.69},{"dia":22,"stock":2818420.16,"nuevos":9166722.98,"total":11985143.14},{"dia":23,"stock":2844117.26,"nuevos":9454039.41,"total":12298156.67},{"dia":24,"stock":2892578.52,"nuevos":9870037.21,"total":12762615.73},{"dia":25,"stock":2975879.87,"nuevos":10509078.95,"total":13484958.82},{"dia":26,"stock":2975879.87,"nuevos":10526003.0,"total":13501882.87},{"dia":27,"stock":2975879.87,"nuevos":10526003.0,"total":13501882.87},{"dia":28,"stock":2975879.87,"nuevos":10526003.0,"total":13501882.87},{"dia":29,"stock":2975879.87,"nuevos":10526003.0,"total":13501882.87},{"dia":30,"stock":2975879.87,"nuevos":10526003.0,"total":13501882.87},{"dia":31,"stock":2975879.87,"nuevos":10526003.0,"total":13501882.87}],"meta_total":17117628.49,"real_a_corte":13484958.82,"real_a_corte_stock":2975879.87,"real_a_corte_nuevos":10509078.95,"asignado_stock":5809445.32,"asignado_calendario":73990868.32},"recupero":{"stock_seg":{"a. 1-8":{"a. avance <10%":1138797.25,"b. avance 10-40%":1134409.39,"c. avance 40-70%":514804.28,"d. avance 70%+":85644.33},"b. 9-15":{"a. avance <10%":192370.22,"b. avance 10-40%":250160.48,"c. avance 40-70%":124336.02,"d. avance 70%+":24846.27},"c. 16-30":{"a. avance <10%":438208.6,"b. avance 10-40%":378804.0,"c. avance 40-70%":142762.86,"d. avance 70%+":27698.01}},"calendario":{"2026-08-01":{"a. avance <10%":1276347.64,"b. avance 10-40%":1605156.75,"c. avance 40-70%":488824.64,"d. avance 70%+":82100.35},"2026-08-03":{"a. avance <10%":1713507.49,"b. avance 10-40%":2400731.33,"c. avance 40-70%":724453.67,"d. avance 70%+":93736.67},"2026-08-04":{"a. avance <10%":874170.07,"b. avance 10-40%":1254420.97,"c. avance 40-70%":378430.17,"d. avance 70%+":45846.18},"2026-08-05":{"a. avance <10%":1352232.45,"b. avance 10-40%":1829544.94,"c. avance 40-70%":558922.56,"d. avance 70%+":85178.37},"2026-08-07":{"a. avance <10%":1206759.46,"b. avance 10-40%":2171787.79,"c. avance 40-70%":683094.76,"d. avance 70%+":101615.43},"2026-08-08":{"a. avance <10%":664534.36,"b. avance 10-40%":1020344.04,"c. avance 40-70%":364413.57,"d. avance 70%+":61511.94},"2026-08-10":{"a. avance <10%":1327840.55,"b. avance 10-40%":2080945.98,"c. avance 40-70%":711526.69,"d. avance 70%+":86417.29},"2026-08-11":{"a. avance <10%":582298.98,"b. avance 10-40%":955541.13,"c. avance 40-70%":297607.07,"d. avance 70%+":44951.35},"2026-08-12":{"a. avance <10%":611487.06,"b. avance 10-40%":826353.2,"c. avance 40-70%":265018.31,"d. avance 70%+":41586.39},"2026-08-13":{"a. avance <10%":591951.09,"b. avance 10-40%":1008795.32,"c. avance 40-70%":303073.8,"d. avance 70%+":36246.89},"2026-08-14":{"a. avance <10%":474044.17,"b. avance 10-40%":837866.38,"c. avance 40-70%":305650.71,"d. avance 70%+":52622.42},"2026-08-15":{"a. avance <10%":1960384.99,"b. avance 10-40%":2217246.69,"c. avance 40-70%":776200.15,"d. avance 70%+":117966.03},"2026-08-17":{"a. avance <10%":1479487.11,"b. avance 10-40%":2075495.87,"c. avance 40-70%":677474.34,"d. avance 70%+":111954.29},"2026-08-18":{"a. avance <10%":830514.68,"b. avance 10-40%":988123.54,"c. avance 40-70%":311067.21,"d. avance 70%+":46471.89},"2026-08-19":{"a. avance <10%":742517.05,"b. avance 10-40%":816053.86,"c. avance 40-70%":280283.92,"d. avance 70%+":49634.18},"2026-08-20":{"a. avance <10%":1069818.33,"b. avance 10-40%":1196998.55,"c. avance 40-70%":371132.22,"d. avance 70%+":70338.73},"2026-08-21":{"a. avance <10%":791710.17,"b. avance 10-40%":1033429.26,"c. avance 40-70%":340072.64,"d. avance 70%+":51893.3},"2026-08-22":{"a. avance <10%":820339.74,"b. avance 10-40%":883250.63,"c. avance 40-70%":319373.3,"d. avance 70%+":54445.48},"2026-08-24":{"a. avance <10%":1811849.88,"b. avance 10-40%":1780850.14,"c. avance 40-70%":704232.01,"d. avance 70%+":96512.68},"2026-08-25":{"a. avance <10%":2671764.41,"b. avance 10-40%":2150422.86,"c. avance 40-70%":648218.3,"d. avance 70%+":93480.96},"2026-08-26":{"a. avance <10%":1036930.41,"b. avance 10-40%":926469.61,"c. avance 40-70%":347633.87,"d. avance 70%+":50375.09},"2026-08-27":{"a. avance <10%":1214665.27,"b. avance 10-40%":938508.36,"c. avance 40-70%":327574.73,"d. avance 70%+":47237.68},"2026-08-28":{"a. avance <10%":1069080.61,"b. avance 10-40%":1039919.22,"c. avance 40-70%":462818.02,"d. avance 70%+":45811.71},"2026-08-29":{"a. avance <10%":893205.19,"b. avance 10-40%":670596.96,"c. avance 40-70%":197456.83,"d. avance 70%+":39137.35},"2026-08-31":{"a. avance <10%":5206329.57,"b. avance 10-40%":3233919.71,"c. avance 40-70%":806750.15,"d. avance 70%+":144595.94}},"proyeccion_diaria":[{"dia":1,"fecha":"2026-08-01","stock":101052.41,"nuevos":0.0,"total":101052.41},{"dia":2,"fecha":"2026-08-02","stock":179212.49,"nuevos":20624.45,"total":199836.93},{"dia":3,"fecha":"2026-08-03","stock":228937.53,"nuevos":32203.39,"total":261140.92},{"dia":4,"fecha":"2026-08-04","stock":262282.39,"nuevos":70775.1,"total":333057.48},{"dia":5,"fecha":"2026-08-05","stock":294481.18,"nuevos":107608.0,"total":402089.18},{"dia":6,"fecha":"2026-08-06","stock":319550.03,"nuevos":155680.31,"total":475230.34},{"dia":7,"fecha":"2026-08-07","stock":337939.73,"nuevos":186089.23,"total":524028.96},{"dia":8,"fecha":"2026-08-08","stock":357522.69,"nuevos":233142.48,"total":590665.17},{"dia":9,"fecha":"2026-08-09","stock":375287.48,"nuevos":276709.13,"total":651996.61},{"dia":10,"fecha":"2026-08-10","stock":389071.43,"nuevos":307260.06,"total":696331.5},{"dia":11,"fecha":"2026-08-11","stock":404915.72,"nuevos":356441.54,"total":761357.26},{"dia":12,"fecha":"2026-08-12","stock":416326.08,"nuevos":398709.81,"total":815035.89},{"dia":13,"fecha":"2026-08-13","stock":430211.71,"nuevos":441638.72,"total":871850.43},{"dia":14,"fecha":"2026-08-14","stock":440531.92,"nuevos":482227.33,"total":922759.25},{"dia":15,"fecha":"2026-08-15","stock":453551.98,"nuevos":521818.61,"total":975370.59},{"dia":16,"fecha":"2026-08-16","stock":464526.5,"nuevos":581493.13,"total":1046019.63},{"dia":17,"fecha":"2026-08-17","stock":475602.84,"nuevos":620545.07,"total":1096147.91},{"dia":18,"fecha":"2026-08-18","stock":485893.6,"nuevos":678822.74,"total":1164716.34},{"dia":19,"fecha":"2026-08-19","stock":496989.73,"nuevos":729242.92,"total":1226232.65},{"dia":20,"fecha":"2026-08-20","stock":511580.52,"nuevos":778259.35,"total":1289839.87},{"dia":21,"fecha":"2026-08-21","stock":522359.66,"nuevos":829904.74,"total":1352264.4},{"dia":22,"fecha":"2026-08-22","stock":533993.24,"nuevos":878981.26,"total":1412974.5},{"dia":23,"fecha":"2026-08-23","stock":546101.27,"nuevos":929111.64,"total":1475212.91},{"dia":24,"fecha":"2026-08-24","stock":558832.83,"nuevos":964626.01,"total":1523458.83},{"dia":25,"fecha":"2026-08-25","stock":575346.32,"nuevos":1020795.79,"total":1596142.11},{"dia":26,"fecha":"2026-08-26","stock":594409.41,"nuevos":1090506.45,"total":1684915.86},{"dia":27,"fecha":"2026-08-27","stock":616907.12,"nuevos":1155276.6,"total":1772183.71},{"dia":28,"fecha":"2026-08-28","stock":639782.14,"nuevos":1219238.15,"total":1859020.29},{"dia":29,"fecha":"2026-08-29","stock":665207.96,"nuevos":1282172.27,"total":1947380.23},{"dia":30,"fecha":"2026-08-30","stock":696043.36,"nuevos":1344521.95,"total":2040565.31},{"dia":31,"fecha":"2026-08-31","stock":711160.47,"nuevos":1397274.98,"total":2108435.46}],"real_diaria":[{"dia":1,"stock":97299.0,"nuevos":0.0,"total":97299.0},{"dia":2,"stock":132501.08,"nuevos":94.08,"total":132595.16},{"dia":3,"stock":219944.33,"nuevos":48176.83,"total":268121.16},{"dia":4,"stock":255867.24,"nuevos":66804.92,"total":322672.16},{"dia":5,"stock":299774.09,"nuevos":106476.43,"total":406250.52},{"dia":6,"stock":312395.67,"nuevos":127136.19,"total":439531.86},{"dia":7,"stock":334239.03,"nuevos":184638.14,"total":518877.17},{"dia":8,"stock":343695.17,"nuevos":205165.41,"total":548860.58},{"dia":9,"stock":349695.82,"nuevos":228465.05,"total":578160.87},{"dia":10,"stock":363784.21,"nuevos":320421.73,"total":684205.94},{"dia":11,"stock":384058.15,"nuevos":361310.56,"total":745368.71},{"dia":12,"stock":394165.61,"nuevos":412353.33,"total":806518.94},{"dia":13,"stock":400167.14,"nuevos":452164.28,"total":852331.42},{"dia":14,"stock":415098.02,"nuevos":497924.27,"total":913022.29},{"dia":15,"stock":423152.71,"nuevos":540392.82,"total":963545.53},{"dia":16,"stock":430032.99,"nuevos":571793.17,"total":1001826.16},{"dia":17,"stock":439885.71,"nuevos":672076.79,"total":1111962.5},{"dia":18,"stock":451916.67,"nuevos":732064.39,"total":1183981.06},{"dia":19,"stock":462890.68,"nuevos":791699.46,"total":1254590.14},{"dia":20,"stock":472598.99,"nuevos":855368.75,"total":1327967.74},{"dia":21,"stock":487529.09,"nuevos":929373.65,"total":1416902.74},{"dia":22,"stock":496476.11,"nuevos":976999.49,"total":1473475.6},{"dia":23,"stock":505952.77,"nuevos":1002095.62,"total":1508048.39},{"dia":24,"stock":517467.55,"nuevos":1096500.79,"total":1613968.34},{"dia":25,"stock":534300.02,"nuevos":1145299.04,"total":1679599.06},{"dia":26,"stock":534300.02,"nuevos":1148028.57,"total":1682328.59},{"dia":27,"stock":534300.02,"nuevos":1148028.57,"total":1682328.59},{"dia":28,"stock":534300.02,"nuevos":1148028.57,"total":1682328.59},{"dia":29,"stock":534300.02,"nuevos":1148028.57,"total":1682328.59},{"dia":30,"stock":534300.02,"nuevos":1148028.57,"total":1682328.59},{"dia":31,"stock":534300.02,"nuevos":1148028.57,"total":1682328.59}],"meta_total":2108435.46,"real_a_corte":1679599.06,"real_a_corte_stock":534300.02,"real_a_corte_nuevos":1145299.04,"asignado_stock":4452841.71,"asignado_calendario":81619516.05}},"factores":{"p_entrada":21.9918,"p_no_paga_recup":13.38,"p_entrada_recup_jul":25.07,"dia_mes_nuevos":{"quincena":1.085462,"fin de mes":1.184756,"resto":0.981172},"dia_mes_stock_v3":{"quincena":1.006814,"cierre":1.869811,"resto":0.97166}}}</script>
+
 <script>
 const DATA = JSON.parse(document.getElementById('data-json').textContent);
 
@@ -345,7 +357,6 @@ function lineChart(container, opts) {
   wrapDiv.style.position = "relative";
   const svg = svgEl("svg", { width: "100%", viewBox: `0 0 ${W} ${H}`, height: H });
 
-  // gridlines (y)
   const ySteps = 4;
   for (let i = 0; i <= ySteps; i++) {
     const v = (yMax / ySteps) * i;
@@ -355,7 +366,6 @@ function lineChart(container, opts) {
     t.textContent = opts.yFmt ? opts.yFmt(v) : Math.round(v);
     svg.appendChild(t);
   }
-  // x axis ticks
   const xTicks = opts.xTicks || [1, 8, 15, 22, xMax];
   xTicks.forEach((d) => {
     const t = svgEl("text", { x: x(d), y: H - 6, class: "axis-label", "text-anchor": "middle" });
@@ -364,7 +374,6 @@ function lineChart(container, opts) {
   });
   svg.appendChild(svgEl("line", { x1: M.left, x2: W - M.right, y1: M.top + ih, y2: M.top + ih, class: "baseline" }));
 
-  // series lines
   opts.series.forEach((s) => {
     const pts = s.points;
     const d = pts.map((p, i) => (i === 0 ? "M" : "L") + x(p[0]).toFixed(1) + "," + y(Math.min(p[1], yMax)).toFixed(1)).join(" ");
@@ -375,7 +384,6 @@ function lineChart(container, opts) {
     }
   });
 
-  // vertical marker (e.g. "hoy")
   if (opts.markX) {
     svg.appendChild(svgEl("line", { x1: x(opts.markX), x2: x(opts.markX), y1: M.top, y2: M.top + ih, stroke: "var(--ink-muted)", "stroke-width": 1, "stroke-dasharray": "3,3" }));
     const t = svgEl("text", { x: x(opts.markX), y: M.top - 2, class: "axis-label", "text-anchor": "middle" });
@@ -383,7 +391,6 @@ function lineChart(container, opts) {
     svg.appendChild(t);
   }
 
-  // hover layer
   const hoverLine = svgEl("line", { y1: M.top, y2: M.top + ih, stroke: "var(--ink-2)", "stroke-width": 1, opacity: 0 });
   svg.appendChild(hoverLine);
   const rect = svgEl("rect", { x: M.left, y: M.top, width: iw, height: ih, fill: "transparent" });
@@ -458,7 +465,6 @@ function stackedBarChart(container, opts) {
       seg.push({ k, v, el: r });
       acc += v;
     });
-    // hover hit area for whole bar
     const hit = svgEl("rect", { x: cx - gap / 2, y: M.top, width: bw + gap, height: ih, fill: "transparent" });
     hit.addEventListener("mousemove", (ev) => {
       const bb = svg.getBoundingClientRect();
@@ -499,15 +505,29 @@ function legendFor(container, items) {
   container.appendChild(l);
 }
 
-// ---------- section 1: curves ----------
 function lastPoint(series) { return series[series.length - 1]; }
+function stockToCategoryData(stockObj) {
+  const out = {};
+  TRAMOS.forEach((t) => { out[t] = stockObj[t]; });
+  return out;
+}
+function totalStock(stockObj) {
+  return TRAMOS.reduce((a, t) => a + AVANCES.reduce((b, av) => b + (stockObj[t][av] || 0), 0), 0);
+}
+function totalCalendario(calObj) {
+  return Object.keys(calObj).reduce((a, d) => a + AVANCES.reduce((b, av) => b + (calObj[d][av] || 0), 0), 0);
+}
 
+// ---------- section 1: curves ----------
 function renderCurvas() {
   const curvas = DATA.curvas[state.enfoque];
   const isAseg = state.enfoque === "asegurado";
   document.getElementById("curva-def").textContent = isAseg
     ? "% del saldo con al menos 1 día de pago en el mes (capital asegurado)"
     : "% del saldo capital efectivamente recuperado (soles cobrados)";
+  document.getElementById("nuevos-nota").innerHTML = isAseg
+    ? "Indexada a \"días desde que entró en mora\" y colapsada por avance para este resumen — en producción se segmenta ADEMÁS por día de semana del vencimiento (18-42% en el día 0 según el día) y lleva un factor de quincena/cierre. Detalle completo en <code>proyectado_vs_real.html</code> y en la sección 4."
+    : "Indexada a \"días desde que entró en mora\" y colapsada por avance para este resumen — igual que capital asegurado, en producción (para julio en adelante) se segmenta ADEMÁS por día de semana del vencimiento y lleva un factor de quincena/cierre (sección 4). Mide soles efectivamente rebajados, no activación.";
 
   const stockWrap = document.getElementById("chart-stock");
   clear(stockWrap);
@@ -557,100 +577,116 @@ function renderCurvas() {
 }
 
 // ---------- section 2: julio ----------
-function stockToCategoryData(stockObj) {
-  const out = {};
-  TRAMOS.forEach((t) => { out[t] = stockObj[t]; });
-  return out;
-}
 function renderJulio() {
+  const isAseg = state.enfoque === "asegurado";
+  const stockSeg = DATA.julio.stock_seg[state.enfoque];
+  const calendario = DATA.julio.calendario[state.enfoque];
+
+  document.getElementById("titulo-cal-julio").textContent = "Nuevos — calendario de entrada en mora de julio";
+  document.getElementById("nota-cal-julio").textContent =
+    "Saldo en riesgo por día de ENTRADA (vencimiento + 1 día) — mismo calendario para los dos enfoques, ver sección 4.";
+
   const chartStock = document.getElementById("chart-stock-julio");
   clear(chartStock);
   const div1 = document.createElement("div"); chartStock.appendChild(div1);
   stackedBarChart(div1, {
-    categories: TRAMOS, seriesKeys: AVANCES, dataByCategory: stockToCategoryData(DATA.julio.stock_aseg),
+    categories: TRAMOS, seriesKeys: AVANCES, dataByCategory: stockToCategoryData(stockSeg),
     colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
     xFmt: (c) => TRAMO_LABEL[c].replace("Tramo ", ""), catLabel: (c) => TRAMO_LABEL[c],
     keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 210,
   });
   legendFor(chartStock, AVANCES.map((a) => ({ label: AVANCE_LABEL[a], color: AVANCE_COLOR[a] })));
-  const totalStock = TRAMOS.reduce((a, t) => a + AVANCES.reduce((b, av) => b + DATA.julio.stock_aseg[t][av], 0), 0);
   const p = document.createElement("p"); p.className = "note"; p.style.marginTop = "6px";
-  p.innerHTML = `Total stock asignado: <b>${fmtS(totalStock)}</b> (créditos ya en mora 1-30 al cierre de junio, más los que entraron el día 1 de julio).`;
+  p.innerHTML = `Total stock asignado: <b>${fmtS(totalStock(stockSeg))}</b> (créditos ya en mora 1-30 al cierre de junio).`;
   chartStock.appendChild(p);
 
   const chartCal = document.getElementById("chart-cal-julio");
   clear(chartCal);
   const div2 = document.createElement("div"); chartCal.appendChild(div2);
-  const dias = Object.keys(DATA.julio.calendario).sort();
+  const dias = Object.keys(calendario).sort();
   stackedBarChart(div2, {
-    categories: dias, seriesKeys: AVANCES, dataByCategory: DATA.julio.calendario,
+    categories: dias, seriesKeys: AVANCES, dataByCategory: calendario,
     colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
-    xFmt: (c) => c.slice(8, 10), catLabel: (c) => "Vence " + c,
+    xFmt: (c) => c.slice(8, 10), catLabel: (c) => "Entra " + c,
     keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 210, gap: 3,
   });
-  const totalCal = dias.reduce((a, d) => a + AVANCES.reduce((b, av) => b + (DATA.julio.calendario[d][av] || 0), 0), 0);
   const p2 = document.createElement("p"); p2.className = "note"; p2.style.marginTop = "6px";
-  p2.innerHTML = `Total en riesgo en julio: <b>${fmtS(totalCal)}</b> — de eso, históricamente ~13.38% cae en mora (ver sección 3).`;
+  const tasaTxt = isAseg ? DATA.factores.p_entrada.toFixed(2) : DATA.factores.p_entrada_recup_jul.toFixed(2);
+  p2.innerHTML = `Total en riesgo en julio: <b>${fmtS(totalCalendario(calendario))}</b> — de eso, ~${tasaTxt}% cae en mora (tasa calibrada en la ventana rodante que testea julio, <code>[202507,202606]</code>).`;
   chartCal.appendChild(p2);
 
   const resDiv = document.getElementById("julio-resultado");
   clear(resDiv);
   ["asegurado", "recupero"].forEach((enf) => {
     const c = DATA.julio.comparacion[enf];
-    const tieneFantasma = c.real.fantasma !== undefined;
     const err = (c.real.total - c.proyectado.total) / c.proyectado.total * 100;
     const errS = (c.real.stock - c.proyectado.stock) / c.proyectado.stock * 100;
     const errN = (c.real.nuevos - c.proyectado.nuevos) / c.proyectado.nuevos * 100;
-    const errF = tieneFantasma ? (c.real.fantasma - c.proyectado.fantasma) / c.proyectado.fantasma * 100 : 0;
     const covS = c.real.stock / c.asignado.stock * 100;
     const covN = c.real.nuevos / c.asignado.nuevos * 100;
     const covT = c.real.total / c.asignado.total * 100;
     const unidad = enf === "asegurado" ? "asegurado" : "recuperado";
-    const filaFantasma = tieneFantasma
-      ? `<tr><td>Fantasma <span class="note" style="font-weight:400;">(bug 14, no visto por dayslate)</span></td><td>—</td><td>${fmtS(c.proyectado.fantasma)}</td><td>${fmtS(c.real.fantasma)}</td><td>${fmtPctSigned(errF)}</td><td>—</td></tr>`
-      : "";
     const card = document.createElement("div"); card.className = "card";
-    card.innerHTML = `<h3>${enf === "asegurado" ? "Capital asegurado" : "Recupero oficial"}</h3>
+    card.innerHTML = `<h3>${enf === "asegurado" ? "Capital asegurado (motor v3 — con factor de cierre de stock)" : "Recupero oficial (motor migrado, tarea 18e)"}</h3>
       <table class="datatable">
-        <thead><tr><th></th><th>Capital asignado</th><th>Proyectado</th><th>Real</th><th>Error</th><th>% ${unidad}</th></tr></thead>
+        <thead><tr><th></th><th>Total asignado/en riesgo</th><th>Proyectado</th><th>Real</th><th>Error</th><th>% ${unidad}</th></tr></thead>
         <tbody>
           <tr><td>Stock</td><td>${fmtS(c.asignado.stock)}</td><td>${fmtS(c.proyectado.stock)}</td><td>${fmtS(c.real.stock)}</td><td>${fmtPctSigned(errS)}</td><td>${covS.toFixed(1)}%</td></tr>
           <tr><td>Nuevos</td><td>${fmtS(c.asignado.nuevos)}</td><td>${fmtS(c.proyectado.nuevos)}</td><td>${fmtS(c.real.nuevos)}</td><td>${fmtPctSigned(errN)}</td><td>${covN.toFixed(1)}%</td></tr>
-          ${filaFantasma}
           <tr><td>Total</td><td>${fmtS(c.asignado.total)}</td><td>${fmtS(c.proyectado.total)}</td><td>${fmtS(c.real.total)}</td><td>${fmtPctSigned(err)}</td><td>${covT.toFixed(1)}%</td></tr>
         </tbody>
       </table>
-      <p class="note" style="margin-top:8px;">"Capital asignado" = saldo total de la población medida (stock al cierre del mes anterior + créditos que realmente entraron en mora en julio; no incluye la capa fantasma, que por definición no aparece en ninguna población basada en dayslate). "% ${unidad}" = real ÷ asignado — qué parte de lo asignado terminó ${unidad}.</p>`;
+      <p class="note" style="margin-top:8px;">Stock = saldo asignado; nuevos = total del calendario en riesgo (no solo quien terminó en mora). "% ${unidad}" = real ÷ asignado — qué parte de lo asignado terminó ${unidad}.</p>`;
     resDiv.appendChild(card);
   });
 
   document.getElementById("julio-callout").innerHTML = `<div class="callout">
     <span class="ic">⚠️</span>
-    <span><b>El recupero oficial de julio (+17.6%) es el error más alto medido hasta ahora en ese enfoque</b> —
-    junio había dado +5.4%. Casi todo viene de "nuevos" (+22.5%), no de "stock" (+2.0%). Capital asegurado, en
-    cambio, mejoró mucho al agregar la capa fantasma (bug 14, 2026-08-20): de subestimar -4.3% (mismo signo que
-    junio, no invertido como se pensaba antes — era un error de signo en el registro) a <b>+2.17%</b> de
-    error total, ya con el fix de frontera de mes y la tasa recalibrada (ver sección 4 abajo para el detalle
-    completo de por qué sube de +0.12% a +2.17%). La capa fantasma detecta créditos que pagan una cuota
-    exactamente 1 día tarde y que <code>dayslate</code> nunca ve — no se aplicó al recupero oficial (fuera de
-    alcance por ahora). Con solo 2 meses cerrados todavía no alcanza para saber si esto es estable — se sigue
-    extendiendo el backtest a más meses antes de sacar conclusiones.</span>
+    <span><b>El recupero oficial de julio cierra en +18.3%</b>, con el motor migrado a
+    <code>dias_atraso_cuota</code> (tarea 18e) — no es comparable directo contra el +17.6% que
+    este mismo mes daba con el motor anterior (<code>dayslate</code>): cambió la definición del
+    universo medido, no solo el número. El real capturado con el motor nuevo es
+    <b>148%-157% del que capturaba el motor viejo</b> en junio/julio — <code>dayslate</code>
+    nunca ve créditos que pagan ~1 día tarde, y esa población paga casi instantáneo (99.6% el
+    mismo día). Casi todo el error de julio viene de "nuevos" (+21.5%), "stock" está casi exacto
+    (-0.9%). Capital asegurado, en el mismo mes, cerró en <b>-2.9%</b> (stock -3.5%,
+    nuevos -2.8%) — el resultado más parejo entre componentes de los 7 meses del backtest
+    oficial, y el único mes sin ningún vencimiento de fin de semana. Con 7 meses cerrados ya se
+    puede ver que el componente "nuevos" de capital asegurado subestima con signo constante — es
+    la tarea 18b abierta del proyecto, ver <code>analisis_sesgo_nuevos_18b.md</code>.</span>
   </div>`;
 }
 
 // ---------- section 3: agosto ----------
 function renderAgosto() {
   const isAseg = state.enfoque === "asegurado";
-  const stockKey = isAseg ? "stock_aseg" : "stock_recup";
+  const d = DATA.agosto[state.enfoque];
   const curvas = DATA.curvas[state.enfoque];
-  const tasa = DATA.agosto.tasa_no_paga;
-  document.querySelectorAll(".tasa-inline, #tasa-label").forEach((el) => el.textContent = tasa + "%");
+  const tasa = isAseg ? DATA.factores.p_entrada : DATA.factores.p_no_paga_recup;
+
+  document.getElementById("formula-agosto").innerHTML = isAseg
+    ? `<div class="box">1. Stock (cierre de julio)</div><span class="op">×</span><div class="box">curva de stock</div>
+       <span class="arrow">＋</span>
+       <div class="box">2. Calendario de entrada</div><span class="op">×</span><div class="box">${tasa.toFixed(2)}% (P_ENTRADA)</div><span class="op">×</span><div class="box">curva de nuevos<br><span style="font-weight:400;font-size:11px;color:var(--ink-muted);">× día de semana × factor de mes</span></div>
+       <span class="arrow">＝</span>
+       <div class="box" style="background:var(--blue);color:#fff;">Meta de agosto</div>`
+    : `<div class="box">1. Stock (cierre de julio)</div><span class="op">×</span><div class="box">curva de stock</div>
+       <span class="arrow">＋</span>
+       <div class="box">2. Calendario de vencimientos</div><span class="op">×</span><div class="box">${tasa.toFixed(2)}% (tasa histórica)</div><span class="op">×</span><div class="box">curva de nuevos</div>
+       <span class="arrow">＝</span>
+       <div class="box" style="background:var(--blue);color:#fff;">Meta de agosto</div>`;
+
+  document.getElementById("titulo-cal-agosto").textContent = isAseg
+    ? "2. El calendario de entrada en mora de agosto" : "2. El calendario de vencimientos de agosto";
+  document.getElementById("nota-cal-agosto").innerHTML = isAseg
+    ? `Indexado por día de ENTRADA (= vencimiento + 1 día) — así lo indexa el motor unificado desde tarea 17 Fase 4, sin las correcciones de frontera de mes que hacían falta con el calendario anterior. Este calendario es el que arma la <b>meta</b> — se fijó una sola vez al inicio de agosto.`
+    : `Días 1-18 con saldo exacto (ya pasaron); días 19-31 con el saldo vigente al 18-ago como aproximación (todavía no se fotografían). Este calendario es el que arma la <b>meta</b> — se fija una sola vez al inicio del mes.`;
 
   const chartStock = document.getElementById("chart-stock-agosto");
   clear(chartStock);
   const div1 = document.createElement("div"); chartStock.appendChild(div1);
   stackedBarChart(div1, {
-    categories: TRAMOS, seriesKeys: AVANCES, dataByCategory: stockToCategoryData(DATA.agosto[stockKey]),
+    categories: TRAMOS, seriesKeys: AVANCES, dataByCategory: stockToCategoryData(d.stock_seg),
     colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
     xFmt: (c) => TRAMO_LABEL[c].replace("Tramo ", ""), catLabel: (c) => TRAMO_LABEL[c],
     keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 190,
@@ -660,94 +696,116 @@ function renderAgosto() {
   const chartCal = document.getElementById("chart-cal-agosto");
   clear(chartCal);
   const div2 = document.createElement("div"); chartCal.appendChild(div2);
-  const dias = Object.keys(DATA.agosto.calendario).sort();
+  const dias = Object.keys(d.calendario).sort();
   stackedBarChart(div2, {
-    categories: dias, seriesKeys: AVANCES, dataByCategory: DATA.agosto.calendario,
+    categories: dias, seriesKeys: AVANCES, dataByCategory: d.calendario,
     colorFor: (k) => AVANCE_COLOR[k], yFmt: (v) => (v / 1e6).toFixed(1) + "M",
-    xFmt: (c) => c.slice(8, 10), catLabel: (c) => (c <= DATA.agosto.corte_real ? "Vence " + c + " (exacto)" : "Vence " + c + " (proxy)"),
+    xFmt: (c) => c.slice(8, 10), catLabel: (c) => (isAseg ? "Entra " : "Vence ") + c,
     keyLabel: (k) => AVANCE_LABEL[k], tooltipFmt: (v) => fmtS(v), height: 190, gap: 3,
   });
 
   // walkthrough table
   const tblDiv = document.getElementById("tabla-agosto");
   clear(tblDiv);
+  document.getElementById("tasa-explicacion").innerHTML = isAseg
+    ? `De cada sol que vence, el <b>${tasa.toFixed(2)}%</b> (<code>P_ENTRADA</code>) entra en mora — es la única constante del calendario. El resto de la meta depende de las curvas de arriba, ya segmentadas por día de semana y por día del mes (sección 4).`
+    : `De cada sol que vence, históricamente el <b>${tasa.toFixed(2)}%</b> no se paga a tiempo y entra en mora — esa es la única constante del calendario. El resto de la meta depende 100% de las curvas de arriba.`;
+
   let rows = "";
-  let totalAsignado = 0, totalAportado = 0;
+  let totalAsignadoStock = 0, totalAportadoStock = 0;
   TRAMOS.forEach((t) => {
     AVANCES.forEach((a) => {
-      const saldo = DATA.agosto[stockKey][t][a];
+      const saldo = d.stock_seg[t][a];
       const curva = curvas.stock[t][a];
       const pct = lastPoint(curva)[1];
       const aporta = saldo * pct / 100;
-      totalAsignado += saldo; totalAportado += aporta;
+      totalAsignadoStock += saldo; totalAportadoStock += aporta;
       rows += `<tr><td class="seg-name"><span class="dot" style="background:${resolveColor(AVANCE_COLOR[a])}"></span>${TRAMO_LABEL[t].replace("Tramo ","")} · ${AVANCE_LABEL[a]}</td>
         <td>${fmtS(saldo)}</td><td>${pct.toFixed(1)}%</td><td>${fmtS(aporta)}</td></tr>`;
     });
   });
-  const calTotal = dias.reduce((acc, d) => acc + AVANCES.reduce((b, av) => b + (DATA.agosto.calendario[d][av] || 0), 0), 0);
+  const calTotal = totalCalendario(d.calendario);
   const entraEnMora = calTotal * tasa / 100;
-  const nuevosAportado = DATA.agosto.proyeccion_diaria[state.enfoque][30].nuevos;
-  const fantasmaAportado = DATA.agosto.proyeccion_diaria[state.enfoque][30].fantasma || 0;
-  const filaFantasmaTabla = isAseg
-    ? `<p style="font-size:13px;color:var(--ink-2);margin:18px 0 10px;"><b>Fantasma</b> (bug 14) — mismo calendario, otra tasa: créditos que pagan 1 día tarde sin que <code>dayslate</code> los vea, se activan 100% al día siguiente del vencimiento (sin curva propia):</p>
-    <table class="datatable">
-      <thead><tr><th></th><th>Saldo en riesgo (mismo calendario)</th><th>× tasa fantasma</th><th>Aporta a la meta</th></tr></thead>
-      <tbody><tr><td>Subtotal fantasma</td><td>${fmtS(calTotal)}</td><td>${DATA.agosto.tasa_fantasma}% → activado el día siguiente</td><td>${fmtS(fantasmaAportado)}</td></tr></tbody>
-    </table>`
-    : "";
+  const nuevosAportado = d.proyeccion_diaria[d.proyeccion_diaria.length - 1].nuevos;
+  const notaNuevos = isAseg
+    ? "no se desglosa por segmento aquí — cada (banda × día de semana) tiene su propia curva y su propio factor de mes, ver sección 4 y el gráfico de trayectoria de abajo"
+    : "no se desglosa por segmento aquí porque cada día-avance madura por separado; el detalle está en el gráfico de trayectoria de abajo";
   tblDiv.innerHTML = `
     <p style="font-size:13px;color:var(--ink-2);margin:0 0 10px;"><b>Stock</b> — cada segmento aporta su saldo × el valor de su curva a día 31 (de la sección 1):</p>
     <table class="datatable">
       <thead><tr><th>Segmento (tramo · avance)</th><th>Saldo asignado</th><th>Curva a día 31</th><th>Aporta a la meta</th></tr></thead>
-      <tbody>${rows}<tr><td>Subtotal stock</td><td>${fmtS(totalAsignado)}</td><td>—</td><td>${fmtS(totalAportado)}</td></tr></tbody>
+      <tbody>${rows}<tr><td>Subtotal stock</td><td>${fmtS(totalAsignadoStock)}</td><td>—</td><td>${fmtS(totalAportadoStock)}</td></tr></tbody>
     </table>
-    <p style="font-size:13px;color:var(--ink-2);margin:18px 0 10px;"><b>Nuevos</b> — el calendario completo se reduce a 2 pasos (no se desglosa por segmento aquí porque cada día-avance madura por separado; el detalle está en el gráfico de trayectoria de abajo):</p>
+    <p style="font-size:13px;color:var(--ink-2);margin:18px 0 10px;"><b>Nuevos</b> — el calendario completo se reduce a 2 pasos (${notaNuevos}):</p>
     <table class="datatable">
-      <thead><tr><th></th><th>Saldo en riesgo (calendario)</th><th>× tasa histórica</th><th>Aporta a la meta</th></tr></thead>
-      <tbody><tr><td>Subtotal nuevos</td><td>${fmtS(calTotal)}</td><td>${tasa}% → ${fmtS(entraEnMora)} entra en mora</td><td>${fmtS(nuevosAportado)}</td></tr></tbody>
+      <thead><tr><th></th><th>Saldo en riesgo (calendario)</th><th>× tasa</th><th>Aporta a la meta</th></tr></thead>
+      <tbody><tr><td>Subtotal nuevos</td><td>${fmtS(calTotal)}</td><td>${tasa.toFixed(2)}% → ${fmtS(entraEnMora)} entra en mora</td><td>${fmtS(nuevosAportado)}</td></tr></tbody>
     </table>
-    ${filaFantasmaTabla}
     <table class="datatable" style="margin-top:14px;">
-      <tbody><tr><td>TOTAL — meta de agosto proyectada</td><td></td><td></td><td style="font-size:16px;">${fmtS(totalAportado + nuevosAportado + fantasmaAportado)}</td></tr></tbody>
+      <tbody><tr><td>TOTAL — meta de agosto proyectada</td><td></td><td></td><td style="font-size:16px;">${fmtS(totalAportadoStock + nuevosAportado)}</td></tr></tbody>
     </table>`;
 
-  // trajectory chart
+  // trajectory chart -- ahora con el REAL dia a dia, no una recta aproximada
   const trajDiv = document.getElementById("chart-trayectoria");
   clear(trajDiv);
-  const proy = DATA.agosto.proyeccion_diaria[state.enfoque];
-  const real = DATA.agosto.real_a_hoy[state.enfoque];
-  const corteDay = parseInt(DATA.agosto.corte_real.slice(8, 10), 10);
+  const proy = d.proyeccion_diaria;
+  const corteDay = new Date(DATA.agosto.corte).getUTCDate();
+  const realHastaCorte = d.real_diaria.filter((r) => r.dia <= corteDay);
   const corteLabel = corteDay + "-ago";
   const proySeries = { label: "Proyectado (mes completo)", color: "var(--blue)", points: proy.map((r) => [r.dia, r.total]) };
-  // approximate real trajectory as a straight share of proyectado shape scaled to match real total at corteDay (only 2 real points known: 0 and corteDay)
-  const realSeries = { label: "Real (hasta el corte)", color: "var(--orange)", points: [[0, 0], [corteDay, real.total]], markLast: true, width: 3 };
-  const yMax = Math.max(proy[30].total, real.total) * 1.08;
+  const realSeries = { label: "Real (día a día, hasta el corte)", color: "var(--orange)", points: realHastaCorte.map((r) => [r.dia, r.total]), markLast: true, width: 3 };
+  const yMax = Math.max(proy[proy.length - 1].total, d.real_a_corte) * 1.08;
   lineChart(trajDiv, {
     series: [proySeries, realSeries], xMax: 31, yMax, height: 260,
     xTicks: [1, 8, 15, corteDay, 22, 31], yFmt: (v) => "S/" + (v / 1e6).toFixed(0) + "M",
-    xTooltipLabel: (d) => "Día " + d + " de agosto",
+    xTooltipLabel: (dd) => "Día " + dd + " de agosto",
     tooltipFmt: (v) => fmtS(v),
     markX: corteDay, markLabel: "hoy (" + corteLabel + ")",
   });
   legendFor(trajDiv, [
     { label: "Proyectado (mes completo)", color: "var(--blue)", line: true },
-    { label: "Real (solo hasta el " + corteLabel + " — línea recta entre 0 y el corte, no un dato diario)", color: "var(--orange)", line: true },
+    { label: "Real (dato diario real, no aproximado)", color: "var(--orange)", line: true },
   ]);
 
-  const proyTotal = proy[30].total;
+  const proyTotal = proy[proy.length - 1].total;
   const proyMismoDia = proy[corteDay - 1].total;
-  const errMismoDia = (real.total - proyMismoDia) / proyMismoDia * 100;
-  const avancePct = real.total / proyTotal * 100;
-  const fantasmaTxt = isAseg ? ` + fantasma ${fmtS(proy[30].fantasma)}` : "";
-  const fantasmaTxtReal = isAseg ? ` + fantasma ${fmtS(real.fantasma)}` : "";
+  const errMismoDia = (d.real_a_corte - proyMismoDia) / proyMismoDia * 100;
+  const avancePct = d.real_a_corte / proyTotal * 100;
   const resumen = document.getElementById("agosto-resumen");
   resumen.innerHTML = `
     <div class="stat"><div class="k">Meta proyectada (cierre de agosto)</div><div class="v">${fmtS(proyTotal)}</div>
-      <div class="d" style="color:var(--ink-muted);">stock ${fmtS(proy[30].stock)} + nuevos ${fmtS(proy[30].nuevos)}${fantasmaTxt}</div></div>
-    <div class="stat"><div class="k">Real al ${corteLabel} (${avancePct.toFixed(0)}% del mes)</div><div class="v">${fmtS(real.total)}</div>
-      <div class="d" style="color:var(--ink-muted);">stock ${fmtS(real.stock)} + nuevos ${fmtS(real.nuevos)}${fantasmaTxtReal}</div></div>
+      <div class="d" style="color:var(--ink-muted);">stock ${fmtS(proy[proy.length - 1].stock)} + nuevos ${fmtS(proy[proy.length - 1].nuevos)}</div></div>
+    <div class="stat"><div class="k">Real al ${corteLabel} (${avancePct.toFixed(0)}% del mes)</div><div class="v">${fmtS(d.real_a_corte)}</div>
+      <div class="d" style="color:var(--ink-muted);">stock ${fmtS(d.real_a_corte_stock)} + nuevos ${fmtS(d.real_a_corte_nuevos)}</div></div>
     <div class="stat"><div class="k">Real vs. proyectado al mismo día</div><div class="v">${fmtPctSigned(errMismoDia)}</div>
       <div class="d ${errMismoDia >= 0 ? "up" : "down"}">${errMismoDia >= 0 ? "por encima" : "por debajo"} de lo esperado a esta altura del mes</div></div>`;
+}
+
+// ---------- section 4: afinación ----------
+function renderAfinacion() {
+  document.getElementById("tabla-backtest").innerHTML = `
+    <thead><tr><th>Mes</th><th>Proyectado</th><th>Real</th><th>Error total</th><th>Error stock</th><th>Error nuevos</th></tr></thead>
+    <tbody>
+      <tr><td>Enero 2026</td><td>S/10,162,760</td><td>S/11,429,495</td><td>-11.1%</td><td>-0.6%</td><td>-13.4%</td></tr>
+      <tr><td>Febrero 2026</td><td>S/9,404,912</td><td>S/11,620,886</td><td>-19.1%</td><td>-8.3%</td><td>-21.6%</td></tr>
+      <tr><td>Marzo 2026</td><td>S/12,440,972</td><td>S/14,466,133</td><td>-14.0%</td><td>+5.7%</td><td>-16.1%</td></tr>
+      <tr><td>Abril 2026</td><td>S/11,867,742</td><td>S/13,389,034</td><td>-11.4%</td><td>+8.1%</td><td>-15.5%</td></tr>
+      <tr><td>Mayo 2026</td><td>S/13,179,165</td><td>S/14,763,546</td><td>-10.7%</td><td>-0.4%</td><td>-12.3%</td></tr>
+      <tr><td>Junio 2026</td><td>S/13,177,167</td><td>S/13,539,856</td><td>-2.7%</td><td>+5.8%</td><td>-4.7%</td></tr>
+      <tr><td>Julio 2026</td><td>S/16,816,807</td><td>S/17,323,922</td><td>-2.9%</td><td>-3.5%</td><td>-2.8%</td></tr>
+    </tbody>`;
+
+  document.getElementById("tabla-backtest-recup").innerHTML = `
+    <thead><tr><th>Mes</th><th>Proyectado</th><th>Real</th><th>Error total</th><th>Error stock</th><th>Error nuevos</th></tr></thead>
+    <tbody>
+      <tr><td>Enero 2026</td><td>S/2,394,155</td><td>S/2,290,411</td><td>+4.5%</td><td>+3.1%</td><td>+4.9%</td></tr>
+      <tr><td>Febrero 2026</td><td>S/2,133,336</td><td>S/2,227,338</td><td>-4.2%</td><td>-5.6%</td><td>-3.8%</td></tr>
+      <tr><td>Marzo 2026</td><td>S/2,998,996</td><td>S/3,061,707</td><td>-2.0%</td><td>-4.2%</td><td>-1.8%</td></tr>
+      <tr><td>Abril 2026</td><td>S/2,715,849</td><td>S/2,614,085</td><td>+3.9%</td><td>+14.4%</td><td>+1.2%</td></tr>
+      <tr><td>Mayo 2026</td><td>S/3,067,507</td><td>S/2,893,212</td><td>+6.0%</td><td>-0.3%</td><td>+7.2%</td></tr>
+      <tr><td>Junio 2026</td><td>S/2,939,249</td><td>S/2,538,947</td><td>+15.8%</td><td>+12.6%</td><td>+16.6%</td></tr>
+      <tr><td>Julio 2026</td><td>S/3,882,039</td><td>S/3,280,551</td><td>+18.3%</td><td>-0.9%</td><td>+21.5%</td></tr>
+    </tbody>`;
 }
 
 function render() {
@@ -761,10 +819,23 @@ document.getElementById("toggle").addEventListener("click", (ev) => {
   if (!btn) return;
   state.enfoque = btn.dataset.enfoque;
   document.querySelectorAll("#toggle button").forEach((b) => b.classList.toggle("active", b === btn));
-  renderCurvas(); renderAgosto();
+  render();
 });
 
+document.getElementById("footer-fuentes").innerHTML = `Generado 2026-08-19, reescrito 2026-08-26 (tarea 18d)
+  sobre el motor unificado v3, actualizado el mismo día (continuación 2, tarea 18e — recupero
+  oficial migrado a <code>dias_atraso_cuota</code>) a partir de
+  <code>datos_artifact_julio_agosto.json</code> (<code>armar_artifact_julio_agosto.py</code>).
+  Fuente completa: <code>motor_unificado.py</code>,
+  <code>backtest_capital_asegurado_unificado.py</code>, <code>meta_agosto_capital_asegurado.py</code>,
+  <code>meta_agosto.py</code>, <code>tarea18d_real_agosto_recupero.sql</code>,
+  <code>backtest_tarea18e_recupero_oficial_v2.py</code>,
+  <code>enfoque_capital_asegurado.md</code>, <code>guia_tecnica_recupero.md</code>. Metodología y
+  decisiones en <code>DECISIONES.md</code> / <code>CLAUDE.md</code> / <code>PENDIENTES.md</code>
+  (tareas 17, 18a, 18e, 18f, 18g) y <code>SEGUIMIENTO.md</code> del repo REBAJE_DIARIO.`;
+
 render();
+renderAfinacion();
 window.addEventListener("resize", () => { render(); });
 </script>
 </body>
