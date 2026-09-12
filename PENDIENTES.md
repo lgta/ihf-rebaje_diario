@@ -1253,3 +1253,133 @@ justo después de fijar una meta, no antes.
   `meta_agosto_capital_asegurado.py`. Julio: capital asegurado +4.7%, recupero oficial
   +17.6% (el error más alto medido hasta ahora, en "nuevos"). Agosto: metas proyectadas y
   tracking en vivo al corte 18-ago, ambos enfoques.
+
+### Tarea 20 — La tasa de entrada se mueve por banda de avance y el modelo la aplica plana — 2026-09-02
+
+**MEDIDO, NO ADOPTADO.** Salió al armar la sección «Qué mueve cada corte» del artifact 949ab3c2.
+Fuente: `calendario_8m.csv` (denominador) + `curva_cruda_nuevos.csv` filas `tipo='base'` (numerador),
+que son las dos caras de la MISMA matriz cruda con la que se calibra la curva — numerador y
+denominador comparten definición, que es lo que pide el principio de modelado de `CLAUDE.md`.
+Ventana **202601-202607** (la intersección real de las dos fuentes; ver la trampa abajo).
+
+| Corte | Rango de la tasa de entrada | Índice | ¿El modelo lo usa para repartir entradas? |
+|---|---|---|---|
+| **Banda de avance** | 22.75% – 30.81% | **0.874 – 1.184 (±18%)** | **no** — tasa plana |
+| Día de semana del venc. | 24.63% – 27.60% | 0.947 – 1.061 (±6%) | **no** — tasa plana |
+| Cercanía al pago | 25.43% – 26.40% | 0.977 – 1.015 (±2%) | no, y no hace falta |
+
+**Lo que esto dice:** el corte más grande de los tres es el que el modelo ignora. La banda de avance
+sí segmenta la curva (techo 86.8%→96.4%), pero la tasa de entrada se aplica plana. En cambio la
+cercanía al pago **no mueve quién cae en mora** (±2%) y sí mueve **cuándo paga el que ya cayó**
+(factores ×1.087 quincena, ×1.225 fin de mes) — o sea que el factor de día del mes está del lado
+correcto del modelo. El corte por día de semana es chico pero **estable**: miércoles por encima del
+promedio los 7 meses, lunes por debajo los 7.
+
+**NO SE TOCÓ NADA** — `CLAUDE.md`, principio de modelado: un cambio de constante se decide corriendo
+el backtest, no en abstracto (precedente: bug 10). Si se quiere probar, es `p_entrada` por banda en
+`motor_unificado.proyectar()`, que ya recibe el calendario segmentado por banda: el cambio es de una
+línea, lo que cuesta es el walk-forward de 8 meses. **Ojo con el criterio de arbitraje:** cambiar la
+tasa por banda es un cambio de NIVEL por segmento, no de forma, así que acá el error de cierre sí es
+pertinente (mismo razonamiento que en tarea 19 con la tasa por soles).
+
+**TRAMPA YA PISADA, no repetir:** `curva_cruda_nuevos.csv` cubre entradas hasta **202607**, mientras
+`calendario_8m.csv` llega a **202608**. Cruzarlas sobre 202601-202608 resta las entradas de agosto sin
+restar su calendario y hunde la tasa a 22.3% (contra 26.0% real). La ventana correcta es 202601-202607.
+
+**DIFERENCIA DE CONVENCIÓN, pendiente de decidir si importa:** sobre la misma ventana, el par crudo da
+**26.02%** y `tasa_soles.csv` (la fuente oficial de `P_ENTRADA`) da **24.85%**. La oficial deduplica a
+un vencimiento por crédito-mes en el denominador y una entrada por crédito-mes en el numerador; la
+matriz cruda cuenta cada evento. **La curva está calibrada sobre la convención cruda** y la tasa sobre
+la deduplicada — que es exactamente el tipo de mezcla que el principio de modelado prohíbe. El efecto
+medido es acotado (+1.16pp sobre la ventana, con dispersión mensual de +0.07 a +2.86pp) y **no se
+tocó**; queda anotado acá para decidirlo con datos, no por argumento.
+
+### Tarea 21 — Variante "primera entrada": el doble conteo antiguo/nuevo — 2026-09-02
+
+**PEDIDO DEL USUARIO.** La gestión de cobranza congela el atributo antiguo/nuevo al inicio del mes.
+Un crédito que arranca en mora (antiguo), paga, cura y vuelve a vencer dentro del mismo mes reentra
+— y su capital podría contarse dos veces: una en el stock y otra en el calendario de nuevos.
+
+**SON DOS SOLAPAMIENTOS DISTINTOS, y solo uno estaba vivo.**
+
+| | Agosto 2026 (cerrado) | Septiembre 2026 (prospectivo) | ¿Estaba resuelto? |
+|---|---|---|---|
+| **A.** El crédito está en el stock **y** tiene vencimiento en el mes | 2,204 créd. · **S/3,311,800** | 2,205 créd. · **S/3,703,671** | **Sí**, `not in stock_agosto` |
+| **B2.** 2.º vencimiento del **mismo** crédito en el mes | 2 créd. · S/1,913 | 2 créd. · S/6,546 | **No** — lo agrega esta variante |
+
+(A) ya estaba excluido y **no es cosmético**: en septiembre el **92%** de los créditos del stock
+tiene además un vencimiento en el mes. Coincide con el atributo congelado — el crédito es antiguo
+todo el mes, y su reentrada ya vive dentro de la curva de stock, que se calibra sobre esa misma
+población. Fuentes: `tarea21_diagnostico_doble_entrada.sql`, `tarea21_agosto_doble_entrada.sql`.
+
+**LAS REENTRADAS SON FRECUENTES, y por eso (A) importa tanto.** En agosto, **1,035 de los 3,608
+créditos del stock (28.7%) curan y vuelven a entrar en mora dentro del mismo mes** — S/1,659,914,
+el 28.8% del capital del stock. Trayectorias día a día de 8 casos reales en
+`datos_tarea21/casos_reentrada_trayectorias.txt` (`tarea21_casos_reentrada.sql`).
+
+**LA VARIANTE, entregada y NO adoptada:** `meta_septiembre_primera_entrada.py` +
+`tarea21_insumos_primera_entrada.sql`. Regla: cada crédito entra al universo del mes **una sola
+vez, por su primera entrada en mora**. Resultado sobre una sola foto de datos:
+
+    vigente (todo vencimiento)   S/20,412,734
+    primera entrada              S/20,411,584   (-0.0056%)
+
+**Para septiembre no mueve la meta, y ese es el resultado** — no un fracaso. La meta publicada
+sigue siendo **S/20,477,271** (la diferencia contra los S/20.41M de arriba es re-expresión de
+`dts_mambu_loans_hist` entre el 1-sep y el 2-sep, ~-0.3%, no el método).
+
+**POR QUÉ IGUAL VALE TENERLA, dos razones independientes del tamaño:**
+1. **Depende del mes.** El calendario se indexa por entrada (= vencimiento+1), así que su ventana
+   va del último día del mes anterior al penúltimo del mes. Cuando el mes anterior es corto, atrapa
+   dos vencimientos mensuales del mismo crédito: **202603 +12.7%** y **202607 +12.9%** contra el
+   universo deduplicado, vs. **+0.0%** en 202609. Septiembre se salva por casualidad de calendario.
+2. **Cierra media tarea 20.** `P_ENTRADA` (`tasa_soles.csv`) **sí** deduplica a un vencimiento por
+   crédito-mes, pero hoy se aplica sobre un calendario que **no** deduplica. Con la variante, tasa y
+   universo comparten definición — lo que exige el principio de modelado de `CLAUDE.md`.
+
+**LO QUE LA VARIANTE NO ARREGLA (pendiente real):** la **curva** de nuevos sigue calibrada sobre
+`curva_cruda_nuevos.csv`, que cuenta cada evento de entrada sin deduplicar por crédito-mes. Para
+consistencia de punta a punta hay que recalibrarla sobre entradas deduplicadas — **una corrida más
+de Athena**, editando `tarea19_curva_cruda_nuevos.sql` con un `row_number()` sobre
+(crédito, mes de entrada) y `rn=1`. La curva es una forma, así que el efecto esperado es de segundo
+orden, pero mientras no se mida **no se puede afirmar que sea chico**.
+
+
+### Tarea 23 — Versión de proyección "lo que realmente entra a gestión" — pedido 2026-09-02, NO empezada
+
+**PEDIDO TEXTUAL DEL USUARIO**, anotado para trabajarlo después:
+
+> "Quiero proyectar cuánto entrará en gestión de cobranza. Para ello debemos excluir aquellos
+> que entran en mora sábado y pagan ese mismo día y domingo, ya que esos días no tenemos
+> asignación, y solo considerar el saldo al lunes, ya que eso se asignará."
+
+**QUÉ ES:** una **tercera versión** de la proyección (no reemplaza la vigente ni la de tarea 21).
+Hoy el modelo proyecta *capital asegurado sobre todo el que entra en mora*. Esta versión
+proyectaría *capital que efectivamente llega a la mesa de gestión*, que es menos: el que entra
+sábado y se resuelve solo antes del lunes **nunca se asigna**, así que no debería estar en el
+universo de una meta de gestión.
+
+**POR QUÉ ENCAJA CON LO YA MEDIDO** (no es una idea suelta):
+- Ninguna cuota vence domingo, así que **nadie entra en mora un lunes** (bug 21). Las entradas
+  de fin de semana son las de **vencimiento viernes → entra sábado** y **vencimiento sábado →
+  entra domingo**.
+- La curva de nuevos ya muestra que ese grupo es el más distinto de todos: el **día 0** de
+  "vence sábado" es **19.1%** contra **42.0%** de "vence martes" (artifact 949ab3c2, sección de
+  curvas). Ese 19.1% que activa el día 0 sin gestión es, casi por definición, la población que
+  esta versión quiere excluir.
+- Y la tasa de entrada por día de semana del vencimiento ya está medida: viernes 27.3% y
+  sábado 27.1%, ambos **por encima** del promedio (tarea 20).
+
+**CÓMO SE CONSTRUIRÍA** (borrador, a validar con el usuario antes de correr nada):
+1. Definir el universo de gestión: capital en mora **al lunes** (o al primer día hábil), no al
+   día de entrada. Para las cohortes de sábado y domingo, eso significa medir el saldo
+   remanente después de los pagos de fin de semana, no el saldo de entrada.
+2. Eso cambia **el universo, no la curva**: hay que recalibrar la tasa de entrada y la curva
+   sobre esa misma definición (`CLAUDE.md`, principio de modelado) — no basta con descontar
+   del resultado.
+3. Cuidado con el corte: `in (6,7)` sobre el día de vencimiento es en la práctica **solo
+   sábado**, y deja "vence viernes" (que entra **sábado**) del lado de los días hábiles
+   (bug 21). El corte correcto es sobre el **día de ENTRADA**, no el de vencimiento.
+
+**PREGUNTA ABIERTA para el usuario antes de construirlo:** ¿los feriados también son días sin
+asignación? Si sí, el universo depende de un calendario de feriados que hoy el proyecto no tiene.

@@ -1,3 +1,5 @@
+>>> SUPERADO 2026-09-11 — el handoff vigente es prompt_handoff_2026-09-11.txt <<<
+
 PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
 Escrito 2026-09-02. Reemplaza a prompt_handoff_2026-08-26.txt (que quedó viejo: hablaba de
 "cerrar agosto" y del plan de 18e, los dos ya hechos).

@@ -1,0 +1,170 @@
+PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
+Escrito 2026-09-11. Reemplaza a prompt_handoff_2026-09-02.txt, que ya no refleja lo abierto
+(hablaba de republicar artifacts y de commitear el backlog: las dos cosas están hechas).
+
+====================================================================
+ORDEN DE LECTURA — y nada más
+====================================================================
+1. CLAUDE.md              — reglas de datos y los 4 principios no negociables.
+2. ESTADO.md              — bloque "2026-09-11" (el de arriba) + "La meta vigente".
+3. PENDIENTES.md          — tareas 20, 21 y 23. Son las tres abiertas.
+4. Solo si hace falta:
+   - reconciliacion_antiguos_septiembre.md  (si se vuelve a comparar contra la vista oficial)
+   - analisis_tarea19_activacion_decreciente.md  (el hallazgo de fondo)
+   - BUGS.md bugs 23 y 24  (trampas nuevas, ver abajo)
+
+NO releer todo el historial. ESTADO.md + PENDIENTES.md alcanzan para operar.
+
+====================================================================
+DÓNDE ESTÁ EL PROYECTO
+====================================================================
+Agosto 2026 CERRADO:  capital asegurado -1.2% | recupero oficial -3.2%
+Metas de SEPTIEMBRE, fijadas el 1-sep y NO recalculadas:
+    Capital asegurado (meta principal):  S/20,477,271
+    Recupero oficial:                    S/3,928,776
+Motor: unificado v3, tasa de entrada por SOLES (24.9081%), curvas [202508,202607].
+Último commit: el de esta sesión (tareas 20/21/22 + docs). Antes: c65df32.
+
+La sesión del 2026-09-02/03 NO tocó el motor ni las metas. Midió tres cosas que estaban
+asumidas y dejó una variante construida sin adoptar. Todo commiteado y pusheado.
+
+====================================================================
+LO PRIMERO QUE HAY QUE HACER — y es lo que falta desde el 1-sep
+====================================================================
+SEGUIR SEPTIEMBRE CONTRA LA META. Ya van 11+ días del mes y la query del real diario
+NO EXISTE todavía. Es una copia de tarea19_real_agosto_cierre.sql con las fechas corridas
+a septiembre. Sin eso no se puede responder la pregunta del mes:
+
+    ¿se está materializando el caveat de ~10% que viaja con esta meta?
+
+Contexto que hay que tener a mano al mirarlo:
+  - La meta lleva escrito que corre ~10% ALTA si la caída de activación sigue. El
+    contrafáctico de agosto con este mismo motor dio +9.8%.
+  - Hay que reportar DOS números, no uno: error de cierre Y correlación diaria. Pueden
+    moverse en direcciones opuestas y eso no es contradicción (CLAUDE.md / DECISIONES.md).
+  - Trampa: la foto del día en curso todavía está corriendo cuando se lee. Usar el
+    PENÚLTIMO día como "último día completo".
+  - Trampa: dts_mambu_loans_hist se re-expresa para días pasados (-0.3% a -0.6%). Re-medir
+    un corte viejo da números levemente distintos. No es bug del modelo.
+
+====================================================================
+LOS OTROS DOS FRENTES ABIERTOS (ninguno bloquea al otro)
+====================================================================
+
+A) EXPLICAR LA CAÍDA DE ACTIVACIÓN — el frente de fondo, sigue medido y no explicado.
+   -0.46pp/mes: activación de nuevos ÷ calendario pasó de 20.99% (ene-mar) a 18.50%
+   (jun-ago), r=-0.77. Mientras la tasa de entrada por soles NO tiene tendencia y el
+   calendario creció +90% en 9 meses. Es señal de negocio, no defecto del modelo.
+   Plan en 3 pasos, en orden, en PENDIENTES.md tarea 19:
+     1. ¿Capacidad de gestión? dts_asignaciones_gestiones_cobranza existe solo desde
+        julio 2026 — limitación real, solo da 2-3 puntos.
+     2. ¿Composición? Si la cartera nueva entra con avance_band distinto es mix, no
+        eficiencia. Se mide SIN Athena nueva, desde la matriz cruda.
+     3. ¿Artefacto del universo? Parcialmente descartado: el patrón aparece en los dos
+        enfoques y con las dos tasas.
+   NO AJUSTAR NADA MIENTRAS TANTO (principio de interpretación del error).
+
+B) TAREA 23 — pedida por el usuario el 2026-09-02, NO empezada.
+   Quiere una TERCERA versión de proyección: "cuánto entrará en gestión de cobranza",
+   excluyendo a quien entra en mora sábado y paga ese mismo día o domingo, porque esos
+   días no hay asignación. Solo cuenta el saldo al lunes, que es lo que se asigna.
+   ANTES DE CONSTRUIRLA, PREGUNTARLE: ¿los feriados también son días sin asignación? Si
+   sí, hace falta un calendario de feriados que el proyecto hoy no tiene.
+   Lo que ya está medido y le sirve:
+     - día 0 de la curva "vence sábado" = 19.1% contra 42.0% de "vence martes". Esa
+       población que activa sola el fin de semana es casi exactamente la que hay que excluir.
+     - tasa de entrada por día de semana: viernes 27.3%, sábado 27.1%, las dos por encima
+       del promedio (tarea 20).
+   TRAMPA: el corte va sobre el DÍA DE ENTRADA, no el de vencimiento. "Vence viernes"
+   entra SÁBADO (día no hábil) y quedaría del lado equivocado. Ver bug 21.
+   Y OJO: cambiar el universo obliga a recalibrar tasa y curva sobre la misma definición
+   (principio de modelado). No basta con descontar del resultado.
+
+====================================================================
+LO QUE SE MIDIÓ EN LA ÚLTIMA SESIÓN — para no re-preguntarlo
+====================================================================
+
+TAREA 20 — La tasa de entrada REAL se mueve por banda de avance y el modelo la aplica plana.
+  banda de avance:        22.75% a 30.81%   índice 0.874-1.184  (±18%)  <- el modelo NO lo usa
+  día de semana del venc: 24.63% a 27.60%   índice 0.947-1.061  (±6%)   <- el modelo NO lo usa
+  cercanía al pago:       25.43% a 26.40%   índice 0.977-1.015  (±2%)   <- y no hace falta
+  El corte más grande es el que el modelo ignora. La cercanía al pago NO cambia quién cae en
+  mora, solo cuándo paga el que ya cayó — o sea que el factor de día del mes está del lado
+  correcto. NO SE ADOPTÓ NADA: segmentar la tasa por banda es un cambio que se decide
+  corriendo el backtest de 8 meses, no en abstracto (precedente: bug 10).
+
+TAREA 21 — El doble conteo antiguo/nuevo: son DOS solapamientos y solo uno estaba vivo.
+  (A) stock x calendario:  YA estaba excluido. Y no es cosmético: S/3,703,671 en septiembre,
+      el 92% de los créditos del stock tiene además un vencimiento en el mes.
+  (B) 2do vencimiento del MISMO crédito: NO estaba excluido, pero son 2 créditos y S/6,546
+      en septiembre (S/1,913 en agosto). La variante existe y da -0.0056%.
+  DATO QUE SÍ IMPORTA: 1,035 de los 3,608 créditos del stock de agosto (28.7%, S/1,659,914)
+  CURAN Y REENTRAN dentro del mismo mes. Eso ya está absorbido por la curva de stock, que se
+  calibra sobre esa población — contarlos otra vez en el calendario sería el doble conteo.
+  Trayectorias día a día de 8 casos en datos_tarea21/casos_reentrada_trayectorias.txt.
+
+TAREA 22 — Por qué nuestros antiguos de septiembre (S/3.76M) < TEMPRANA de la vista (S/4.90M).
+  Cuadre crédito a crédito, exacto por los dos lados. El 99% de la diferencia son 965
+  créditos (S/1,929,629) que vencieron el 31-ago y entraron en mora el 1-sep:
+  `antiguo` para la vista (que congela el atributo en la fecha de la PRIMERA ASIGNACIÓN),
+  `nuevos con dia_entrada = 1` para nuestro motor (que corta al CIERRE DEL MES ANTERIOR).
+  NO ES CAPITAL FALTANTE — está en la proyección, en el componente de nuevos.
+  Se probó y se DESCARTÓ que fuera el punto ciego de bug 9/14: sobreviven 2 créditos, S/4,872.
+  Informe completo en reconciliacion_antiguos_septiembre.md.
+
+====================================================================
+UN PENDIENTE CHICO QUE AHORA YA SE PUEDE CERRAR
+====================================================================
+487 créditos (S/658,854) que el 2-sep no aparecían en vw_seguimiento_diario_cohorte_tramo
+para 202609. Ese día la vista tenía solo 2 días de asignación cargados, así que no se pudo
+distinguir REZAGO de AUSENCIA. Con el mes corrido, re-correr tarea22_solo_nuestro.sql lo
+resuelve en una corrida. Si siguen sin aparecer con 11+ días, es un hallazgo de universo y
+hay que investigarlo; si aparecieron, era rezago y se cierra con una línea.
+
+====================================================================
+TRAMPAS NUEVAS (bugs 23 y 24, recién documentadas)
+====================================================================
+- vw_seguimiento_diario_cohorte_tramo trae `tipo_mora` en MINÚSCULA ('antiguo','nuevo',
+  'sin mora'). Filtrar por 'ANTIGUO' devuelve CERO filas sin error, y un full outer join
+  contra eso parece un resultado válido ("todo es solo nuestro"). Costó una corrida.
+- Los nombres de columna de esa vista NO son los de su definición: expone `monto_asignado`
+  y `dias_mora_inicio`, no `saldo_capital_ancla` / `dias_mora_ancla`. Verificar contra
+  information_schema.columns, no contra el .txt.
+- calendario_8m.csv llega a 202608 pero curva_cruda_nuevos.csv corta en 202607. Cruzarlas
+  sobre 202601-202608 resta entradas sin restar calendario y hunde la tasa a 22.3% contra
+  26.0% real. La ventana válida de ese cruce es 202601-202607.
+- La ventana del calendario prospectivo atrapa DOS vencimientos del mismo crédito cuando el
+  mes anterior es corto: +12.7% en 202603, +12.9% en 202607, +0.0% en 202609.
+
+====================================================================
+TRAMPAS VIEJAS QUE SIGUEN VIGENTES
+====================================================================
+- Ninguna cuota vence domingo → nadie entra en mora un LUNES. En septiembre los días 7, 14,
+  21 y 28 no tienen ni una entrada. Buen chequeo de sanidad.
+- Athena: WHERE ... IN (...) en la MISMA query que SUM() OVER (ORDER BY ...) aplica el WHERE
+  ANTES de la window function. Acumular en una CTE y filtrar afuera (bug 4).
+- Hay 3 generaciones de scripts en el root. Verificar cuál es el vigente en ESTADO.md antes
+  de tocar uno. El root tiene ~125 archivos (tarea 12, sigue sin bloquear).
+
+====================================================================
+CICLO MENSUAL — cómo se fija la meta de OCTUBRE
+====================================================================
+Ya está armado y cuesta poco:
+  1. Correr las 10 queries tarea19_*.sql con las ventanas corridas un mes.
+  2. generar_curvas_septiembre.py con VENTANA_NUEVOS = ("202509","202608"). Renombrar.
+  3. meta_septiembre_capital_asegurado.py y meta_septiembre_recupero.py (renombrar a octubre).
+  4. armar_asignado_a_asegurado.py + republicar 949ab3c2 (pasar url= para conservarla).
+REGLA: la ventana termina en el último mes COMPLETAMENTE OBSERVADO al fijar la meta — una
+cohorte necesita 31 días de seguimiento. Para octubre eso es [202509, 202608].
+
+====================================================================
+CONVENCIONES DE TRABAJO
+====================================================================
+- El usuario controla commit y push explícitamente. No commitear sin que lo pida.
+- Artifacts: al publicar, copiar el .html al repo y actualizar la tabla en ESTADO.md y
+  README.md. Para actualizar uno existente hay que pasar url= o se crea otro.
+- Los 3 artifacts vigentes: 949ab3c2 (De asignado a asegurado — el recomendado para explicar
+  el enfoque), d4140b13 (Capital asegurado), f80d3761 (Proyectado vs. Real).
+  OJO: 949ab3c2 está compartido y los viewers ven una VERSIÓN ANCLADA anterior, no la viva.
+  Si el equipo tiene que ver los cambios, hay que actualizar la versión compartida desde el
+  menú de compartir del artifact.

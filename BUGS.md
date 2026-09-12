@@ -1714,3 +1714,55 @@ agregar `fecha_entrada` al `group by` y al join.
 por `id_loan` solo, sin `fecha_entrada`): daba celdas con más créditos activados que en la
 base. Detectado con un chequeo explícito `activados <= base` por celda, que quedó en la
 validación de `curvas_crudas.py`.
+
+### 23. La ventana del calendario prospectivo atrapa DOS vencimientos del mismo crédito cuando el mes anterior es corto — hasta +12.9% de doble conteo, y depende del mes
+
+**Encontrado 2026-09-02 (tarea 21), al medir el doble conteo que preguntó el usuario.**
+
+El calendario se indexa por **día de ENTRADA** (= `fechavencimiento + 1`), así que la ventana de
+un mes `M` va del **último día de `M-1`** al **penúltimo día de `M`**. Cuando `M-1` es corto, esa
+ventana contiene **dos** vencimientos mensuales del mismo crédito:
+
+| periodo | ventana de vencimientos | ¿atrapa dos? |
+|---|---|---|
+| 202603 | 28-feb a 30-mar | **sí** — un crédito que vence el 28 aparece el 28-feb y el 28-mar |
+| 202607 | 30-jun a 30-jul | **sí** — el que vence el 30 aparece dos veces |
+| 202609 | 31-ago a 29-sep | no — sep no tiene 31 |
+
+Medido contra `tasa_soles.csv` (que **sí** deduplica a un vencimiento por crédito-mes): el
+calendario corre **+12.7% en 202603**, **+12.9% en 202607** y **+0.0% en 202609**. En 202601,
+202602 y 202606 la razón es ≈1.00.
+
+**Consecuencia que importa más que el tamaño:** `P_ENTRADA` se calibra sobre un denominador
+**deduplicado** (`rn = 1` en `tarea19_tasa_soles.sql`) pero se aplica sobre un calendario que **no**
+deduplica — tasa y universo con definiciones distintas, justo lo que prohíbe el principio de
+modelado de `CLAUDE.md`.
+
+**No adoptado.** La variante que lo corrige existe y está medida
+(`meta_septiembre_primera_entrada.py`, `tarea21_insumos_primera_entrada.sql`): para septiembre
+mueve **−0.0056%**, porque septiembre cae en el caso benigno. Ver `PENDIENTES.md` tarea 21.
+
+**Cómo NO medirlo** (error cometido en esta sesión): cruzar `calendario_8m.csv` (que llega a
+202608) contra `curva_cruda_nuevos.csv` (que corta en **202607**) sobre la ventana 202601-202608.
+Eso resta las entradas de agosto sin restar su calendario y hunde la tasa a 22.3% contra 26.0%
+real. La ventana válida de ese cruce es **202601-202607**.
+
+### 24. Dos trampas de nombres en `vw_seguimiento_diario_cohorte_tramo` — costaron dos corridas de Athena
+
+**Encontradas 2026-09-02 (tarea 22).** La vista es externa al proyecto y sus nombres **no** son
+los que sugiere su propia definición:
+
+1. **`tipo_mora` viene en MINÚSCULA:** `'antiguo'`, `'nuevo'`, `'sin mora'`. Filtrar por
+   `tipo_mora = 'ANTIGUO'` **no falla, devuelve cero filas** — y un `full outer join` contra eso
+   se ve como "todo es solo nuestro", que parece un resultado y no un bug. Síntoma que lo delata:
+   el bucket "solo la vista" desaparece por completo.
+2. **Los nombres de columna del CTE interno no son los de la vista.** La definición arma
+   `saldo_capital_ancla` y `dias_mora_ancla` en `cohorte_anclaje`, pero la vista los expone como
+   **`monto_asignado`** y **`dias_mora_inicio`**. Verificar siempre contra
+   `information_schema.columns` antes de escribir la query, no contra el `.txt` de la definición.
+
+**Además, de la reconciliación:** el `antiguo` de la vista **no es** nuestro stock. La vista congela
+`tipo_mora` en la **fecha de la primera asignación del mes** (1-sep), así que incluye a quien entró
+en mora **ese mismo día**; nuestro stock corta al **cierre del mes anterior** (31-ago) y manda esa
+cohorte al calendario de nuevos con `dia_entrada = 1`. Son **965 créditos y S/1,929,629** en
+septiembre — el 99% de la diferencia. Detalle en `reconciliacion_antiguos_septiembre.md`.

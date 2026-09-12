@@ -217,8 +217,9 @@ def empaquetar(filas_s, nb, nd, ndia, periodo, p_ent):
                         "calendario": v[0], "entran": v[0] * p_ent, "asegurado": v[1],
                         "ratio_activacion": 100 * v[1] / (v[0] * p_ent) if v[0] else 0}
                        for k, v in sorted(nd.items())],
-        "nuevos_dia": [{"dia": k, "calendario": v[0], "asegurado": v[1],
-                        "dow": dow_venc(periodo, k)} for k, v in sorted(ndia.items())],
+        "nuevos_dia": [{"dia": k, "calendario": v[0], "entran": v[0] * p_ent,
+                        "asegurado": v[1], "dow": dow_venc(periodo, k)}
+                       for k, v in sorted(ndia.items())],
     }
 
 
@@ -231,6 +232,166 @@ curvas_stock = {f"{tr}|{b}": [{"dia": d, "pct": curva_s_v3[(tr, b)][d]}
 curvas_nuevos = {f"{b}|{dw}": [{"dia": d, "pct": curva_n_sep[(b, dw)][d]}
                                for d in sorted(curva_n_sep[(b, dw)])]
                  for (b, dw) in curva_n_sep}
+
+# =====================================================================
+# 3b. LOS CORTES -- como se mueve la TASA DE ENTRADA segun cada corte
+# =====================================================================
+# El modelo aplica UNA tasa de entrada a todo el calendario y mete toda
+# la segmentacion en la CURVA. Esta seccion mide lo contrario: cuanto se
+# mueve la tasa de entrada REAL en cada corte, para poder mostrar que
+# corte el modelo esta usando y cual no.
+#
+# Fuente: `calendario_8m.csv` (denominador, capital que vence por dia de
+# entrada y banda) + `curva_cruda_nuevos.csv` filas `tipo='base'`
+# (numerador, capital que efectivamente entro en mora ese dia). Son las
+# DOS caras de la misma matriz cruda con la que se calibra la curva, asi
+# que numerador y denominador comparten definicion -- que es la regla del
+# "principio de modelado" de CLAUDE.md.
+#
+# VENTANA: 202601-202607, la interseccion real de las dos fuentes. El
+# calendario llega hasta 202608 pero la matriz cruda de nuevos corta en
+# 202607, asi que incluir agosto restaria entradas sin restar calendario
+# y hundiria la tasa (da 22.3% en vez de 26.0% -- error ya cometido y
+# descartado en esta sesion).
+#
+# OJO CON EL NIVEL, NO CON LA FORMA: sobre esta misma ventana el par
+# crudo da 26.02% y la tasa oficial (`tasa_soles.csv`, que deduplica a
+# UN vencimiento por credito-mes en el denominador y UNA entrada por
+# credito-mes en el numerador) da 24.85%. Son dos convenciones sobre
+# recurrencias dentro del mes, no dos poblaciones. Lo que se publica de
+# aca es la FORMA (el indice relativo a la media de la ventana), que no
+# depende de la convencion; el nivel absoluto va con su nota.
+MESES_CORTES = ["2026%02d" % m for m in range(1, 8)]
+
+_cal_c = collections.defaultdict(float)
+for r in leer(f"{DIR_19}/calendario_8m.csv"):
+    if r["periodo"] in MESES_CORTES:
+        _cal_c[(r["periodo"], int(r["dia_entrada"]), r["avance_band"])] += float(r["saldo_en_riesgo"])
+_ent_c = collections.defaultdict(float)
+for r in leer(f"{DIR_19}/curva_cruda_nuevos.csv"):
+    f_e = r["fecha_entrada"]
+    if r["tipo"] == "base" and f_e[:6] in MESES_CORTES:
+        _ent_c[(f_e[:6], int(f_e[6:]), r["avance_band"])] += float(r["saldo"])
+
+_TC = sum(_cal_c.values())
+_TE = sum(_ent_c.values())
+_TASA = _TE / _TC
+
+
+def _grupo_pago(periodo, dia_entrada):
+    """Cercania al pago, medida sobre el dia del mes del VENCIMIENTO
+    (= dia_entrada - 1), que es el dia en que el cliente tenia que pagar."""
+    v = dt.date(int(periodo[:4]), int(periodo[4:]), dia_entrada) - dt.timedelta(days=1)
+    ult = (dt.date(v.year + (v.month == 12), v.month % 12 + 1, 1) - dt.timedelta(days=1)).day
+    if v.day in (15, 16):
+        return "quincena"
+    if v.day >= ult - 1:
+        return "fin de mes"
+    return "resto"
+
+
+def _cortar(keyfn):
+    ag_ = collections.defaultdict(lambda: [0.0, 0.0])
+    for k, c in _cal_c.items():
+        kk = keyfn(*k)
+        ag_[kk][0] += c
+        ag_[kk][1] += _ent_c.get(k, 0.0)
+    return {k: {"cal": v[0], "entran": v[1], "tasa": 100 * v[1] / v[0],
+                "indice": (v[1] / v[0]) / _TASA}
+            for k, v in ag_.items() if v[0] > 0}
+
+
+_c_banda = _cortar(lambda p, d, b: b)
+_c_dow = _cortar(lambda p, d, b: dow_venc(p, d))
+_c_pago = _cortar(lambda p, d, b: _grupo_pago(p, d))
+
+# estabilidad del corte por dia de semana: el indice mes a mes
+_dow_mes = []
+for _p in MESES_CORTES:
+    _a = collections.defaultdict(lambda: [0.0, 0.0])
+    for k, c in _cal_c.items():
+        if k[0] == _p:
+            _a[dow_venc(_p, k[1])][0] += c
+            _a[dow_venc(_p, k[1])][1] += _ent_c.get(k, 0.0)
+    _tc = sum(v[0] for v in _a.values())
+    _te = sum(v[1] for v in _a.values())
+    _dow_mes.append({"periodo": _p, "indices": {
+        str(k): (v[1] / v[0]) / (_te / _tc) for k, v in _a.items() if v[0] > 0}})
+
+
+def _rango_curva(filtro):
+    """(dia0_min, dia0_max, techo_min, techo_max) de la curva de nuevos
+    sobre los segmentos que pasan el filtro -- para mostrar, al lado de
+    cada corte, cuanto mueve ESE corte la curva (que es donde el modelo
+    si lo usa)."""
+    d0s, tes = [], []
+    for (b, dw), cur in curva_n_sep.items():
+        if not filtro(b, dw):
+            continue
+        d0s.append(cur[min(cur)])
+        tes.append(cur[max(cur)])
+    return {"dia0_min": min(d0s), "dia0_max": max(d0s),
+            "techo_min": min(tes), "techo_max": max(tes)}
+
+
+cortes = {
+    "ventana": "enero–julio 2026",
+    "tasa_global": 100 * _TASA,
+    "tasa_oficial": 100 * sum(float(r["entran_soles"]) for r in leer(f"{DIR_19}/tasa_soles.csv")
+                              if r["periodo"] in MESES_CORTES)
+                    / sum(float(r["elegibles_soles"]) for r in leer(f"{DIR_19}/tasa_soles.csv")
+                          if r["periodo"] in MESES_CORTES),
+    "banda": [dict(k=b, nombre=b, **_c_banda[b], curva=_rango_curva(lambda bb, dw, b=b: bb == b))
+              for b in BANDAS if b in _c_banda],
+    "dow": [dict(k=dw, vence=NOM_DOW[dw], entra=ENTRA_DOW[dw], **_c_dow[dw],
+                 curva=_rango_curva(lambda bb, d2, dw=dw: d2 == dw))
+            for dw in sorted(_c_dow)],
+    "pago": [dict(k=g, **_c_pago[g]) for g in ("resto", "quincena", "fin de mes") if g in _c_pago],
+    "dow_mes": _dow_mes,
+}
+
+# =====================================================================
+# 3c. CURVAS AGREGADAS POR SEGMENTO -- para poder MOSTRARLAS
+# =====================================================================
+# Las curvas del motor viven al grano (banda, dow_venc) en nuevos y
+# (tramo, banda) en stock: 24 y 12 curvas. Mostrar 24 lineas no explica
+# nada. Para el artifact se agregan a UNA curva por banda, una por dia de
+# semana y una por tramo, ponderando por la MASA REAL de septiembre (el
+# calendario para nuevos, el stock inicial para antiguos) -- que es la
+# ponderacion con la que esas curvas efectivamente se combinan en la
+# proyeccion, asi que la curva agregada es la que de verdad opera.
+def _peso_nuevos():
+    w = collections.defaultdict(float)
+    for de, seg in cal_sep.items():
+        dw = dow_venc("202609", de)
+        for b, saldo in seg.items():
+            w[(b, dw)] += saldo
+    return w
+
+
+def _agregar(curvas, pesos, keyfn):
+    """{clave_grano: {dia: pct}} + pesos -> {clave_grupo: [{dia, pct}]}."""
+    grupos = collections.defaultdict(lambda: collections.defaultdict(float))
+    masa = collections.defaultdict(float)
+    for k, cur in curvas.items():
+        w = pesos.get(k, 0.0)
+        if w <= 0:
+            continue
+        g = keyfn(*k)
+        masa[g] += w
+        for d, pct in cur.items():
+            grupos[g][d] += w * pct
+    return {g: [{"dia": d, "pct": v / masa[g]} for d, v in sorted(dias.items())]
+            for g, dias in grupos.items()}
+
+
+_pn = _peso_nuevos()
+_ps = {k: v for k, v in stock_sep.items()}
+
+curvas_nuevos_banda = _agregar(curva_n_sep, _pn, lambda b, dw: b)
+curvas_nuevos_dow = _agregar(curva_n_sep, _pn, lambda b, dw: str(dw))
+curvas_stock_tramo = _agregar(curva_s_v3, _ps, lambda tr, b: tr)
+curvas_stock_banda = _agregar(curva_s_v3, _ps, lambda tr, b: b)
 
 # serie diaria real de agosto, para la trayectoria
 real_dia = collections.defaultdict(lambda: {"stock": 0.0, "nuevos": 0.0})
@@ -252,6 +413,11 @@ out = {
     "septiembre": empaquetar(s_sep, nb_sep, nd_sep, ndia_sep, "202609", p_sep),
     "curvas_stock": curvas_stock,
     "curvas_nuevos": curvas_nuevos,
+    "cortes": cortes,
+    "curvas_nuevos_banda": curvas_nuevos_banda,
+    "curvas_nuevos_dow": curvas_nuevos_dow,
+    "curvas_stock_tramo": curvas_stock_tramo,
+    "curvas_stock_banda": curvas_stock_banda,
     "factores": {
         "nuevos_sep": cargar_factor_dia_mes(f"{DIR_CA}/factor_dia_mes_sep.csv"),
         "stock": f_s,

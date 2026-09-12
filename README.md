@@ -16,7 +16,7 @@ Ver [`ESTADO.md`](ESTADO.md) para el detalle.
 
 ## Empezar por acá
 
-**[`prompt_handoff_2026-09-02.txt`](prompt_handoff_2026-09-02.txt)** — si vas a arrancar una
+**[`prompt_handoff_2026-09-11.txt`](prompt_handoff_2026-09-11.txt)** — si vas a arrancar una
 sesión nueva, empieza por acá: orden de lectura, dónde está el proyecto, qué está resuelto y no
 hay que re-probar, las tareas abiertas en orden, el ciclo mensual para fijar la meta siguiente y
 las trampas conocidas. *(`prompt_handoff_2026-08-26.txt` queda como registro; está viejo.)*
@@ -42,7 +42,7 @@ lo que falta sin releer todo el historial.
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85) — `curvas_matriz_alfa.html` | Equipo | Enfoque alfa: curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes de asignado/asegurado/%, ya con la definición corregida (bug 12). Ver `matriz_mensual_alfa.sql` |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) — `meta_julio_en_vivo.html` | Operativo, ⚠ desactualizado | Caso de uso real: cálculo de la meta del mes en curso |
 | [Deck completo](https://claude.ai/code/artifact/ae2f5e71-ff14-48bd-af00-909b0aa634cf) — `deck_meta_recupero.html` | Presentación, ⚠ desactualizado | De la asignación (antiguos/nuevos) a la meta, en 11 slides |
-| [🎯 De asignado a asegurado](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) — `asignado_a_asegurado.html` | **El recomendado para explicar el enfoque**, ✓ vigente (2026-09-02) | Escrito para que lo entienda alguien que no siguió el proyecto. Eje: la **cadena de capital asignado → capital asegurado**, con los tres ratios nombrados y con su denominador explícito — ratio de activación de antiguos (66.7%), tasa de entrada en mora (22.8%) y ratio de activación de nuevos (86.2%) — y la distinción entre antiguos (se asignan **todos el día 1**) y nuevos (**entran día a día** según vencimientos). Todo abierto por tramo de atraso, banda de avance y día de semana del vencimiento. Cubre **agosto 2026 cerrado** (−1.2% vs. la meta publicada, **+9.8%** vs. el enfoque actual) y **septiembre proyectado** (S/20,477,271) con la misma cadena, más el hallazgo de la caída de activación (−0.46pp/mes). Fuente: `armar_asignado_a_asegurado.py` + `tarea19_agosto_cadena_segmentada.sql`. **Reemplazó a "De julio a agosto"** (`resumen_julio_agosto.html`, que queda en el repo como la versión anterior). |
+| [🎯 De asignado a asegurado](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) — `asignado_a_asegurado.html` | **El recomendado para explicar el enfoque**, ✓ vigente (2026-09-02) | Escrito para que lo entienda alguien que no siguió el proyecto. Eje: la **cadena de capital asignado → capital asegurado**, con los tres ratios nombrados y con su denominador explícito — ratio de activación de antiguos (66.7%), tasa de entrada en mora (22.8%) y ratio de activación de nuevos (86.2%) — y la distinción entre antiguos (se asignan **todos el día 1**) y nuevos (**entran día a día** según vencimientos). Todo abierto por tramo de atraso, banda de avance y día de semana del vencimiento. Cubre **agosto 2026 cerrado** (−1.2% vs. la meta publicada, **+9.8%** vs. el enfoque actual) y **septiembre proyectado** (S/20,477,271) con la misma cadena, más el hallazgo de la caída de activación (−0.46pp/mes). Fuente: `armar_asignado_a_asegurado.py` + `tarea19_agosto_cadena_segmentada.sql`. **Reemplazó a "De julio a agosto"** (`resumen_julio_agosto.html`, que queda en el repo como la versión anterior). **Republicado el 2026-09-02 por la tarde:** el gráfico diario pasó a **dos pisos** (las tres magnitudes en soles arriba — antes faltaba *entra en mora*, así que se leía `asegurado ÷ vence`, que mezcla los dos pasos — y el **ratio de activación por cohorte** abajo, en su propia escala); se agregaron **tablas de cohortes por día de entrada** que muestran el truncamiento de fin de mes (la cohorte del día 1 activa 88.4%, la del 30 solo 52.1%, y el 81.7% del total es su promedio ponderado); y la sección **«Qué mueve cada corte»**, que mide la tasa de entrada **real** por banda de avance (±18%), día de semana del vencimiento (±6%) y cercanía al pago (±2%) contra los cortes que el modelo efectivamente usa. **Tercera pasada del mismo día:** sección nueva **«La curva de maduración: el reloj de cada cohorte»** — las curvas se usaban en todo el motor pero casi no se mostraban. Sigue una cohorte real día por día y enseña las tres curvas completas (nuevos por banda, donde el orden se invierte entre el día 0 y el cierre; nuevos por día de semana, que convergen al día 7; antiguos por tramo). Va **antes** de «Qué mueve cada corte», y en esa tabla la columna críptica «día 0 va de X a Y · techo Z» se reemplazó por la miniatura de la curva del segmento. |
 | [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637) — `tasa_1338.html` | Técnico | Reconstruye paso a paso `P_NO_PAGA_DIA0=13.38%`: embudo elegibles/entradas, 2 créditos reales día por día, desglose mensual y diario, pruebas de robustez (dedup, ventanas 6/10/12 meses). |
 | [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) — `proyectado_vs_real.html` | Técnico, ✓ vigente (2026-09-02) | Los **2 motores** del backtest mensual (stock + nuevos) explicados con julio y mayo 2026 día a día, la fuga de calibración medida (0.10pp) y la tabla de los **8 meses cerrados**. Republicado 2026-09-02 con la tasa por soles y una sección nueva, **"Dos calendarios"**: por qué una meta y un backtest no miden el mismo mes, y cómo el desvío se parte en convención de anclaje (-6.5pp) y modelo (+2.7pp). |
 
@@ -87,6 +87,7 @@ archivos de referencia de abajo para consultas puntuales.
 | [`enfoque_acumulado.md`](enfoque_acumulado.md) | Enfoque oficial (validado): resumen corto, apunta a `guia_tecnica_recupero.md` |
 | [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa: % de capital con actividad de pago. **Ojo: describe la arquitectura anterior** — el motor vigente es `motor_unificado.py` v2, ver `ESTADO.md` |
 | [`avance_cobranza_fase.md`](avance_cobranza_fase.md) | Análisis puntual: avance de julio por fase de cobranza (Temprana/Especializada/Recovery), usando la asignación real del negocio |
+| [`reconciliacion_antiguos_septiembre.md`](reconciliacion_antiguos_septiembre.md) | **Cierra la pregunta del 2026-09-02**: por qué nuestros antiguos de septiembre (S/3.76M) son menores que TEMPRANA de la vista oficial (S/4.90M). Cuadre crédito a crédito; el 99% de la diferencia son 965 créditos que vencieron el 31-ago y entraron en mora el 1-sep — `antiguo` para la vista, **nuevos del día 1** para el motor. No es capital faltante. |
 | [`reconciliacion_vw_seguimiento_temprana.md`](reconciliacion_vw_seguimiento_temprana.md) | **Pendiente activo** — reconciliación contra la vista oficial externa `vw_seguimiento_diario_cohorte_tramo`: cuadra casi exacto en la población compartida, pero cuantifica el punto ciego de `dayslate` en ~27% de TEMPRANA (bug 14, `BUGS.md`) |
 
 ## Estructura del repositorio
@@ -124,6 +125,20 @@ backtest_tarea18a.py         Las 7 variantes de segmentacion que decidieron W3 (
 backtest_tarea18f.py         Walk-forward de 7 meses, W0/W1/W2/W3 (evidencia de la decision)
 -----------------------------------------------------------------------------
 
+--- UNIVERSO: DOBLE CONTEO Y RECONCILIACION (tareas 21 y 22 - 2026-09-02) ----
+tarea21_diagnostico_doble_entrada.sql  Mide los 2 solapamientos antiguo/nuevo en septiembre
+tarea21_agosto_doble_entrada.sql  El mismo diagnostico sobre agosto (mes cerrado)
+tarea21_casos_reentrada.sql   Cuantos antiguos curan y REENTRAN dentro del mes (28.7%), con casos
+tarea21_insumos_primera_entrada.sql  Insumos de la variante; emite los DOS calendarios en UNA corrida,
+                             para que la comparacion aisle el metodo de la re-expresion de Mambu
+meta_septiembre_primera_entrada.py  La variante proyectada (NO adoptada): -0.0056% en septiembre
+tarea22_reconcilia_antiguos_septiembre.sql  Cuadre credito a credito contra la vista oficial
+tarea22_hipotesis_fecha_corte.sql  Prueba las 3 hipotesis del gap -- gana la FECHA DE CORTE (965
+                             creditos que vencieron el 31-ago y entraron el 1-sep)
+tarea22_solo_nuestro.sql      Donde estan los 592 creditos que la vista no marca en TEMPRANA
+reconciliacion_antiguos_septiembre.md  El informe: por que S/3.76M y no S/4.90M
+-----------------------------------------------------------------------------
+
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
 backtest_junio.py            Compara proyección vs. recupero real de junio (backtest)
 backtest_capital_asegurado_junio.py  Backtest de junio del enfoque alfa (capital asegurado)
@@ -135,6 +150,9 @@ meta_agosto.py                Meta de agosto (recupero oficial, motor viejo) —
 meta_agosto_capital_asegurado.py  Meta de agosto (enfoque alfa, v8) — mes CERRADO, -1.2%
 meta_septiembre_capital_asegurado.py  META VIGENTE (enfoque alfa), tasa por SOLES, anclada al cierre de agosto
 meta_septiembre_recupero.py   META VIGENTE (recupero oficial), primera con el motor 18e
+meta_septiembre_primera_entrada.py  VARIANTE de universo (tarea 21), NO adoptada: cada crédito
+                              cuenta una sola vez, por su primera entrada en mora. Proyecta el
+                              método vigente y el nuevo sobre la MISMA foto, para aislar el efecto
 generar_curvas_septiembre.py  Curvas de producción de septiembre, ventana [202508,202607]
 backtest_tarea19_tasa_soles.py  P_ENTRADA por conteo vs. por soles, 3 variantes sobre 8 meses
 avance_cobranza_fase.py      Agregación + cruce con curvas del análisis por fase de cobranza
@@ -144,6 +162,12 @@ datos_meta_julio/            Insumos (CSV) de la meta de julio (enfoque acumulad
 datos_meta_agosto/            Insumos (CSV) de la meta de agosto (enfoque acumulado)
 datos_tarea19/                Insumos del ciclo de septiembre: matrices crudas a 202607, tasa
                               por soles, cierre de agosto, insumos de la meta de septiembre
+datos_tarea21/                Doble conteo antiguo/nuevo: diagnósticos de agosto y septiembre,
+                              insumos de la variante "primera entrada", y las trayectorias día
+                              por día de 8 casos reales de reentrada dentro del mes
+datos_tarea22/                Reconciliación de los antiguos de septiembre contra la vista
+                              oficial: cuadre crédito a crédito, prueba de las 3 hipótesis del
+                              gap, y dónde están los 592 que solo tenemos nosotros
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
 datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado, curvas)
 datos_avance_capital_asegurado_agosto/  Insumos (CSV) de la meta de agosto (enfoque alfa)

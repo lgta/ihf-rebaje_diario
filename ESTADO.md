@@ -6,11 +6,12 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-02.
+Última actualización: 2026-09-11 (cierre de la sesión de tareas 20/21/22/23).
 
 > **PARA ARRANCAR UNA SESIÓN NUEVA:** leer este bloque + "La meta vigente", y después
-> `PENDIENTES.md` **tarea 19**. El prompt de handoff vigente es
-> [`prompt_handoff_2026-09-02.txt`](prompt_handoff_2026-09-02.txt) (el de agosto quedó viejo).
+> `PENDIENTES.md` **tareas 20, 21 y 23** (las tres abiertas). El prompt de handoff vigente es
+> [`prompt_handoff_2026-09-11.txt`](prompt_handoff_2026-09-11.txt) — reemplaza al del 2026-09-02,
+> que ya no refleja lo abierto.
 
 > **2026-09-01/02 — AGOSTO CERRADO, METAS DE SEPTIEMBRE FIJADAS, Y UN HALLAZGO DE NEGOCIO QUE
 > CAMBIA LA LECTURA DEL SESGO (tarea 19).**
@@ -66,6 +67,76 @@
 > **denominadores**, que es lo que faltaba para poder mostrar cada paso como una división.
 > **Los otros dos artifacts se republicaron el mismo día** (Capital asegurado d4140b13,
 > Proyectado vs. Real f80d3761), los dos conservando su URL.
+
+> **2026-09-11 — CIERRE DE SESIÓN. Todo lo de las tareas 20/21/22 está commiteado; quedan 3
+> frentes abiertos y ninguno bloquea al otro.** Esta sesión no tocó el motor ni las metas: la meta
+> de septiembre sigue siendo **S/20,477,271** (alfa) y **S/3,928,776** (recupero), fijadas el 1-sep.
+> Lo que se hizo fue **medir tres cosas que estaban asumidas** y dejar una variante construida sin
+> adoptar. Los tres frentes abiertos, en orden de lo que rinde más:
+>
+> 1. **SEGUIR SEPTIEMBRE CONTRA LA META — es lo más urgente y no está hecho.** Al escribir esto van
+>    **11 días del mes** y todavía no existe la query de "real de septiembre por día". Hace falta
+>    `tarea19_real_agosto_cierre.sql` con las fechas corridas. Sin eso no se sabe si el caveat de
+>    ~10% se está materializando, que es la pregunta de negocio del mes.
+> 2. **Explicar la caída de activación** (−0.46pp/mes) — sigue medida y no explicada. Es el frente
+>    de fondo, con el plan en 3 pasos en `PENDIENTES.md` tarea 19.
+> 3. **Tarea 23**, pedida por el usuario y no empezada: proyectar *lo que realmente entra a gestión*,
+>    excluyendo al que entra en mora sábado y se resuelve antes del lunes. Tiene una pregunta abierta
+>    para el usuario antes de construirla (¿los feriados cuentan como días sin asignación?).
+>
+> **Lo que quedó pendiente de re-chequear y ahora YA SE PUEDE:** los **487 créditos (S/658,854)** que
+> el 2-sep no aparecían en `vw_seguimiento_diario_cohorte_tramo` para 202609. Ese día la vista tenía
+> solo 2 días de asignación cargados, así que no se pudo distinguir rezago de ausencia. Con 11 días
+> corridos, re-correr `tarea22_solo_nuestro.sql` lo resuelve en una corrida.
+
+> **2026-09-02 (tarde) — TAREA 22: RECONCILIADOS LOS "ANTIGUOS" DE SEPTIEMBRE CONTRA LA VISTA
+> OFICIAL. La diferencia es UN DÍA de definición, no capital faltante.** El usuario comparó nuestro
+> stock del 1-sep (**S/3,763,294**) contra `vw_seguimiento_diario_cohorte_tramo` 202609 TEMPRANA
+> `antiguo` (**S/4,901,917**) y pidió explicar el −23.2%. Cuadre crédito a crédito, exacto por los
+> dos lados: **en ambos 1,807 (S/2,952,721) · solo la vista 982 (S/1,949,196) · solo nuestro 592
+> (S/810,573)**.
+>
+> **El 99.0% de "solo la vista" son 965 créditos (S/1,929,629) con `dias_mora_inicio = 1.0` exacto y
+> `fecha_ancla = 2026-09-01` para todos**: cuotas vencidas el 31-ago que entraron en mora el 1-sep.
+> La vista los llama `antiguo` porque congela el atributo en la **fecha de la primera asignación**;
+> nuestro motor los manda al **calendario de nuevos con `dia_entrada = 1`**, porque al cierre de
+> agosto tienen atraso 0 y no son stock (decisión explícita del motor unificado, que revirtió el
+> parche `dia1_entrantes` de bug 12). **Ese capital SÍ está en la proyección, en nuevos.**
+>
+> **Se probó y se DESCARTÓ que fuera el punto ciego de bug 9/14:** sobreviven **2 créditos,
+> S/4,872**. La migración a `dias_atraso_cuota` lo cerró. Del lado "solo nuestro": 103 créditos
+> (S/150,086) escalados a ESPECIALIZADA (misma categoría que bug 14 ya conocía) y **487
+> (S/658,854) que aún no aparecen en la vista — a reconfirmar con el mes más avanzado**, porque al
+> 2-sep solo hay dos días de asignación cargados.
+>
+> **NO se tocó el motor.** Mover nuestro corte al 1-sep para cuadrar cambiaría quién entra al
+> universo y obligaría a recalibrar las dos curvas y la tasa — se decide con backtest, no en
+> abstracto (`CLAUDE.md`). Detalle completo en `reconciliacion_antiguos_septiembre.md`.
+
+> **2026-09-02 (tarde) — TAREA 21: EL DOBLE CONTEO ANTIGUO/NUEVO, MEDIDO. Variante "primera
+> entrada" entregada, NO adoptada.** Pregunta del usuario: como la gestión congela el atributo
+> antiguo/nuevo al inicio del mes, un crédito que arranca en mora, cura y vuelve a vencer dentro del
+> mes podría contarse dos veces (stock + calendario). **Resultado: son dos solapamientos y solo uno
+> estaba vivo.** (A) *stock × calendario* **ya estaba excluido** (`not in stock_agosto`) y no es
+> menor — S/3,311,800 en agosto y S/3,703,671 en septiembre, o sea el **92% de los créditos del
+> stock** de septiembre tiene además un vencimiento en el mes. (B) *dos vencimientos del mismo
+> crédito en el mes* **no** estaba excluido, pero es diminuto: **2 créditos, S/1,913 en agosto y
+> S/6,546 en septiembre**.
+>
+> **Las reentradas SÍ son frecuentes, y es el dato que justifica (A):** en agosto **1,035 de los
+> 3,608 créditos del stock (28.7%, S/1,659,914) curan y reentran dentro del mismo mes**. Ese
+> comportamiento ya está absorbido por la curva de stock, que se calibra sobre esa misma población —
+> contarlos además en el calendario de nuevos sería el doble conteo que la exclusión evita.
+> Trayectorias día a día de 8 casos reales en `datos_tarea21/casos_reentrada_trayectorias.txt`.
+>
+> **La variante `meta_septiembre_primera_entrada.py`** (cada crédito cuenta una sola vez, por su
+> primera entrada) da **S/20,411,584 contra S/20,412,734 del método vigente sobre la misma foto de
+> datos: −0.0056%**. No cambia la meta de septiembre, que sigue siendo **S/20,477,271**. Se conserva
+> igual porque el tamaño **depende del mes** (en 202603 y 202607 el calendario corre +12.7% y +12.9%
+> sobre el universo deduplicado) y porque **alinea la definición del universo con la de `P_ENTRADA`**,
+> que ya deduplicaba — media tarea 20 cerrada. **Pendiente real:** la curva de nuevos sigue
+> calibrada sobre entradas sin deduplicar; falta una corrida de Athena para medirlo.
+> Detalle en `PENDIENTES.md` tarea 21.
 
 > **2026-08-26 (continuación 2) — TAREA 18e FASES A-D EJECUTADAS: motor completo de Recupero
 > Oficial migrado a `dias_atraso_cuota`, respaldado con backtest de 7 meses. NO adoptado —
@@ -802,11 +873,50 @@ leer `motor_unificado.py`.
 | [⚠️ Por qué NO 25%](https://claude.ai/code/artifact/fa602fcb-a2f9-489f-a7bf-697a92fdbcf8) | ✓ vigente, es una advertencia | Registro de por qué la tasa oficial es 13.38% y no el complemento simple de "paga a tiempo" |
 | [🔒 Capital asegurado](https://claude.ai/code/artifact/d4140b13-4017-4313-b140-7d8f6356d5d7) | ✓ vigente, **republicado 2026-09-02** — agosto cerrado y meta de septiembre | Enfoque alfa, **meta principal** — 5 créditos reales de agosto, curvas por segmento, backtest de **7 meses cerrados** (enero a julio, calibración rodante de 12 meses sin fuga) y avance en vivo de agosto por segmento. La actualización de 18a/18f tocó: banner nuevo, meta S/17.27M→**S/17.12M**, tabla de 7 meses con columna de correlación diaria, avance al 21-ago -0.3%→**-0.7%** y corte fresco al **25-ago (+1.0%)**, y todo el bloque de datos regenerado con `armar_capital_asegurado.py`. |
 | [🔒 Curvas + matriz mensual](https://claude.ai/code/artifact/8f58cd63-14d4-4280-a198-f9bdace76e85) | ✓ vigente (republicado 2026-08-22, URL nueva — la anterior dejó de estar disponible) | Enfoque alfa — curvas de maduración interactivas (antiguo por tramo, nuevos) + matriz mes a mes (mar-2025 a jul-2026) de asignado/asegurado/% por segmento, con la definición corregida (bug 12). Agregado 2026-08-22: banner de "Principio de universo" + estado de la investigación de `dias_atraso_cuota` (bug 16, no adoptada). Fuente: `curvas_matriz_alfa.html` + `matriz_mensual_alfa.sql` |
-| [🎯 De asignado a asegurado](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) | ✓ vigente, **publicado 2026-09-02 (tarea 19)** — es **el artifact para explicar el enfoque** | **Reescritura completa; reemplaza a "De julio a agosto"** en la misma URL (`resumen_julio_agosto.html` queda en el repo como la versión anterior). Escrito para alguien que no siguió el proyecto: define capital asegurado (≥1 pago, no soles cobrados), la entrada en mora como vencimiento+1, y la diferencia entre **antiguos** (se asignan **todos el día 1**, solo pueden achicarse) y **nuevos** (**no existen el día 1**, entran día a día según vencimientos). Eje estructural: la **cadena asignado → asegurado**, con los tres ratios nombrados y con denominador explícito — *ratio de activación de antiguos* 66.7%, *tasa de entrada en mora* 22.8%, *ratio de activación de nuevos* 86.2% — y la advertencia de que el calendario **no** es capital asignado. Todo abierto por tramo × banda de avance × día de semana del vencimiento; incluye las curvas de maduración (antiguos indexada por día del mes, nuevos por días desde la entrada) y los factores de quincena/cierre. Cubre **agosto cerrado** (real S/17,322,872; −1.2% vs. la meta publicada y **+9.8%** vs. el enfoque actual, con la descomposición del error) y **septiembre proyectado** (S/20,477,271), más la **caída de activación** (−0.46pp/mes) y su implicancia. Fuente: `asignado_a_asegurado.html` + `armar_asignado_a_asegurado.py` + `tarea19_agosto_cadena_segmentada.sql`. |
+| [🎯 De asignado a asegurado](https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde) | ✓ vigente, **publicado 2026-09-02 (tarea 19)** — es **el artifact para explicar el enfoque** | **Reescritura completa; reemplaza a "De julio a agosto"** en la misma URL (`resumen_julio_agosto.html` queda en el repo como la versión anterior). Escrito para alguien que no siguió el proyecto: define capital asegurado (≥1 pago, no soles cobrados), la entrada en mora como vencimiento+1, y la diferencia entre **antiguos** (se asignan **todos el día 1**, solo pueden achicarse) y **nuevos** (**no existen el día 1**, entran día a día según vencimientos). Eje estructural: la **cadena asignado → asegurado**, con los tres ratios nombrados y con denominador explícito — *ratio de activación de antiguos* 66.7%, *tasa de entrada en mora* 22.8%, *ratio de activación de nuevos* 86.2% — y la advertencia de que el calendario **no** es capital asignado. Todo abierto por tramo × banda de avance × día de semana del vencimiento; incluye las curvas de maduración (antiguos indexada por día del mes, nuevos por días desde la entrada) y los factores de quincena/cierre. Cubre **agosto cerrado** (real S/17,322,872; −1.2% vs. la meta publicada y **+9.8%** vs. el enfoque actual, con la descomposición del error) y **septiembre proyectado** (S/20,477,271), más la **caída de activación** (−0.46pp/mes) y su implicancia. **Republicado 2026-09-02 (tarde)** con: gráfico diario en dos pisos (soles + ratio de activación por cohorte, con la barra de *entra en mora* que faltaba), **tablas de cohortes por día de entrada** para los dos meses, y la sección **«Qué mueve cada corte»** (tasa de entrada real por banda ±18%, por día de semana ±6%, por cercanía al pago ±2%, contra lo que el modelo efectivamente segmenta). Fuente: `asignado_a_asegurado.html` + `armar_asignado_a_asegurado.py` + `tarea19_agosto_cadena_segmentada.sql`. |
 
 | [🧮 Cómo se calcula 13.38%](https://claude.ai/code/artifact/8f7ba3ea-de3e-4bdb-84dd-9105eda2a637) | ✓ vigente, nuevo 2026-08-22 | Reconstruye paso a paso `P_NO_PAGA_DIA0=13.38%`: el embudo elegibles/entradas, 2 créditos reales día por día, desglose mensual (10 meses) y diario (365 días) con curva por día, y las pruebas de robustez de esta sesión (dedup bug 11, ventanas 6/10/12 meses). Fuente: `tasa_1338.html`. |
 | [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732c-483b-99ad-d85c95c896aa) | ✓ vigente, **republicado 2026-09-02** — 8 meses y tasa por soles, más la sección "Dos calendarios" | Cómo se arma el backtest mensual completo (2 motores: stock + nuevos), explicado con julio y mayo 2026 día a día. Ahora con la tabla de los **7 meses cerrados** y su correlación diaria, la fuga de calibración **medida** sobre el motor unificado (0.10pp, reemplaza la prueba vieja que se había corrido sobre la arquitectura de 3 motores) y la explicación de cuánta historia conviene usar. Mayo quedó como el ejemplo de por qué el cierre y el seguimiento diario pueden moverse en direcciones opuestas. Series regeneradas con `armar_proyectado_vs_real.py`. Fuente: `proyectado_vs_real.html`. |
 
+> **✔ 2026-09-02 (tarde) — «De asignado a asegurado» (949ab3c2) REPUBLICADO otra vez**, a pedido
+> del usuario, para cerrar dos huecos de lectura que él detectó en el artifact:
+> (1) el gráfico diario mostraba *vence* y *asegurado* pero **no** *entra en mora*, así que invitaba
+> a leer `asegurado ÷ vence` (19.7%), un ratio que mezcla los dos pasos; ahora va en **dos pisos** —
+> las tres magnitudes en soles arriba (con el umbral de entrada marcado), y el **ratio de activación
+> por cohorte** abajo en su propia escala, porque en soles ese segundo salto ocupa 2 píxeles;
+> (2) el «ratio de activación» del cuadro de septiembre (81.7%) se leía como parámetro del modelo
+> cuando es el **promedio ponderado de 26 cohortes truncadas** (88.4% la del día 1, 52.1% la del 30).
+> Se agregaron **tablas de cohortes por día de entrada** (agosto y septiembre) con los días que le
+> quedan a cada una, y la sección **«Qué mueve cada corte»**. Fuente: `armar_asignado_a_asegurado.py`
+> (bloque `cortes` nuevo) + `asignado_a_asegurado.html`.
+>
+> **REPUBLICADO OTRA VEZ el mismo día, tercera pasada:** faltaba **mostrar las curvas de
+> maduración** — se usaban en todo el motor pero el artifact casi no las enseñaba (solo 6 miniaturas
+> de una sola banda), y la columna «Qué le hace a la curva» de la tabla de cortes decía *«día 0 va de
+> 19.2% – 45.8% · techo 90.3%»* sin aclarar siquiera de qué población hablaba. Ahora hay una sección
+> propia, **«La curva de maduración: el reloj de cada cohorte»**, que **se movió antes de «Qué mueve
+> cada corte»** (primero qué es una curva, después cuánto la mueve cada corte). Arranca siguiendo la
+> cohorte del **2 de agosto** día por día (entró S/882,739 → la curva proyecta 91.3% → terminó en
+> 92.3%), y muestra las tres curvas completas: **nuevos por banda** (el orden **se invierte** entre el
+> día 0 y el cierre: <10% arranca en 37.5% y termina en 88.2%, 70%+ arranca en 30.2% y termina en
+> 94.9%), **nuevos por día de semana** (toda la diferencia vive en los 3 primeros días — sábado 19.1%
+> contra martes 42.0% — y para el día 7 convergen en ~78%) y **antiguos por tramo** (74.2% / 55.9% /
+> 36.2% al día 30). La columna confusa se reemplazó por una **miniatura de la curva** del segmento,
+> todas en la misma escala. Se agregaron **rampas secuenciales** (`--ramp-n-*`, `--ramp-a-*`) porque
+> banda y tramo son escalas ordenadas, no categorías; contraste ≥3:1 y lightness monótona verificados
+> en los dos temas. Datos nuevos en `armar_asignado_a_asegurado.py`: `curvas_nuevos_banda`,
+> `curvas_nuevos_dow`, `curvas_stock_tramo`, `curvas_stock_banda` — agregadas ponderando por la masa
+> real de septiembre, que es la ponderación con la que esas curvas se combinan en la proyección.
+>
+> **HALLAZGO DE ESA SECCIÓN, sin adoptar nada (`PENDIENTES.md` tarea 20):** medida sobre
+> **202601-202607** desde la matriz cruda, la **tasa de entrada real sí se mueve por banda de
+> avance** — 30.8% en `<10%` contra 22.8% en `10-40%`, un índice de **1.184 a 0.874 (±18%)** — y el
+> modelo la aplica **plana**. Por día de semana del vencimiento el rango es ±6% (estable: miércoles
+> por encima los 7 meses, lunes por debajo los 7); por **cercanía al pago es ±2%**, o sea la
+> quincena/fin de mes **no cambian quién cae en mora**, solo **cuándo paga el que ya cayó** (ahí sí
+> el modelo los usa, ×1.087 y ×1.225 sobre la activación). **No se tocó el modelo** — segmentar la
+> tasa por banda es un cambio que se decide con backtest, no en abstracto.
+>
 > **✔ 2026-09-02 — LOS 3 ARTIFACTS AFECTADOS YA ESTÁN REPUBLICADOS**, todos conservando su URL:
 > **De asignado a asegurado** (949ab3c2, reescritura completa que reemplaza a "De julio a
 > agosto"), **Capital asegurado** (d4140b13, agosto cerrado + meta de septiembre + backtest de
