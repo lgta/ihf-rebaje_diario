@@ -3,17 +3,27 @@
 Definiciones cortas. Si un término tiene matices, acá va la versión de una línea — el
 detalle completo está en `guia_tecnica_recupero.md` o `DECISIONES.md`.
 
-**Antiguos / stock** — créditos con mora 1-30 días al cierre del mes anterior. Se les mide
-capital una sola vez (ese cierre) y se les da seguimiento con la curva de stock. **Excepción
-(solo Enfoque alfa, `BUGS.md` bug 12):** también incluye a los que muestran `dayslate=1`
-justo el día 1 del mes — su cuota venció el último día del mes anterior, son antiguos
-aunque `dayslate` recién lo refleje al día siguiente. El recupero oficial (`fase1_stock.sql`)
-no tiene este ajuste todavía.
+**Antiguos / stock** — **definición decidida el 2026-09-13 (tarea 24), la de la vista oficial:**
+créditos con `dias_atraso_cuota` entre 1 y 30 **el día 1 del mes**, con el saldo del cierre del mes
+anterior. Incluye a quien entra en mora ese mismo día (su cuota venció el último día del mes
+anterior) y excluye a quien estaba en mora al cierre pero pagó el último día. Es la regla del
+negocio (`tipo_mora`: `dias_mora >= day(fecha_base)` → antiguo). Se les mide capital una sola vez y
+se les da seguimiento con la curva de stock. **Los motores vigentes todavía usan la definición
+anterior** — mora 1-30 **al cierre** del mes anterior, con la cohorte del día 1 en nuevos (motor
+unificado, tarea 17 Fase 4) — hasta que se complete la recalibración de tarea 24.
 
-**Nuevos / flujo** — créditos que NO estaban en mora al cierre del mes anterior pero
-tienen una cuota que vence durante el mes. Cada día de vencimiento genera su propia
-cohorte. **En Enfoque alfa**, el día 1 del mes queda excluido de "nuevos" por la excepción
-de arriba.
+**Nuevos / flujo** — créditos que entran en mora durante el mes (entrada = vencimiento + 1): del
+día 2 en adelante con la definición nueva. Cada día de entrada genera su propia cohorte.
+
+**Arrastre por DNI (`flg_arrastre_dni`)** — crédito en mora 1-30 cuyo DNI tiene otro crédito con
+más de 30 días de mora: el negocio lo asigna a ESPECIALIZADA/RECOVERY, no a TEMPRANA. Decidido el
+2026-09-13: se trata como en la vista, pero **marcado con un flag, no borrado**, para poder
+separarlo en reporte y análisis. Se reconstruye desde `calendario_diario.dni` (99.9% contra el
+`max_dias_mora_dni` del negocio).
+
+**Pago regularizado** — pago registrado días después con una fecha valor anterior. La tabla de
+cuotas y `dias_atraso_cuota` se re-expresan con la fecha valor, así que el crédito puede "no haber
+estado nunca" en mora un día en que el negocio sí lo gestionó (bug 26).
 
 **Tramo** — banda de mora del stock al momento de asignación: 1-8 / 9-15 / 16-30 días.
 Fijo todo el mes aunque el crédito cruce 30 días después (ver `DECISIONES.md`). Predice

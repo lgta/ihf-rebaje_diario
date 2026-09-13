@@ -52,7 +52,7 @@ de vencimientos y para la validación en # de operaciones.
 | `installmentstate` | `PAID` / `PENDING` / `LATE` / otros |
 | `dias_vencimiento_a_pago` | días entre vencimiento y pago real (a nivel cuota, no crédito) |
 | `flg_last_loan_in_chain` | 1 si es el último crédito de su cadena de reenganches. Constante por `id_ihfintech_loan` (verificado) — derivar a nivel crédito con `max(flg_last_loan_in_chain)` agrupado por `id_ihfintech_loan` y unir a `dts_mambu_loans_hist`/`dts_okaapi_loans` |
-| `installmentlastpaiddate` | fecha real de pago de la cuota. Aportado por el usuario, **sin explotar todavía** — ver `IDEAS.md` punto 4 |
+| `installmentlastpaiddate` | fecha de pago de la cuota — **es la FECHA VALOR, no la de registro** (verificado 2026-09-13, bug 26): cuando un pago se regulariza con fecha valor retroactiva, este campo y el `dias_atraso_cuota` de `calendario_diario` se re-expresan hacia atrás. Si la fecha valor se cargó sin hora viene como `00:00:00`: no sirve para ubicar el pago dentro del día sin verificar. Ver `IDEAS.md` punto 4 |
 | `principalamountpaid` / `principalamountdue` | **ROTOS para capital** — sobre-atribuyen pagos anticipados a cuotas individuales (el acumulado supera 400%). Solo sirven para la curva de validación en # de operaciones, nunca para montos |
 
 Sin `flg_last_loan_in_chain=1`, la curva de # operaciones sale ~10 puntos más baja de lo
@@ -72,6 +72,7 @@ a diferencia de `dts_mambu_loans_hist`, ver bug 11).
 | `dias_atraso_cuota` | días de atraso de la cuota vigente. **`NULL` cuando está al día** — usar siempre `coalesce(dias_atraso_cuota,0)`, mismo patrón que `dayslate` |
 | `fechaporvencer` | fecha de vencimiento de la cuota vigente en esa fila |
 | `fecha_pago` | fecha real de pago de la cuota (no explotada todavía en detalle) |
+| `dni` / `producto` | documento del cliente y producto — permiten calcular la mora máxima por DNI en cualquier fecha histórica (flag de arrastre de tarea 24: 99.9% de acuerdo con el `max_dias_mora_dni` del negocio) |
 
 Join con `dts_mambu_loans_hist`: `date_format(c.fecha_calendario, '%Y%m%d') = a.fechaproceso
 and a._datos_adicionales_loan_accounts_id_ihfintech = c.id_ihfintech_loan` (ver `rebaje.sql`
@@ -106,12 +107,14 @@ población inferida vía `dayslate`). **Reemplaza a `dts_asignaciones_cobranza`*
 de abajo — esa quedó congelada el 2026-07-10). Confirmado 2026-08-18 vía
 `homologacion_tipo_mora_gestiones.sql`, ver bug 13 en `BUGS.md`.
 
-**No tiene NINGUNA fila los sábados/domingos** (verificado julio 2026: `fecha_base` saltea
-los 8 sábados/domingos del mes por completo) — el proceso de asignación del negocio corre
-solo de lunes a viernes. Un crédito que entra en mora y se resuelve DENTRO de un fin de
-semana nunca aparece en esta tabla para todo el mes, aunque `dias_atraso_cuota` sí lo vea
-brevemente en mora — no es un hueco de esta tabla a "corregir", es simplemente su cadencia
-real. Ver bug 16 en `BUGS.md` para el mecanismo completo y su impacto en la calibración.
+**Fines de semana — corregido 2026-09-13.** Los domingos no hay NINGUNA fila. Los sábados **sí
+hay filas desde el 2026-07-25** (~8,300-9,400 créditos cada uno; antes no — verificado en julio
+2026, `fecha_base` salteaba los sábados). **Pero la asignación de sábado es solo para canales
+complementarios: no se genera para call ni IVR** (aclaración del usuario). Para call/IVR el proceso
+sigue siendo de lunes a viernes, así que un crédito que entra en mora y se resuelve DENTRO de un fin
+de semana no llega a esa gestión, aunque `dias_atraso_cuota` sí lo vea brevemente en mora — no es un
+hueco de esta tabla a "corregir", es su cadencia real. Ver bug 16 en `BUGS.md` para el mecanismo y su
+impacto en la calibración, y `PENDIENTES.md` tarea 23.
 
 | Campo | Notas |
 |---|---|
@@ -121,7 +124,7 @@ real. Ver bug 16 en `BUGS.md` para el mecanismo completo y su impacto en la cali
 | `tipo_mora` | `antiguo` / `nuevo` / `sin mora`, calculado A NIVEL CUOTA vigente (`dias_mora >= day(current_date)` → antiguo) y **recalculado a diario** — no fijo como el "tramo" de este proyecto. Homologado contra `dayslate`+bug12: 98.5% de acuerdo en mora 1-30 (ver bug 13, `BUGS.md`); el 1.5% de diferencia son créditos que curan y recaen dentro del mismo mes (este proyecto los mantiene "antiguo" todo el mes por diseño, gestiones_cobranzas los reclasifica a "nuevo") |
 | `fase_estrategia` | TEMPRANA / ESPECIALIZADA / RECOVERY — se fija al momento de asignar la campaña, NO se recalcula a diario (un crédito puede seguir en una fase aunque su mora real ya haya cambiado de tramo) |
 | `subsegmento_fase_estrategia` | sub-banda de mora dentro de la fase (ej. "VENCIDO 1 A 8"), definida por el negocio — no coincide exactamente con los tramos `a.1-8/b.9-15/c.16-30` que usa el resto del proyecto |
-| `dias_mora` / `max_dias_mora_dni` | mora del negocio a nivel cuota — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar |
+| `dias_mora` / `max_dias_mora_dni` | mora del negocio a nivel cuota — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar. `max_dias_mora_dni > 30` ⇒ el crédito va a ESPECIALIZADA/RECOVERY por arrastre (100% de los casos de septiembre); reconstruible desde `calendario_diario.dni` al 99.9% (tarea 24) |
 | `monto_capital_pendiente` / `monto_capital_pendiente_asignado` | saldo según esta tabla — **no usarlo para capital**, seguir el patrón del proyecto de tomar el saldo desde `dts_mambu_loans_hist` (mismo principio que descartó `principalamountpaid`/`principalamountdue`, bug 5 en `BUGS.md`) |
 | `grupo_control` | confirmado 2026-08-19 (`reconciliacion_vw_seguimiento_temprana.md`): valores incluyen `'CONTROL'` (créditos deliberadamente NO gestionados, para medir "efecto de la gestión") y `NULL`/otros — explica la mayoría (82%) de los créditos en mora 1-30 propios que NO aparecen en la fase TEMPRANA oficial. Sigue sin explorarse a fondo su uso para medir el efecto causal de la gestión |
 | `fecha_de_vencimiento_cuota`, `hora_base`, `fecha_proceso`, `abtest_cob_wapp`, `segmento_piloto_cbr`, `grupo_control_fisica` | columnas nuevas vs. `dts_asignaciones_cobranza`, sin explotar todavía en este proyecto |
@@ -160,6 +163,19 @@ saldo de Mambu para nuestro propio cálculo de capital** — es el mismo campo
 `monto_capital_pendiente` de `dts_asignaciones_gestiones_cobranza` que `FUENTES_DATOS.md`
 ya advierte no usar (mismo principio que bug 5), aunque en la práctica difiere solo ~1%
 del saldo Mambu en la muestra vista hasta ahora.
+
+**Actualización 2026-09-13 (tarea 24):**
+- **La vista cambió desde que se copió su definición.** Ahora incluye RECOVERY en 202609
+  (`fecha_inicio_recovery` = 2026-09-01) y agrega las columnas `call`, `monto_cuota_a_pagar`,
+  `ultima_actualizacion` y `fecha_pago`. El `.txt` del repo se reemplazó el 2026-09-13 con la
+  versión viva (`SHOW CREATE VIEW` — ojo: escribe un `.txt` en S3, no un `.csv`, así que el helper
+  no lo baja; hay que hacer `aws s3 cp` de `<QID>.txt`).
+- **Es pesada:** su CTE `mambu_con_fecha` hace `row_number()` sobre TODO `dts_mambu_loans_hist`;
+  referenciarla varias veces en una query agota recursos (bug 27). Para fase/tipo/mora/monto del
+  anclaje, replicarlo desde `dts_asignaciones_gestiones_cobranza` (primer `fecha_base` del mes,
+  atributos `MAX` de ese día) — validado exacto: 2,790 / S/4,904,772.54 en TEMPRANA `antiguo` 202609.
+- `monto_asignado` coincide al céntimo con nuestro saldo Mambu del cierre del mes anterior en 2,749
+  de 2,751 créditos compartidos (septiembre).
 
 ## Patrón de CTEs base (aparece en casi todos los `.sql` del proyecto)
 

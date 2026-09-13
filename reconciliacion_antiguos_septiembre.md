@@ -1,5 +1,12 @@
 # Por qué nuestros "antiguos" de septiembre (S/3.76M) son menores que TEMPRANA de la vista oficial (S/4.90M)
 
+> **ACTUALIZACIÓN 2026-09-13 — superado por la tarea 24.** El usuario decidió que la definición
+> correcta de antiguo es la de la vista (en mora el día 1). Con ella el cuadre pasa de −23.9% a
+> **+0.5%** (`tarea24_reconcilia_antiguos_sep_v2.sql`), y la recomendación de abajo de *"no mover
+> nuestro corte al 1-sep"* queda sin efecto: se mueve, recalibrando tasa y curvas (`PENDIENTES.md`
+> tarea 24). Y los **487 créditos que "aún no aparecían" no eran rezago**: 475 pagaron el 31-ago,
+> el 1-sep ya estaban al día y nadie los asignó. El resto del documento queda como registro.
+
 **2026-09-02.** Pregunta del usuario. Aplica el *principio de universo* de `CLAUDE.md`: la
 diferencia se explica con datos, no se asume. Fuentes:
 `tarea22_reconcilia_antiguos_septiembre.sql`, `tarea22_hipotesis_fecha_corte.sql`,

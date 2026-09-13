@@ -1,0 +1,152 @@
+PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
+Escrito 2026-09-13. Reemplaza a prompt_handoff_2026-09-11.txt: esta sesión cambió la definición
+de antiguo (tarea 24), y eso reordena todo lo que sigue.
+
+====================================================================
+ORDEN DE LECTURA — y nada más
+====================================================================
+1. CLAUDE.md              — reglas de datos y los 4 principios no negociables. Tiene 3 reglas
+                            nuevas de esta sesión (antiguo v2, reenganches, fecha valor).
+2. ESTADO.md              — bloque "2026-09-13" (el de arriba) + "La meta vigente".
+3. PENDIENTES.md          — TAREA 24 completa: decisiones, la pregunta abierta al usuario y el
+                            plan de recalibración. Después tareas 20, 21 y 23.
+4. Solo si hace falta:
+   - DECISIONES.md, última entrada (antiguo = en mora el día 1)
+   - BUGS.md bugs 25, 26 y 27 (trampas nuevas, resumidas abajo)
+   - analisis_tarea19_activacion_decreciente.md (el hallazgo de fondo)
+
+NO releer todo el historial. ESTADO.md + PENDIENTES.md alcanzan para operar.
+
+====================================================================
+DÓNDE ESTÁ EL PROYECTO
+====================================================================
+Agosto 2026 CERRADO:  capital asegurado -1.2% | recupero oficial -3.2%
+Metas de SEPTIEMBRE, fijadas el 1-sep y NO recalculadas (tampoco en esta sesión):
+    Capital asegurado (meta principal):  S/20,477,271
+    Recupero oficial:                    S/3,928,776
+Motor vigente: unificado v3, tasa de entrada por SOLES (24.9081%), curvas [202508,202607],
+con la definición VIEJA de antiguo (mora 1-30 al cierre del mes anterior).
+
+DECISIÓN DE ESTA SESIÓN (usuario, 2026-09-13): antiguo = mora 1-30 EL DÍA 1 del mes — la
+definición de vw_seguimiento_diario_cohorte_tramo. "Si esto implica recalibrar, hagámoslo."
+La recalibración NO está hecha: es lo que sigue.
+
+====================================================================
+LO QUE SE HIZO EN ESTA SESIÓN (tarea 24) — para no re-preguntarlo
+====================================================================
+- La regla del negocio (tipo_mora: dias_mora >= day(fecha_base) -> antiguo) equivale a "entró
+  en mora el día 1 o antes", en cualquier día de asignación. Va anclada al día 1 CALENDARIO, no
+  al primer día hábil: se reproduce en toda la historia sin la tabla de asignaciones.
+      v2: dias_atraso_cuota 1-30 el DÍA 1 del mes, saldo Mambu al cierre del mes anterior
+      v1: dias_atraso_cuota 1-30 al CIERRE del mes anterior   <- lo que usan los motores hoy
+  Quién está en mora el día 1 se sabe al cierre del día anterior: la meta se sigue fijando el 1.
+- Cuadre de septiembre contra la vista: v1 -23.9% -> v2 +0.5% (2,837 / S/4,930,217 contra
+  2,790 / S/4,904,773). En ambos 2,751, con el monto idéntico al céntimo en 2,749.
+- v1 -> v2 mueve: +965 que entraron el 1-sep (S/1.92M), +12 que volvieron a 1-30; -478 que
+  pagaron el 31-ago (S/657K — ERAN los 487 "no aparecen aún" de tarea 22: no era rezago), y
+  -46 que pasaron de 30 a 31 días (el negocio los mandó a ESPECIALIZADA).
+- Lo que queda, con su decisión:
+    arrastre por DNI    68 / S/86K   -> como la vista, con FLAG flg_arrastre_dni (validado 99.9%)
+    punto ciego dac     25 / S/63K   -> documentar (17 pagos regularizados + 8 sin cuota en tabla)
+    reenganches         13 / S/19K   -> DECISIÓN PENDIENTE del usuario (medido, ver abajo)
+    sin asignación      18 / S/22K   -> se quedan
+- Reenganches (bug 25): flg_last_loan_in_chain se lee con la foto de HOY y borra de cada mes a
+  los que se refinanciaron DESPUÉS. Peso en saldo: nuevos 7.8-11.3%, stock 1.2-5.9% en los meses
+  completos; cae hacia el presente (nuevos 4.8% jul, 2.2% ago). HIPÓTESIS NO VERIFICADA: podría
+  explicar parte de la caída de activación de tarea 19. El filtro de status NO tiene el problema.
+- Todo está en tarea24_*.sql y datos_tarea24/. La definición de la vista en el repo se actualizó
+  con SHOW CREATE VIEW (la vista viva había cambiado).
+
+====================================================================
+LO QUE SIGUE, EN ORDEN
+====================================================================
+0. PREGUNTA ABIERTA AL USUARIO (hecha el 13-sep, sin respuesta al escribir esto):
+   ¿el arrastre por DNI queda FUERA de la meta de TEMPRANA con su real reportado aparte
+   (recomendado: ~1.7% del stock; una curva propia saldría sin muestra), o quiere proyección
+   propia? Defaults ya anunciados si no dice otra cosa: flag también para nuevos (medido el día
+   de entrada); los dos enfoques; septiembre publicada NO se toca (v2 en paralelo); octubre es la
+   primera meta v2; backtest de 8 meses con error de cierre + correlación diaria.
+
+1. RECALIBRAR CON v2 (plan en PENDIENTES tarea 24):
+   a. Re-correr las matrices crudas de tarea19_*.sql con v2 y con DOS dimensiones nuevas:
+      flg_arrastre_dni y el flag de reenganche. Incluir los reenganches MARCADOS, sin contar como
+      pago el día del cierre por refinanciamiento -> decidir reenganches después cuesta 0 Athena.
+      Producción los sigue excluyendo hasta que el usuario decida.
+   b. Stock v2 (ventana FIJA 202504-202606). OJO: la cohorte que entra el día 1 se comporta como
+      nueva (activa fuerte el día 0) y su peso en el tramo 1-8 varía por mes — cuando el último
+      día del mes anterior es domingo NO hay cohorte del día 1. Probar un segmento propio
+      ("entra el día 1") dentro del stock; decidirlo con métricas DIARIAS (CLAUDE.md).
+   c. Nuevos: sin la cohorte del día 1; los que pagaron el último día del mes vuelven al
+      calendario (ya no están en el stock). P_ENTRADA sobre la MISMA definición (principio de
+      modelado).
+   d. Los dos enfoques (comparten la definición de entrada).
+   e. Backtest v1 vs v2, 8 meses, las dos métricas. Corregir el universo se adopta aunque el
+      error suba (principio de interpretación del error), pero la adopción la decide el usuario.
+
+2. SEGUIR SEPTIEMBRE CONTRA LA META — sigue SIN HACER desde el 1-sep. Copia de
+   tarea19_real_agosto_cierre.sql con las fechas de septiembre, con la definición v1 (la de la
+   meta publicada: el real se mide con la misma definición que la meta, como agosto). Pregunta
+   del mes: ¿se materializa el caveat de ~10%? Dos números: cierre y correlación diaria. Usar el
+   PENÚLTIMO día como último día completo.
+
+3. EXPLICAR LA CAÍDA DE ACTIVACIÓN (-0.46pp/mes, tarea 19). Candidato nuevo para el paso 3
+   ("artefacto del universo"): el filtro de reenganches que mira adelante (bug 25). Se prueba
+   midiendo la activación de los que después se refinancian contra el resto, mes a mes.
+
+4. Tarea 23 (proyectar lo que entra a gestión): premisa ajustada — desde el 25-jul hay
+   asignación los sábados, pero SOLO para canales complementarios (no call/IVR). Cortar por
+   canal_asignado. Sigue abierta la pregunta de los feriados.
+
+====================================================================
+TRAMPAS NUEVAS (bugs 25, 26 y 27)
+====================================================================
+- flg_last_loan_in_chain mira hacia adelante (bug 25). No "arreglarlo" sin decisión del usuario.
+- dias_atraso_cuota e installmentlastpaiddate usan la FECHA VALOR: un pago regularizado días
+  después re-expresa la mora hacia atrás (bug 26). installmentlastpaiddate a veces viene sin hora
+  (00:00:00): no sirve para ubicar el pago dentro del día.
+- vw_seguimiento_diario_cohorte_tramo recalcula un row_number() sobre TODO dts_mambu_loans_hist
+  en cada referencia: más de ~2 referencias por query -> "Query exhausted resources". Replicar el
+  anclaje desde dts_asignaciones_gestiones_cobranza (validado exacto contra la vista) (bug 27).
+- unnest de array(row(...)) NO expande a columnas en Athena: usar arrays paralelos (bug 27).
+- SHOW CREATE VIEW deja un .txt en S3, no un .csv: el helper no lo baja -> aws s3 cp <QID>.txt.
+- La vista CAMBIÓ: ahora tiene RECOVERY en 202609 y columnas call / monto_cuota_a_pagar /
+  ultima_actualizacion / fecha_pago. El .txt del repo ya está actualizado.
+- dts_asignaciones_gestiones_cobranza SÍ tiene filas los sábados desde el 25-jul (canales
+  complementarios). FUENTES_DATOS.md ya corregido.
+
+====================================================================
+TRAMPAS VIEJAS QUE SIGUEN VIGENTES
+====================================================================
+- tipo_mora de la vista viene en MINÚSCULA, y los nombres de columna de la vista no son los de
+  su definición: verificar contra information_schema.columns (bug 24).
+- Ninguna cuota vence domingo -> nadie entra en mora un LUNES.
+- WHERE ... IN (...) + SUM() OVER (ORDER BY ...) en la misma query: el WHERE va antes (bug 4).
+- dts_mambu_loans_hist se re-expresa para días pasados (-0.3% a -0.8%): re-medir un corte viejo
+  da números levemente distintos. No es bug del modelo.
+- La foto del día en curso todavía está corriendo: usar el penúltimo día.
+- 3 generaciones de scripts en el root: verificar en ESTADO.md cuál es el vigente.
+
+====================================================================
+CICLO MENSUAL — la meta de OCTUBRE
+====================================================================
+Ventana [202509, 202608] (el último mes completamente observado al 1-oct). Si la recalibración
+v2 está adoptada antes del 1-oct, octubre sale con v2; si no, con el ciclo de siempre:
+  1. Las 10 queries tarea19_*.sql con las ventanas corridas un mes.
+  2. generar_curvas_septiembre.py con VENTANA_NUEVOS = ("202509","202608"). Renombrar.
+  3. meta_septiembre_capital_asegurado.py y meta_septiembre_recupero.py -> octubre.
+  4. armar_asignado_a_asegurado.py + republicar 949ab3c2 (pasar url= para conservarla).
+Con v2, los pasos 1-3 cambian según lo que salga de la recalibración.
+
+====================================================================
+CONVENCIONES DE TRABAJO
+====================================================================
+- El usuario controla commit y push explícitamente. No commitear sin que lo pida.
+- Las decisiones de adopción son suyas: medir y recomendar con el backtest corrido.
+- Prefiere FLAG antes que borrar: un segmento que no entra a la meta se marca, para poder
+  separarlo en reporte y análisis (caso: arrastre por DNI).
+- Artifacts: al publicar, copiar el .html al repo y actualizar la tabla en ESTADO.md y
+  README.md. Para actualizar uno existente hay que pasar url= o se crea otro.
+- Los 3 artifacts vigentes: 949ab3c2 (De asignado a asegurado — el recomendado), d4140b13
+  (Capital asegurado), f80d3761 (Proyectado vs. Real). OJO: 949ab3c2 está compartido y los
+  viewers ven una VERSIÓN ANCLADA anterior; para que el equipo vea cambios hay que actualizar la
+  versión compartida desde el menú de compartir del artifact.

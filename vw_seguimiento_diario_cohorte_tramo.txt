@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW "vw_seguimiento_diario_cohorte_tramo" AS 
+CREATE VIEW dev_datalake_master.vw_seguimiento_diario_cohorte_tramo AS
 WITH
   fecha_inicio_recovery AS (
    SELECT *
@@ -7,6 +7,7 @@ WITH
  VALUES 
         ROW ('202607', DATE '2026-07-03')
       , ROW ('202608', DATE '2026-08-05')
+      , ROW ('202609', DATE '2026-09-01')
    )  t (periodo, fecha_inicio_recovery)
 ) 
 , base_gestion AS (
@@ -27,6 +28,8 @@ WITH
    , a.rango_saldo_fisica
    , a.canal_fisica
    , a.fecha_de_vencimiento_cuota
+   , a."call"
+   , a.monto_cuota_a_pagar
    FROM
      (dts_asignaciones_gestiones_cobranza a
    LEFT JOIN fecha_inicio_recovery r ON (r.periodo = date_format(CAST(a.fecha_base AS date), '%Y%m')))
@@ -59,6 +62,8 @@ WITH
    , MAX(c.rango_saldo_fisica) rango_saldo_fisica
    , MAX(c.canal_fisica) canal_fisica
    , MAX(b.fecha_de_vencimiento_cuota) fecha_de_vencimiento_cuota
+   , MAX(b."call") "call"
+   , MAX(b.monto_cuota_a_pagar) monto_cuota_a_pagar
    FROM
      ((primer_dia_mes p
    INNER JOIN base_gestion b ON ((b.id_ihfintech_loan = p.id_ihfintech_loan) AND (b.fecha_base = p.fecha_ancla) AND (b.periodo_calendario_gestiones = p.periodo_calendario_gestiones)))
@@ -90,6 +95,7 @@ WITH
    , m.accountstate accountstate_ancla
    , m.accountsubstate accountsubstate_ancla
    , COALESCE(m.balances_principalbalance, 0) saldo_capital_mambu_ancla
+   , m.fechaactualizaciontabla fechaactualizacion_ancla
    FROM
      (cohorte_anclaje coh
    LEFT JOIN mambu_con_fecha m ON ((m._datos_adicionales_loan_accounts_id_ihfintech = coh.id_ihfintech_loan) AND (m.fecha_efectiva = coh.fecha_ancla) AND (m.rn = 1)))
@@ -110,8 +116,11 @@ WITH
    , coh.rango_saldo_fisica
    , coh.canal_fisica
    , coh.fecha_de_vencimiento_cuota
+   , coh."call"
+   , coh.monto_cuota_a_pagar
    , avc.saldo_capital_mambu_ancla saldo_capital
    , avc.monto_asignado_fix monto_asignado
+   , avc.fechaactualizacion_ancla ultima_actualizacion
    , COALESCE(coh.dias_mora_ancla, 0) dias_mora
    , COALESCE(coh.dias_mora_ancla, 0) dias_mora_inicio
    , coh.max_dias_mora_dni_ancla max_dias_mora_dni
@@ -137,8 +146,11 @@ WITH
    , coh.rango_saldo_fisica
    , coh.canal_fisica
    , coh.fecha_de_vencimiento_cuota
+   , coh."call"
+   , coh.monto_cuota_a_pagar
    , m.balances_principalbalance saldo_capital
    , avc.monto_asignado_fix monto_asignado
+   , m.fechaactualizaciontabla ultima_actualizacion
    , COALESCE(m.dayslate, 0) dias_mora
    , COALESCE(coh.dias_mora_ancla, 0) dias_mora_inicio
    , coh.max_dias_mora_dni_ancla max_dias_mora_dni
@@ -237,6 +249,7 @@ SELECT
 , refin.motivo_apertura
 , pagos.monto_pago
 , pagos.capital_pagado
+, pagos.fecha_pago
 , (CASE WHEN (refin.fecha_desembolso = c.fecha) THEN 1 ELSE 0 END) flg_dia_refinanciado
 , (CASE WHEN (pp.fecha_primer_pago = c.fecha) THEN 1 ELSE 0 END) flg_primer_pago
 , (CASE WHEN ((pp.fecha_primer_pago IS NOT NULL) AND (c.fecha >= pp.fecha_primer_pago)) THEN 1 ELSE 0 END) flg_pagado_en_el_mes

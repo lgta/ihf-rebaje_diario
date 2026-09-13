@@ -16,10 +16,11 @@ Ver [`ESTADO.md`](ESTADO.md) para el detalle.
 
 ## Empezar por acá
 
-**[`prompt_handoff_2026-09-11.txt`](prompt_handoff_2026-09-11.txt)** — si vas a arrancar una
+**[`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt)** — si vas a arrancar una
 sesión nueva, empieza por acá: orden de lectura, dónde está el proyecto, qué está resuelto y no
 hay que re-probar, las tareas abiertas en orden, el ciclo mensual para fijar la meta siguiente y
-las trampas conocidas. *(`prompt_handoff_2026-08-26.txt` queda como registro; está viejo.)*
+las trampas conocidas. *(Los handoffs anteriores — `2026-09-11`, `2026-09-02` y `2026-08-26` —
+quedan como registro; están viejos.)*
 
 **[`ESTADO.md`](ESTADO.md)** — foto del momento: meta vigente, artifacts actualizados,
 qué está validado vs. experimental, pendientes. Es el archivo que se mantiene al día; todo
@@ -60,7 +61,10 @@ diario — por eso el recupero se modela como **P(paga) × E(% del saldo que reb
 pagar)**, para dos poblaciones con motores distintos:
 
 - **Stock (antiguos):** créditos con mora 1–30 al cierre del mes anterior. Curva de
-  recupero por **tramo de mora × día del mes**.
+  recupero por **tramo de mora × día del mes**. **Decidido el 2026-09-13 (tarea 24), por
+  implementar:** pasa a ser *mora 1-30 el día 1 del mes*, la definición de la vista oficial, que
+  incluye a quien entra en mora ese mismo día. Los motores vigentes usan todavía la definición
+  del cierre hasta que se complete la recalibración.
 - **Nuevos:** créditos que caen en mora durante el mes, uno por cada día del calendario
   de vencimientos que no se paga a tiempo. Curva de recupero por **avance de
   amortización × días desde la entrada en mora**.
@@ -87,7 +91,7 @@ archivos de referencia de abajo para consultas puntuales.
 | [`enfoque_acumulado.md`](enfoque_acumulado.md) | Enfoque oficial (validado): resumen corto, apunta a `guia_tecnica_recupero.md` |
 | [`enfoque_capital_asegurado.md`](enfoque_capital_asegurado.md) | Enfoque alfa: % de capital con actividad de pago. **Ojo: describe la arquitectura anterior** — el motor vigente es `motor_unificado.py` v2, ver `ESTADO.md` |
 | [`avance_cobranza_fase.md`](avance_cobranza_fase.md) | Análisis puntual: avance de julio por fase de cobranza (Temprana/Especializada/Recovery), usando la asignación real del negocio |
-| [`reconciliacion_antiguos_septiembre.md`](reconciliacion_antiguos_septiembre.md) | **Cierra la pregunta del 2026-09-02**: por qué nuestros antiguos de septiembre (S/3.76M) son menores que TEMPRANA de la vista oficial (S/4.90M). Cuadre crédito a crédito; el 99% de la diferencia son 965 créditos que vencieron el 31-ago y entraron en mora el 1-sep — `antiguo` para la vista, **nuevos del día 1** para el motor. No es capital faltante. |
+| [`reconciliacion_antiguos_septiembre.md`](reconciliacion_antiguos_septiembre.md) | **Cierra la pregunta del 2026-09-02**: por qué nuestros antiguos de septiembre (S/3.76M) son menores que TEMPRANA de la vista oficial (S/4.90M). Cuadre crédito a crédito; el 99% de la diferencia son 965 créditos que vencieron el 31-ago y entraron en mora el 1-sep — `antiguo` para la vista, **nuevos del día 1** para el motor. No es capital faltante. **Superado el 2026-09-13 (tarea 24):** el usuario adoptó la definición de la vista (antiguo = en mora el día 1); con ella el cuadre queda en +0.5%, y los 487 que "no aparecían" resultaron ser créditos que pagaron el 31-ago. |
 | [`reconciliacion_vw_seguimiento_temprana.md`](reconciliacion_vw_seguimiento_temprana.md) | **Pendiente activo** — reconciliación contra la vista oficial externa `vw_seguimiento_diario_cohorte_tramo`: cuadra casi exacto en la población compartida, pero cuantifica el punto ciego de `dayslate` en ~27% de TEMPRANA (bug 14, `BUGS.md`) |
 
 ## Estructura del repositorio
@@ -139,6 +143,19 @@ tarea22_solo_nuestro.sql      Donde estan los 592 creditos que la vista no marca
 reconciliacion_antiguos_septiembre.md  El informe: por que S/3.76M y no S/4.90M
 -----------------------------------------------------------------------------
 
+--- ANTIGUO = "EN MORA EL DIA 1" (tarea 24 - 2026-09-13) ---------------------
+tarea24_reconcilia_antiguos_sep_v2.sql  Cuadre v2 contra la vista: -23.9% -> +0.5%
+tarea24_diagnostico_diferencias.sql  Lo que entra/sale al mover el corte (los 487 pagaron el 31-ago)
+tarea24_diagnostico_vista.sql  Punto ciego, reenganches y arrastre, con el anclaje replicado
+tarea24_casos_b.sql          Los 25 que dias_atraso_cuota no ve, uno por uno
+tarea24_casos_b_transacciones.sql  Sus transacciones Mambu: 17 son pagos regularizados
+tarea24_validacion_arrastre_dni.sql  Flag de arrastre por DNI reconstruido: 99.9% contra el negocio
+tarea24_reenganches_historico.sql  Peso del filtro de reenganches que mira adelante (bug 25)
+tarea24_sabados_asignacion.sql  Asignacion de sabado desde el 25-jul (solo canales complementarios)
+tarea24_status_okaapi.sql      El filtro de status NO mira adelante (flag 0 = todo COMPLETED)
+vw_seguimiento_diario_cohorte_tramo.txt  Definicion de la vista, actualizada con SHOW CREATE VIEW
+-----------------------------------------------------------------------------
+
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
 backtest_junio.py            Compara proyección vs. recupero real de junio (backtest)
 backtest_capital_asegurado_junio.py  Backtest de junio del enfoque alfa (capital asegurado)
@@ -168,6 +185,10 @@ datos_tarea21/                Doble conteo antiguo/nuevo: diagnósticos de agost
 datos_tarea22/                Reconciliación de los antiguos de septiembre contra la vista
                               oficial: cuadre crédito a crédito, prueba de las 3 hipótesis del
                               gap, y dónde están los 592 que solo tenemos nosotros
+datos_tarea24/                Antiguo = en mora el día 1: cuadre v2 contra la vista, diagnóstico
+                              de cada diferencia, los 25 casos del punto ciego con sus
+                              transacciones, validación del flag de arrastre, peso histórico de
+                              los reenganches, sábados y status
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
 datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado, curvas)
 datos_avance_capital_asegurado_agosto/  Insumos (CSV) de la meta de agosto (enfoque alfa)

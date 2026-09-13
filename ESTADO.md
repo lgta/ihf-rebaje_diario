@@ -6,12 +6,28 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-11 (cierre de la sesión de tareas 20/21/22/23).
+Última actualización: 2026-09-13 (tarea 24: antiguo = en mora el día 1).
 
-> **PARA ARRANCAR UNA SESIÓN NUEVA:** leer este bloque + "La meta vigente", y después
-> `PENDIENTES.md` **tareas 20, 21 y 23** (las tres abiertas). El prompt de handoff vigente es
-> [`prompt_handoff_2026-09-11.txt`](prompt_handoff_2026-09-11.txt) — reemplaza al del 2026-09-02,
-> que ya no refleja lo abierto.
+> **PARA ARRANCAR UNA SESIÓN NUEVA:** el prompt de handoff vigente es
+> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt) — reemplaza al del 2026-09-11,
+> que no cubría la tarea 24. Después: el bloque de abajo + "La meta vigente", y `PENDIENTES.md`
+> **tarea 24** (en curso: recalibración) y **tareas 20, 21 y 23**.
+
+> **2026-09-13 — TAREA 24: ANTIGUO PASA A SER "EN MORA EL DÍA 1", LA DEFINICIÓN DE LA VISTA
+> (decisión del usuario). Reconciliado, decidido lo que colgaba, recalibración por empezar.**
+> Con la definición nueva el cuadre de antiguos de septiembre contra la vista pasa de **−23.9% a
+> +0.5%** (2,837 créditos / S/4,930,217 contra 2,790 / S/4,904,773), con el monto idéntico al céntimo
+> en 2,749 de 2,751 compartidos. La regla del negocio (`dias_mora >= day(fecha_base)`) equivale a
+> "entró en mora el día 1 o antes", así que se reproduce en toda la historia. Los 487 que el 2-sep "no
+> aparecían" **no eran rezago**: pagaron el 31-ago y nadie los asignó. Decisiones: arrastre por DNI
+> como la vista pero con flag (reconstrucción validada al 99.9%); punto ciego de `dias_atraso_cuota`
+> documentado (pagos regularizados con fecha valor, bug 26); **reenganches medidos, decisión
+> pendiente** — el filtro mira hacia adelante y saca 8-11% del saldo de nuevos en los meses completos
+> (bug 25). **La meta de septiembre (S/20,477,271) no se tocó**; octubre sería la primera meta v2.
+> **Queda una pregunta abierta al usuario antes de recalibrar:** si el arrastre queda fuera de la
+> meta con su real reportado aparte (recomendado) o con proyección propia. Sigue sin hacerse,
+> además, el seguimiento del real de septiembre contra la meta (bloque del 2026-09-11).
+> Detalle y plan en `PENDIENTES.md` tarea 24; decisión en `DECISIONES.md`.
 
 > **2026-09-01/02 — AGOSTO CERRADO, METAS DE SEPTIEMBRE FIJADAS, Y UN HALLAZGO DE NEGOCIO QUE
 > CAMBIA LA LECTURA DEL SESGO (tarea 19).**

@@ -1,0 +1,21 @@
+"bloque","k1","k2","k3","creditos","monto_asignado","saldo_nuestro"
+"0. control: TEMPRANA antiguo replicado","total","","","2790","4904772.54","4885289.83"
+"B. vista antiguo, mora 0 nuestra el 1-sep","mora 0 el 31-ago","mora asignacion 1","p0. sin pago 30-ago..1-sep","5","26186.08","26186.08"
+"B. vista antiguo, mora 0 nuestra el 1-sep","mora 0 el 31-ago","mora asignacion 1","p2. pago 31-ago antes de 09h","1","284.69","284.69"
+"B. vista antiguo, mora 0 nuestra el 1-sep","mora 0 el 31-ago","mora asignacion 16-30","p0. sin pago 30-ago..1-sep","4","18800.63","18800.63"
+"B. vista antiguo, mora 0 nuestra el 1-sep","mora 0 el 31-ago","mora asignacion 2-8","p0. sin pago 30-ago..1-sep","9","7802.57","7802.57"
+"B. vista antiguo, mora 0 nuestra el 1-sep","mora 0 el 31-ago","mora asignacion 9-15","p0. sin pago 30-ago..1-sep","4","4775.91","4775.91"
+"B. vista antiguo, mora 0 nuestra el 1-sep","mora >=1 el 31-ago (estaba en v1)","mora asignacion 2-8","p2. pago 31-ago antes de 09h","2","5605.73","5605.73"
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260902","CLOSED/REFINANCED","","2","1617.35",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260903","CLOSED/REFINANCED","","1","929.38",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260904","CLOSED/REFINANCED","","1","544.91",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260906","CLOSED/REFINANCED","","2","2028.66",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260907","CLOSED/REFINANCED","","1","945.96",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260908","CLOSED/REFINANCED","","3","7667.2",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260909","CLOSED/REFINANCED","","1","1619.31",
+"C. reenganches que gestiona la vista","deja ACTIVE el 20260911","CLOSED/REFINANCED","","2","3222.25",
+"D. v2 asignado a ESPECIALIZADA/RECOVERY","ESPECIALIZADA","max_dias_mora_dni > 30 (arrastre por DNI)","nuestra mora 1-8","13","14468.4","14468.4"
+"D. v2 asignado a ESPECIALIZADA/RECOVERY","ESPECIALIZADA","max_dias_mora_dni > 30 (arrastre por DNI)","nuestra mora 16-30","37","57132.06","57132.06"
+"D. v2 asignado a ESPECIALIZADA/RECOVERY","ESPECIALIZADA","max_dias_mora_dni > 30 (arrastre por DNI)","nuestra mora 9-15","16","12838.23","12838.23"
+"D. v2 asignado a ESPECIALIZADA/RECOVERY","RECOVERY","max_dias_mora_dni > 30 (arrastre por DNI)","nuestra mora 16-30","1","132.41","132.41"
+"D. v2 asignado a ESPECIALIZADA/RECOVERY","RECOVERY","max_dias_mora_dni > 30 (arrastre por DNI)","nuestra mora 9-15","1","1428.14","1428.14"

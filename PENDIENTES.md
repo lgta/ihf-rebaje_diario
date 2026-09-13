@@ -1181,6 +1181,11 @@ meses. **Está medido, no explicado.** Lo que hay que averiguar, en orden:
    ser mix y no eficiencia. Se mide sin Athena nueva, desde la matriz cruda.
 3. **¿Es un artefacto del universo?** Descartado parcialmente: el mismo patrón aparece en los
    dos enfoques y con las dos tasas, así que no es de la definición de entrada.
+   **Candidato nuevo (2026-09-13, bug 25, sin verificar):** el filtro `flg_last_loan_in_chain` mira
+   hacia adelante y saca de cada mes a los que se refinanciaron después — 8-11% del saldo de nuevos
+   en los meses viejos, solo 2-5% en los recientes porque sus refinanciamientos todavía no
+   ocurrieron. Si esos créditos activan menos, los meses viejos quedan "limpiados" y los recientes
+   no: una caída aparente. Se prueba midiendo su activación contra el resto (tarea 24).
 **No ajustar nada mientras tanto** (`CLAUDE.md`) — la meta de septiembre lleva el caveat
 explícito de que corre ~10% alta si la tendencia sigue.
 
@@ -1383,3 +1388,128 @@ universo de una meta de gestión.
 
 **PREGUNTA ABIERTA para el usuario antes de construirlo:** ¿los feriados también son días sin
 asignación? Si sí, el universo depende de un calendario de feriados que hoy el proyecto no tiene.
+
+**ACTUALIZACIÓN 2026-09-13:** desde el **25-jul** `dts_asignaciones_gestiones_cobranza` SÍ tiene
+filas los sábados (~8,300-9,400 créditos cada uno; los domingos nunca). Aclaración del usuario: **la
+asignación de sábado es solo para canales complementarios — no se genera para call ni IVR.** La
+premisa de esta tarea sigue valiendo para los canales principales, pero al construirla hay que
+cortar por canal (`canal_asignado`): "el sábado no hay asignación" es cierto para call/IVR, no para
+toda la tabla.
+
+
+### Tarea 24 — Antiguo = "en mora el día 1" (la definición de la vista): reconciliación, decisiones y recalibración — 2026-09-13
+
+**DECISIÓN DEL USUARIO (2026-09-13):** la definición correcta de antiguo es la de
+`vw_seguimiento_diario_cohorte_tramo` — el crédito que entra en mora el día 1 es **antiguo**, no un
+nuevo con `dia_entrada = 1`. *"Si esto implica recalibrar, hagámoslo."* Revierte a propósito lo que
+hacía el motor unificado desde tarea 17 Fase 4. Decisión en `DECISIONES.md`.
+
+**La regla es reproducible en toda la historia.** El negocio calcula `tipo_mora` con
+`dias_mora >= day(fecha_base)`; en cualquier día de asignación eso equivale a "entró en mora el día 1
+del mes o antes". Va anclada al **día 1 calendario**, no al primer día hábil:
+
+    v2 (nueva):   dias_atraso_cuota entre 1 y 30 el DÍA 1 del mes; saldo al cierre del mes anterior
+    v1 (vigente): dias_atraso_cuota entre 1 y 30 al CIERRE del mes anterior
+
+Quién está en mora el día 1 se sabe al cierre del último día del mes anterior: la meta se sigue
+pudiendo fijar el día 1.
+
+**Reconciliación de septiembre con v2** (`tarea24_reconcilia_antiguos_sep_v2.sql`, vista con 11 días
+de asignación cargados):
+
+| | Créditos | Saldo | vs. vista |
+|---|---:|---:|---:|
+| Vista, TEMPRANA `antiguo` | 2,790 | S/4,904,773 | |
+| v1 (cierre de agosto) | 2,384 | S/3,734,730 | −23.9% |
+| **v2 (en mora el 1-sep)** | 2,837 | S/4,930,217 | **+0.5%** |
+
+En ambos: 2,751 créditos, con el monto idéntico al céntimo en 2,749. (v1 daba S/3,763,294 el 2-sep:
+re-expresión de Mambu y del calendario.)
+
+**Qué mueve v1 → v2** (`tarea24_diagnostico_diferencias.sql`):
+- **+965 (S/1,915,671)** entraron en mora el 1-sep; +12 (S/14,279) tenían >30 al cierre y 1-30 el 1-sep.
+- **−478 (S/656,621)** estaban en mora al cierre pero **pagaron el 31-ago** (475 de 478): el 1-sep ya
+  estaban al día y el negocio no los asignó. **Son los 487 "no aparecen aún" de tarea 22 — no era
+  rezago.** 459 no aparecen en ninguna asignación del mes, 17 reentraron como `nuevo`, 2 fueron
+  asignados `antiguo` igual. 475 tienen otro vencimiento en septiembre: con v2, si vuelven a caer,
+  entran por el calendario de nuevos (hoy el motor los deja fijos en el stock todo el mes).
+- **−46 (S/77,843)** pasaron de 30 a 31 días el 1-sep: el negocio los asignó a ESPECIALIZADA (45) y
+  RECOVERY (1).
+
+**Lo que queda, y qué se decidió** (`tarea24_diagnostico_vista.sql`, `tarea24_casos_b*.sql`):
+
+| Diferencia | Créditos | Saldo | Decisión |
+|---|---:|---:|---|
+| Arrastre por DNI (solo nuestro) | 68 | S/85,999 | **Como la vista, con flag** |
+| Punto ciego de `dias_atraso_cuota` (solo vista) | 25 | S/63,456 | Documentar; el usuario valida con IDs |
+| Reenganches refinanciados después del corte (solo vista) | 13 | S/18,575 | **PENDIENTE** — medido abajo |
+| Sin asignación en sep (solo nuestro) | 18 | S/22,383 | Se quedan (pocos; decisión del 24-ago) |
+| Sin foto Mambu al cierre (solo vista) | 1 | S/814 | — |
+
+1. **Arrastre por DNI.** Los 68 tienen `max_dias_mora_dni > 30` (100%). Se tratan como la vista
+   (fuera de TEMPRANA) **mediante un flag** `flg_arrastre_dni`, para poder separarlos en reporte y
+   análisis. **Validado** (`tarea24_validacion_arrastre_dni.sql`): la mora máxima por DNI
+   reconstruida desde `calendario_diario.dni` coincide con el `max_dias_mora_dni` del negocio en
+   99.9% (jul 3,282/3,286; ago 2,484/2,485; sep 2,830/2,831), y en septiembre el flag separa la fase
+   exacto: 67 de 68 ESP/REC marcados, 0 de 2,763 TEMPRANA. Contar todos los créditos del DNI o solo
+   los últimos de su cadena da lo mismo. En julio y agosto hay además 328 y 263 ESP/REC con
+   `max_dias_mora_dni <= 30` ("fase pegajosa", bug 14) que el flag no captura; en septiembre, 0.
+2. **Punto ciego de `dias_atraso_cuota`** (bug 26). El negocio los tiene en mora el 1-sep y Mambu
+   (`dayslate`) le da la razón en 24 de 25. Dos mecanismos (`tarea24_casos_b_transacciones.sql`):
+   **17 (S/21,190) pagos regularizados** — registrados después del corte (casi todos el 3-sep, en
+   lote) con fecha valor en agosto; la tabla de cuotas y `calendario_diario` se re-expresan con la
+   fecha valor (hipótesis del usuario, confirmada en los 17). **8 (S/42,266) sin la cuota vencida en
+   `dts_cobranza_creditos_cuotas`** y sin pagos entre el 20-jul y el corte; causa no verificada. Se
+   documenta, no se cambia de fuente (1.3% contra el ~20% del punto ciego de `dayslate`). IDs en
+   `datos_tarea24/casos_b.csv`.
+3. **Sin asignación:** 15 pagaron el 1-sep y el negocio nunca los asignó (mecanismo de tarea 14);
+   3 (S/2,719) siguen en mora sin asignación, sin explicar. Se quedan.
+
+**REENGANCHES — MEDIDO, DECISIÓN PENDIENTE DEL USUARIO** (pidió explícitamente anotarlo y medirlo
+para decidir después; `tarea24_reenganches_historico.sql`, bug 25). `flg_last_loan_in_chain` se lee
+con la foto de HOY: un crédito vigente y en mora el día 1 que se refinanció después tiene hoy flag 0,
+y la calibración lo borra de ese mes. Peso en saldo, sobre las poblaciones v2:
+
+| | Meses completos 202504-202605 | 202606 | 202607 | 202608 |
+|---|---|---:|---:|---:|
+| Nuevos | 7.8% – 11.3% | 7.6% | 4.8% | 2.2% |
+| Stock | 1.2% – 5.9% | 2.0% | 2.6% | 1.1% |
+
+- Todos cierran en Mambu como `CLOSED/REFINANCED` (RESCHEDULED no aparece). Casi todo es
+  refinanciamiento **después** del mes; **dentro** del mes es 0.7-1.6% en nuevos y 0.0-1.3% en stock
+  — esos, si se incluyeran, bajan el saldo a 0 y contarían como pago.
+- **El peso cae hacia el presente** porque los refinanciamientos futuros todavía no ocurrieron: la
+  población de calibración está más "limpiada" en los meses viejos que en los recientes.
+- **Hipótesis, NO verificada:** si quienes después se refinancian activan menos, esto solo produce una
+  caída aparente de la activación en los meses recientes — conecta con los −0.46pp/mes de tarea 19.
+  Se prueba midiendo la activación de este grupo contra el resto, mes a mes.
+- **No bloquea la recalibración:** las matrices nuevas llevan el flag de reenganche como dimensión
+  (sin contar el cierre por refinanciamiento como pago), así la decisión se toma después sin volver a
+  Athena. Producción sigue excluyéndolos hasta que se decida.
+
+**ABIERTO — una pregunta al usuario antes de recalibrar (hecha el 2026-09-13):** ¿los créditos con
+arrastre por DNI quedan **fuera de la meta de TEMPRANA con su real reportado aparte**
+(recomendado: son ~1.7% del stock y una curva propia saldría con muy poca muestra), o se quiere
+también una **proyección propia** para esa línea? Defaults anunciados si no dice otra cosa: el flag
+se aplica también a nuevos (medido el día de entrada); los dos enfoques; la meta de septiembre
+publicada no se toca; octubre es la primera meta v2; backtest de 8 meses con las dos métricas.
+
+**Ojo de diseño para el stock v2:** la cohorte que entra el día 1 se comporta como nueva (activa
+fuerte el día 0) y su peso dentro del tramo 1-8 varía por mes — cuando el último día del mes
+anterior es domingo **no hay** cohorte del día 1 (ninguna cuota vence domingo). Probar un segmento
+propio ("entra el día 1") dentro del stock y decidirlo con métricas diarias (`CLAUDE.md`).
+
+**Plan de recalibración:**
+1. Matrices crudas nuevas (stock, nuevos, calendario, tasa; activación y rebaje) con v2 y con
+   `flg_arrastre_dni` y el flag de reenganche como dimensiones.
+2. Curva de stock v2 (ventana fija 202504-202606). Nuevos sin la cohorte del día 1 y con los que
+   pagaron el último día de vuelta al calendario. `P_ENTRADA` sobre la misma definición.
+3. Los dos enfoques — comparten la definición de entrada.
+4. Backtest de 8 meses v1 vs. v2, con error de cierre y correlación diaria.
+5. Septiembre: la meta publicada no se toca; v2 en paralelo para comparar. Octubre: primera meta v2.
+
+**De paso:** (a) la asignación de sábado es solo para canales complementarios (ver tarea 23,
+`tarea24_sabados_asignacion.sql`); (b) la vista cambió — incluye RECOVERY en 202609 y columnas
+nuevas (`call`, `monto_cuota_a_pagar`, `ultima_actualizacion`, `fecha_pago`); el `.txt` del repo se
+actualizó con `SHOW CREATE VIEW`; (c) referenciar la vista varias veces por query agota recursos de
+Athena (bug 27); (d) el filtro de `status` no mira adelante (`tarea24_status_okaapi.sql`).

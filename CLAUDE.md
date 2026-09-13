@@ -45,6 +45,16 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   ninguna entrada un lunes**. Cualquier corte "fin de semana" definido sobre el vencimiento
   tiene que tenerlo en cuenta: `in (6,7)` es en la práctica solo sábado, y deja "vence viernes"
   (que entra **sábado**, día no hábil) del lado de los días hábiles. Ver bug 21.
+- **Antiguo = en mora 1-30 el DÍA 1 del mes** (decisión del usuario 2026-09-13, tarea 24): la
+  definición de la vista oficial. Incluye a quien entra en mora el día 1 y excluye a quien pagó el
+  último día del mes anterior. **Los motores vigentes todavía usan la del cierre del mes anterior**
+  hasta que la recalibración de tarea 24 se complete — no mezclar las dos en una misma
+  calibración. El arrastre por DNI se marca con `flg_arrastre_dni`, no se borra.
+- **`flg_last_loan_in_chain` mira hacia adelante** (bug 25): se lee con la foto de hoy y borra de
+  cada mes histórico a los créditos que se refinanciaron después (8-11% del saldo de nuevos). Se
+  sigue aplicando hasta que el usuario decida (tarea 24) — no "arreglarlo" por cuenta propia.
+- **`dias_atraso_cuota` e `installmentlastpaiddate` usan la FECHA VALOR del pago** (bug 26): un
+  pago regularizado días después con fecha valor anterior re-expresa la mora hacia atrás.
 
 ## No re-consultar Athena para recalibrar una curva de "nuevos"
 
@@ -102,6 +112,12 @@ correlación diaria subiendo de 0.32 a 0.86). Reportar las dos cosas, nunca una 
 el `WHERE` ANTES de la window function — el acumulado arranca mal. Siempre calcular el
 acumulado completo en una CTE y filtrar en una consulta externa. Ya mordió 2+ veces en este
 proyecto (ver bug 4 en `BUGS.md`).
+
+Otras tres (bug 27): `vw_seguimiento_diario_cohorte_tramo` recalcula un `row_number()` sobre todo
+`dts_mambu_loans_hist` en cada referencia — más de ~2 referencias por query agotan recursos;
+replicar el anclaje desde `dts_asignaciones_gestiones_cobranza`. `unnest` de un array de
+`row(...)` no expande a columnas: usar arrays paralelos. Y `SHOW CREATE VIEW` deja un `.txt` en
+S3, no un `.csv`: el helper no lo baja, hay que hacer `aws s3 cp` de `<QID>.txt`.
 
 ## Principio de modelado — no negociable
 

@@ -289,3 +289,33 @@ ajuste ex-post y destruiría lo que lo hace útil como meta fijada al inicio del
 ~10% por encima de lo alcanzable si la tendencia sigue — en `ESTADO.md`, en el docstring del
 script y en el artifact. La meta es la referencia contra la cual se lee la ejecución; la
 desviación se explica.
+
+### Antiguo = "en mora el día 1": la definición de la vista, con flag de arrastre por DNI (2026-09-13, tarea 24)
+
+**Decisión del usuario.** Un crédito que entra en mora el día 1 del mes es **antiguo**, como en
+`vw_seguimiento_diario_cohorte_tramo`, y no un nuevo con `dia_entrada = 1` como lo trataba el motor
+unificado desde tarea 17 Fase 4. Se recalibra lo que haga falta.
+
+**Por qué es la regla correcta y no solo "la del negocio".** El negocio calcula `tipo_mora` con
+`dias_mora >= day(fecha_base)`, que en cualquier día de asignación equivale a "entró en mora el día 1
+o antes". Con esa definición el cuadre contra la vista pasa de −23.9% a **+0.5%**, con el monto
+idéntico al céntimo en 2,749 de 2,751 créditos compartidos: es el *principio de universo* de
+`CLAUDE.md` cumplido. Y es reproducible en toda la historia sin la tabla de asignaciones, porque va
+anclada al día 1 calendario y no al primer día hábil.
+
+**Lo que arrastra la misma regla, y coincide con el negocio:** sale del stock quien estaba en mora al
+cierre pero pagó el último día del mes (478 en septiembre; si vuelve a caer, entra por el
+calendario), y quien pasa de 30 a 31 el día 1 (46, van a ESPECIALIZADA).
+
+**Arrastre por DNI: como la vista, pero con flag.** El crédito en mora 1-30 cuyo DNI tiene otro
+crédito con más de 30 días no es TEMPRANA. Se marca con `flg_arrastre_dni` en vez de borrarlo, para
+poder separarlo en reporte y análisis (pedido del usuario). Reconstrucción validada al 99.9% contra
+el `max_dias_mora_dni` del negocio.
+
+**Qué NO se decidió:** qué hacer con los reenganches — el filtro mira hacia adelante (bug 25), medido
+y con la decisión pendiente del usuario. Tampoco se cambió de fuente por el punto ciego de
+`dias_atraso_cuota` (bug 26, 1.3%).
+
+**Cómo se aplica a las metas.** La de septiembre, ya publicada, no se toca: v2 se calcula en paralelo.
+Octubre es la primera meta con la definición nueva. El criterio de siempre: se corrige el universo
+aunque el error suba, y se mide con el backtest.

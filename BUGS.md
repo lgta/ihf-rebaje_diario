@@ -1766,3 +1766,58 @@ los que sugiere su propia definición:
 en mora **ese mismo día**; nuestro stock corta al **cierre del mes anterior** (31-ago) y manda esa
 cohorte al calendario de nuevos con `dia_entrada = 1`. Son **965 créditos y S/1,929,629** en
 septiembre — el 99% de la diferencia. Detalle en `reconciliacion_antiguos_septiembre.md`.
+
+**→ Resuelto por decisión del usuario 2026-09-13 (tarea 24):** antiguo pasa a ser "en mora el día 1",
+la definición de la vista. Con eso el cuadre queda en +0.5% (`tarea24_reconcilia_antiguos_sep_v2.sql`).
+
+### 25. `flg_last_loan_in_chain` mira hacia adelante — borra de la historia a los créditos que se refinanciaron DESPUÉS
+
+**Encontrado 2026-09-13 (tarea 24).** El flag es constante por crédito y se lee con la foto de hoy. Un
+crédito vigente y en mora el día 1 que se refinancia después queda hoy con flag 0, y todas las
+queries de calibración lo sacan de ese mes. En la reconciliación de septiembre fueron 13 créditos
+(S/18,575) que la vista gestiona como antiguos, todos `CLOSED/REFINANCED` entre el 2 y el 11-sep.
+
+**Peso medido** (`tarea24_reenganches_historico.sql`, en saldo, poblaciones v2): nuevos **7.8%-11.3%**
+y stock **1.2%-5.9%** en los meses completos (202504-202605); en nuevos cae a 4.8% en 202607 y 2.2% en
+202608 porque los refinanciamientos futuros todavía no ocurrieron. O sea que el sesgo **no es
+constante: depende de cuánto tiempo pasó desde el mes**, y la población de calibración está más
+"limpiada" en los meses viejos que en los recientes.
+
+**Por qué no es trivial arreglarlo:** el filtro tiene una razón válida — si se incluyen, el
+refinanciamiento baja el saldo a 0 y se contaría como pago (0.7-1.6% del saldo de nuevos se
+refinancia dentro del mismo mes). La corrección posible es tomar la cadena como estaba el día 1 y no
+contar el cierre por refinanciamiento como pago. **Decisión pendiente del usuario** (PENDIENTES tarea
+24). El filtro de `status` **no** tiene el mismo problema: los 30,184 créditos con flag 0 están todos
+en COMPLETED, y ese filtro solo saca DELETED/REQUESTED (`tarea24_status_okaapi.sql`).
+
+### 26. `dias_atraso_cuota` se re-expresa hacia atrás cuando un pago se regulariza con fecha valor retroactiva
+
+**Encontrado 2026-09-13 (tarea 24; hipótesis del usuario, confirmada).** 25 créditos (S/63,456) que el
+negocio asignó como antiguos el 1-sep aparecen con `dias_atraso_cuota = 0` el 31-ago, 1-sep y 2-sep, y
+Mambu (`dayslate`) le da la razón al negocio en 24:
+- **17 (S/21,190): pago regularizado.** Registrado después del corte (casi todos el 3-sep, en lote,
+  entre 10:10 y 10:55) con fecha valor en agosto. La tabla de cuotas guarda la fecha valor como
+  `installmentlastpaiddate`, y `calendario_diario` recalcula la mora con ella: el crédito "nunca
+  estuvo" en mora ese día, aunque el negocio lo gestionó.
+- **8 (S/42,266): la cuota vencida no existe en `dts_cobranza_creditos_cuotas`**, sin pagos entre el
+  20-jul y el corte; `calendario_diario` toma como vigente la cuota del mes siguiente. Causa no
+  verificada.
+
+Es el punto ciego inverso al de `dayslate` (bug 9) y mucho más chico (1.3% contra ~20%): no se cambia
+de fuente. Dos consecuencias a tener presentes: `installmentlastpaiddate` es la **fecha valor**, no la
+de registro, y cuando la fecha valor se cargó sin hora viene como `00:00:00` — no sirve para ubicar el
+pago dentro del día sin verificar. IDs en `datos_tarea24/casos_b.csv`, transacciones en
+`datos_tarea24/casos_b_transacciones.csv`.
+
+### 27. Dos trampas de Athena en queries de reconciliación
+
+**Encontradas 2026-09-13 (tarea 24).**
+1. **`vw_seguimiento_diario_cohorte_tramo` referenciada muchas veces agota recursos** (*"Query
+   exhausted resources at this scale factor"*). Su CTE `mambu_con_fecha` hace `row_number()` sobre TODO
+   `dts_mambu_loans_hist` sin filtro de fecha, y Athena recalcula la vista en cada referencia: con 2
+   referencias corrió, con 6 falló. Para fase/tipo/mora/monto del anclaje, replicar el anclaje desde
+   `dts_asignaciones_gestiones_cobranza` (primer `fecha_base` del mes, atributos `MAX` de ese día) —
+   validado exacto contra la vista: 2,790 créditos / S/4,904,772.54.
+2. **`unnest` de un array de `row(...)` no expande a columnas**: falla con *"Column alias list has 4
+   entries but 'r' has 1 columns available"*. Usar varios arrays paralelos en el mismo `unnest`, que
+   sí se zipean en columnas.
