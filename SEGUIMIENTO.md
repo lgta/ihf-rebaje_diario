@@ -46,13 +46,14 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 `backtest_tarea18e_recupero_oficial_v2.py`, series diarias en
 `datos_tarea18e/serie_diaria_recupero_v2_*.csv`.
 
-> **Septiembre 2026 — EN CURSO, seguimiento al 12-sep** (último día completo al 13-sep). Meta
-> S/3,928,776, la primera con el motor 18e. Real **S/1,089,167 contra S/1,526,191 proyectado al
-> mismo día: −28.6%** (stock −17.0%, nuevos −31.2%), correlación diaria 0.948. Va más lejos que el
-> alfa: el stock activa +4.0% en alfa pero rebaja −17.0% acá, lo que apunta a pagos más chicos que
-> los de la curva (lectura, no verificada crédito a crédito). Real medido con `dias_atraso_cuota`,
-> la misma población de la meta (`tarea19_real_septiembre.sql`, columna `rebaje_dia`;
-> `seguimiento_septiembre.py`).
+> **Septiembre 2026 — seguimiento contra la publicada v1, al 13-sep** (último día completo al 14-sep).
+> Meta S/3,928,776, la primera con el motor 18e; **reemplazada el 14-sep por la v2 (S/3,338,715), que va
+> en 0.811 al 13-sep** (ver el bloque de septiembre del Enfoque alfa, abajo). Real **S/1,125,733 contra
+> S/1,579,556 proyectado al mismo día: −28.7%** (stock −19.6%, nuevos −30.7%), correlación diaria 0.958;
+> al 12-sep era −28.6%. Va más lejos que el alfa: el stock activa +1.7% en alfa pero rebaja −19.6% acá,
+> lo que apunta a pagos más chicos que los de la curva (lectura, no verificada crédito a crédito). Real
+> medido con `dias_atraso_cuota`, la misma población de la meta (`tarea19_real_septiembre.sql`, columna
+> `rebaje_dia`; `seguimiento_septiembre.py 13`).
 
 **Histórico — motor anterior (`dayslate`, `P_NO_PAGA_DIA0=13.38%`), reemplazado 2026-08-26:**
 
@@ -178,15 +179,16 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 > después de la quincena: mirarlo el 16-17 sep. Lo que sigue es el seguimiento contra la publicada v1, que queda
 > como referencia.
 >
-> **Septiembre 2026 — seguimiento contra la publicada v1, al 12-sep** (último día completo al 13-sep). Meta
-> S/20,477,271 (v1, fijada el 1-sep). Real acumulado **S/7,155,605 contra S/8,666,800 proyectado al
-> mismo día: −17.4%** (stock +4.0%, nuevos −21.6%). La forma se sigue muy bien: correlación de
-> incrementos diarios **0.982** (nuevos 0.971). **El caveat de ~10% se está materializando, y lo
-> supera:** en los 8 meses del backtest el cociente real/proyectado del día 12 quedó siempre entre
-> 0.93 y 1.08, y el cierre terminó a ±4pp de él (agosto, con la meta prospectiva: 0.973 el día 12,
-> 1.012 al cierre). Septiembre está en 0.826, fuera de ese rango. Código: `tarea19_real_septiembre.sql` +
-> `seguimiento_septiembre.py`. **Re-chequeado el 13-sep a la noche:** el día 13 todavía está incompleto
-> (`tarea24_frescura.sql`), así que el 12 sigue siendo el último día completo.
+> **Septiembre 2026 — seguimiento contra la publicada v1, al 13-sep** (último día completo al 14-sep;
+> re-medido el 14-sep: los días 1-12 se movieron −0.02% en nuevos y nada en stock). Meta S/20,477,271 (v1,
+> fijada el 1-sep). Real acumulado **S/7,324,713 contra S/8,935,763 proyectado al mismo día: −18.0%**
+> (stock +1.7%, nuevos −21.8%; al 12-sep era −17.4%). La forma se sigue muy bien: correlación de
+> incrementos diarios **0.984** (nuevos 0.979). Recupero: S/1,125,733 contra S/1,579,556, **−28.7%**
+> (corr. 0.958). Brecha de nuevos, días 1-13: entró 16.9% menos saldo que calendario × 24.91% y el
+> activado por sol que entró va −6.0%. **El caveat de ~10% se materializó y lo supera:** en los 8 meses
+> del backtest el cociente real/proyectado del día 12 quedó siempre entre 0.93 y 1.08, y el cierre
+> terminó a ±4pp de él (agosto, con la meta prospectiva: 0.973 el día 12, 1.012 al cierre). Septiembre
+> está en 0.820, fuera de ese rango. Código: `tarea19_real_septiembre.sql` + `seguimiento_septiembre.py 13`.
 >
 > **Con el motor de octubre** (v2, reenganches incluidos, tasa anclada; adoptado el 13-sep a la noche),
 > **la meta que habría salido el 1-sep es S/17,504,932, y el real va en 0.927 de su trayectoria**

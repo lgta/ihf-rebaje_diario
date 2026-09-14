@@ -1731,7 +1731,9 @@ Motor v2 adoptado (tarea 24) con las dos decisiones del 13-sep a la noche: **ree
 datos_tarea25/real_v2_septiembre.csv` y `python seguimiento_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv
 datos_tarea25/real_v2_septiembre.csv <último día completo>`. El 16-17 sep, mirar si la brecha de nuevos se
 achica tras la quincena (tarea 19). Al cierre, la fila de septiembre en `SEGUIMIENTO.md` va contra la v2,
-con la v1 al lado.
+con la v1 al lado. Referencia contra la publicada v1: `bash scripts/run_athena.sh tarea19_real_septiembre.sql >
+datos_tarea19/real_septiembre.csv` y `python seguimiento_septiembre.py <último día completo>` (el día va como
+argumento; sin él corta en el 12). Al 13-sep, medido el 14: alfa 0.820 (−18.0%), recupero 0.713 (−28.7%).
 
 **Desde el 2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
 1. **Matriz de nuevos:** `bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv`

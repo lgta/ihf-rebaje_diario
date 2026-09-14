@@ -1,7 +1,8 @@
 PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
 Escrito 2026-09-13; actualizado al cierre del 14-sep: septiembre RE-FIJADA con el motor v2 (decisión del
 usuario), tarea 19 medida (la "caída de activación" es sobre todo menos entradas, no menos conversión) y el
-artifact 949ab3c2 corregido (versión 7). Reemplaza a prompt_handoff_2026-09-11.txt.
+artifact 949ab3c2 corregido (versión 7). El 14-sep a las 18:17, el seguimiento contra la publicada v1 llevado
+al 13-sep. Reemplaza a prompt_handoff_2026-09-11.txt.
 
 ====================================================================
 ORDEN DE LECTURA — y nada más
@@ -30,6 +31,9 @@ Septiembre: metas RE-FIJADAS el 14-sep con el motor v2 (decisión del usuario), 
   Al 13-sep (último día completo al 14): alfa en 0.922 de la trayectoria v2 (-7.8%; stock 0.972, nuevos
   0.891, corr. diaria 0.984), recupero en 0.811. Entró el volumen esperado (+0.9%); la brecha de nuevos es de
   ARRANQUE: por sol que entró, 0.632 asegurado al día 13 contra 0.715 (-11.7%).
+  Contra la publicada v1 (referencia), al 13-sep: alfa 0.820 (-18.0%; stock +1.7%, nuevos -21.8%), recupero
+  0.713 (-28.7%). La diferencia con la v2 está en la meta (S/8.94M contra S/7.90M a esa fecha), no en el
+  real (S/7.32M con v1 contra S/7.29M con v2).
 
 Tarea 19 (caída de activación), medida el 14-sep con v2 (tarea19_composicion_activacion.py):
   - asegurado/calendario cae 6.2% (ene-mar -> jun-ago) = tasa de entrada -5.0% + conversión -1.3%
@@ -68,7 +72,8 @@ LO QUE SIGUE, EN ORDEN
    datos_tarea25/real_v2_septiembre.csv y python seguimiento_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv
    datos_tarea25/real_v2_septiembre.csv <último día completo>. Si la brecha de nuevos (0.891 al 13) se achica
    después del 15, se confirma que es arranque; si no, es un quiebre de conversión (tarea 19). Anotarlo en
-   SEGUIMIENTO.md. Contra la publicada v1, como referencia: tarea19_real_septiembre.sql + seguimiento_septiembre.py.
+   SEGUIMIENTO.md. Contra la publicada v1, como referencia: tarea19_real_septiembre.sql + seguimiento_septiembre.py <día> (sin
+   argumento corta en el 12).
    Al cierre (1-2 oct): fila de septiembre en SEGUIMIENTO.md contra la v2, con la v1 al lado.
 3. OCTUBRE, desde el 2-oct (PENDIENTES tarea 25). Todo está escrito y corrido de prueba:
    a. bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv
@@ -95,6 +100,9 @@ LO QUE SIGUE, EN ORDEN
 ====================================================================
 TRAMPAS (las de esta sesión primero)
 ====================================================================
+- EL PROMPT DE ARRANQUE DEL 13-SEP QUEDÓ VIEJO ("falta recalibrar", con el placeholder del arrastre sin
+  completar): el 14-sep se re-envió cuando todo eso ya estaba hecho y adoptado. Antes de ejecutar un pedido,
+  cruzarlo con git log y ESTADO.md; si ya está hecho, decirlo y no rehacerlo (pisaría el motor adoptado).
 - "ACTIVADO POR SOL QUE ENTRÓ" (seguimiento_v2.py) MIDE VELOCIDAD, NO CONVERSIÓN: entradas de los días 2..N,
   activado hasta N. Varía S/0.60-0.77 al día 12 entre meses; la conversión a 30 días, en cambio, 91-94%.
 - ENE-MAR 2026 FUE UN PICO: toda comparación contra ese trimestre exagera cualquier caída. La curva de la meta
