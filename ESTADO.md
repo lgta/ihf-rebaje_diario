@@ -6,15 +6,17 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-13, tarde (seguimiento de septiembre + recalibración v2 de tarea 24).
+Última actualización: 2026-09-13, noche (motor v2 adoptado y validado con septiembre; handoff reescrito).
 
 > **PARA ARRANCAR UNA SESIÓN NUEVA:** el prompt de handoff vigente es
-> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt) (actualizado la tarde del 13-sep)
-> — reemplaza al del 2026-09-11. Después: los dos bloques de abajo + "La meta vigente", y
-> `PENDIENTES.md` **tarea 24** (recalibración hecha, adopción pendiente) y **tareas 20, 21 y 23**.
+> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt), reescrito al cierre del 13-sep —
+> reemplaza al del 2026-09-11. Después: los dos bloques de abajo + "La meta vigente", y
+> `PENDIENTES.md` **tarea 24** (v2 adoptado y validado; quedan dos decisiones: reenganches y bug 28),
+> **tarea 25** (ciclo de octubre, la primera meta v2) y **tareas 19, 20, 21 y 23**.
 
-> **2026-09-13 (tarde) — SEPTIEMBRE SEGUIDO CONTRA LA META Y RECALIBRACIÓN v2 EJECUTADA. Nada
-> adoptado ni commiteado: quedan tres decisiones del usuario.**
+> **2026-09-13 (tarde) — SEPTIEMBRE SEGUIDO CONTRA LA META, Y MOTOR v2 RECALIBRADO Y ADOPTADO
+> (decisión del usuario): octubre es la primera meta v2. Quedan dos decisiones: los reenganches y el
+> bug 28 (antes del 1-oct).**
 >
 > **SEPTIEMBRE VA −17.4% CONTRA LA TRAYECTORIA DE LA META (alfa, al 12-sep).** Real S/7,155,605
 > contra S/8,666,800 proyectado al mismo día; stock +4.0%, nuevos −21.6%; correlación diaria 0.982.
@@ -39,11 +41,22 @@
 > 12-sep el real v2 lleva S/7,116,182 contra S/8,378,394 de la trayectoria (0.849): faltan S/12.7M. No
 > reemplaza a la meta publicada salvo que el usuario lo decida.
 >
-> **Tres decisiones pendientes del usuario:** (1) adoptar v2 con S2 para octubre (recomendado); (2)
-> arrastre por DNI: el mensaje de arranque dejó la respuesta en blanco, se corrió con "fuera, con
-> flag" y dentro/fuera no cambia el modelo (4.09% contra 4.10%); (3) reenganches: incluirlos baja el
-> error de alfa de 4.09% a 3.74% y explica ~1.5-2pp de la deriva de jun-jul (entran en mora mucho
-> menos, tasa 15-19%). Detalle en `PENDIENTES.md` tarea 24.
+> **Decisiones del usuario (2026-09-13):** (1) **v2 adoptado**, con la cohorte del día 1 en S2, desde
+> la meta de octubre (`motor_v2.py` + `meta_v2.py`; el ciclo está en `PENDIENTES.md` tarea 25); (2)
+> **arrastre por DNI fuera**, como en la vista, porque se cobra en ESPECIALIZADA; (3) **reenganches,
+> pendiente**: el usuario aclaró que un reenganche es un crédito adicional en la misma línea, no un
+> refinanciamiento de cobranzas, y los datos lo confirman (99.8% de los cierres `REFINANCED` tienen
+> `extendedbyloan_id`; 98.6% estaban al día). Incluirlos en la calibración baja el error de alfa de
+> 4.09% a 3.74%. Está recomendado; falta el visto bueno. Detalle en `PENDIENTES.md` tarea 24.
+>
+> **EL FIX, VALIDADO CON SEPTIEMBRE** (`backtest_septiembre_v2.py`, al 12-sep). Stock: cuadra con la
+> vista (+0.5%) y su curva va en **0.998** del real. Nuevos: **3,973 créditos coinciden con los nuevos de
+> TEMPRANA de la vista, con el monto idéntico al céntimo**; 96.8% de cobertura, y lo que no coincide está
+> explicado (107 entraron un domingo y pagaron antes de la asignación del lunes). **La brecha de la meta
+> no viene del fix:** de 0.847 a 0.901 es el ancla (bug 28, nuevo: la tasa se calibra sobre el saldo al
+> vencimiento y la meta la aplica sobre el saldo del 31-ago, que es 10.5% mayor), de 0.901 a 0.944 es
+> la tasa (22.90% realizada contra 24.36% calibrada, igual que jun-ago), y el resto es conversión
+> (nuevos 0.909). **El bug 28 hay que resolverlo antes de la meta de octubre.**
 
 > **2026-09-13 — TAREA 24: ANTIGUO PASA A SER "EN MORA EL DÍA 1", LA DEFINICIÓN DE LA VISTA
 > (decisión del usuario). Reconciliado, decidido lo que colgaba, recalibración por empezar.**
@@ -906,7 +919,7 @@ artifact [📈 Proyectado vs. Real](https://claude.ai/code/artifact/f80d3761-732
 202504-202606), así que su error de ene-jun está subestimado — es lo que queda de 18c. Y la
 caída de activación de tarea 19 no tiene explicación causal todavía: está medida, no explicada.
 
-**Metodología vigente:** dos motores. **Stock** = población en mora al cierre del mes anterior
+**Metodología de las metas hasta septiembre (v1):** dos motores. **Stock** = población en mora al cierre del mes anterior
 (`dias_atraso_cuota` 1-30) × curva por tramo × avance, indexada por día del mes, con factor de
 cierre real (18g). **Nuevos** = calendario por día de entrada (= vencimiento + 1) × tasa de
 entrada **por soles** × curva por `(avance_band, día de semana del vencimiento)` **desde el día
@@ -914,6 +927,12 @@ entrada **por soles** × curva por `(avance_band, día de semana del vencimiento
 `motor_unificado.py` v2/v3 + `curvas_crudas.py`. El detalle conceptual de
 `enfoque_capital_asegurado.md` describe la arquitectura **anterior** — para el motor vigente,
 leer `motor_unificado.py`.
+
+**Desde octubre, motor v2** (adoptado 2026-09-13; reglas en `DECISIONES.md`, código en `motor_v2.py` +
+`meta_v2.py`). **Stock** = mora 1-30 **el día 1** del mes; la cohorte que entra en mora ese mismo día
+se proyecta con la curva de nuevos sobre su saldo real (S2). **Nuevos** = calendario desde el día 2,
+una cuota por crédito, tasa por soles sobre esa población. Arrastre por DNI fuera, como en la vista.
+Ventana de nuevos [M-13, M-2]; stock fija 202504-202606.
 
 ## Artifacts publicados
 
@@ -1109,7 +1128,8 @@ si algo quedó solo en el scratchpad de Claude Code, anótalo aquí para no perd
 
 ## Prompt de continuación
 
-> Copiar/pegar esto al abrir la siguiente sesión para retomar sin releer todo:
+> **HISTÓRICO (2026-08-24), no usar.** El prompt vigente es
+> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt); lo de abajo queda como registro.
 
 ```
 CONTEXTO MÍNIMO PARA ARRANCAR (leer en este orden):
@@ -1220,9 +1240,10 @@ de confiar en ella -- ver BUGS.md antes de escribir queries nuevas.
 
 ## Estado de git
 
-> **2026-09-13 (tarde) — COMMITEADO Y PUSHEADO a `origin`** (pedido del usuario): el seguimiento de
-> septiembre, la recalibración v2, la meta v2 como habría salido el 1-sep y la documentación, en
-> commits separados (ver `git log`).
+> **2026-09-13 (noche) — TODO COMMITEADO Y PUSHEADO a `origin`** (pedido del usuario), en commits por
+> unidad de trabajo (ver `git log`): seguimiento de septiembre, recalibración v2, meta v2 al 1-sep,
+> adopción del motor v2 (`motor_v2.py`, `meta_v2.py`, insumos de octubre), verificación de
+> reenganches, validación con septiembre y la documentación con el handoff reescrito.
 > **Desde acá los CSV no se versionan:** `*.csv` en `.gitignore`, y los 162 CSV que estaban
 > trackeados (16.9 MB) salieron del índice con `git rm --cached` — siguen en disco y en el
 > historial de git; sacarlos del historial exigiría reescribirlo con force-push, y no se hizo.

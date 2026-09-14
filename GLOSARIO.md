@@ -8,10 +8,10 @@ créditos con `dias_atraso_cuota` entre 1 y 30 **el día 1 del mes**, con el sal
 anterior. Incluye a quien entra en mora ese mismo día (su cuota venció el último día del mes
 anterior) y excluye a quien estaba en mora al cierre pero pagó el último día. Es la regla del
 negocio (`tipo_mora`: `dias_mora >= day(fecha_base)` → antiguo). Se les mide capital una sola vez y
-se les da seguimiento con la curva de stock. **La recalibración está hecha (2026-09-13), pero las
-metas siguen con la definición anterior hasta que el usuario la adopte** — mora 1-30 **al cierre**
-del mes anterior, con la cohorte del día 1 en nuevos (motor unificado, tarea 17 Fase 4). Ver
-"v1 / v2" al final.
+se les da seguimiento con la curva de stock. **Adoptada el 2026-09-13; la primera meta con esta
+definición es la de octubre.** Septiembre se fijó con la anterior: mora 1-30 **al cierre** del mes
+anterior, con la cohorte del día 1 en nuevos (motor unificado, tarea 17 Fase 4). Ver "v1 / v2" al
+final.
 
 **Nuevos / flujo** — créditos que entran en mora durante el mes (entrada = vencimiento + 1): del
 día 2 en adelante con la definición nueva. Cada día de entrada genera su propia cohorte.
@@ -192,8 +192,9 @@ SEPTIEMBRE; la meta de AGOSTO es la única excepción — sigue con el motor vie
 ## Términos de tarea 24 (recalibración con antiguo = en mora el día 1, agregados 2026-09-13)
 
 **v1 / v2 (definición de antiguo)** — v1: stock = mora 1-30 al **cierre** del mes anterior (la de
-producción hasta que el usuario adopte v2). v2: mora 1-30 **el día 1** del mes, la de la vista
-oficial. Las matrices `datos_tarea24/v2_*` traen las dos de la misma foto de Mambu.
+las metas hasta septiembre 2026). v2: mora 1-30 **el día 1** del mes, la de la vista oficial,
+**adoptada el 2026-09-13** (motor v2, primera meta: octubre). Las matrices `datos_tarea24/v2_*` traen
+las dos de la misma foto de Mambu.
 
 **Cohorte d1** — los créditos que entran en mora el día 1 (su cuota venció el último día del mes
 anterior). En v1 eran "nuevos con día de entrada 1" y se proyectaban con calendario × tasa; en v2
@@ -210,6 +211,11 @@ insumo leído días después. Dos fuentes: Mambu se re-expresa (−0.3% a −0.8
 prospectivo pierde a los que terminaron de pagar (hoy `COMPLETED`). Para comparar definiciones se
 compara contra la versión re-medida, no contra la publicada.
 
+**Reenganche** — crédito ADICIONAL en la misma línea, como aumentar el monto desembolsado
+(aclaración del usuario 2026-09-13). **No** es un refinanciamiento ni una reprogramación de
+cobranzas. Mambu cierra el crédito anterior con `accountsubstate = REFINANCED` (el nombre técnico
+confunde) y ese crédito deja de ser el último de su cadena (`flg_last_loan_in_chain = 0`).
+
 **Reenganche marcado** — incluir en la calibración los créditos con `flg_last_loan_in_chain = 0`
 (que hoy se excluyen con un flag que mira adelante, bug 25), marcados con `reeng`, sin contar como
-pago el salto de saldo del día en que Mambu los cierra por refinanciamiento.
+pago el salto de saldo del día en que Mambu cierra el crédito anterior por el reenganche.

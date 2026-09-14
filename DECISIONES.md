@@ -319,3 +319,33 @@ y con la decisión pendiente del usuario. Tampoco se cambió de fuente por el pu
 **Cómo se aplica a las metas.** La de septiembre, ya publicada, no se toca: v2 se calcula en paralelo.
 Octubre es la primera meta con la definición nueva. El criterio de siempre: se corrige el universo
 aunque el error suba, y se mide con el backtest.
+
+### Se adopta el motor v2: cohorte del día 1 con la curva de nuevos, arrastre por DNI fuera (2026-09-13, tarea 24)
+
+**Decisión del usuario**, con el backtest de 8 meses a la vista (`backtest_tarea24_v1_v2.py`): las
+metas desde **octubre 2026** se calculan con el motor v2 (`motor_v2.py` + `meta_v2.py`).
+
+- **Stock** = `dias_atraso_cuota` 1-30 el día 1, con el saldo de la última foto del mes anterior.
+- **La cohorte que entra en mora el día 1** (0-53% del stock según el mes, porque sigue a las cuotas
+  que vencen el 30) se proyecta con la curva de **nuevos** por banda y día de semana del
+  vencimiento, sobre su saldo real y sin tasa (variante S2). Ganó en las métricas diarias en los dos
+  enfoques contra mezclarla en el tramo 1-8 (S0) o darle un tramo propio en la curva de stock (S1):
+  la curva de nuevos sabe que el día 0 de esa cohorte depende del día en que venció la cuota.
+- **Nuevos** = calendario desde el día 2, una cuota por crédito, tasa por soles sobre esa misma
+  población (24.36% en [202508, 202607], contra 24.94% de v1). Resuelve bug 23 por construcción.
+- **Arrastre por DNI: fuera de TEMPRANA**, como en la vista, porque se cobra en ESPECIALIZADA.
+  Marcado con `flg_arrastre_dni`, no borrado. Medido: dentro o fuera no cambia el modelo.
+- Ventanas: nuevos (curva y tasa) en **[M-13, M-2]**, los 12 meses hasta el último completamente
+  observado el día 1 (`motor_v2.ventana_meta`); stock fija 202504-202606.
+
+**Por qué se adopta aunque el error de recupero suba** (8.26% → 8.94%): cambia QUIÉN entra al
+universo — cuadra con la vista al +0.5% — y ese es el criterio de `CLAUDE.md`. En alfa el error baja
+(4.55% → 4.09%) con la misma correlación diaria.
+
+**Septiembre no se toca:** su meta se fijó el 1-sep con la definición anterior, y una meta no se
+cambia a mitad de mes. La meta v2 que habría salido ese día (S/19,814,433 alfa, S/3,856,429 recupero;
+`meta_septiembre_v2_dia1.py`) queda como referencia, salvo que el usuario decida otra cosa.
+
+**Pendiente:** si la calibración incluye a los créditos que después tuvieron un **reenganche** (bug 25).
+El usuario aclaró que un reenganche es un crédito adicional en la misma línea y no un
+refinanciamiento de cobranzas; los datos lo confirman (`tarea24_reenganches_que_son.sql`).

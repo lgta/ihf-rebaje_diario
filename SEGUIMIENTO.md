@@ -178,7 +178,11 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 > conversión:** entró en mora 17.1% menos saldo que el esperado (calendario × tasa; hasta ~8pp de eso
 > es el ancla al cierre de agosto, que no descuenta la amortización), y cada sol que entró activó
 > 5.4% menos. Con la definición v2, la meta que habría salido el 1-sep es **S/19,814,433** y su real
-> va en 0.849 de la trayectoria (`meta_septiembre_v2_dia1.py`): la definición explica una parte chica. Código: `tarea19_real_septiembre.sql` +
+> va en 0.849 de la trayectoria (`meta_septiembre_v2_dia1.py`): la definición explica una parte chica.
+> **Descomposición con v2** (`backtest_septiembre_v2.py`): de 0.847 a 0.901 es el ancla — la tasa se
+> calibra sobre el saldo al vencimiento y la meta la aplica sobre el del 31-ago, 10.5% mayor (bug 28) —;
+> de 0.901 a 0.944 es la tasa realizada (22.90% contra 24.36%, el nivel de jun-ago); el resto es
+> conversión (nuevos 0.909). El stock va en 0.998. Código: `tarea19_real_septiembre.sql` +
 > `seguimiento_septiembre.py` (descomposición con `tarea24_v2_septiembre.sql`).
 
 **Magnitud media de error de fin de mes, 7 meses: 10.26%** (10.55% antes del factor de cierre

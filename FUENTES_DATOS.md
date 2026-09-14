@@ -19,7 +19,7 @@ mezcla.
 | `_datos_adicionales_loan_accounts_id_ihfintech` | ID del crédito, llave de join con las otras dos tablas |
 | `balances_principalbalance` | saldo capital vigente ese día — la fuente de verdad para "rebaje" |
 | `dayslate` | días de mora. **`NULL` cuando está al día** — usar siempre `coalesce(dayslate,0)`. Tiene un punto ciego de ~1 día, ver `GLOSARIO.md` y bug 9 en `BUGS.md` |
-| `accountsubstate` | `REFINANCED` / `RESCHEDULED` desde el día en que Mambu cierra el crédito por refinanciamiento (`f_cierre` = primer día con ese valor). **El saldo cae a 0 exactamente ese día** (27,106 de 27,124 caídas; `tarea24_diag_cierre_refin.sql`) y la tabla **sigue sacando fotos** del crédito cerrado, con saldo 0. Para no contar ese salto como pago, ignorar las fotos desde `f_cierre` (bug 25) |
+| `accountsubstate` | `REFINANCED` / `RESCHEDULED` desde el día en que Mambu cierra el crédito (`f_cierre` = primer día con ese valor). **En OKA `REFINANCED` es el REENGANCHE** (crédito adicional en la misma línea), no un refinanciamiento de cobranzas: 99.8% de esos cierres tienen `extendedbyloan_id` y estaban al día (`tarea24_reenganches_que_son.sql`); `RESCHEDULED` son 26 créditos en total. **El saldo cae a 0 exactamente ese día** (27,106 de 27,124 caídas; `tarea24_diag_cierre_refin.sql`) y la tabla **sigue sacando fotos** del crédito cerrado, con saldo 0. Para no contar ese salto como pago, ignorar las fotos desde `f_cierre` (bug 25) |
 
 Confirmado que la tabla SÍ trae la foto del día de la consulta (verificado 2026-07-09),
 aunque en general puede tardar en llegar hasta el día anterior — revisar si una corrida

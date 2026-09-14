@@ -167,6 +167,19 @@ meta_septiembre_v2.py         Septiembre con v2 en paralelo, insumos leidos hoy 
 tarea24_v2_septiembre_al_1.sql  Insumos de septiembre como se leian el 1-sep (sin los COMPLETED
                               posteriores ni el flag de reenganche de hoy); v1 reproduce la publicada
 meta_septiembre_v2_dia1.py    La meta v2 como habria salido el 1-sep, con alternativas y lo que falta
+tarea24_reenganches_que_son.sql  Los cierres REFINANCED son reenganches (credito adicional en la
+                              linea), no refinanciamientos de cobranzas
+tarea24_v2_dimensionamiento_sep.sql  Validacion con septiembre: nuevos v2 vs vista credito a credito,
+                              tasa de los dias 2-12 por mes, entradas reales y calendario medido
+backtest_septiembre_v2.py     Backtest en tres capas al dia de corte: ancla / tasa / conversion
+-----------------------------------------------------------------------------
+
+--- MOTOR v2 -- ADOPTADO 2026-09-13, primera meta: octubre ------------------
+motor_v2.py                   Reglas de produccion: stock el dia 1, cohorte d1 con curva de nuevos
+                              (S2), arrastre fuera, ventana [M-13, M-2]; se niega a calibrar una
+                              ventana que la matriz de nuevos no cubre
+meta_v2.py                    META DEL MES: python meta_v2.py <periodo> <insumos.csv>
+tarea25_insumos_octubre.sql   Insumos de octubre (correr el 2-oct o despues). Ciclo: PENDIENTES t25
 -----------------------------------------------------------------------------
 
 --- SEGUIMIENTO DEL MES EN CURSO (septiembre 2026) ---------------------------

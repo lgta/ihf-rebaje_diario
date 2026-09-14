@@ -1782,7 +1782,7 @@ septiembre — el 99% de la diferencia. Detalle en `reconciliacion_antiguos_sept
 **→ Resuelto por decisión del usuario 2026-09-13 (tarea 24):** antiguo pasa a ser "en mora el día 1",
 la definición de la vista. Con eso el cuadre queda en +0.5% (`tarea24_reconcilia_antiguos_sep_v2.sql`).
 
-### 25. `flg_last_loan_in_chain` mira hacia adelante — borra de la historia a los créditos que se refinanciaron DESPUÉS
+### 25. `flg_last_loan_in_chain` mira hacia adelante — borra de la historia a los créditos que tuvieron un reenganche DESPUÉS
 
 **Encontrado 2026-09-13 (tarea 24).** El flag es constante por crédito y se lee con la foto de hoy. Un
 crédito vigente y en mora el día 1 que se refinancia después queda hoy con flag 0, y todas las
@@ -1813,6 +1813,17 @@ que son mayormente reenganches de buenos pagadores, no refinanciamientos de clie
 4.09% a 3.74%, con jun/jul/ago de +9.0/+8.4/+2.5% a +7.1/+6.9/+1.1%; la correlación diaria no cambia
 (0.826 → 0.828). Es la primera evidencia medida de que este sesgo explica **una parte** (~1.5-2pp)
 de la deriva de tarea 19, no toda. La decisión sigue siendo del usuario.
+
+**→ 2026-09-13 (noche): qué son, verificado. No son refinanciamientos: son reenganches.** El usuario
+aclaró que en OKA un reenganche es un crédito ADICIONAL en la misma línea (como aumentar el monto
+desembolsado), y que no tiene relación con el refinanciamiento o la reprogramación de cobranzas. La
+palabra "refinanciamiento" de este bug venía del substate de Mambu (`REFINANCED`), no del negocio.
+Verificado con `tarea24_reenganches_que_son.sql` (30,237 cierres desde 2025-01): 99.8% tienen flag 0
+y `extendedbyloan_id`; en 73.2% aparece un crédito nuevo del mismo DNI entre 3 días antes y 1 después
+del cierre, y en 72.3% ese crédito arranca con más saldo que el que le quedaba al viejo; el día
+anterior, 98.6% de los que tienen fila en el calendario estaban al día (1.1% en mora 1-30, ninguno en
+31+). `RESCHEDULED` son 26 créditos, todos con flag 1. Queda confirmado lo que la tasa baja (15-19%)
+sugería: el filtro saca de la historia a buenos pagadores que después recibieron un reenganche.
 
 ### 26. `dias_atraso_cuota` se re-expresa hacia atrás cuando un pago se regulariza con fecha valor retroactiva
 
@@ -1845,3 +1856,25 @@ pago dentro del día sin verificar. IDs en `datos_tarea24/casos_b.csv`, transacc
 2. **`unnest` de un array de `row(...)` no expande a columnas**: falla con *"Column alias list has 4
    entries but 'r' has 1 columns available"*. Usar varios arrays paralelos en el mismo `unnest`, que
    sí se zipean en columnas.
+
+### 28. La tasa de entrada se calibra sobre el saldo AL VENCIMIENTO, pero la meta la aplica sobre el saldo ANCLADO al cierre del mes anterior — la meta prospectiva sale ~10% alta en nuevos
+
+**Encontrado 2026-09-13 (validación de septiembre, tarea 24).** La diferencia ya estaba medida en el
+addendum de tarea 19 (+8.2% en agosto, "el calendario anclado no descuenta la amortización") y se
+había leído como "dos preguntas distintas, las dos correctas". Mirada con el principio de modelado
+de `CLAUDE.md` es otra cosa: la tasa (`entran_soles / elegibles_soles`) se calibra con el saldo del
+día del vencimiento (`tarea24_v2_calendario_tasa.sql`, igual que `tarea19_tasa_soles.sql`), pero la
+meta la multiplica por el calendario con el saldo del cierre del mes anterior, que es el único que se
+conoce el día 1. **Son denominadores distintos.** En septiembre (días 2-12) el calendario anclado
+tiene **10.5% más saldo** que el mismo calendario medido al vencimiento (S/31.3M contra S/28.3M), y
+eso explica **5.4pp** de los ~15pp de brecha de la meta de alfa al 12-sep (`backtest_septiembre_v2.py`:
+0.847 con el calendario anclado, 0.901 con el medido). Los backtests nunca lo vieron porque usan el
+calendario medido en los dos lados. Mecanismo probable, no verificado crédito a crédito: la foto del
+día del vencimiento ya refleja el pago de quien paga a tiempo ese día.
+
+**Corrección propuesta (no hecha):** calibrar la tasa sobre el denominador que la meta sí puede
+conocer — el saldo de cada cuota del calendario en la última foto del mes anterior —, dejando el
+numerador en el saldo de entrada, que es a lo que se aplica la curva. Hace falta una columna más en
+`tarea24_v2_calendario_tasa.sql` y un backtest que proyecte con el calendario anclado. Cambia CÓMO se
+mide, así que se corrige aunque el error suba, y se decide con el backtest. **Pendiente antes de la
+meta de octubre** (`PENDIENTES.md` tarea 25, paso 0).

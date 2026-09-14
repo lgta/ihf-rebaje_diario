@@ -47,18 +47,22 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   (que entra **sábado**, día no hábil) del lado de los días hábiles. Ver bug 21.
 - **Antiguo = en mora 1-30 el DÍA 1 del mes** (decisión del usuario 2026-09-13, tarea 24): la
   definición de la vista oficial. Incluye a quien entra en mora el día 1 y excluye a quien pagó el
-  último día del mes anterior. **La recalibración está hecha pero NO adoptada** (2026-09-13 tarde,
-  `PENDIENTES.md` tarea 24): las matrices `datos_tarea24/v2_*` traen v1 y v2 de la misma foto, y
-  `curvas_v2.py` las lee con filtros. **Hasta que el usuario adopte, las metas siguen con la del
-  cierre del mes anterior** — no mezclar las dos en una misma calibración. En v2 la cohorte que
-  entra el día 1 pesa 0-53% del stock según el mes y se proyecta con la curva de NUEVOS (variante
-  S2). El arrastre por DNI se marca con `flg_arrastre_dni`, no se borra.
+  último día del mes anterior. **ADOPTADA el 2026-09-13 (decisión del usuario): las metas desde
+  OCTUBRE usan el motor v2** (`motor_v2.py` + `meta_v2.py`; reglas en `DECISIONES.md`). La cohorte
+  que entra el día 1 (0-53% del stock según el mes) se proyecta con la curva de NUEVOS sobre su
+  saldo real (variante S2), y el **arrastre por DNI queda fuera** de TEMPRANA, como en la vista (se
+  cobra en ESPECIALIZADA; se marca con `flg_arrastre_dni`, no se borra). La meta de septiembre,
+  fijada con la definición anterior, no se toca. No mezclar las dos definiciones en una misma
+  calibración.
 - **`flg_last_loan_in_chain` mira hacia adelante** (bug 25): se lee con la foto de hoy y borra de
-  cada mes histórico a los créditos que se refinanciaron después (8-11% del saldo de nuevos). Se
-  sigue aplicando hasta que el usuario decida (tarea 24) — no "arreglarlo" por cuenta propia. Las
-  matrices v2 los traen marcados (`reeng`) y no cuentan el cierre por refinanciamiento como pago:
-  el salto de saldo cae exactamente el día de `f_cierre` (primer día `REFINANCED`/`RESCHEDULED`),
-  así que se ignoran las fotos desde ese día.
+  cada mes histórico a los créditos que tuvieron un **reenganche** después (8-11% del saldo de
+  nuevos). Reenganche = crédito ADICIONAL en la misma línea, como aumentar el monto desembolsado
+  (aclaración del usuario 2026-09-13); **no** es un refinanciamiento de cobranzas. Mambu cierra el
+  crédito anterior con `accountsubstate = REFINANCED` — el nombre técnico confunde: 99.8% de esos
+  cierres tienen `extendedbyloan_id` y estaban al día (`tarea24_reenganches_que_son.sql`). Se
+  sigue excluyendo hasta que el usuario decida (tarea 24) — no "arreglarlo" por cuenta propia. Las
+  matrices v2 los traen marcados (`reeng`) y no cuentan como pago el salto de saldo del reenganche,
+  que cae exactamente el día de `f_cierre` (primer día `REFINANCED`): se ignoran las fotos desde ese día.
 - **`dias_atraso_cuota` e `installmentlastpaiddate` usan la FECHA VALOR del pago** (bug 26): un
   pago regularizado días después con fecha valor anterior re-expresa la mora hacia atrás.
 
@@ -70,11 +74,14 @@ vencimiento, con factor por día del mes, y sobre **cualquier ventana rodante**.
 8 meses × 4 variantes cuesta 0 corridas adicionales. Antes de escribir una query nueva de
 calibración de nuevos, revisar si sale de ahí.
 
-**Cuál es la vigente:** `datos_tarea19/curva_cruda_nuevos.csv` (alfa) y
-`curva_cruda_nuevos_rebaje.csv` (recupero), más las dos de stock — cubren hasta **202607**. Las de
-`datos_tarea18a/` cubren hasta 202606 y quedan congeladas: son el registro de lo que produjo la
-meta de agosto. **Cada mes hay que extenderlas un mes** corriendo las `tarea19_*.sql` con las
-ventanas movidas; ese es el único costo recurrente de Athena del ciclo.
+**Cuál es la vigente (desde octubre, motor v2):** `datos_tarea24/v2_matriz_stock.csv`,
+`v2_matriz_nuevos.csv` y `v2_calendario_tasa.csv` — v1 y v2 de la misma foto, activación y rebaje en
+el mismo archivo —, leídas con `curvas_v2.py`. Las rutas vigentes y hasta qué día llegan las fotos de
+la de nuevos están en `curvas_v2.MN` / `FOTOS_NUEVOS_HASTA`, y `motor_v2.curvas` se niega a calibrar
+una ventana que la matriz no cubre. **Cada mes hay que extender la de nuevos** (fotos hasta el día 1
+del mes a proyectar) **y la de calendario/tasa** (un periodo más); la de stock no (ventana fija). El
+ciclo está en `PENDIENTES.md` tarea 25. Las de `datos_tarea19/` son el registro de la meta de
+septiembre y las de `datos_tarea18a/`, de la de agosto: quedan congeladas.
 
 ## Protocolo de calibración y test — vigente desde 2026-08-26
 

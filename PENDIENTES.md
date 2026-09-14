@@ -1626,10 +1626,98 @@ Trayectoria de la meta v2 en alfa: 15-sep S/9.84M, 20-sep S/13.07M, 25-sep S/16.
 S/19.81M. Al 12-sep el real v2 lleva S/7,116,182 (35.9% del mes, contra 42.3% esperado): faltan
 S/12.7M. El 0.871 de la tabla anterior sale de insumos re-medidos y **no** es el comparable.
 
-**Decisiones pendientes del usuario:**
-1. Adoptar v2 para octubre, con S2 en los dos enfoques (recomendado).
-2. Arrastre: fuera con flag (default aplicado) o proyección propia. Medido: no cambia el modelo.
-3. Reenganches (bug 25): incluirlos marcados, sin contar el cierre como pago. Medido arriba.
+#### VALIDACIÓN DEL FIX CON SEPTIEMBRE, al 12-sep (`tarea24_v2_dimensionamiento_sep.sql` + `backtest_septiembre_v2.py`)
+
+Pedido del usuario: correr el backtest de septiembre sobre la lógica que dimensiona stock y nuevos, y
+con eso validar el fix. **El fix de definición queda validado por los dos lados:**
+- **Stock:** con v2 se observa el día 1 (no se estima), y cuadra con la vista crédito a crédito
+  (+0.5%). La curva que proyecta cuánto activa va en **0.998** del real al 12-sep (corr. diaria
+  0.993), con la cohorte del día 1 proyectada con la curva de nuevos (S2).
+- **Nuevos:** nuestras entradas v2 del 2 al 12-sep son los nuevos que el negocio asigna a TEMPRANA:
+  **3,973 créditos en ambos, con el monto idéntico al céntimo (S/6,251,983)**. 96.8% de nuestras
+  entradas asignables están en la vista y 99.6% de la vista está en lo nuestro; 3,612 se asignan el
+  mismo día de la entrada y 361 al día siguiente. Las diferencias están explicadas: 127 (S/240K)
+  curaron en 48 horas sin llegar a asignarse — 107 de ellos entraron un DOMINGO y pagaron antes de
+  la asignación del lunes, la población de la tarea 23 —, 8 son arrastre por DNI y 6 fueron a
+  ESPECIALIZADA/RECOVERY. Del lado de la vista hay 17 (S/30K) que `dias_atraso_cuota` no ve (fecha
+  valor, bug 26).
+
+**La brecha de la meta NO viene del fix.** Backtest en tres capas al 12-sep, con la misma curva y la
+misma tasa:
+
+| Capital asegurado, real/proyectado al 12-sep | Nuevos | Total |
+|---|---:|---:|
+| a. Meta al 1-sep (calendario anclado al 31-ago) | 0.767 | 0.847 |
+| b. Calendario medido al vencimiento | 0.844 | 0.901 |
+| c. Entradas reales, curva sin tasa | 0.909 | 0.944 |
+| Stock (igual en las tres capas) | | 0.998 |
+
+- **a → b, el ancla (+5.4pp del total):** en los días 2-12 el calendario anclado al 31-ago tiene
+  **10.5% más saldo** que el mismo calendario medido al vencimiento (S/31.3M contra S/28.3M). La tasa
+  se calibra sobre el saldo al vencimiento, pero la meta la aplica sobre el saldo anclado: tasa y
+  calendario con definiciones distintas. **Es el bug 28, con una corrección propuesta.**
+- **b → c, la tasa (+4.3pp):** entró 6.3% menos de lo que esperaba la tasa calibrada (24.36%). La
+  tasa realizada de los días 2-12 de septiembre es **22.90%**, en línea con jun-ago (22.9-23.5%) y
+  por debajo de ene-may (24.2-26.3%): no es un mes raro, es el nivel reciente. Una parte puede ser el
+  filtro de reenganches que mira adelante (bug 25), que saca más buenos pagadores de los meses viejos.
+- **c, la conversión (0.909 en nuevos):** quien entra activa 9% menos que la curva hasta el día 12.
+  Es la señal de ejecución, la caída de activación de la tarea 19.
+- Recupero: 0.719 → 0.744 → 0.789. Ahí además el stock va en 0.763: activa como se esperaba (0.998 en
+  alfa) pero rebaja menos, o sea pagos más chicos que los de la curva (lectura, no verificada
+  crédito a crédito).
+
+### Tarea 25 — Ciclo de octubre: la primera meta con el motor v2 — preparada 2026-09-13
+
+Con el motor v2 adoptado (tarea 24), el ciclo mensual cambia. Para **octubre 2026**, a partir del
+**2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
+
+0. **Antes del 1-oct, resolver el bug 28** (tasa calibrada sobre el saldo al vencimiento y aplicada
+   sobre el saldo anclado): si no se corrige, la meta de octubre vuelve a salir ~10% alta en nuevos.
+   Hace falta una columna más en la query de calendario/tasa y un backtest con el calendario anclado.
+1. **Matriz de nuevos:** copiar `tarea24_v2_matriz_nuevos.sql` como `tarea25_matriz_nuevos.sql`,
+   con las fotos de Mambu hasta `'20261001'` y el calendario y las entradas hasta `2026-09-30` (las de
+   septiembre quedan truncadas: no calibrar con ellas). Correrla a `datos_tarea25/v2_matriz_nuevos.csv`
+   y actualizar `curvas_v2.MN` y `FOTOS_NUEVOS_HASTA = "20261001"`. Sin esto, `motor_v2.curvas` se
+   niega a calibrar la ventana de octubre, [202509, 202608] (probado).
+2. **Matriz de stock:** no hace falta, porque la ventana es fija (202504-202606) y ya está cubierta.
+3. **Calendario y tasa:** `v2_calendario_tasa.csv` ya llega a 202608, que es lo que pide la ventana
+   de octubre. Re-correrla es opcional (frescura); para noviembre sí hay que extenderla un periodo.
+4. **Insumos:** `tarea25_insumos_octubre.sql` (ya escrita) → `datos_tarea25/insumos_octubre.csv`.
+5. **Meta:** `python meta_v2.py 202610 datos_tarea25/insumos_octubre.csv`, los dos enfoques. Control
+   ya pasado: con septiembre (`202609`, `datos_tarea24/v2_septiembre_al_1.csv`) reproduce S/19,814,433
+   y S/3,856,429.
+6. **Seguimiento de octubre:** falta escribir la query del real v2 por día de un mes en curso (el
+   bloque `real` de `tarea24_v2_septiembre.sql` con las fechas corridas) y un `seguimiento_v2.py`.
+7. **Artifacts:** `armar_asignado_a_asegurado.py` está armado sobre los insumos v1 de tarea 19;
+   revisarlo antes de republicar 949ab3c2.
+
+Si antes del 1-oct el usuario decide incluir los reenganches (tarea 24, decisión 3):
+`motor_v2.REENG = True`.
+
+**Decisiones del usuario (2026-09-13):**
+1. **v2 ADOPTADO** desde la meta de octubre, con S2 en los dos enfoques (`motor_v2.py`, `meta_v2.py`;
+   el ciclo está en la tarea 25). Septiembre queda con su meta publicada.
+2. **Arrastre por DNI FUERA** de TEMPRANA, como en la vista, porque se cobra en ESPECIALIZADA.
+3. **Reenganches: PENDIENTE, con la definición aclarada.** El usuario aclaró que un reenganche es un
+   crédito ADICIONAL en la misma línea (como aumentar el monto desembolsado), no un refinanciamiento
+   ni una reprogramación de cobranzas. Verificado con `tarea24_reenganches_que_son.sql` (30,237
+   cierres `REFINANCED`/`RESCHEDULED` desde 2025-01):
+   - 99.8% tienen flag 0 y `extendedbyloan_id`.
+   - En 73.2% aparece un crédito nuevo del mismo DNI entre 3 días antes y 1 después del cierre, y en
+     72.3% ese crédito arranca con más saldo que el que le quedaba al viejo.
+   - El día anterior, 98.6% de los que tienen fila en el calendario estaban al día (1.1% en mora
+     1-30, ninguno en 31+).
+   - `RESCHEDULED` son 26 créditos, todos con flag 1: las reprogramaciones no pasan por este flag.
+
+   **El "refinanciamiento" de esta tarea era el nombre técnico de Mambu (`REFINANCED`), no el del
+   negocio.** Con eso la pregunta queda así: el flag saca de cada mes histórico a créditos que
+   DESPUÉS recibieron un reenganche — buenos pagadores que el día 1 de ese mes eran créditos como
+   cualquier otro, y que al fijar la meta no se sabe quiénes van a ser. Incluirlos (sin contar como
+   pago el salto de saldo del día del reenganche) baja el error de alfa de 4.09% a 3.74%, y la meta v2
+   de septiembre al 1-sep quedaría en S/19,468,590. **Recomendado; falta el visto bueno del
+   usuario.** Si se incluyen: `motor_v2.REENG = True`. Detalle menor: 1.1% de los reenganches
+   ocurre con el crédito en mora 1-30 (~310 créditos en 20 meses); v2 no cuenta ese cierre como
+   pago, porque la deuda pasa al crédito nuevo.
 
 **Si se adopta, para octubre:** re-correr las 4 queries `tarea24_v2_*` con las fechas corridas un
 mes (fotos de la matriz de nuevos hasta el 1-oct; ventana [202509, 202608]), un `meta_octubre_v2.py`
