@@ -184,7 +184,7 @@ footer{margin-top:4rem;padding-top:1.4rem;border-top:1px solid var(--hair);
     <div class="kpi">
       <div class="k">Septiembre 2026 · meta</div>
       <div class="v" id="k-sep">—</div>
-      <div class="n">proyección al 30 de septiembre</div>
+      <div class="n">re-fijada el 14-sep con el motor corregido; la del 1-sep era S/20.48M</div>
     </div>
   </div>
 </header>
@@ -516,13 +516,39 @@ soles — sobre los insumos que se conocían el 1 de agosto, el modelo habría d
 <div class="note alerta">
   <b>El modelo se pasó por 9.8%, y eso tiene una explicación medible.</b> La <b>tasa de entrada</b>
   que el modelo usó (25.10%, promedio de los 12 meses previos) fue más alta que la que realmente
-  ocurrió en agosto (<span class="mono">22.84%</span>). Y el <b>ratio de activación de nuevos</b>
-  real (<span class="mono">86.2%</span>) también corrió por debajo del histórico. No es ruido:
-  es la tendencia que está abajo.
+  ocurrió en agosto (<span class="mono">22.84%</span>). <b>Casi tres cuartos de ese 9.8% eran,
+  además, una inconsistencia del propio modelo</b> —la tasa se calculaba sobre un saldo y se aplicaba
+  sobre otro, más grande—, corregida el 13 de septiembre: ver la sección siguiente y la última.
 </div>
 
 <h2>Septiembre 2026, la proyección</h2>
 <p class="lede">Misma cadena, hacia adelante. Fijada el 1 de septiembre, sin mirar ni un día del mes.</p>
+
+<div class="note alerta"><b>La meta de septiembre se re-fijó el 14 de septiembre: la vigente es
+<span class="mono">S/17,504,932</span>.</b> Es lo que habría dado el 1 de septiembre el motor corregido,
+con los mismos datos que se conocían ese día. La publicada el 1-sep era <span class="mono">S/20,477,271</span>.
+Las tablas y gráficos de esta sección siguen siendo los de esa meta del 1-sep; <b>la versión completa con
+el motor corregido sale el 2 de octubre</b>, junto con la meta de octubre.</div>
+
+<div class="tabla-wrap"><table id="t-puente-sep">
+  <caption>De la meta del 1-sep a la vigente
+  <span class="cap-n">Cada fila suma una corrección, en este orden. La primera incluye también
+  +S/20,205 (+0.1%) de reconstruir los datos tal como se leían el 1-sep.</span></caption>
+  <thead><tr><th class="l">Corrección</th><th>Meta</th><th>Cambio</th></tr></thead>
+  <tbody>
+    <tr><td class="l">Publicada el 1-sep</td><td class="n">S/20,477,271</td><td class="n"></td></tr>
+    <tr><td class="l">Antiguo = en mora el día 1, como la vista de asignaciones</td><td class="n">S/19,815,529</td><td class="n">−S/661,742</td></tr>
+    <tr><td class="l">Reenganches dentro de la calibración</td><td class="n">S/19,467,964</td><td class="n">−S/347,565</td></tr>
+    <tr><td class="l">Tasa de entrada medida sobre el saldo que multiplica</td><td class="n">S/17,504,932</td><td class="n">−S/1,963,032</td></tr>
+  </tbody>
+  <tfoot><tr><td class="l">Vigente: antiguos S/3.53M + nuevos S/13.98M</td><td class="n">S/17,504,932</td><td class="n">−14.5%</td></tr></tfoot>
+</table></div>
+
+<p>La corrección grande es la última. El modelo calculaba la tasa de entrada dividiendo lo que entra en
+mora por el saldo de cada cuota el día que vence, pero la meta la multiplica por el saldo al cierre del
+mes anterior —el único que se conoce el día 1—, que es entre 13% y 17% más grande porque todavía no
+descontó lo que el cliente amortiza en el medio. Dos saldos distintos en la misma cuenta inflaban la meta
+alrededor de 11%, todos los meses de la prueba.</p>
 
 <div class="bleed">
 <h3 style="color:var(--antiguos)">Antiguos</h3>
@@ -576,35 +602,44 @@ parecen decir «septiembre va a activar peor», y no dicen eso: dicen que septie
 menos y más masa venciendo tarde. Lo que sí es comparable entre meses son las curvas, que son las
 mismas, y la tasa de entrada.</div>
 
-<h2>El caveat que acompaña a esta meta</h2>
-<p>Hay una tendencia de fondo que conviene mirar antes de tomar la meta de septiembre como un
-número fijo. Es la división más simple posible: <strong>de todo el capital que vence en el mes,
-qué porción termina asegurada</strong>.</p>
+<h2>Qué está cayendo, y qué no</h2>
+<p>Hasta el 14 de septiembre esta sección decía que la porción del calendario que termina asegurada venía
+cayendo —de 21.0% en enero–marzo a 18.5% en junio–agosto— y que eso apuntaba a una gestión que no escalaba
+con la cartera. <strong>Medida de nuevo con el motor corregido, la lectura cambia.</strong> Esa porción es
+el producto de los dos pasos de nuevos, y los dos no se movieron igual:</p>
 
-<div class="bleed">
-<figure>
-  <div id="ch-tend"></div>
-  <figcaption>Capital asegurado de nuevos ÷ capital del calendario, por mes. La línea punteada
-  es la tendencia lineal.</figcaption>
-</figure>
-</div>
+<div class="tabla-wrap"><table id="t-cadena-v2">
+  <caption>Nuevos, del calendario al capital asegurado, en dos trimestres
+  <span class="cap-n">Motor corregido: antiguo = en mora el día 1, reenganches dentro de la calibración.
+  El calendario va con el saldo del día del vencimiento, y la activación es la del mes calendario, la
+  que cuenta la meta.</span></caption>
+  <thead><tr><th class="l">Paso</th><th>Ene–mar 2026</th><th>Jun–ago 2026</th><th>Cambio</th></tr></thead>
+  <tbody>
+    <tr><td class="l">Tasa de entrada en mora</td><td class="n">23.81%</td><td class="n">22.63%</td><td class="n">−5.0%</td></tr>
+    <tr><td class="l">Ratio de activación de nuevos</td><td class="n">84.84%</td><td class="n">83.72%</td><td class="n">−1.3%</td></tr>
+  </tbody>
+  <tfoot><tr><td class="l">Asegurado ÷ calendario</td><td class="n">20.20%</td><td class="n">18.95%</td><td class="n">−6.2%</td></tr></tfoot>
+</table></div>
 
-<p>La cartera <strong>casi se duplicó</strong> en nueve meses — el calendario pasó de S/47M en
-enero a S/90M en septiembre — y la porción que se asegura <strong>bajó de 21.0% a 18.5%</strong>,
-a un ritmo de −0.46 puntos por mes. No se cobra menos: se cobra <strong>una tajada más chica de
-una torta que crece más rápido</strong>.</p>
+<p><strong>Lo que más cayó es la entrada en mora, no la cobranza.</strong> De cada sol que vence, hoy
+entra en mora un 5% menos que a comienzos de año. Eso achica lo que llega a cobranza, pero no dice nada de
+cómo se gestiona. De los que sí entran, la porción que hace al menos un pago bajó 1.3%, y ni siquiera eso
+es una tendencia: <strong>en 19 meses, de enero 2025 a julio 2026, la activación a 30 días de quien entra
+se mantiene entre 91% y 94%</strong>, sin pendiente. La mezcla de lo que entra tampoco lo explica: con la
+banda de avance, el día de la semana y el momento del mes fijos, la caída es prácticamente la misma.</p>
 
-<p>Eso apunta a capacidad de gestión que no escala al ritmo de la cartera, o a un cambio en la
-composición de lo que entra. <strong>Está medido, no explicado</strong> — y es la pregunta
-abierta principal del proyecto ahora mismo.</p>
+<div class="note"><b>Enero–marzo 2026 fue un trimestre excepcional, no el nivel normal.</b> Ese
+trimestre, el 46% de lo que terminó activando lo hizo el mismo día en que entró en mora; en todo 2025 fue
+entre 35% y 43%, y desde abril volvió a 37–39%. Toda comparación contra enero–marzo exagera la caída.</div>
 
-<div class="note alerta">
-  <b>Qué significa para la meta de septiembre.</b> El modelo calibra sus curvas con los 12 meses
-  previos, donde la activación era más alta. Si la caída sigue al mismo ritmo, la meta de
-  <b>S/20.5M corre alrededor de 10% por encima de lo alcanzable</b> — es exactamente lo que pasó
-  con agosto. Se publica igual, y con esta lectura al lado: la meta es la referencia contra la
-  cual se lee la ejecución, y una desviación se explica, no se corrige moviendo el número.
-</div>
+<div class="note alerta"><b>Qué significa para septiembre.</b> Al 12 de septiembre, el capital que entró
+en mora es el esperado (+0.6%). Lo que va atrás es el <b>arranque</b>: por cada sol que entró en mora
+entre el 2 y el 12, al día 12 había asegurados <span class="mono">S/0.649</span>, contra
+<span class="mono">S/0.731</span> que esperaba el modelo. Ese número varía mucho de un mes a otro —entre
+S/0.60 y S/0.77 en el último año—, y la curva, calibrada con doce meses que incluyen el trimestre rápido,
+espera un arranque más veloz que el de los meses recientes. Si se repite lo de siempre —la velocidad
+cambia, la activación a 30 días no—, <b>la brecha de nuevos debería achicarse después de la
+quincena</b>. Si no se achica, es un quiebre y hay que mirarlo.</div>
 
 <footer>
   <p>Capital asegurado, cartera de cobranza temprana (mora 1–30 días), OKA. Agosto 2026 cerrado
@@ -613,6 +648,10 @@ abierta principal del proyecto ahora mismo.</p>
   <p>Fuentes: <span class="mono">meta_septiembre_capital_asegurado.py</span>,
   <span class="mono">tarea19_agosto_cadena_segmentada.sql</span>,
   <span class="mono">motor_unificado.py</span>. Datos al 1 de septiembre de 2026.</p>
+  <p>Corregido el 14 de septiembre de 2026: la meta de septiembre, re-fijada con el motor corregido
+  (<span class="mono">motor_v2.py</span>, <span class="mono">meta_v2.py</span>), y la última sección,
+  medida de nuevo (<span class="mono">tarea19_composicion_activacion.py</span>). Las tablas de
+  septiembre siguen siendo las del 1-sep.</p>
 </footer>
 </div>
 
@@ -654,7 +693,9 @@ document.getElementById("k-ago-real").textContent = Sc(realTot);
 document.getElementById("k-ago-mod").textContent = Sc(modTot);
 document.getElementById("k-ago-err").textContent =
   ((modTot / realTot - 1) * 100).toFixed(1) + "% por encima del real";
-document.getElementById("k-sep").textContent = Sc(sepTot);
+// Meta vigente de septiembre: re-fijada el 14-sep con el motor v2 (meta_v2.py 202609).
+const SEP_VIGENTE = 17504931.86;
+document.getElementById("k-sep").textContent = Sc(SEP_VIGENTE);
 
 document.getElementById("r-ant").textContent = P(100 * T.stock_act[1] / T.stock_base[1]);
 document.getElementById("r-ent").textContent = P(100 * T.nuevos_ent[1] / T.nuevos_cal[1]);
@@ -1271,53 +1312,4 @@ curvaMulti("ch-cst", "lg-cst", ["a. 1-8", "b. 9-15", "c. 16-30"].map((tr, i) => 
   document.getElementById("factores").appendChild(h);
 })();
 
-/* ---------------- tendencia ---------------- */
-(() => {
-  const D = [["ene", 19.80], ["feb", 22.00], ["mar", 21.16], ["abr", 21.28], ["may", 19.37],
-             ["jun", 19.16], ["jul", 18.13], ["ago", 18.21]];
-  const W = 1040, H = 250, ml = 46, mr = 90, mt = 16, mb = 30;
-  const lo = 17, hi = 23;
-  const x = i => ml + i * (W - ml - mr) / (D.length - 1);
-  const y = v => mt + (1 - (v - lo) / (hi - lo)) * (H - mt - mb);
-  const g = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img",
-    "aria-label": "Porcentaje del calendario que termina asegurado, enero a agosto 2026" });
-  for (let v = 18; v <= 22; v++) {
-    g.appendChild(el("line", { x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: css("--hair") }));
-    const t = el("text", { x: ml - 8, y: y(v) + 4, "text-anchor": "end", fill: css("--faint"),
-      "font-size": 10, "font-family": "IBM Plex Mono, monospace" });
-    t.textContent = v + "%"; g.appendChild(t);
-  }
-  const n = D.length, sx = D.reduce((s, _, i) => s + i, 0), sy = D.reduce((s, d) => s + d[1], 0);
-  const sxy = D.reduce((s, d, i) => s + i * d[1], 0), sxx = D.reduce((s, _, i) => s + i * i, 0);
-  const b = (n * sxy - sx * sy) / (n * sxx - sx * sx), a = (sy - b * sx) / n;
-  g.appendChild(el("line", { x1: x(0), y1: y(a), x2: x(n - 1), y2: y(a + b * (n - 1)),
-    stroke: css("--alerta"), "stroke-width": 1.5, "stroke-dasharray": "5 4", opacity: .85 }));
-  let path = "";
-  D.forEach((d, i) => { path += (i ? "L" : "M") + x(i).toFixed(1) + " " + y(d[1]).toFixed(1) + " "; });
-  g.appendChild(el("path", { d: path, fill: "none", stroke: cS, "stroke-width": 2.5,
-    "stroke-linejoin": "round", "stroke-linecap": "round" }));
-  D.forEach((d, i) => {
-    const c = el("circle", { cx: x(i), cy: y(d[1]), r: 4.5, fill: cS,
-      stroke: css("--surface"), "stroke-width": 2 });
-    c.style.cursor = "crosshair";
-    hov(c, `${d[0]} 2026\n${d[1].toFixed(2)}% del calendario asegurado`);
-    g.appendChild(c);
-    const t = el("text", { x: x(i), y: H - 10, "text-anchor": "middle", fill: css("--faint"),
-      "font-size": 11, "font-family": "IBM Plex Mono, monospace" });
-    t.textContent = d[0]; g.appendChild(t);
-  });
-  const anot = (yv, txt, color) => {
-    const t = el("text", { x: W - mr + 12, y: y(yv) + 4, fill: color, "font-size": 12,
-      "font-weight": 600, "font-family": "IBM Plex Mono, monospace" });
-    t.textContent = txt; g.appendChild(t);
-  };
-  anot(D[n - 1][1], "18.21%", cS);
-  const lab = el("text", { x: W - mr + 12, y: y(D[n - 1][1]) + 22, fill: css("--alerta"),
-    "font-size": 11, "font-family": "IBM Plex Sans, sans-serif" });
-  lab.textContent = "− 0.46 pp / mes"; g.appendChild(lab);
-  const lab2 = el("text", { x: x(0) + 6, y: y(D[0][1]) - 14, fill: css("--muted"),
-    "font-size": 11, "font-family": "IBM Plex Sans, sans-serif" });
-  lab2.textContent = "media ene–mar 20.99%"; g.appendChild(lab2);
-  document.getElementById("ch-tend").appendChild(g);
-})();
 </script>
