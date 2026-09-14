@@ -26,8 +26,12 @@ import collections
 import csv
 import datetime as dt
 
+# Matrices VIGENTES. Al extenderlas en el ciclo mensual, actualizar la ruta y, para la de
+# nuevos, hasta que dia llegan sus fotos: una cohorte necesita 31 dias de seguimiento, y
+# `motor_v2.curvas` se niega a calibrar una ventana que la matriz no cubre.
 MS = "datos_tarea24/v2_matriz_stock.csv"
 MN = "datos_tarea24/v2_matriz_nuevos.csv"
+FOTOS_NUEVOS_HASTA = "20260901"
 CT = "datos_tarea24/v2_calendario_tasa.csv"
 
 # Tramo propio de la cohorte que entra en mora el dia 1 (stock v2, variante S1).
