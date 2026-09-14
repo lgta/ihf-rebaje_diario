@@ -154,6 +154,22 @@ tarea24_reenganches_historico.sql  Peso del filtro de reenganches que mira adela
 tarea24_sabados_asignacion.sql  Asignacion de sabado desde el 25-jul (solo canales complementarios)
 tarea24_status_okaapi.sql      El filtro de status NO mira adelante (flag 0 = todo COMPLETED)
 vw_seguimiento_diario_cohorte_tramo.txt  Definicion de la vista, actualizada con SHOW CREATE VIEW
+tarea24_frescura.sql          Filas por dia de Mambu y calendario: cual es el ultimo dia completo
+tarea24_diag_cierre_refin.sql El salto del cierre por refinanciamiento cae el dia de f_cierre
+tarea24_v2_matriz_stock.sql   RECALIBRACION v2: matriz de stock con v1 y v2 de la misma foto,
+                              activacion y rebaje, dimensiones d1 / arrastre / reeng
+tarea24_v2_matriz_nuevos.sql  Idem para nuevos (entradas 2025-01..2026-08; agosto truncado)
+tarea24_v2_calendario_tasa.sql  Calendario y tasa en UNA poblacion, con el orden de la cuota (bug 23)
+tarea24_v2_septiembre.sql     Insumos de septiembre v1/v2, real v2 y entradas por dia
+curvas_v2.py                  Lee las matrices v2 con los filtros de cada variante
+backtest_tarea24_v1_v2.py     BACKTEST v1 vs. v2, 8 meses, variantes S0/S1/S2 + sensibilidades
+meta_septiembre_v2.py         Septiembre con v2 en paralelo (la meta publicada no se toca)
+-----------------------------------------------------------------------------
+
+--- SEGUIMIENTO DEL MES EN CURSO (septiembre 2026) ---------------------------
+tarea19_real_septiembre.sql   Real de septiembre por dia, definicion v1, los dos enfoques
+seguimiento_septiembre.py     Septiembre contra la meta publicada: avance, correlacion diaria y
+                              descomposicion volumen/conversion. Arg: ultimo dia completo
 -----------------------------------------------------------------------------
 
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
@@ -178,7 +194,8 @@ datos_backtest_junio/        Insumos (CSV) del backtest de junio (recupero + cap
 datos_meta_julio/            Insumos (CSV) de la meta de julio (enfoque acumulado, histórico)
 datos_meta_agosto/            Insumos (CSV) de la meta de agosto (enfoque acumulado)
 datos_tarea19/                Insumos del ciclo de septiembre: matrices crudas a 202607, tasa
-                              por soles, cierre de agosto, insumos de la meta de septiembre
+                              por soles, cierre de agosto, insumos de la meta de septiembre,
+                              real y seguimiento de septiembre
 datos_tarea21/                Doble conteo antiguo/nuevo: diagnósticos de agosto y septiembre,
                               insumos de la variante "primera entrada", y las trayectorias día
                               por día de 8 casos reales de reentrada dentro del mes
@@ -188,7 +205,9 @@ datos_tarea22/                Reconciliación de los antiguos de septiembre cont
 datos_tarea24/                Antiguo = en mora el día 1: cuadre v2 contra la vista, diagnóstico
                               de cada diferencia, los 25 casos del punto ciego con sus
                               transacciones, validación del flag de arrastre, peso histórico de
-                              los reenganches, sábados y status
+                              los reenganches, sábados y status. Recalibración v2: matrices
+                              v2_* (v1 y v2 de la misma foto), backtest v1 vs. v2 y septiembre
+                              en paralelo
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
 datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado, curvas)
 datos_avance_capital_asegurado_agosto/  Insumos (CSV) de la meta de agosto (enfoque alfa)
@@ -216,6 +235,10 @@ armar_asignado_a_asegurado.py   Prepara e inyecta los datos de asignado_a_asegur
 armar_artifact_julio_agosto.py  Prepara los datos embebidos de resumen_julio_agosto.html
 PENDIENTES.md                Plan de continuación accionable para los 2 enfoques vigentes
 ```
+
+**Nota (2026-09-13):** los CSV de `datos_*/` **no se versionan** (`*.csv` en `.gitignore`, pedido
+del usuario): viven solo en la copia local. Un clon nuevo no los trae; se regeneran re-corriendo
+los `.sql` con `scripts/run_athena.sh`.
 
 **Nota (2026-07-15):** `enfoque_reinicio_reloj.md`, `meta_desde_hoy.py`/`.sql`,
 `datos_meta_desde_hoy/`, `enfoque_salida_mora.md`/`.sql`, `salida_mora.html`,

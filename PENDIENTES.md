@@ -1513,3 +1513,106 @@ propio ("entra el día 1") dentro del stock y decidirlo con métricas diarias (`
 nuevas (`call`, `monto_cuota_a_pagar`, `ultima_actualizacion`, `fecha_pago`); el `.txt` del repo se
 actualizó con `SHOW CREATE VIEW`; (c) referenciar la vista varias veces por query agota recursos de
 Athena (bug 27); (d) el filtro de `status` no mira adelante (`tarea24_status_okaapi.sql`).
+
+#### RECALIBRACIÓN v2 — EJECUTADA 2026-09-13 (tarde). La adopción la decide el usuario.
+
+**La respuesta sobre el arrastre no llegó:** el mensaje de arranque de la sesión trajo el
+placeholder sin completar. Se corrió con el default recomendado (**fuera de la meta, con flag**) y se
+midió la alternativa: **no cambia nada material** (alfa 4.09% → 4.10% de error medio, correlación
+idéntica). Con eso la pregunta queda como decisión de reporte, no de modelo.
+
+**Queries.** Las cuatro llevan las dos definiciones en la misma foto de Mambu (`definicion`, o
+`st_v1`/`st_v2`), más `d1` (entró en mora el día 1), `arrastre` y `reeng`:
+- `tarea24_v2_matriz_stock.sql`: stock, activación y rebaje, `periodo_meta` 202501-202608.
+- `tarea24_v2_matriz_nuevos.sql`: nuevos, activación y rebaje, entradas 20250101-20260831. Las de
+  **agosto tienen el seguimiento truncado al 1-sep: no calibrar con ellas.**
+- `tarea24_v2_calendario_tasa.sql`: calendario y tasa en **una sola población**, con el orden de
+  la cuota en el grano (bug 23).
+- `tarea24_v2_septiembre.sql`: insumos de septiembre v1 y v2, real v2 y entradas por día.
+- `tarea24_diag_cierre_refin.sql`: el salto del cierre por refinanciamiento cae **exactamente** el
+  día de `f_cierre` (27,106 de 27,124 caídas de ese día llegan a 0, S/30.7M; los días previos son
+  pagos normales). Alcanza con ignorar las fotos desde `f_cierre`.
+- Código: `curvas_v2.py` (lectura con filtros, no toca `curvas_crudas*.py`),
+  `backtest_tarea24_v1_v2.py`, `meta_septiembre_v2.py`.
+
+**Control.** Filtradas como v1, las matrices reproducen las de `datos_tarea19/` a ≤1.2%
+(re-expresión). La tasa v1 da 24.9412% en [202508, 202607] contra 24.9081% de producción. El
+backtest v1 reconstruido reproduce el publicado mes a mes: media 4.55% contra 4.54%, correlación de
+nuevos 0.889 idéntica.
+
+**La cohorte del día 1 pesa de 0% a 53% del stock v2 según el mes.** Sigue a las cuotas que vencen
+el día 30: es grande en los meses que siguen a uno de 30 días o a febrero (marzo 52%, mayo 34%,
+julio 47%, octubre 37%) y casi nula en el resto. Por eso el stock v2 va de 0.72x a 1.87x del v1
+según el mes, y esa cohorte necesita tratamiento propio.
+
+**Tasa v2 = 24.36%** en [202508, 202607] con el arrastre fuera (24.40% con el arrastre dentro),
+contra 24.94% de v1.
+
+**Backtest, 8 meses (202601-202608), las dos métricas** (`python backtest_tarea24_v1_v2.py sens`):
+
+| Enfoque alfa | Error medio de cierre | Corr. total | Corr. stock | Corr. nuevos | MAE total |
+|---|---:|---:|---:|---:|---:|
+| v1 publicada | 4.55% | 0.826 | 0.842 | 0.889 | S/75.3K |
+| v2 S0 — d1 dentro del tramo 1-8 | 3.99% | 0.808 | 0.896 | 0.897 | S/77.1K |
+| v2 S1 — d1 como tramo propio | 4.04% | 0.815 | 0.900 | 0.897 | S/76.7K |
+| **v2 S2 — d1 con la curva de nuevos** | 4.09% | **0.826** | **0.912** | 0.897 | **S/72.4K** |
+
+| Recupero oficial | Error medio de cierre | Corr. total | Corr. stock | Corr. nuevos | MAE total |
+|---|---:|---:|---:|---:|---:|
+| v1 publicada | 8.26% | 0.826 | 0.811 | 0.881 | S/16.1K |
+| v2 S0 | 8.33% | 0.810 | 0.857 | 0.887 | S/16.1K |
+| v2 S1 | 8.15% | 0.810 | 0.862 | 0.887 | S/16.1K |
+| **v2 S2** | 8.94% | 0.811 | **0.876** | 0.887 | **S/15.9K** |
+
+- **Entre variantes v2 (el real es el mismo), S2 gana en las métricas diarias en los dos enfoques**,
+  más claro en alfa. Se nota en los meses con cohorte d1 grande: marzo, correlación de stock 0.995
+  (S2) contra 0.931/0.939; julio, 0.989 contra 0.961/0.953. La curva de nuevos por día de semana
+  captura que el día 0 de esa cohorte depende del día en que cayó el vencimiento. S2 usa el saldo
+  real de la cohorte, sin tasa: el día 1 ya se sabe quién entró. **Recomendación: S2 en los dos
+  enfoques.**
+- **v1 → v2:** en alfa baja el error de cierre (4.55% → 4.09%) con la misma correlación total y un
+  MAE 4% menor; en recupero sube (8.26% → 8.94%) y la correlación total baja (0.826 → 0.811). Las
+  correlaciones por componente no son comparables entre definiciones (la cohorte d1 cambia de
+  lado): la comparable es la total. Criterio de `CLAUDE.md`: v2 corrige quién entra al universo
+  (cuadra la vista al +0.5%), así que se adopta aunque el error de recupero suba. La adopción la
+  decide el usuario.
+- **Bug 23 queda resuelto por construcción en v2**: la cuota que entra el día 1 ya no es calendario
+  (quien entró es stock, conocido), así que queda una cuota por crédito en la misma base que la
+  tasa. De paso se midió la corrección que tarea 21 había dejado sin adoptar para v1 (`v1c1`, una
+  cuota por crédito): **empeora el seguimiento diario** (marzo corr. total 0.912 → 0.736, julio
+  0.886 → 0.680), porque quedarse con la primera cuota saca la del día 31, que sí genera entradas.
+  No sirve como arreglo de v1.
+
+**Sensibilidades, sobre v2 S2:**
+- **Arrastre dentro:** igual (alfa 4.10%, corr. 0.826; recupero 8.93%).
+- **Reenganches incluidos (bug 25):** alfa 4.09% → **3.74%**; jun/jul/ago pasan de +9.0/+8.4/+2.5%
+  a +7.1/+6.9/+1.1%; correlación igual (0.828). Recupero 8.94% → 7.75%. La tasa baja a ~23.8%
+  porque los reenganches entran en mora bastante menos (su tasa propia es 15-19% en soles, contra
+  ~25%), lo que sugiere que son mayormente reenganches de buenos pagadores. **Inferencia, no
+  verificada caso a caso.** Primera evidencia medida de que el filtro que mira adelante explica una
+  parte de la deriva de tarea 19 (~1.5-2pp de los ~9pp de jun-jul), no toda. Se decide por
+  universo (no mirar adelante), no por el error.
+
+**Septiembre en paralelo** (`python meta_septiembre_v2.py S2 12`), la meta publicada no se toca:
+
+| | Alfa | Recupero | Real/proy. al 12-sep (alfa) |
+|---|---:|---:|---:|
+| v1 publicada (1-sep) | S/20,477,271 | S/3,928,776 | 0.826 |
+| v1 re-medida hoy | S/19,932,405 (−2.7%) | S/3,794,996 (−3.4%) | 0.852 |
+| **v2 S2** | **S/19,283,694** (−3.3% contra v1 hoy) | **S/3,713,811** (−2.1%) | 0.871 |
+
+La re-medición es el calendario prospectivo re-leído hoy: los créditos que terminaron de pagar en
+septiembre ya figuran `COMPLETED` (S/87.1M contra S/89.6M), más la re-expresión de Mambu. El stock
+v2 reproduce la reconciliación (2,837 / S/4,930,217); la cohorte d1 son S/1,920,753 que v2 conoce
+el día 1 en vez de proyectarlos con la tasa. La definición explica una parte chica de la brecha de
+septiembre: el resto es volumen y ejecución (ver `SEGUIMIENTO.md`).
+
+**Decisiones pendientes del usuario:**
+1. Adoptar v2 para octubre, con S2 en los dos enfoques (recomendado).
+2. Arrastre: fuera con flag (default aplicado) o proyección propia. Medido: no cambia el modelo.
+3. Reenganches (bug 25): incluirlos marcados, sin contar el cierre como pago. Medido arriba.
+
+**Si se adopta, para octubre:** re-correr las 4 queries `tarea24_v2_*` con las fechas corridas un
+mes (fotos de la matriz de nuevos hasta el 1-oct; ventana [202509, 202608]), un `meta_octubre_v2.py`
+análogo a `meta_septiembre_v2.py` con insumos prospectivos (`status = 'ACTIVE'`) al cierre de
+septiembre, y actualizar en `CLAUDE.md` cuál es la matriz vigente.

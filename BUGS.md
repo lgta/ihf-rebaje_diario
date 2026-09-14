@@ -1747,6 +1747,18 @@ mueve **−0.0056%**, porque septiembre cae en el caso benigno. Ver `PENDIENTES.
 Eso resta las entradas de agosto sin restar su calendario y hunde la tasa a 22.3% contra 26.0%
 real. La ventana válida de ese cruce es **202601-202607**.
 
+**→ 2026-09-13 (tarea 24): efecto medido en el backtest, y la definición v2 lo resuelve.**
+`tarea24_v2_calendario_tasa.sql` lleva el orden de la cuota en el grano, así que las dos versiones
+salen de la misma foto. El doble conteo pesa **4-13% del calendario en mar/may/jul/oct/dic** y 0% en
+los demás meses. La corrección "una cuota por crédito", corrida sobre el backtest de 8 meses
+(`backtest_tarea24_v1_v2.py`, variante `v1c1`), casi no mueve el error de cierre (4.55% → 4.60%)
+pero **empeora fuerte el seguimiento diario** justo en esos meses (marzo, corr. total
+0.912 → 0.736; julio, 0.886 → 0.680): quedarse con la PRIMERA cuota saca la del día 31, y esa cuota
+sí genera entradas ese día. La corrección de tarea 21 no arregla v1: el problema de fondo es que la
+tasa es por crédito y la exposición es por cuota. **Con v2 desaparece:** la cuota que entra el día 1
+ya no es calendario (quien entró es stock), y queda una sola cuota por crédito, la misma base que la
+tasa (`orden_d2 = 1`).
+
 ### 24. Dos trampas de nombres en `vw_seguimiento_diario_cohorte_tramo` — costaron dos corridas de Athena
 
 **Encontradas 2026-09-02 (tarea 22).** La vista es externa al proyecto y sus nombres **no** son
@@ -1789,6 +1801,18 @@ refinancia dentro del mismo mes). La corrección posible es tomar la cadena como
 contar el cierre por refinanciamiento como pago. **Decisión pendiente del usuario** (PENDIENTES tarea
 24). El filtro de `status` **no** tiene el mismo problema: los 30,184 créditos con flag 0 están todos
 en COMPLETED, y ese filtro solo saca DELETED/REQUESTED (`tarea24_status_okaapi.sql`).
+
+**→ 2026-09-13 (tarde): medido el efecto de incluirlos.** Las matrices v2 (`tarea24_v2_*.sql`) los
+traen marcados (`reeng`) y no cuentan el cierre por refinanciamiento como pago:
+`tarea24_diag_cierre_refin.sql` muestra que el salto de saldo cae **exactamente** el día de
+`f_cierre` (27,106 de las 27,124 caídas de ese día llegan a 0; S/30.7M), así que alcanza con ignorar
+las fotos desde ese día. En el backtest (`backtest_tarea24_v1_v2.py sens`, v2 S2), los reenganches
+**entran en mora bastante menos** que el resto (tasa propia 15-19% en soles, contra ~25%): sugiere
+que son mayormente reenganches de buenos pagadores, no refinanciamientos de clientes en problemas
+(inferencia, no verificada caso a caso). Incluirlos baja la tasa a ~23.8% y el error de alfa de
+4.09% a 3.74%, con jun/jul/ago de +9.0/+8.4/+2.5% a +7.1/+6.9/+1.1%; la correlación diaria no cambia
+(0.826 → 0.828). Es la primera evidencia medida de que este sesgo explica **una parte** (~1.5-2pp)
+de la deriva de tarea 19, no toda. La decisión sigue siendo del usuario.
 
 ### 26. `dias_atraso_cuota` se re-expresa hacia atrás cuando un pago se regulariza con fecha valor retroactiva
 

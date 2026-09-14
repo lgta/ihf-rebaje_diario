@@ -6,12 +6,38 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-13 (tarea 24: antiguo = en mora el día 1).
+Última actualización: 2026-09-13, tarde (seguimiento de septiembre + recalibración v2 de tarea 24).
 
 > **PARA ARRANCAR UNA SESIÓN NUEVA:** el prompt de handoff vigente es
-> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt) — reemplaza al del 2026-09-11,
-> que no cubría la tarea 24. Después: el bloque de abajo + "La meta vigente", y `PENDIENTES.md`
-> **tarea 24** (en curso: recalibración) y **tareas 20, 21 y 23**.
+> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt) (actualizado la tarde del 13-sep)
+> — reemplaza al del 2026-09-11. Después: los dos bloques de abajo + "La meta vigente", y
+> `PENDIENTES.md` **tarea 24** (recalibración hecha, adopción pendiente) y **tareas 20, 21 y 23**.
+
+> **2026-09-13 (tarde) — SEPTIEMBRE SEGUIDO CONTRA LA META Y RECALIBRACIÓN v2 EJECUTADA. Nada
+> adoptado ni commiteado: quedan tres decisiones del usuario.**
+>
+> **SEPTIEMBRE VA −17.4% CONTRA LA TRAYECTORIA DE LA META (alfa, al 12-sep).** Real S/7,155,605
+> contra S/8,666,800 proyectado al mismo día; stock +4.0%, nuevos −21.6%; correlación diaria 0.982.
+> Recupero, −28.6%. El caveat de ~10% se materializa y lo supera: en los 8 meses del backtest el
+> cociente del día 12 nunca bajó de 0.93, y el cierre terminó a ±4pp de él. La brecha es sobre todo
+> de **volumen** (entró en mora 17.1% menos saldo que el esperado, hasta ~8pp por el ancla sin
+> amortizar) y en menor medida de **conversión** (−5.4% por sol que entró). Detalle en
+> `SEGUIMIENTO.md`.
+>
+> **RECALIBRACIÓN v2 (antiguo = en mora el día 1) HECHA, con v1 y v2 de la misma foto.** Cuatro
+> queries nuevas (`tarea24_v2_*.sql`) que, filtradas como v1, reproducen las de tarea 19 (≤1.2%), y un
+> backtest v1 reconstruido que reproduce el publicado (4.55% contra 4.54%). En 8 meses: alfa, v1 4.55%
+> / corr. 0.826 → **v2 S2 4.09% / 0.826**, con un MAE diario 4% menor; recupero, 8.26% / 0.826 →
+> 8.94% / 0.811. La cohorte del día 1 pesa 0-53% del stock según el mes y se proyecta mejor con la
+> curva de NUEVOS (variante S2, gana en métricas diarias en los dos enfoques). v2 **resuelve bug 23**
+> por construcción. Septiembre en paralelo: v2 daría **S/19,283,694** en alfa, contra S/19,932,405 de
+> v1 re-medida hoy (−3.3%).
+>
+> **Tres decisiones pendientes del usuario:** (1) adoptar v2 con S2 para octubre (recomendado); (2)
+> arrastre por DNI: el mensaje de arranque dejó la respuesta en blanco, se corrió con "fuera, con
+> flag" y dentro/fuera no cambia el modelo (4.09% contra 4.10%); (3) reenganches: incluirlos baja el
+> error de alfa de 4.09% a 3.74% y explica ~1.5-2pp de la deriva de jun-jul (entran en mora mucho
+> menos, tasa 15-19%). Detalle en `PENDIENTES.md` tarea 24.
 
 > **2026-09-13 — TAREA 24: ANTIGUO PASA A SER "EN MORA EL DÍA 1", LA DEFINICIÓN DE LA VISTA
 > (decisión del usuario). Reconciliado, decidido lo que colgaba, recalibración por empezar.**
@@ -24,9 +50,7 @@
 > documentado (pagos regularizados con fecha valor, bug 26); **reenganches medidos, decisión
 > pendiente** — el filtro mira hacia adelante y saca 8-11% del saldo de nuevos en los meses completos
 > (bug 25). **La meta de septiembre (S/20,477,271) no se tocó**; octubre sería la primera meta v2.
-> **Queda una pregunta abierta al usuario antes de recalibrar:** si el arrastre queda fuera de la
-> meta con su real reportado aparte (recomendado) o con proyección propia. Sigue sin hacerse,
-> además, el seguimiento del real de septiembre contra la meta (bloque del 2026-09-11).
+> La recalibración y el seguimiento de septiembre se hicieron esa misma tarde (bloque de arriba).
 > Detalle y plan en `PENDIENTES.md` tarea 24; decisión en `DECISIONES.md`.
 
 > **2026-09-01/02 — AGOSTO CERRADO, METAS DE SEPTIEMBRE FIJADAS, Y UN HALLAZGO DE NEGOCIO QUE
@@ -90,10 +114,8 @@
 > Lo que se hizo fue **medir tres cosas que estaban asumidas** y dejar una variante construida sin
 > adoptar. Los tres frentes abiertos, en orden de lo que rinde más:
 >
-> 1. **SEGUIR SEPTIEMBRE CONTRA LA META — es lo más urgente y no está hecho.** Al escribir esto van
->    **11 días del mes** y todavía no existe la query de "real de septiembre por día". Hace falta
->    `tarea19_real_agosto_cierre.sql` con las fechas corridas. Sin eso no se sabe si el caveat de
->    ~10% se está materializando, que es la pregunta de negocio del mes.
+> 1. ~~**SEGUIR SEPTIEMBRE CONTRA LA META.**~~ **Hecho el 2026-09-13** (`tarea19_real_septiembre.sql`
+>    + `seguimiento_septiembre.py`): al 12-sep, −17.4% en alfa. Ver el bloque del 13-sep (tarde).
 > 2. **Explicar la caída de activación** (−0.46pp/mes) — sigue medida y no explicada. Es el frente
 >    de fondo, con el plan en 3 pasos en `PENDIENTES.md` tarea 19.
 > 3. **Tarea 23**, pedida por el usuario y no empezada: proyectar *lo que realmente entra a gestión*,
@@ -832,11 +854,17 @@ datos de septiembre).
 > con que se corrigió bug 18, que también empeoró el error). **La meta se reporta junto con esta
 > lectura, no sola.** Ver `analisis_tarea19_activacion_decreciente.md`.
 
+> **Seguimiento al 12-sep (medido el 13-sep): −17.4%** contra la trayectoria de la meta (S/7,155,605
+> real contra S/8,666,800 proyectado a esa fecha), con correlación diaria 0.982. Supera el caveat y
+> queda fuera del rango histórico del día 12 (0.93-1.08 en los 8 meses del backtest). Es sobre todo
+> volumen de entradas. Ver `SEGUIMIENTO.md`.
+
 **Septiembre 2026 — Recupero oficial.** Meta proyectada **S/3,928,776** (stock S/537,381 +
 nuevos S/3,391,395). **Primera meta de este enfoque con el motor migrado a `dias_atraso_cuota`**
 (18e, adoptado 2026-08-26) — agosto quedó con el motor viejo a propósito, por ser mes en curso.
 Mismo caveat: el motor corrido contra agosto sobreestima **+13.5%**, en línea con junio (+15.8%)
-y julio (+18.3%). Fuente: `meta_septiembre_recupero.py`.
+y julio (+18.3%). Fuente: `meta_septiembre_recupero.py`. **Al 12-sep: −28.6%** contra la trayectoria
+(S/1,089,167 real contra S/1,526,191), correlación diaria 0.948.
 
 **Agosto 2026 — CERRADO.** Capital asegurado: meta S/17,117,628, real **S/17,322,872**,
 **-1.2%** (stock -1.3%, nuevos -1.1%) — el mes más ajustado del proyecto. Recupero oficial:
@@ -1181,6 +1209,13 @@ de confiar en ella -- ver BUGS.md antes de escribir queries nuevas.
 ```
 
 ## Estado de git
+
+> **2026-09-13 (tarde) — COMMITEADO Y PUSHEADO a `origin`** (pedido del usuario): el seguimiento de
+> septiembre, la recalibración v2 y la documentación, en commits separados (ver `git log`).
+> **Desde acá los CSV no se versionan:** `*.csv` en `.gitignore`, y los 162 CSV que estaban
+> trackeados (16.9 MB) salieron del índice con `git rm --cached` — siguen en disco y en el
+> historial de git; sacarlos del historial exigiría reescribirlo con force-push, y no se hizo.
+> `rebaje_diario` es un remoto viejo (35 commits atrás) y no se toca.
 
 > **✔ 2026-09-02 — TODO COMMITEADO. Working tree limpio.** Se cerró el hueco que venía desde el
 > 26-ago (99 archivos sin commitear, con código que producía la meta vigente sin respaldo).

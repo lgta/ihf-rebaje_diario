@@ -47,12 +47,18 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   (que entra **sábado**, día no hábil) del lado de los días hábiles. Ver bug 21.
 - **Antiguo = en mora 1-30 el DÍA 1 del mes** (decisión del usuario 2026-09-13, tarea 24): la
   definición de la vista oficial. Incluye a quien entra en mora el día 1 y excluye a quien pagó el
-  último día del mes anterior. **Los motores vigentes todavía usan la del cierre del mes anterior**
-  hasta que la recalibración de tarea 24 se complete — no mezclar las dos en una misma
-  calibración. El arrastre por DNI se marca con `flg_arrastre_dni`, no se borra.
+  último día del mes anterior. **La recalibración está hecha pero NO adoptada** (2026-09-13 tarde,
+  `PENDIENTES.md` tarea 24): las matrices `datos_tarea24/v2_*` traen v1 y v2 de la misma foto, y
+  `curvas_v2.py` las lee con filtros. **Hasta que el usuario adopte, las metas siguen con la del
+  cierre del mes anterior** — no mezclar las dos en una misma calibración. En v2 la cohorte que
+  entra el día 1 pesa 0-53% del stock según el mes y se proyecta con la curva de NUEVOS (variante
+  S2). El arrastre por DNI se marca con `flg_arrastre_dni`, no se borra.
 - **`flg_last_loan_in_chain` mira hacia adelante** (bug 25): se lee con la foto de hoy y borra de
   cada mes histórico a los créditos que se refinanciaron después (8-11% del saldo de nuevos). Se
-  sigue aplicando hasta que el usuario decida (tarea 24) — no "arreglarlo" por cuenta propia.
+  sigue aplicando hasta que el usuario decida (tarea 24) — no "arreglarlo" por cuenta propia. Las
+  matrices v2 los traen marcados (`reeng`) y no cuentan el cierre por refinanciamiento como pago:
+  el salto de saldo cae exactamente el día de `f_cierre` (primer día `REFINANCED`/`RESCHEDULED`),
+  así que se ignoran las fotos desde ese día.
 - **`dias_atraso_cuota` e `installmentlastpaiddate` usan la FECHA VALOR del pago** (bug 26): un
   pago regularizado días después con fecha valor anterior re-expresa la mora hacia atrás.
 
@@ -171,6 +177,11 @@ El usuario controla explícitamente cuándo se hace commit y push — no commite
 sin que lo pida. Si un push a un remoto agregado en la sesión queda bloqueado por el
 clasificador de seguridad de auto-mode, no intentar workarounds (curl+token, etc.) — dar al
 usuario el comando exacto para que lo corra desde su terminal.
+
+**Los CSV no se versionan** (pedido del usuario 2026-09-13): `*.csv` está en `.gitignore` y los
+datos viven solo en la copia local. Un clon nuevo no trae `datos_*/`: se regeneran re-corriendo
+los `.sql`. No forzar un CSV con `git add -f`. Se pushea a `origin`; `rebaje_diario` es un remoto
+viejo (35 commits atrás) que no se actualiza.
 
 ## Artifacts (HTML/MD publicados)
 

@@ -8,9 +8,10 @@ créditos con `dias_atraso_cuota` entre 1 y 30 **el día 1 del mes**, con el sal
 anterior. Incluye a quien entra en mora ese mismo día (su cuota venció el último día del mes
 anterior) y excluye a quien estaba en mora al cierre pero pagó el último día. Es la regla del
 negocio (`tipo_mora`: `dias_mora >= day(fecha_base)` → antiguo). Se les mide capital una sola vez y
-se les da seguimiento con la curva de stock. **Los motores vigentes todavía usan la definición
-anterior** — mora 1-30 **al cierre** del mes anterior, con la cohorte del día 1 en nuevos (motor
-unificado, tarea 17 Fase 4) — hasta que se complete la recalibración de tarea 24.
+se les da seguimiento con la curva de stock. **La recalibración está hecha (2026-09-13), pero las
+metas siguen con la definición anterior hasta que el usuario la adopte** — mora 1-30 **al cierre**
+del mes anterior, con la cohorte del día 1 en nuevos (motor unificado, tarea 17 Fase 4). Ver
+"v1 / v2" al final.
 
 **Nuevos / flujo** — créditos que entran en mora durante el mes (entrada = vencimiento + 1): del
 día 2 en adelante con la definición nueva. Cada día de entrada genera su propia cohorte.
@@ -187,3 +188,28 @@ semana, quincena, factor de cierre en stock) pero calibración propia (no compar
 tasa). Vigente para todo mes CERRADO desde julio 2026 en adelante y para la meta de
 SEPTIEMBRE; la meta de AGOSTO es la única excepción — sigue con el motor viejo (`dayslate`,
 `P_NO_PAGA_DIA0`) porque ya estaba en curso cuando se migró. Ver `DECISIONES.md`.
+
+## Términos de tarea 24 (recalibración con antiguo = en mora el día 1, agregados 2026-09-13)
+
+**v1 / v2 (definición de antiguo)** — v1: stock = mora 1-30 al **cierre** del mes anterior (la de
+producción hasta que el usuario adopte v2). v2: mora 1-30 **el día 1** del mes, la de la vista
+oficial. Las matrices `datos_tarea24/v2_*` traen las dos de la misma foto de Mambu.
+
+**Cohorte d1** — los créditos que entran en mora el día 1 (su cuota venció el último día del mes
+anterior). En v1 eran "nuevos con día de entrada 1" y se proyectaban con calendario × tasa; en v2
+son stock, y se conocen el día 1. Pesan de 0% a 53% del stock según el mes, porque siguen a las
+cuotas que vencen el día 30.
+
+**Variantes S0 / S1 / S2** — cómo proyectar la cohorte d1 dentro del stock v2. S0: mezclada en el
+tramo 1-8 de la curva de stock. S1: tramo propio en la curva de stock. **S2 (recomendada):** con la
+curva de NUEVOS por banda y día de semana del vencimiento, sobre su saldo real y sin tasa. Gana en
+las métricas diarias porque el día 0 de esa cohorte depende del día en que venció la cuota.
+
+**Re-medición** — la diferencia entre un insumo leído el día en que se fijó la meta y el mismo
+insumo leído días después. Dos fuentes: Mambu se re-expresa (−0.3% a −0.8%) y el calendario
+prospectivo pierde a los que terminaron de pagar (hoy `COMPLETED`). Para comparar definiciones se
+compara contra la versión re-medida, no contra la publicada.
+
+**Reenganche marcado** — incluir en la calibración los créditos con `flg_last_loan_in_chain = 0`
+(que hoy se excluyen con un flag que mira adelante, bug 25), marcados con `reeng`, sin contar como
+pago el salto de saldo del día en que Mambu los cierra por refinanciamiento.

@@ -1,6 +1,8 @@
 PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
 Escrito 2026-09-13. Reemplaza a prompt_handoff_2026-09-11.txt: esta sesión cambió la definición
 de antiguo (tarea 24), y eso reordena todo lo que sigue.
+ACTUALIZADO 2026-09-13 (tarde): la recalibración v2 y el seguimiento de septiembre están HECHOS.
+Quedan tres decisiones del usuario (punto 0 de LO QUE SIGUE). Nada commiteado.
 
 ====================================================================
 ORDEN DE LECTURA — y nada más
@@ -8,8 +10,8 @@ ORDEN DE LECTURA — y nada más
 1. CLAUDE.md              — reglas de datos y los 4 principios no negociables. Tiene 3 reglas
                             nuevas de esta sesión (antiguo v2, reenganches, fecha valor).
 2. ESTADO.md              — bloque "2026-09-13" (el de arriba) + "La meta vigente".
-3. PENDIENTES.md          — TAREA 24 completa: decisiones, la pregunta abierta al usuario y el
-                            plan de recalibración. Después tareas 20, 21 y 23.
+3. PENDIENTES.md          — TAREA 24 completa, incluida la sección "RECALIBRACIÓN v2 — EJECUTADA"
+                            (resultados y las 3 decisiones pendientes). Después tareas 20, 21 y 23.
 4. Solo si hace falta:
    - DECISIONES.md, última entrada (antiguo = en mora el día 1)
    - BUGS.md bugs 25, 26 y 27 (trampas nuevas, resumidas abajo)
@@ -29,7 +31,12 @@ con la definición VIEJA de antiguo (mora 1-30 al cierre del mes anterior).
 
 DECISIÓN DE ESTA SESIÓN (usuario, 2026-09-13): antiguo = mora 1-30 EL DÍA 1 del mes — la
 definición de vw_seguimiento_diario_cohorte_tramo. "Si esto implica recalibrar, hagámoslo."
-La recalibración NO está hecha: es lo que sigue.
+La recalibración se HIZO la tarde del 13-sep; no está adoptada.
+
+SEGUIMIENTO AL 12-SEP (meta publicada, definición v1): alfa -17.4% contra la trayectoria de la
+meta (corr. diaria 0.982; stock +4.0%, nuevos -21.6%), recupero -28.6%. Fuera del rango histórico
+del día 12 (0.93-1.08 en los 8 meses del backtest). Es sobre todo VOLUMEN: entró en mora 17% menos
+saldo que el esperado (hasta ~8pp por el ancla sin amortizar); la conversión, -5.4%.
 
 ====================================================================
 LO QUE SE HIZO EN ESTA SESIÓN (tarea 24) — para no re-preguntarlo
@@ -60,38 +67,35 @@ LO QUE SE HIZO EN ESTA SESIÓN (tarea 24) — para no re-preguntarlo
 ====================================================================
 LO QUE SIGUE, EN ORDEN
 ====================================================================
-0. PREGUNTA ABIERTA AL USUARIO (hecha el 13-sep, sin respuesta al escribir esto):
-   ¿el arrastre por DNI queda FUERA de la meta de TEMPRANA con su real reportado aparte
-   (recomendado: ~1.7% del stock; una curva propia saldría sin muestra), o quiere proyección
-   propia? Defaults ya anunciados si no dice otra cosa: flag también para nuevos (medido el día
-   de entrada); los dos enfoques; septiembre publicada NO se toca (v2 en paralelo); octubre es la
-   primera meta v2; backtest de 8 meses con error de cierre + correlación diaria.
+0. TRES DECISIONES DEL USUARIO (todo medido el 13-sep tarde; tablas en PENDIENTES tarea 24):
+   a. Adoptar v2 para octubre, con la cohorte del día 1 proyectada con la curva de NUEVOS
+      (variante S2: su saldo real x curva por banda y día de semana, sin tasa). Recomendado.
+      Alfa: cierre 4.55% -> 4.09%, corr. total igual (0.826), MAE diario -4%. Recupero: 8.26% ->
+      8.94%, corr. 0.826 -> 0.811. S2 gana en métricas diarias en los dos enfoques.
+   b. Arrastre por DNI: el mensaje de arranque del 13-sep trajo el placeholder SIN completar. Se
+      corrió con el default (fuera de la meta, con flag). Dentro/fuera no cambia el modelo
+      (4.09% vs 4.10%): es una decisión de reporte.
+   c. Reenganches (bug 25): incluirlos baja alfa a 3.74% y explica ~1.5-2pp de la deriva de
+      jun-jul. Entran en mora mucho menos (tasa 15-19%): mayormente buenos pagadores (inferencia).
 
-1. RECALIBRAR CON v2 (plan en PENDIENTES tarea 24):
-   a. Re-correr las matrices crudas de tarea19_*.sql con v2 y con DOS dimensiones nuevas:
-      flg_arrastre_dni y el flag de reenganche. Incluir los reenganches MARCADOS, sin contar como
-      pago el día del cierre por refinanciamiento -> decidir reenganches después cuesta 0 Athena.
-      Producción los sigue excluyendo hasta que el usuario decida.
-   b. Stock v2 (ventana FIJA 202504-202606). OJO: la cohorte que entra el día 1 se comporta como
-      nueva (activa fuerte el día 0) y su peso en el tramo 1-8 varía por mes — cuando el último
-      día del mes anterior es domingo NO hay cohorte del día 1. Probar un segmento propio
-      ("entra el día 1") dentro del stock; decidirlo con métricas DIARIAS (CLAUDE.md).
-   c. Nuevos: sin la cohorte del día 1; los que pagaron el último día del mes vuelven al
-      calendario (ya no están en el stock). P_ENTRADA sobre la MISMA definición (principio de
-      modelado).
-   d. Los dos enfoques (comparten la definición de entrada).
-   e. Backtest v1 vs v2, 8 meses, las dos métricas. Corregir el universo se adopta aunque el
-      error suba (principio de interpretación del error), pero la adopción la decide el usuario.
+1. HECHO — recalibración v2: tarea24_v2_{matriz_stock,matriz_nuevos,calendario_tasa,septiembre}.sql,
+   curvas_v2.py, backtest_tarea24_v1_v2.py (`sens v2s2` para las sensibilidades),
+   meta_septiembre_v2.py (`S2 12`). Todo con v1 y v2 de la MISMA foto: v1 reconstruido reproduce
+   el backtest publicado (4.55% vs 4.54%). Septiembre en paralelo: v2 S/19,283,694 contra v1
+   re-medida hoy S/19,932,405 (la publicada, S/20,477,271, no se toca).
+   SI SE ADOPTA, para octubre: re-correr las 4 queries tarea24_v2_* con fechas +1 mes (fotos de la
+   matriz de nuevos hasta el 1-oct; ventana [202509, 202608]), meta_octubre_v2.py análogo a
+   meta_septiembre_v2.py con insumos prospectivos al cierre de septiembre, y actualizar CLAUDE.md.
 
-2. SEGUIR SEPTIEMBRE CONTRA LA META — sigue SIN HACER desde el 1-sep. Copia de
-   tarea19_real_agosto_cierre.sql con las fechas de septiembre, con la definición v1 (la de la
-   meta publicada: el real se mide con la misma definición que la meta, como agosto). Pregunta
-   del mes: ¿se materializa el caveat de ~10%? Dos números: cierre y correlación diaria. Usar el
-   PENÚLTIMO día como último día completo.
+2. HECHO — seguimiento de septiembre: tarea19_real_septiembre.sql + seguimiento_septiembre.py
+   (arg: último día completo). Para refrescar: re-correr esa query y tarea24_v2_septiembre.sql
+   (descomposición volumen/conversión), y `python seguimiento_septiembre.py <día>`.
 
 3. EXPLICAR LA CAÍDA DE ACTIVACIÓN (-0.46pp/mes, tarea 19). Candidato nuevo para el paso 3
    ("artefacto del universo"): el filtro de reenganches que mira adelante (bug 25). Se prueba
    midiendo la activación de los que después se refinancian contra el resto, mes a mes.
+   AVANCE 13-sep: incluir los reenganches baja jun/jul/ago ~1.5-2pp — explica una parte, no toda.
+   Septiembre muestra el mismo signo, sobre todo por VOLUMEN de entradas.
 
 4. Tarea 23 (proyectar lo que entra a gestión): premisa ajustada — desde el 25-jul hay
    asignación los sábados, pero SOLO para canales complementarios (no call/IVR). Cortar por
@@ -113,6 +117,13 @@ TRAMPAS NUEVAS (bugs 25, 26 y 27)
   ultima_actualizacion / fecha_pago. El .txt del repo ya está actualizado.
 - dts_asignaciones_gestiones_cobranza SÍ tiene filas los sábados desde el 25-jul (canales
   complementarios). FUENTES_DATOS.md ya corregido.
+- tarea24_v2_matriz_nuevos: las entradas de 202608 tienen el seguimiento TRUNCADO al 1-sep. Sirven
+  para el real de agosto, NO para calibrar.
+- El calendario prospectivo re-leído días después pierde a los que terminaron de pagar
+  (COMPLETED): -2.8% en septiembre al 13-sep. Comparar v2 contra v1 RE-MEDIDA, no contra la
+  publicada.
+- Bug 23 (dos cuotas del mismo crédito en el mes): la corrección "una cuota por crédito" EMPEORA
+  el seguimiento diario de v1 (marzo 0.912 -> 0.736). v2 lo resuelve por construcción.
 
 ====================================================================
 TRAMPAS VIEJAS QUE SIGUEN VIGENTES

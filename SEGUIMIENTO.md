@@ -46,6 +46,14 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 `backtest_tarea18e_recupero_oficial_v2.py`, series diarias en
 `datos_tarea18e/serie_diaria_recupero_v2_*.csv`.
 
+> **Septiembre 2026 — EN CURSO, seguimiento al 12-sep** (último día completo al 13-sep). Meta
+> S/3,928,776, la primera con el motor 18e. Real **S/1,089,167 contra S/1,526,191 proyectado al
+> mismo día: −28.6%** (stock −17.0%, nuevos −31.2%), correlación diaria 0.948. Va más lejos que el
+> alfa: el stock activa +4.0% en alfa pero rebaja −17.0% acá, lo que apunta a pagos más chicos que
+> los de la curva (lectura, no verificada crédito a crédito). Real medido con `dias_atraso_cuota`,
+> la misma población de la meta (`tarea19_real_septiembre.sql`, columna `rebaje_dia`;
+> `seguimiento_septiembre.py`).
+
 **Histórico — motor anterior (`dayslate`, `P_NO_PAGA_DIA0=13.38%`), reemplazado 2026-08-26:**
 
 | Mes | Meta proyectada | Real | Error total | Error stock | Error nuevos | Motivo principal | Notas |
@@ -159,6 +167,19 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 | Junio 2026 | S/13,177,167 | S/13,539,856 | **-2.7%** | +5.8% | -4.7% | 0.900 | Junto con julio, el mes más cerca de su meta. | Idem. |
 | Julio 2026 | S/16,816,807 | S/17,323,922 | **-2.9%** | -3.5% | -2.8% | 0.880 | El mes más parejo entre componentes. Su calendario de fin de mes no tiene ningún vencimiento de fin de semana, y por eso es el que más mejora con la curva por día de semana (-5.0% → -2.9%). | Idem. |
 | Agosto 2026 | S/17,117,628 | S/17,322,872 | **-1.2%** | -1.3% | -1.1% | — | El mes más ajustado de todo el proyecto, y el más parejo entre componentes (stock -1.3%, nuevos -1.1%). Rompe la racha: "nuevos" venía subestimando en los 7 meses anteriores entre -2.8% y -21.6%. | **CERRADA 2026-09-01.** Meta con motor v2 (W3), sin el factor de cierre de stock (v3) — deliberado, ver bloque 2026-08-26: stock S/3,795,022 + nuevos S/13,322,607. Curvas [202507-202606]. `meta_agosto_capital_asegurado.py` v8; real de `tarea19_real_agosto_cierre.sql`. **Caveat de honestidad:** las curvas nunca vieron agosto, pero la ADOPCIÓN de W3 se decidió el 26-ago con 25 días del mes ya visibles — no es un test prospectivo limpio como lo será septiembre. Los cortes publicados se movieron al re-medir (21-ago S/11,595,123→S/11,547,707, -0.4%; 25-ago S/13,484,959→S/13,398,433, -0.6%): `dts_mambu_loans_hist` se re-expresa para días pasados. |
+
+> **Septiembre 2026 — EN CURSO, seguimiento al 12-sep** (último día completo al 13-sep). Meta
+> S/20,477,271 (v1, fijada el 1-sep). Real acumulado **S/7,155,605 contra S/8,666,800 proyectado al
+> mismo día: −17.4%** (stock +4.0%, nuevos −21.6%). La forma se sigue muy bien: correlación de
+> incrementos diarios **0.982** (nuevos 0.971). **El caveat de ~10% se está materializando, y lo
+> supera:** en los 8 meses del backtest el cociente real/proyectado del día 12 quedó siempre entre
+> 0.93 y 1.08, y el cierre terminó a ±4pp de él (agosto, con la meta prospectiva: 0.973 el día 12,
+> 1.012 al cierre). Septiembre está en 0.826, fuera de ese rango. **La brecha es de volumen más que de
+> conversión:** entró en mora 17.1% menos saldo que el esperado (calendario × tasa; hasta ~8pp de eso
+> es el ancla al cierre de agosto, que no descuenta la amortización), y cada sol que entró activó
+> 5.4% menos. Con la definición v2 en paralelo el cociente sería 0.871 (`meta_septiembre_v2.py`): la
+> definición explica una parte chica. Código: `tarea19_real_septiembre.sql` +
+> `seguimiento_septiembre.py` (descomposición con `tarea24_v2_septiembre.sql`).
 
 **Magnitud media de error de fin de mes, 7 meses: 10.26%** (10.55% antes del factor de cierre
 de stock). **Correlación media de incrementos diarios de nuevos: 0.886** (sin cambios — el
