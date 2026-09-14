@@ -18,12 +18,13 @@ listadas en `PENDIENTES.md`, tareas compartidas):
 - ~~Recalibrar las curvas excluyendo cada mes de prueba~~ **hecho 2026-08-26** para la curva de
   **nuevos**: calibración rodante de 12 meses, `[M-12, M-1]`. Leak medido: 0.10pp. **Falta la
   curva de stock**, que sigue con ventana fija (tarea 18c).
-- **Explicar el sesgo de "nuevos"** — subestima en los 7 meses con signo constante (-2.8% a
-  -21.6%). Es el frente abierto principal (tarea 18b). No se ajusta con una constante.
-- Rodar también la curva de **stock** (lo que queda de tarea 18c). Mientras no se haga, el
-  nivel de error de ene-jun está subestimado.
-- `installmentlastpaiddate` (`dts_cobranza_creditos_cuotas`, nivel cuota) — sin explotar,
-  podría precisar el punto ciego de 1 día de `dayslate` (bug 9 en `BUGS.md`).
+- ~~**Explicar el sesgo de "nuevos"**~~ **explicado (tarea 19, 2026-09-01):** la tasa de entrada se
+  calibraba por conteo y se aplicaba sobre soles. Corregida, lo que queda es la **caída de
+  activación** (tarea 19), hoy el frente abierto principal.
+- Rodar también la curva de **stock** (lo que queda de tarea 18c). **Probado en 18c/18g: empeora**
+  (corr. 0.848→0.820, muestra chica); necesita otro enfoque, no el de nuevos.
+- ~~`installmentlastpaiddate`~~ **hecho 2026-08-20** (tarea 7, capa fantasma) y **superado** por
+  `dias_atraso_cuota`, que cierra el punto ciego de `dayslate` sin capa aparte (tarea 17).
 - Reorganizar en carpetas (`sql/`, `python/`, `docs/`) si el root sigue creciendo — baja
   prioridad, no bloquea nada.
 

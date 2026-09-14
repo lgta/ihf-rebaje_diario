@@ -208,3 +208,79 @@ calibrarlo sobre historia y correr el backtest, y es la primera tarea del frente
 **Cuidado con la trampa:** ese factor NO se calibra contra el residuo del backtest (eso sí sería
 ajuste ex-post). Se calibra midiendo, sobre meses históricos, cuánto cae el saldo de una cuota
 entre el cierre del mes anterior y su fecha de vencimiento, abierto por días de distancia.
+
+> **Nota 2026-09-13:** este factor quedó resuelto de otra forma — la tasa de entrada se calibra con el
+> saldo anclado como denominador, el mismo que la meta multiplica (bug 28, `motor_v2.TASA_ANCLADA`).
+
+---
+
+# Addendum 2026-09-14 — Con las definiciones v2, la caída es sobre todo MENOS ENTRADAS; la conversión no tiene tendencia
+
+Pregunta 2 del frente abierto (¿es composición?), medida sin Athena con la matriz de nuevos vigente
+(`datos_tarea24/v2_matriz_nuevos.csv`) y los filtros de producción del motor v2: antiguo = en mora el
+día 1, arrastre por DNI fuera, reenganches incluidos. Script: `tarea19_composicion_activacion.py`;
+salida en `datos_tarea19/composicion_activacion.log` (local, no se versiona).
+
+**1. La composición no explica la caída.** Shift-share de ene-mar contra may-jul 2026, sobre la
+conversión a 30 días desde la entrada (92.82% → 91.75%, −1.08pp):
+
+| segmentación | mezcla | dentro del segmento |
+|---|---:|---:|
+| banda de avance | +0.04pp | −1.13pp |
+| día de semana del vencimiento | +0.00pp | −1.05pp |
+| banda × día de semana (la de la curva) | +0.05pp | −1.10pp |
+| tercio del mes de entrada | −0.04pp | −1.06pp |
+
+Sobre la conversión dentro del mes (la que cuenta la meta; ene-mar → jun-ago, −1.13pp), la mezcla por
+día de semana y por tercio jugó **a favor** (+0.4 a +0.5pp): tapó parte de la caída. La pendiente
+2026-01 a 2026-07 con la mezcla fija casi no cambia (−0.30 → −0.29pp/mes). La dimensión "reenganche"
+parece explicar 17-24%, pero no es mezcla: su peso cae de ~11% a 2.2% en agosto porque los reenganches
+de los meses recientes todavía no ocurrieron (bug 25). Es la etiqueta, no la población.
+
+**2. Lo que cae es la entrada, no la conversión.** La medida de la sección 3 (activado / calendario)
+partida en sus factores, con v2 y el calendario medido:
+
+| | ene-mar 2026 | jun-ago 2026 | cambio |
+|---|---:|---:|---:|
+| activado en el mes / calendario | 20.20% | 18.95% | −6.2% |
+| tasa de entrada | 23.81% | 22.63% | **−5.0%** |
+| conversión en el mes | 84.84% | 83.72% | −1.3% |
+
+Con el calendario anclado de la meta: −5.7% = −4.4% de tasa y −1.3% de conversión. Coincide con el
+backtest del motor adoptado (`datos_tarea25/backtest_ancla.log`, variante fix): julio sobreestima
+nuevos +8.2% con una tasa anclada realizada de 19.15% contra 20.77% calibrada (−7.8% de volumen).
+**La lectura de la sección 3 —la operación captura una porción decreciente, capacidad que no escala— no
+se sostiene como caída de conversión:** con v2 la conversión cae 1.3%; el grueso es que entra menos
+gente en mora, que es volumen y no ejecución de cobranza.
+
+**3. La conversión a 30 días no tiene tendencia, y ene-mar 2026 fue un pico.** En 19 meses (2025-01 a
+2026-07) la pendiente es −0.02pp/mes (r = −0.13), entre 91.3% y 94.3%. La velocidad cuenta lo mismo:
+
+| de lo activado a 30 días, parte que activó… | ene-mar 2026 | may-jul 2026 | 2025, rango mensual |
+|---|---:|---:|---:|
+| el mismo día de la entrada | 45.9% | 38.3% | 35.4 – 42.9% |
+| hasta el día 7 (mezcla banda × dow × tercio fija) | 90.3% | 87.5% | 85.4 – 89.5% |
+| hasta el día 14 | 96.2% | 95.4% | 94.8 – 96.1% |
+
+Todo lo que se compara contra ene-mar 2026 exagera la caída: ese trimestre activó más rápido que
+cualquier otro de la serie y después volvió al nivel de 2025.
+
+**4. Lo que esto dice de septiembre.** El volumen que entró es el esperado (+0.6%) y la brecha de
+nuevos al día 12 es de **arranque**: 0.649 activado por sol que entró (entradas de los días 2-12) contra
+0.731 proyectado. Ese número, histórico, va de 0.596 a 0.771 en los últimos 12 meses (media 0.705):
+ene-mar 2026 dio 0.74-0.77 y may-ago bajó de 0.72 a 0.67. La curva de la meta se calibra en [202508,
+202607], que incluye el pico de ene-mar, así que espera un arranque más rápido que el de los meses
+recientes. **Si el patrón histórico se sostiene (la velocidad varía, la conversión a 30 días no), la
+brecha de nuevos de septiembre debería achicarse después de la quincena.** Se verifica con el
+seguimiento del 16-17 de septiembre y al cierre; si no se achica, sí es conversión y es un quiebre.
+
+**5. De paso, tarea 21.** La base de la matriz (cada entrada) y el numerador de la tasa (una cuota por
+crédito) coinciden a 0.00-0.04% por mes; la excepción es 202512 (+3.7%). El doble conteo de entradas
+en el nivel de la base es despreciable salvo diciembre 2025. La forma de la curva no se midió.
+
+**Qué queda abierto:** (a) qué pasó en ene-mar 2026 —activación más rápida en toda la cartera—, una
+pregunta para el negocio (¿estrategia, campaña, canal?); (b) por qué bajó la tasa de entrada en jun-jul
+(la anclada de julio, 19.15%, es la más baja de la serie): es cartera u originación, no cobranza; (c) la
+prueba de septiembre después de la quincena.
+
+**No se ajusta nada** (`CLAUDE.md`): es diagnóstico. La ventana de 12 meses sigue (sección 4).

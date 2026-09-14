@@ -230,3 +230,10 @@ día (13-17% menos). Los backtests hasta la tarea 24 usaban el medido; la meta, 
 entrada) / elegibles (saldo anclado)`. Es la del motor v2 desde octubre (`motor_v2.TASA_ANCLADA`):
 20.52% en la ventana de octubre, contra 23.38% de la tasa medida. No se compara con una tasa medida sin
 convertir, porque el denominador es otro.
+
+**Arranque (activado por sol que entró al día N)** — en el seguimiento de un mes en curso, lo asegurado
+hasta el día N por las cohortes que entraron en mora entre el 2 y el N, dividido por lo que entró
+(`seguimiento_v2.py`). Pesa sobre todo los primeros días desde la entrada: mide **velocidad**, no la
+conversión a 30 días. Varía mucho entre meses (S/0.60-0.77 por sol al día 12 en el último año), mientras
+la conversión a 30 días se mantiene en 91-94% (tarea 19, 2026-09-14). Una brecha de arranque puede
+cerrarse después de la quincena; una de conversión, no.
