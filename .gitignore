@@ -5,3 +5,7 @@ __pycache__/
 
 # Logs de las corridas de Athena (QID + estado) -- no son datos, no se versionan
 *.log
+
+# Datos (CSV de las corridas de Athena y derivados): viven solo en la copia local,
+# no se versionan -- pedido del usuario 2026-09-13. Se regeneran re-corriendo los .sql.
+*.csv

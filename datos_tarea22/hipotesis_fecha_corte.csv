@@ -1,3 +1,0 @@
-"diagnostico","creditos","saldo","prom_dias_mora_vista","rango_fecha_ancla"
-"H1. mora 0 el 31-ago y >=1 el 1-sep  (cambio de fecha de corte)","965","1929629.47","1.0","2026-09-01 .. 2026-09-01"
-"H2. mora 0 en los tres dias  (punto ciego que sobrevive)","2","4872.17","5.0","2026-09-01 .. 2026-09-02"
