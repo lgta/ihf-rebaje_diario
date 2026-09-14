@@ -30,8 +30,14 @@
 > / corr. 0.826 → **v2 S2 4.09% / 0.826**, con un MAE diario 4% menor; recupero, 8.26% / 0.826 →
 > 8.94% / 0.811. La cohorte del día 1 pesa 0-53% del stock según el mes y se proyecta mejor con la
 > curva de NUEVOS (variante S2, gana en métricas diarias en los dos enfoques). v2 **resuelve bug 23**
-> por construcción. Septiembre en paralelo: v2 daría **S/19,283,694** en alfa, contra S/19,932,405 de
-> v1 re-medida hoy (−3.3%).
+> por construcción.
+>
+> **SEPTIEMBRE CON v2, COMO HABRÍA SALIDO EL 1-SEP: S/19,814,433 en alfa** (stock S/3,497,231 +
+> nuevos S/16,317,202) **y S/3,856,429 en recupero** — pedido del usuario, `meta_septiembre_v2_dia1.py`.
+> Los insumos se reconstruyen como se leían el 1-sep (`tarea24_v2_septiembre_al_1.sql`): v1 armada así
+> da S/20,496,232 contra los S/20,477,271 publicados (+0.09%), así que la reconstrucción es fiel. Al
+> 12-sep el real v2 lleva S/7,116,182 contra S/8,378,394 de la trayectoria (0.849): faltan S/12.7M. No
+> reemplaza a la meta publicada salvo que el usuario lo decida.
 >
 > **Tres decisiones pendientes del usuario:** (1) adoptar v2 con S2 para octubre (recomendado); (2)
 > arrastre por DNI: el mensaje de arranque dejó la respuesta en blanco, se corrió con "fuera, con
@@ -858,6 +864,10 @@ datos de septiembre).
 > real contra S/8,666,800 proyectado a esa fecha), con correlación diaria 0.982. Supera el caveat y
 > queda fuera del rango histórico del día 12 (0.93-1.08 en los 8 meses del backtest). Es sobre todo
 > volumen de entradas. Ver `SEGUIMIENTO.md`.
+>
+> **Con la definición v2, la meta que habría salido el 1-sep es S/19,814,433** (−3.2%), y su real va en
+> 0.849 de la trayectoria al 12-sep. No reemplaza a la publicada salvo que el usuario lo decida
+> (`meta_septiembre_v2_dia1.py`).
 
 **Septiembre 2026 — Recupero oficial.** Meta proyectada **S/3,928,776** (stock S/537,381 +
 nuevos S/3,391,395). **Primera meta de este enfoque con el motor migrado a `dias_atraso_cuota`**
@@ -1211,7 +1221,8 @@ de confiar en ella -- ver BUGS.md antes de escribir queries nuevas.
 ## Estado de git
 
 > **2026-09-13 (tarde) — COMMITEADO Y PUSHEADO a `origin`** (pedido del usuario): el seguimiento de
-> septiembre, la recalibración v2 y la documentación, en commits separados (ver `git log`).
+> septiembre, la recalibración v2, la meta v2 como habría salido el 1-sep y la documentación, en
+> commits separados (ver `git log`).
 > **Desde acá los CSV no se versionan:** `*.csv` en `.gitignore`, y los 162 CSV que estaban
 > trackeados (16.9 MB) salieron del índice con `git rm --cached` — siguen en disco y en el
 > historial de git; sacarlos del historial exigiría reescribirlo con force-push, y no se hizo.

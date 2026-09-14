@@ -65,7 +65,9 @@ def insumos(definicion, arrastre, reeng, seg_d1=False, solo_d1=None):
     return dict(stock), {d: dict(v) for d, v in cal.items()}
 
 
-def meta(definicion, medida, modo, arrastre, reeng=False):
+def curvas(definicion, medida, modo, arrastre, reeng=False):
+    """Curvas y tasa con las ventanas de la meta de septiembre: nuevos (curva y tasa) en
+    VENTANA, stock en FIJA_STOCK. En S2 la curva de stock se calibra sin la cohorte d1."""
     base_s, acts_s = V.stock_matriz(definicion, medida, arrastre, reeng, seg_d1=(modo == "S1"),
                                     solo_d1=(False if modo == "S2" else None))
     curva_s, f_s = CS.calibrar(base_s, acts_s, *FIJA_STOCK, con_f=True, modo_cierre="real")
@@ -73,23 +75,41 @@ def meta(definicion, medida, modo, arrastre, reeng=False):
     curva_n, f_n = CC.calibrar(base_n, acts_n, *VENTANA, con_dow=True, con_f=True,
                                granularidad="estructural")
     p = V.tasa(V.tasa_mensual(definicion, arrastre, reeng), *VENTANA)
-    stock, cal = insumos(definicion, arrastre, reeng, seg_d1=(modo == "S1"),
-                         solo_d1=(False if modo == "S2" else None))
+    return curva_s, f_s, curva_n, f_n, p
+
+
+def proyectar_mes(c, stock, cal, d1_por_banda=None):
+    """Serie diaria del mes con las curvas `c` de `curvas()`. `d1_por_banda` es la cohorte
+    que entro en mora el dia 1 (modo S2): se proyecta con la curva de NUEVOS y su saldo real,
+    sin tasa, y se suma al stock."""
+    curva_s, f_s, curva_n, f_n, p = c
     filas = proyectar(stock, segmentar_calendario(cal, PERIODO), curva_s, curva_n, N,
                       p_entrada=p, f_dm=f_n, f_dm_stock=f_s)
-    if modo == "S2":
-        d1, _ = insumos(definicion, arrastre, reeng, solo_d1=True)
-        por_banda = collections.defaultdict(float)
-        for (_t, b), s in d1.items():
-            por_banda[b] += s
-        if por_banda:
-            dw = dow_venc(PERIODO, 1)
-            extra = proyectar({}, {1: {(b, dw): s for b, s in por_banda.items()}}, {}, curva_n, N,
-                              p_entrada=1.0, f_dm=f_n)
-            for fila, e in zip(filas, extra):
-                fila["proy_stock"] += e["proy_nuevos"]
-                fila["proy_total"] += e["proy_nuevos"]
-    return filas, p, sum(stock.values()), sum(sum(v.values()) for v in cal.values())
+    if d1_por_banda:
+        dw = dow_venc(PERIODO, 1)
+        extra = proyectar({}, {1: {(b, dw): s for b, s in d1_por_banda.items()}}, {}, curva_n, N,
+                          p_entrada=1.0, f_dm=f_n)
+        for fila, e in zip(filas, extra):
+            fila["proy_stock"] += e["proy_nuevos"]
+            fila["proy_total"] += e["proy_nuevos"]
+    return filas
+
+
+def por_banda(stock):
+    """{(tramo, banda): saldo} -> {banda: saldo}."""
+    out = collections.defaultdict(float)
+    for (_t, b), s in stock.items():
+        out[b] += s
+    return dict(out)
+
+
+def meta(definicion, medida, modo, arrastre, reeng=False):
+    c = curvas(definicion, medida, modo, arrastre, reeng)
+    stock, cal = insumos(definicion, arrastre, reeng, seg_d1=(modo == "S1"),
+                         solo_d1=(False if modo == "S2" else None))
+    d1 = por_banda(insumos(definicion, arrastre, reeng, solo_d1=True)[0]) if modo == "S2" else None
+    filas = proyectar_mes(c, stock, cal, d1)
+    return filas, c[4], sum(stock.values()), sum(sum(v.values()) for v in cal.values())
 
 
 def real_v1(medida):

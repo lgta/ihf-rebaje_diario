@@ -163,7 +163,10 @@ tarea24_v2_calendario_tasa.sql  Calendario y tasa en UNA poblacion, con el orden
 tarea24_v2_septiembre.sql     Insumos de septiembre v1/v2, real v2 y entradas por dia
 curvas_v2.py                  Lee las matrices v2 con los filtros de cada variante
 backtest_tarea24_v1_v2.py     BACKTEST v1 vs. v2, 8 meses, variantes S0/S1/S2 + sensibilidades
-meta_septiembre_v2.py         Septiembre con v2 en paralelo (la meta publicada no se toca)
+meta_septiembre_v2.py         Septiembre con v2 en paralelo, insumos leidos hoy (la publicada no se toca)
+tarea24_v2_septiembre_al_1.sql  Insumos de septiembre como se leian el 1-sep (sin los COMPLETED
+                              posteriores ni el flag de reenganche de hoy); v1 reproduce la publicada
+meta_septiembre_v2_dia1.py    La meta v2 como habria salido el 1-sep, con alternativas y lo que falta
 -----------------------------------------------------------------------------
 
 --- SEGUIMIENTO DEL MES EN CURSO (septiembre 2026) ---------------------------

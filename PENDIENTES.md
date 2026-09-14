@@ -1607,6 +1607,25 @@ v2 reproduce la reconciliación (2,837 / S/4,930,217); la cohorte d1 son S/1,920
 el día 1 en vez de proyectarlos con la tasa. La definición explica una parte chica de la brecha de
 septiembre: el resto es volumen y ejecución (ver `SEGUIMIENTO.md`).
 
+**Septiembre v2 "como habría salido el 1-sep"** (pedido del usuario: cuánto hay que cerrar según la
+proyección del día 1; `tarea24_v2_septiembre_al_1.sql` + `meta_septiembre_v2_dia1.py`). La tabla de
+arriba usa insumos leídos HOY, que miran adelante: el calendario pierde a los que terminaron de
+pagar después del 1-sep (S/2.8M, hoy `COMPLETED`) y el flag borra a los reenganches refinanciados
+después. Reconstruido el universo del 1-sep (ACTIVE o COMPLETED con saldo al 31-ago; reenganches
+refinanciados desde el 1-sep adentro), **v1 reproduce la publicada**: S/20,496,232 contra
+S/20,477,271 (+0.09%; calendario +0.14%, ±0.6% día a día). Con v2:
+
+| Septiembre, fijada el 1-sep | Alfa | Recupero | Real/proy. al 12-sep (alfa) |
+|---|---:|---:|---:|
+| v1 publicada | S/20,477,271 | S/3,928,776 | 0.826 |
+| **v2, S2, arrastre fuera** | **S/19,814,433** (−3.2%) | **S/3,856,429** (−1.8%) | 0.849 |
+| v2, arrastre dentro | S/19,845,582 | S/3,863,733 | 0.849 |
+| v2, reenganches incluidos | S/19,468,590 | S/3,692,374 | 0.853 |
+
+Trayectoria de la meta v2 en alfa: 15-sep S/9.84M, 20-sep S/13.07M, 25-sep S/16.32M, 30-sep
+S/19.81M. Al 12-sep el real v2 lleva S/7,116,182 (35.9% del mes, contra 42.3% esperado): faltan
+S/12.7M. El 0.871 de la tabla anterior sale de insumos re-medidos y **no** es el comparable.
+
 **Decisiones pendientes del usuario:**
 1. Adoptar v2 para octubre, con S2 en los dos enfoques (recomendado).
 2. Arrastre: fuera con flag (default aplicado) o proyección propia. Medido: no cambia el modelo.

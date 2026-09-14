@@ -81,8 +81,10 @@ LO QUE SIGUE, EN ORDEN
 1. HECHO — recalibración v2: tarea24_v2_{matriz_stock,matriz_nuevos,calendario_tasa,septiembre}.sql,
    curvas_v2.py, backtest_tarea24_v1_v2.py (`sens v2s2` para las sensibilidades),
    meta_septiembre_v2.py (`S2 12`). Todo con v1 y v2 de la MISMA foto: v1 reconstruido reproduce
-   el backtest publicado (4.55% vs 4.54%). Septiembre en paralelo: v2 S/19,283,694 contra v1
-   re-medida hoy S/19,932,405 (la publicada, S/20,477,271, no se toca).
+   el backtest publicado (4.55% vs 4.54%). Septiembre con v2 COMO HABRÍA SALIDO EL 1-SEP
+   (meta_septiembre_v2_dia1.py, insumos de tarea24_v2_septiembre_al_1.sql): alfa S/19,814,433,
+   recupero S/3,856,429. v1 rearmada así reproduce la publicada a +0.09%. La publicada
+   (S/20,477,271) no se toca salvo decisión del usuario.
    SI SE ADOPTA, para octubre: re-correr las 4 queries tarea24_v2_* con fechas +1 mes (fotos de la
    matriz de nuevos hasta el 1-oct; ventana [202509, 202608]), meta_octubre_v2.py análogo a
    meta_septiembre_v2.py con insumos prospectivos al cierre de septiembre, y actualizar CLAUDE.md.
