@@ -171,21 +171,32 @@ tarea24_reenganches_que_son.sql  Los cierres REFINANCED son reenganches (credito
                               linea), no refinanciamientos de cobranzas
 tarea24_v2_dimensionamiento_sep.sql  Validacion con septiembre: nuevos v2 vs vista credito a credito,
                               tasa de los dias 2-12 por mes, entradas reales y calendario medido
-backtest_septiembre_v2.py     Backtest en tres capas al dia de corte: ancla / tasa / conversion
+backtest_septiembre_v2.py     Backtest en capas al dia de corte (meta / bug 28 / medido / entradas
+                              reales) con el motor adoptado; arg reeng_fuera = la validacion original
 -----------------------------------------------------------------------------
 
 --- MOTOR v2 -- ADOPTADO 2026-09-13, primera meta: octubre ------------------
 motor_v2.py                   Reglas de produccion: stock el dia 1, cohorte d1 con curva de nuevos
-                              (S2), arrastre fuera, ventana [M-13, M-2]; se niega a calibrar una
+                              (S2), arrastre fuera, reenganches incluidos (REENG), tasa anclada
+                              (TASA_ANCLADA), ventana [M-13, M-2]; se niega a calibrar una
                               ventana que la matriz de nuevos no cubre
 meta_v2.py                    META DEL MES: python meta_v2.py <periodo> <insumos.csv>
+tarea25_calendario_tasa.sql   BUG 28: calendario y tasa con el saldo ANCLADO al cierre del mes
+                              anterior (202501-202608 + 202609 parcial). Vigente: curvas_v2.CT
+backtest_tarea25_ancla.py     BUG 28: backtest de 8 meses -- medido / anclado con la tasa vieja /
+                              anclado con la tasa anclada (+ variante por tercio, no adoptada)
+tarea25_matriz_nuevos.sql     Matriz de nuevos para octubre (fotos al 1-oct): correr el 2-oct
 tarea25_insumos_octubre.sql   Insumos de octubre (correr el 2-oct o despues). Ciclo: PENDIENTES t25
 -----------------------------------------------------------------------------
 
---- SEGUIMIENTO DEL MES EN CURSO (septiembre 2026) ---------------------------
+--- SEGUIMIENTO DEL MES EN CURSO -------------------------------------------
 tarea19_real_septiembre.sql   Real de septiembre por dia, definicion v1, los dos enfoques
 seguimiento_septiembre.py     Septiembre contra la meta publicada: avance, correlacion diaria y
                               descomposicion volumen/conversion. Arg: ultimo dia completo
+tarea25_real_v2.sql           Real v2 por dia de un mes en curso (armada para octubre; validada
+                              con las fechas de septiembre)
+seguimiento_v2.py             Un mes contra su meta v2: avance, correlacion, MAE y la brecha de
+                              nuevos en volumen y conversion (desde octubre)
 -----------------------------------------------------------------------------
 
 armar_trayectoria_seg.py     Combina curvas + calendario en una trayectoria diaria (rolling)
@@ -224,6 +235,10 @@ datos_tarea24/                Antiguo = en mora el día 1: cuadre v2 contra la v
                               los reenganches, sábados y status. Recalibración v2: matrices
                               v2_* (v1 y v2 de la misma foto), backtest v1 vs. v2 y septiembre
                               en paralelo
+datos_tarea25/                Ciclo de octubre: calendario y tasa con el saldo anclado (bug 28,
+                              vigente), backtest de la tasa anclada, septiembre recalculado con
+                              el motor adoptado; desde el 2-oct, matriz de nuevos, insumos, meta
+                              y real de octubre
 datos_motor_cuota/           Insumos (CSV) del motor alternativo por vencimiento
 datos_capital_asegurado/     Insumos (CSV) del enfoque alfa (capital asegurado, curvas)
 datos_avance_capital_asegurado_agosto/  Insumos (CSV) de la meta de agosto (enfoque alfa)

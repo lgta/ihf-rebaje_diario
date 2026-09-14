@@ -6,13 +6,44 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-13, noche (motor v2 adoptado y validado con septiembre; handoff reescrito).
+Última actualización: 2026-09-13, noche (reenganches incluidos y bug 28 corregido: octubre queda listo para el 2-oct; handoff actualizado).
 
 > **PARA ARRANCAR UNA SESIÓN NUEVA:** el prompt de handoff vigente es
-> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt), reescrito al cierre del 13-sep —
-> reemplaza al del 2026-09-11. Después: los dos bloques de abajo + "La meta vigente", y
-> `PENDIENTES.md` **tarea 24** (v2 adoptado y validado; quedan dos decisiones: reenganches y bug 28),
-> **tarea 25** (ciclo de octubre, la primera meta v2) y **tareas 19, 20, 21 y 23**.
+> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt), actualizado al cierre de la noche del
+> 13-sep — reemplaza al del 2026-09-11. Después: el bloque de abajo + "La meta vigente", y
+> `PENDIENTES.md` **tarea 25** (ciclo de octubre, la primera meta v2: lista, se corre desde el 2-oct),
+> **tarea 24** (v2 adoptado y validado, con sus dos decisiones tomadas) y **tareas 19, 20, 21 y 23**.
+
+> **2026-09-13 (noche) — LAS DOS DECISIONES, TOMADAS: REENGANCHES INCLUIDOS Y BUG 28 CORREGIDO.
+> OCTUBRE QUEDA LISTO PARA EL 2-OCT.**
+>
+> **BUG 28 CORREGIDO: la tasa se calibra sobre el saldo ANCLADO al cierre del mes anterior**, el mismo
+> que la meta multiplica (`tarea25_calendario_tasa.sql`, `motor_v2.TASA_ANCLADA`). Backtest de 8 meses
+> proyectando como lo haría la meta (`backtest_tarea25_ancla.py`): con la tasa vieja el sesgo es
+> **+10.9% todos los meses** (error medio 11.00%); corregida, **3.83% con la misma correlación diaria
+> (0.827)**, el nivel del backtest de siempre (3.74%). Recupero, 12.58% → 4.58%. Controles: la matriz
+> nueva reproduce la tasa de tarea 24 a 0.002pp, y su calendario anclado de septiembre coincide al sol
+> con el de los insumos de la meta. De paso: el calendario anclado reparte el saldo por banda como entra
+> la gente (a 3.3pp, contra 8.3pp del medido), lo que conecta con la tarea 20; y el ancla pesa menos al
+> principio del mes, lo que inclina un poco la trayectoria (probado por tercios: no mejora las métricas
+> diarias, no se adopta, queda como salvedad de lectura). **Tasa anclada de octubre: 20.52%** (la medida
+> sería 23.38%).
+>
+> **REENGANCHES INCLUIDOS** en la calibración (`motor_v2.REENG = True`): el flag que los excluía miraba
+> hacia adelante (bug 25). Alfa 4.09% → 3.74% con la misma correlación.
+>
+> **SEPTIEMBRE CON EL MOTOR DE OCTUBRE, COMO HABRÍA SALIDO EL 1-SEP: S/17,504,932 en alfa y S/3,338,715
+> en recupero** (antes de las dos decisiones, S/19,814,433; la publicada, S/20,477,271, no se toca). Al
+> 12-sep el real va en **0.927** de esa trayectoria (recupero, 0.810). **Con la tasa anclada, el volumen
+> que entró en mora es el esperado (+0.6%) y la brecha que queda es conversión:** quien entra activa 11%
+> menos de lo que espera la curva, la caída de activación de la tarea 19. El 10.5% del ancla anotado a la
+> tarde era 9.8% con la misma población (mezclaba reenganches). El seguimiento contra la meta publicada
+> sigue al 12-sep (−17.4%): a la noche del 13 el día 13 todavía está incompleto.
+>
+> **OCTUBRE, LISTO PARA EL 2-OCT** (`PENDIENTES.md` tarea 25): calendario y tasa ya calibrados;
+> `tarea25_matriz_nuevos.sql` y `tarea25_insumos_octubre.sql` escritas y corridas de prueba con los datos
+> de hoy (se corren de verdad el 2-oct); el seguimiento v2 (`tarea25_real_v2.sql` + `seguimiento_v2.py`),
+> escrito y validado con septiembre.
 
 > **2026-09-13 (tarde) — SEPTIEMBRE SEGUIDO CONTRA LA META, Y MOTOR v2 RECALIBRADO Y ADOPTADO
 > (decisión del usuario): octubre es la primera meta v2. Quedan dos decisiones: los reenganches y el
@@ -878,9 +909,10 @@ datos de septiembre).
 > queda fuera del rango histórico del día 12 (0.93-1.08 en los 8 meses del backtest). Es sobre todo
 > volumen de entradas. Ver `SEGUIMIENTO.md`.
 >
-> **Con la definición v2, la meta que habría salido el 1-sep es S/19,814,433** (−3.2%), y su real va en
-> 0.849 de la trayectoria al 12-sep. No reemplaza a la publicada salvo que el usuario lo decida
-> (`meta_septiembre_v2_dia1.py`).
+> **Con el motor de octubre (v2, reenganches incluidos, tasa anclada), la meta que habría salido el 1-sep
+> es S/17,504,932** (−14.5% contra la publicada; S/19,814,433 antes de esas dos decisiones), y su real va
+> en 0.927 de la trayectoria al 12-sep: con la tasa anclada el volumen es el esperado y la brecha es
+> conversión. No reemplaza a la publicada salvo que el usuario lo decida (`meta_septiembre_v2_dia1.py`).
 
 **Septiembre 2026 — Recupero oficial.** Meta proyectada **S/3,928,776** (stock S/537,381 +
 nuevos S/3,391,395). **Primera meta de este enfoque con el motor migrado a `dias_atraso_cuota`**
@@ -931,8 +963,10 @@ leer `motor_unificado.py`.
 **Desde octubre, motor v2** (adoptado 2026-09-13; reglas en `DECISIONES.md`, código en `motor_v2.py` +
 `meta_v2.py`). **Stock** = mora 1-30 **el día 1** del mes; la cohorte que entra en mora ese mismo día
 se proyecta con la curva de nuevos sobre su saldo real (S2). **Nuevos** = calendario desde el día 2,
-una cuota por crédito, tasa por soles sobre esa población. Arrastre por DNI fuera, como en la vista.
-Ventana de nuevos [M-13, M-2]; stock fija 202504-202606.
+una cuota por crédito, con el saldo del cierre del mes anterior; tasa por soles sobre esa población y
+con ese mismo saldo como denominador (**tasa anclada**, bug 28: 20.52% para octubre). **Reenganches
+incluidos** en la calibración (bug 25). Arrastre por DNI fuera, como en la vista. Ventana de nuevos
+[M-13, M-2]; stock fija 202504-202606.
 
 ## Artifacts publicados
 

@@ -1299,6 +1299,16 @@ la deduplicada — que es exactamente el tipo de mezcla que el principio de mode
 medido es acotado (+1.16pp sobre la ventana, con dispersión mensual de +0.07 a +2.86pp) y **no se
 tocó**; queda anotado acá para decidirlo con datos, no por argumento.
 
+**→ 2026-09-13 (tarea 25, bug 28): buena parte de este corte era el denominador.** Con el calendario
+ANCLADO como denominador (el saldo de la última foto del mes anterior, el que usa la meta), en [202509,
+202608] la tasa por banda queda en 19.0% / 21.1% / 23.5% / 23.9% (bandas a-d), contra 29.4% / 19.9% /
+22.2% / 22.4% con el saldo al vencimiento: el rango se achica y la banda "a" pasa de ser la más alta a
+la más baja. En la foto del vencimiento, quien paga la cuota ese día ya bajó de saldo y saltó de banda
+(sobre todo de "a" a "b"): el medido tiene 32.5% del saldo en la banda "a", contra 40.8% de los que
+entran, y eso inflaba la tasa de esa banda. El calendario anclado queda a 3.3pp de la mezcla de bandas
+de quien entra (el medido, a 8.3pp). Si se retoma esta tarea, medir el corte con la tasa anclada
+(`curvas_v2.tasa_mensual(..., ancla=True)`), no con la vieja.
+
 ### Tarea 21 — Variante "primera entrada": el doble conteo antiguo/nuevo — 2026-09-02
 
 **PEDIDO DEL USUARIO.** La gestión de cobranza congela el atributo antiguo/nuevo al inicio del mes.
@@ -1465,7 +1475,8 @@ re-expresión de Mambu y del calendario.)
 3. **Sin asignación:** 15 pagaron el 1-sep y el negocio nunca los asignó (mecanismo de tarea 14);
    3 (S/2,719) siguen en mora sin asignación, sin explicar. Se quedan.
 
-**REENGANCHES — MEDIDO, DECISIÓN PENDIENTE DEL USUARIO** (pidió explícitamente anotarlo y medirlo
+**REENGANCHES — MEDIDO, Y DECIDIDO EL 13-SEP A LA NOCHE: SE INCLUYEN** (`motor_v2.REENG = True`; ver
+tarea 25 y `DECISIONES.md`). Lo que sigue es cómo se midió (el usuario pidió anotarlo y medirlo
 para decidir después; `tarea24_reenganches_historico.sql`, bug 25). `flg_last_loan_in_chain` se lee
 con la foto de HOY: un crédito vigente y en mora el día 1 que se refinanció después tiene hoy flag 0,
 y la calibración lo borra de ese mes. Peso en saldo, sobre las poblaciones v2:
@@ -1666,39 +1677,55 @@ misma tasa:
   alfa) pero rebaja menos, o sea pagos más chicos que los de la curva (lectura, no verificada
   crédito a crédito).
 
-### Tarea 25 — Ciclo de octubre: la primera meta con el motor v2 — preparada 2026-09-13
+### Tarea 25 — Ciclo de octubre: la primera meta con el motor v2 — LISTA el 2026-09-13; lo que falta necesita datos de octubre
 
-Con el motor v2 adoptado (tarea 24), el ciclo mensual cambia. Para **octubre 2026**, a partir del
-**2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
+Motor v2 adoptado (tarea 24) con las dos decisiones del 13-sep a la noche: **reenganches incluidos**
+(`motor_v2.REENG = True`) y **tasa anclada** (`motor_v2.TASA_ANCLADA = True`, bug 28 corregido).
 
-0. **Antes del 1-oct, resolver el bug 28** (tasa calibrada sobre el saldo al vencimiento y aplicada
-   sobre el saldo anclado): si no se corrige, la meta de octubre vuelve a salir ~10% alta en nuevos.
-   Hace falta una columna más en la query de calendario/tasa y un backtest con el calendario anclado.
-1. **Matriz de nuevos:** copiar `tarea24_v2_matriz_nuevos.sql` como `tarea25_matriz_nuevos.sql`,
-   con las fotos de Mambu hasta `'20261001'` y el calendario y las entradas hasta `2026-09-30` (las de
-   septiembre quedan truncadas: no calibrar con ellas). Correrla a `datos_tarea25/v2_matriz_nuevos.csv`
-   y actualizar `curvas_v2.MN` y `FOTOS_NUEVOS_HASTA = "20261001"`. Sin esto, `motor_v2.curvas` se
-   niega a calibrar la ventana de octubre, [202509, 202608] (probado).
-2. **Matriz de stock:** no hace falta, porque la ventana es fija (202504-202606) y ya está cubierta.
-3. **Calendario y tasa:** `v2_calendario_tasa.csv` ya llega a 202608, que es lo que pide la ventana
-   de octubre. Re-correrla es opcional (frescura); para noviembre sí hay que extenderla un periodo.
-4. **Insumos:** `tarea25_insumos_octubre.sql` (ya escrita) → `datos_tarea25/insumos_octubre.csv`.
-5. **Meta:** `python meta_v2.py 202610 datos_tarea25/insumos_octubre.csv`, los dos enfoques. Control
-   ya pasado: con septiembre (`202609`, `datos_tarea24/v2_septiembre_al_1.csv`) reproduce S/19,814,433
-   y S/3,856,429.
-6. **Seguimiento de octubre:** falta escribir la query del real v2 por día de un mes en curso (el
-   bloque `real` de `tarea24_v2_septiembre.sql` con las fechas corridas) y un `seguimiento_v2.py`.
-7. **Artifacts:** `armar_asignado_a_asegurado.py` está armado sobre los insumos v1 de tarea 19;
-   revisarlo antes de republicar 949ab3c2.
+0. ~~**Antes del 1-oct, resolver el bug 28.**~~ **HECHO 2026-09-13 (noche).** `tarea25_calendario_tasa.sql`
+   → `datos_tarea25/v2_calendario_tasa.csv`, vigente en `curvas_v2.CT`: completa hasta
+   `CALENDARIO_HASTA = "202608"`, más 202609 PARCIAL (entradas hasta el 12-sep) para validar
+   septiembre; `curvas_v2.tasa` se niega a calibrar con un periodo posterior. Backtest de 8 meses
+   (`backtest_tarea25_ancla.py`): la meta con la tasa vieja da +10.9% de sesgo; corregida, 3.83% / corr.
+   0.827, el nivel del backtest de siempre (3.74% / 0.828). Detalle en `BUGS.md` bug 28. **Tasa anclada
+   de la ventana de octubre [202509, 202608]: 20.52%** (medida: 23.38%).
 
-Si antes del 1-oct el usuario decide incluir los reenganches (tarea 24, decisión 3):
-`motor_v2.REENG = True`.
+**Desde el 2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
+1. **Matriz de nuevos:** `bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv`
+   (ya escrita: fotos hasta el 1-oct, entradas hasta el 30-sep; las de septiembre quedan truncadas y no
+   se calibra con ellas). Después, en `curvas_v2.py`: `MN = "datos_tarea25/v2_matriz_nuevos.csv"` y
+   `FOTOS_NUEVOS_HASTA = "20261001"`. Sin esto, `motor_v2.curvas` se niega a calibrar [202509, 202608].
+2. **Matriz de stock:** no hace falta (ventana fija 202504-202606).
+3. **Calendario y tasa:** ya está: `datos_tarea25/v2_calendario_tasa.csv` llega a 202608, lo que pide la
+   ventana de octubre. Para noviembre hay que extenderla un periodo (fechas corridas un mes y
+   `CALENDARIO_HASTA = "202609"`).
+4. **Insumos:** `bash scripts/run_athena.sh tarea25_insumos_octubre.sql > datos_tarea25/insumos_octubre.csv`
+   (ya escrita; con REENG = True se usa todo el universo del 1-oct, reenganches incluidos).
+5. **Meta:** `python meta_v2.py 202610 datos_tarea25/insumos_octubre.csv`, los dos enfoques; deja la serie
+   diaria en `datos_tarea25/meta_v2_202610.csv`. Control ya pasado: `python meta_v2.py 202609
+   datos_tarea24/v2_septiembre_al_1.csv` da S/17,504,932 y S/3,338,715 (septiembre con el motor adoptado).
+6. ~~**Seguimiento de octubre:** falta la query y el script.~~ **HECHO 2026-09-13.** `tarea25_real_v2.sql`
+   (real v2 por día de un mes en curso; validada con las fechas de septiembre: stock y nuevos de los días
+   1-12 idénticos al céntimo a `datos_tarea24/v2_septiembre.csv`) + `seguimiento_v2.py` (avance,
+   correlación y MAE diarios, y la brecha de nuevos partida en volumen y conversión; control: reproduce el
+   0.927 de septiembre). Cada día: `bash scripts/run_athena.sh tarea25_real_v2.sql >
+   datos_tarea25/real_v2_octubre.csv` y `python seguimiento_v2.py 202610 datos_tarea25/insumos_octubre.csv
+   datos_tarea25/real_v2_octubre.csv <último día completo>`.
+7. **Artifacts:** `armar_asignado_a_asegurado.py` está armado sobre los insumos v1 de tarea 19; rehacerlo
+   sobre v2 antes de republicar 949ab3c2.
+
+**Salvedad de lectura para el seguimiento de octubre:** la tasa anclada es plana y el ancla pesa menos al
+principio del mes (tasa anclada por tercio en la ventana de octubre: 21.2% / 21.5% / 19.1%), así que la
+trayectoria de nuevos corre algo baja en el primer tercio y alta en el último. La tasa por tercio se
+probó y no mejora las métricas diarias (no adoptada); `seguimiento_v2.py` muestra la tasa histórica de
+los mismos días para poder leerlo.
 
 **Decisiones del usuario (2026-09-13):**
 1. **v2 ADOPTADO** desde la meta de octubre, con S2 en los dos enfoques (`motor_v2.py`, `meta_v2.py`;
    el ciclo está en la tarea 25). Septiembre queda con su meta publicada.
 2. **Arrastre por DNI FUERA** de TEMPRANA, como en la vista, porque se cobra en ESPECIALIZADA.
-3. **Reenganches: PENDIENTE, con la definición aclarada.** El usuario aclaró que un reenganche es un
+3. **Reenganches: INCLUIDOS** (decisión de la noche, `motor_v2.REENG = True`; `DECISIONES.md`). Lo que
+   sigue es el registro de cómo se llegó. El usuario aclaró que un reenganche es un
    crédito ADICIONAL en la misma línea (como aumentar el monto desembolsado), no un refinanciamiento
    ni una reprogramación de cobranzas. Verificado con `tarea24_reenganches_que_son.sql` (30,237
    cierres `REFINANCED`/`RESCHEDULED` desde 2025-01):
@@ -1719,7 +1746,9 @@ Si antes del 1-oct el usuario decide incluir los reenganches (tarea 24, decisió
    ocurre con el crédito en mora 1-30 (~310 créditos en 20 meses); v2 no cuenta ese cierre como
    pago, porque la deuda pasa al crédito nuevo.
 
-**Si se adopta, para octubre:** re-correr las 4 queries `tarea24_v2_*` con las fechas corridas un
-mes (fotos de la matriz de nuevos hasta el 1-oct; ventana [202509, 202608]), un `meta_octubre_v2.py`
-análogo a `meta_septiembre_v2.py` con insumos prospectivos (`status = 'ACTIVE'`) al cierre de
-septiembre, y actualizar en `CLAUDE.md` cuál es la matriz vigente.
+4. **Bug 28 CORREGIDO** (noche): la tasa se calibra con el saldo anclado como denominador
+   (`motor_v2.TASA_ANCLADA = True`; paso 0 de arriba y `DECISIONES.md`).
+
+(El plan de octubre que estaba acá —re-correr las 4 queries de tarea 24 y un `meta_octubre_v2.py`—
+quedó reemplazado por los pasos 0-7 de arriba: la meta sale de `meta_v2.py` y los insumos de
+`tarea25_insumos_octubre.sql`, con el patrón "como el día 1" en vez de `status = 'ACTIVE'`.)

@@ -1825,6 +1825,11 @@ anterior, 98.6% de los que tienen fila en el calendario estaban al día (1.1% en
 31+). `RESCHEDULED` son 26 créditos, todos con flag 1. Queda confirmado lo que la tasa baja (15-19%)
 sugería: el filtro saca de la historia a buenos pagadores que después recibieron un reenganche.
 
+**→ 2026-09-13 (noche): DECIDIDO, se incluyen** (decisión del usuario; `motor_v2.REENG = True`, desde la
+meta de octubre). Las queries nuevas los traen como dimensión (`reeng`) y el salto de saldo del día del
+reenganche no cuenta como pago. En la meta de septiembre al 1-sep, incluirlos solo mueve −1.8% (con la
+tasa medida). Ver `DECISIONES.md`.
+
 ### 26. `dias_atraso_cuota` se re-expresa hacia atrás cuando un pago se regulariza con fecha valor retroactiva
 
 **Encontrado 2026-09-13 (tarea 24; hipótesis del usuario, confirmada).** 25 créditos (S/63,456) que el
@@ -1878,3 +1883,43 @@ numerador en el saldo de entrada, que es a lo que se aplica la curva. Hace falta
 `tarea24_v2_calendario_tasa.sql` y un backtest que proyecte con el calendario anclado. Cambia CÓMO se
 mide, así que se corrige aunque el error suba, y se decide con el backtest. **Pendiente antes de la
 meta de octubre** (`PENDIENTES.md` tarea 25, paso 0).
+
+**→ 2026-09-13 (noche): ✅ CORREGIDO (aprobado por el usuario).** `tarea25_calendario_tasa.sql` es la
+misma query de calendario/tasa con tres columnas más: el saldo de cada cuota en la última foto del mes
+anterior (`saldo_ancla`, dedup de bug 11), si la meta lo ve el día 1 (`tiene_ancla`) y la banda con ese
+saldo (`avance_band_anc`). La tasa anclada es `entran (saldo de entrada) / elegibles (saldo anclado)`
+sobre la población que ve la meta (`curvas_v2.tasa_mensual(..., ancla=True)`, `motor_v2.TASA_ANCLADA`).
+Controles: sumada sobre las columnas nuevas, reproduce la tasa de tarea 24 a 0.002pp; y **el calendario
+anclado de septiembre coincide al sol con el de los insumos de la meta** (S/31,302,973 en los días 2-12).
+
+Backtest de 8 meses proyectando como lo haría la meta (`backtest_tarea25_ancla.py`, v2 S2 con reenganches):
+
+| Alfa | Error medio | Sesgo | Corr. diaria | MAE diario |
+|---|---:|---:|---:|---:|
+| calendario medido × tasa medida (el backtest de siempre) | 3.74% | +0.10% | 0.828 | S/78.2K |
+| **calendario anclado × tasa medida (la meta con el bug)** | **11.00%** | **+10.86%** | 0.826 | S/95.7K |
+| **calendario anclado × tasa anclada (corregido)** | **3.83%** | −0.84% | 0.827 | S/78.0K |
+
+En recupero: 7.74% / 12.58% / **4.58%**, con la misma correlación (0.811). **Una meta fijada el día 1
+con la tasa vieja habría salido ~11% alta todos los meses**; corregida, vuelve al nivel del backtest.
+Funciona porque el cociente anclado/medido es muy estable: 1.13-1.17 en 20 meses, y 0.987-1.004 contra
+el de su ventana.
+
+Tres cosas que salieron al corregirlo:
+- **El 10.5% de septiembre estaba inflado.** Comparaba los insumos de la meta, que traen los reenganches
+  refinanciados después del 1-sep, contra el bloque E, que no los trae. Con la misma población, el ancla
+  de los días 2-12 es **9.0% sin reenganches y 9.8% con ellos**.
+- **El calendario anclado reparte el saldo por banda como entra la gente** (verificado en [202509,
+  202608]): queda a 3.3pp de la mezcla de bandas de quien entra, contra 8.3pp del medido. En la foto del
+  vencimiento, quien paga la cuota ese día ya saltó de banda: en la banda "a" el medido tiene 32.5% del
+  saldo contra 40.8% de los que entran. Con el denominador anclado, la tasa por banda se achica y cambia
+  de orden (19.0 / 21.1 / 23.5 / 23.9%, contra 29.4 / 19.9 / 22.2 / 22.4% con el medido): buena parte
+  del corte por banda de la tarea 20 era este denominador. Es probablemente la razón de que la corrección
+  baje más el error de recupero, cuya curva depende mucho de la banda — lectura, no aislada con una corrida.
+- **El ancla pesa menos al principio del mes:** anclado/medido 1.094 en los días 2-10, 1.147 en 11-20 y
+  1.175 en 21-31. En la ventana de octubre, la tasa anclada por tercio es 21.2% / 21.5% / 19.1%. Con una
+  tasa plana, la trayectoria de nuevos sale algo baja en el primer tercio y alta en el último. Se probó
+  la tasa por tercio (variante `fixt`) y **no mejora las métricas diarias** (alfa: corr. 0.827 igual, MAE
+  S/78.0K → S/79.3K; recupero, peor), así que no se adopta. Corrige el cociente del día 12 (1.012 → 0.999
+  de media): queda como salvedad de lectura del seguimiento de los primeros días
+  (`seguimiento_v2.py` muestra la tasa histórica de los mismos días).

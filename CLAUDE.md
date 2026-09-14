@@ -13,9 +13,12 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   - Histórico/calibración: `status IN ('ACTIVE','COMPLETED')`.
   - Calendario prospectivo (qué va a vencer): `status = 'ACTIVE'` solamente.
   - Backtest de mes cerrado: `status IN ('ACTIVE','COMPLETED')`, sin filtrar `installmentstate`.
-- Excluir siempre reenganches/refinanciamientos: `dts_okaapi_loans` no tiene el flag
-  correcto — derivarlo desde `dts_cobranza_creditos_cuotas.flg_last_loan_in_chain`
-  (`max(...)` agrupado por `id_ihfintech_loan`) y filtrar `coalesce(last_in_chain,1)=1`.
+- Reenganches: `dts_okaapi_loans` no tiene el flag correcto — derivarlo desde
+  `dts_cobranza_creditos_cuotas.flg_last_loan_in_chain` (`max(...)` agrupado por `id_ihfintech_loan`;
+  `reeng = 1` si `coalesce(last_in_chain,1) = 0`). Hasta la meta de septiembre se EXCLUÍAN con
+  `coalesce(last_in_chain,1)=1`; **desde octubre (motor v2) la calibración los INCLUYE, marcados**
+  (decisión del usuario 2026-09-13, bug 25: el flag mira hacia adelante). Las queries nuevas los traen
+  como dimensión, no los filtran.
 - Nunca usar `principalamountpaid`/`principalamountdue` (`dts_cobranza_creditos_cuotas`)
   para capital — están rotos (sobre-atribuyen pagos, superan 400% acumulado). Para capital,
   usar deltas de `balances_principalbalance` en `dts_mambu_loans_hist`.
@@ -39,7 +42,13 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   abajo es la curva (activación vs. rebaje), no quién entra. Verificado: la query de soles
   reproduce el viejo `P_ENTRADA` de conteo al 0.002pp. `motor_unificado.P_ENTRADA = 21.9918%`
   sigue existiendo como default del módulo pero **la producción le pasa `p_entrada=` explícito**
-  — no usarla como si fuera la tasa vigente.
+  — no usarla como si fuera la tasa vigente. **Y desde octubre, con el saldo ANCLADO como
+  denominador** (bug 28, decisión del usuario 2026-09-13): elegibles = saldo de cada cuota en la
+  última foto del mes anterior —el que la meta multiplica—, entran = saldo de entrada. La tasa sobre
+  el saldo al vencimiento es 13-17% más alta y, aplicada al calendario anclado, daba metas ~11% altas
+  que ningún backtest veía (usaban el calendario medido en los dos lados). `curvas_v2.tasa_mensual(...,
+  ancla=True)`, `motor_v2.TASA_ANCLADA`. Una tasa anclada (~20.5%) no se compara con una medida
+  (~23.4%) sin convertir.
 - **Ninguna cuota vence domingo** (0.00% del calendario y de la calibración) — OKA no programa
   vencimientos ese día. Como la entrada en mora es siempre `vencimiento + 1`, **tampoco existe
   ninguna entrada un lunes**. Cualquier corte "fin de semana" definido sobre el vencimiento
@@ -59,8 +68,8 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
   nuevos). Reenganche = crédito ADICIONAL en la misma línea, como aumentar el monto desembolsado
   (aclaración del usuario 2026-09-13); **no** es un refinanciamiento de cobranzas. Mambu cierra el
   crédito anterior con `accountsubstate = REFINANCED` — el nombre técnico confunde: 99.8% de esos
-  cierres tienen `extendedbyloan_id` y estaban al día (`tarea24_reenganches_que_son.sql`). Se
-  sigue excluyendo hasta que el usuario decida (tarea 24) — no "arreglarlo" por cuenta propia. Las
+  cierres tienen `extendedbyloan_id` y estaban al día (`tarea24_reenganches_que_son.sql`). **Desde
+  octubre la calibración los INCLUYE** (`motor_v2.REENG = True`, decisión del usuario 2026-09-13). Las
   matrices v2 los traen marcados (`reeng`) y no cuentan como pago el salto de saldo del reenganche,
   que cae exactamente el día de `f_cierre` (primer día `REFINANCED`): se ignoran las fotos desde ese día.
 - **`dias_atraso_cuota` e `installmentlastpaiddate` usan la FECHA VALOR del pago** (bug 26): un
@@ -74,11 +83,13 @@ vencimiento, con factor por día del mes, y sobre **cualquier ventana rodante**.
 8 meses × 4 variantes cuesta 0 corridas adicionales. Antes de escribir una query nueva de
 calibración de nuevos, revisar si sale de ahí.
 
-**Cuál es la vigente (desde octubre, motor v2):** `datos_tarea24/v2_matriz_stock.csv`,
-`v2_matriz_nuevos.csv` y `v2_calendario_tasa.csv` — v1 y v2 de la misma foto, activación y rebaje en
-el mismo archivo —, leídas con `curvas_v2.py`. Las rutas vigentes y hasta qué día llegan las fotos de
-la de nuevos están en `curvas_v2.MN` / `FOTOS_NUEVOS_HASTA`, y `motor_v2.curvas` se niega a calibrar
-una ventana que la matriz no cubre. **Cada mes hay que extender la de nuevos** (fotos hasta el día 1
+**Cuál es la vigente (desde octubre, motor v2):** `datos_tarea24/v2_matriz_stock.csv` y
+`v2_matriz_nuevos.csv` — v1 y v2 de la misma foto, activación y rebaje en el mismo archivo — y
+`datos_tarea25/v2_calendario_tasa.csv` (calendario/tasa con el saldo anclado, bug 28), leídas con
+`curvas_v2.py`. Las rutas vigentes están en `curvas_v2.MS` / `MN` / `CT`. Hasta qué día llegan las
+fotos de la de nuevos está en `FOTOS_NUEVOS_HASTA`, y `motor_v2.curvas` se niega a calibrar una ventana
+que la matriz no cubre; hasta qué periodo está completa la de calendario/tasa está en
+`CALENDARIO_HASTA`, y `curvas_v2.tasa` se niega a pasar de ahí. **Cada mes hay que extender la de nuevos** (fotos hasta el día 1
 del mes a proyectar) **y la de calendario/tasa** (un periodo más); la de stock no (ventana fija). El
 ciclo está en `PENDIENTES.md` tarea 25. Las de `datos_tarea19/` son el registro de la meta de
 septiembre y las de `datos_tarea18a/`, de la de agosto: quedan congeladas.

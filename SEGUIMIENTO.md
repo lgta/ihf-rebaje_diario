@@ -174,16 +174,30 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 > incrementos diarios **0.982** (nuevos 0.971). **El caveat de ~10% se está materializando, y lo
 > supera:** en los 8 meses del backtest el cociente real/proyectado del día 12 quedó siempre entre
 > 0.93 y 1.08, y el cierre terminó a ±4pp de él (agosto, con la meta prospectiva: 0.973 el día 12,
-> 1.012 al cierre). Septiembre está en 0.826, fuera de ese rango. **La brecha es de volumen más que de
-> conversión:** entró en mora 17.1% menos saldo que el esperado (calendario × tasa; hasta ~8pp de eso
-> es el ancla al cierre de agosto, que no descuenta la amortización), y cada sol que entró activó
-> 5.4% menos. Con la definición v2, la meta que habría salido el 1-sep es **S/19,814,433** y su real
-> va en 0.849 de la trayectoria (`meta_septiembre_v2_dia1.py`): la definición explica una parte chica.
-> **Descomposición con v2** (`backtest_septiembre_v2.py`): de 0.847 a 0.901 es el ancla — la tasa se
-> calibra sobre el saldo al vencimiento y la meta la aplica sobre el del 31-ago, 10.5% mayor (bug 28) —;
-> de 0.901 a 0.944 es la tasa realizada (22.90% contra 24.36%, el nivel de jun-ago); el resto es
-> conversión (nuevos 0.909). El stock va en 0.998. Código: `tarea19_real_septiembre.sql` +
-> `seguimiento_septiembre.py` (descomposición con `tarea24_v2_septiembre.sql`).
+> 1.012 al cierre). Septiembre está en 0.826, fuera de ese rango. Código: `tarea19_real_septiembre.sql` +
+> `seguimiento_septiembre.py`. **Re-chequeado el 13-sep a la noche:** el día 13 todavía está incompleto
+> (`tarea24_frescura.sql`), así que el 12 sigue siendo el último día completo.
+>
+> **Con el motor de octubre** (v2, reenganches incluidos, tasa anclada; adoptado el 13-sep a la noche),
+> **la meta que habría salido el 1-sep es S/17,504,932, y el real va en 0.927 de su trayectoria**
+> (recupero: S/3,338,715 y 0.810; `meta_septiembre_v2_dia1.py`). Descomposición al 12-sep
+> (`backtest_septiembre_v2.py`, con reenganches):
+>
+> | Capital asegurado, real/proyectado al 12-sep | Nuevos | Total |
+> |---|---:|---:|
+> | a. la meta al 1-sep: calendario anclado × tasa anclada | 0.893 | **0.927** |
+> | a0. calendario anclado × tasa medida (la meta con el bug 28) | 0.783 | 0.853 |
+> | b. calendario medido × tasa medida | 0.856 | 0.903 |
+> | c. entradas reales, curva sin tasa | 0.892 | 0.927 |
+> | Stock (igual en todas) | | 0.982 |
+>
+> Lo que la meta publicada tenía de más era sobre todo el **bug 28**: la tasa se calibraba sobre el
+> saldo al vencimiento y se aplicaba sobre el del 31-ago, 9.8% mayor en los días 2-12 (el 10.5% que se
+> había anotado mezclaba reenganches). Con la tasa anclada, **el volumen que entró en mora es el esperado**
+> (+0.6%; −3.0% contra la tasa anclada histórica de esos mismos días, porque la tasa plana subestima el
+> primer tercio del mes) y **la brecha que queda es conversión**: quien entra activa 11% menos de lo que
+> espera la curva, la caída de activación de la tarea 19. Sin reenganches, la misma descomposición
+> reproduce la validación de la tarde (0.847 / 0.901 / 0.944; con la tasa anclada, 0.918).
 
 **Magnitud media de error de fin de mes, 7 meses: 10.26%** (10.55% antes del factor de cierre
 de stock). **Correlación media de incrementos diarios de nuevos: 0.886** (sin cambios — el

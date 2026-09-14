@@ -346,6 +346,42 @@ universo — cuadra con la vista al +0.5% — y ese es el criterio de `CLAUDE.md
 cambia a mitad de mes. La meta v2 que habría salido ese día (S/19,814,433 alfa, S/3,856,429 recupero;
 `meta_septiembre_v2_dia1.py`) queda como referencia, salvo que el usuario decida otra cosa.
 
-**Pendiente:** si la calibración incluye a los créditos que después tuvieron un **reenganche** (bug 25).
-El usuario aclaró que un reenganche es un crédito adicional en la misma línea y no un
-refinanciamiento de cobranzas; los datos lo confirman (`tarea24_reenganches_que_son.sql`).
+**Pendiente, resuelto la misma noche:** si la calibración incluye a los créditos que después tuvieron
+un **reenganche** (bug 25), y el bug 28. Ver las dos entradas siguientes.
+
+### Los reenganches entran en la calibración (2026-09-13, noche — tarea 24, bug 25)
+
+**Decisión del usuario.** La calibración del motor v2 incluye a los créditos que después tuvieron un
+reenganche (`motor_v2.REENG = True`), marcados con `reeng`. El filtro `flg_last_loan_in_chain` se lee
+con la foto de hoy y sacaba de cada mes histórico a créditos que ese día eran como cualquier otro, y que
+al fijar una meta no se sabe quiénes van a ser: miraba hacia adelante. Un reenganche es un crédito
+adicional en la misma línea (aclaración del usuario), no un refinanciamiento de cobranzas; los datos lo
+confirman (`tarea24_reenganches_que_son.sql`). El salto de saldo del día en que Mambu cierra el crédito
+anterior (`f_cierre`, primer día `REFINANCED`) no cuenta como pago.
+
+Es una corrección de universo, no de error: se decide por no mirar adelante. Efecto medido (backtest de
+8 meses, v2 S2): alfa 4.09% → 3.74% con la misma correlación diaria (0.826 → 0.828); recupero 8.94% →
+7.75%. La meta v2 de septiembre al 1-sep, con la tasa medida, baja 1.8% (S/19,815,529 → S/19,467,964).
+
+### La tasa de entrada se calibra sobre el saldo ANCLADO al cierre del mes anterior (2026-09-13, noche — bug 28)
+
+**Decisión del usuario**, antes de la meta de octubre. La tasa (`entran / elegibles`, en soles) se
+calibraba con el saldo de cada cuota el día del vencimiento, pero la meta la multiplica por el saldo de
+la última foto del mes anterior —el único que conoce el día 1—, que es 13-17% mayor porque no descuenta
+la amortización ni el pago de quien paga ese día. Eran denominadores distintos: el principio de modelado
+de `CLAUDE.md`. Desde octubre el denominador es el saldo anclado de la misma población que ve la meta
+(`tiene_ancla = 1`), y el numerador sigue siendo el saldo de entrada, que es a lo que se aplica la curva
+(`motor_v2.TASA_ANCLADA = True`, `tarea25_calendario_tasa.sql`).
+
+**Por qué se corrige.** Cambia CÓMO se mide. Los backtests nunca lo vieron porque usaban el calendario
+medido en los dos lados. Proyectando como lo haría la meta (`backtest_tarea25_ancla.py`), la tasa vieja
+da **+10.9% de sesgo** todos los meses (error medio 11.00%); corregida, 3.83% con la misma correlación
+diaria (0.827), el nivel del backtest de siempre (3.74%). En recupero, 12.58% → 4.58%.
+
+**Lo que no se adoptó:** la tasa anclada por tercio del mes. El ancla pesa menos al principio del mes
+(1.09 contra 1.18 al final) y eso inclina la trayectoria, pero la variante por tercios no mejora las
+métricas diarias, que son las que deciden la forma. Queda como salvedad de lectura del seguimiento.
+
+**Septiembre no se toca.** Con las dos decisiones, la meta v2 que habría salido el 1-sep es
+**S/17,504,932** en alfa y **S/3,338,715** en recupero (`meta_septiembre_v2_dia1.py`), contra la
+publicada S/20,477,271. Es la referencia de cuánto se esperaba con el motor de octubre.

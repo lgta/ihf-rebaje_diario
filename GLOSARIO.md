@@ -217,5 +217,16 @@ cobranzas. Mambu cierra el crédito anterior con `accountsubstate = REFINANCED` 
 confunde) y ese crédito deja de ser el último de su cadena (`flg_last_loan_in_chain = 0`).
 
 **Reenganche marcado** — incluir en la calibración los créditos con `flg_last_loan_in_chain = 0`
-(que hoy se excluyen con un flag que mira adelante, bug 25), marcados con `reeng`, sin contar como
-pago el salto de saldo del día en que Mambu cierra el crédito anterior por el reenganche.
+(que hasta la meta de septiembre se excluían con un flag que mira adelante, bug 25), marcados con
+`reeng`, sin contar como pago el salto de saldo del día en que Mambu cierra el crédito anterior por el
+reenganche. **Adoptado el 2026-09-13** (`motor_v2.REENG = True`), desde la meta de octubre.
+
+**Calendario anclado / calendario medido** — el mismo calendario de cuotas que vencen en el mes, con
+dos saldos distintos. Anclado: el de la última foto del mes anterior, el único que la meta conoce el
+día 1. Medido: el del día del vencimiento, que ya descuenta la amortización y el pago de quien paga ese
+día (13-17% menos). Los backtests hasta la tarea 24 usaban el medido; la meta, el anclado (bug 28).
+
+**Tasa anclada** — la tasa de entrada con el calendario anclado como denominador: `entran (saldo de
+entrada) / elegibles (saldo anclado)`. Es la del motor v2 desde octubre (`motor_v2.TASA_ANCLADA`):
+20.52% en la ventana de octubre, contra 23.38% de la tasa medida. No se compara con una tasa medida sin
+convertir, porque el denominador es otro.
