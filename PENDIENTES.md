@@ -141,7 +141,12 @@ tienen uso operativo (eran para un caso de uso puntual). Es una decisión de pro
 solo técnica — confirmar con el usuario si todavía se usan antes de invertir tiempo en
 refrescarlos.
 
-### Tarea 6 — Aplicar el fix de bug 11 a los 3 archivos del motor oficial
+### Tarea 6 — ~~Aplicar el fix de bug 11 a los 3 archivos del motor oficial~~ OBSOLETA 2026-09-14
+**Obsoleta:** esos tres archivos quedaron como referencia histórica cuando el recupero oficial migró a
+`dias_atraso_cuota` (18e, 2026-08-26), y desde octubre el recupero sale de `motor_v2.py`. Las queries
+v2 (`tarea24_v2_*.sql`, `tarea25_*.sql`) ya traen el dedup de bug 11 (`mambu_dedup`: saldo ≠ 0
+primero, después `lastmodifieddate`). Lo de abajo queda como registro.
+
 **Archivos:** `fase1_stock.sql`, `fase2_nuevos.sql`, `fase3_backtest.sql`.
 
 Mismo dedup ya validado y aplicado a Enfoque alfa en la Tarea 3 (saldo≠0 antes de
@@ -1181,11 +1186,26 @@ meses. **Está medido, no explicado.** Lo que hay que averiguar, en orden:
    ser mix y no eficiencia. Se mide sin Athena nueva, desde la matriz cruda.
 3. **¿Es un artefacto del universo?** Descartado parcialmente: el mismo patrón aparece en los
    dos enfoques y con las dos tasas, así que no es de la definición de entrada.
-   **Candidato nuevo (2026-09-13, bug 25, sin verificar):** el filtro `flg_last_loan_in_chain` mira
+   **Candidato (2026-09-13, bug 25) — MEDIDO, explica una parte:** el filtro `flg_last_loan_in_chain` mira
    hacia adelante y saca de cada mes a los que se refinanciaron después — 8-11% del saldo de nuevos
    en los meses viejos, solo 2-5% en los recientes porque sus refinanciamientos todavía no
    ocurrieron. Si esos créditos activan menos, los meses viejos quedan "limpiados" y los recientes
    no: una caída aparente. Se prueba midiendo su activación contra el resto (tarea 24).
+   **→ Medido el mismo 13-sep:** incluir los reenganches explica ~1.5-2pp de los ~9pp de jun-jul, no
+   toda la deriva (tarea 24, sensibilidades). Desde octubre la calibración los incluye (`motor_v2.REENG`).
+   Ojo con el nombre: son reenganches (crédito adicional en la misma línea), no refinanciamientos.
+**→ 2026-09-14, PREGUNTA 2 (composición) — MEDIDA: la mezcla no explica la caída, y con v2 la caída es
+sobre todo de ENTRADA, no de conversión** (`tarea19_composicion_activacion.py`; addendum en
+`analisis_tarea19_activacion_decreciente.md`). Por banda, día de semana y tercio del mes, la mezcla explica
+≈0 de la caída de la conversión a 30 días (−1.08pp, ene-mar → may-jul); la de reenganches es etiqueta (bug
+25). Activado/calendario cae 6.2% (ene-mar → jun-ago) = tasa de entrada −5.0% + conversión −1.3%. La
+conversión a 30 días no tiene tendencia en 19 meses (−0.02pp/mes); ene-mar 2026 fue un pico de velocidad
+(45.9% activa el mismo día de la entrada, contra 35-43% en 2025). Septiembre: la brecha al día 12 es de
+arranque (0.649 contra 0.731), dentro del rango histórico (0.596-0.771); si el patrón se sostiene, se achica
+después de la quincena — **verificarlo el 16-17 de septiembre**. La pregunta 1 (capacidad de gestión) pierde
+fuerza: la conversión no cae. Lo abierto: qué pasó en ene-mar 2026 y por qué bajó la tasa de entrada en
+jun-jul (cartera u originación, no cobranza).
+
 **No ajustar nada mientras tanto** (`CLAUDE.md`) — la meta de septiembre lleva el caveat
 explícito de que corre ~10% alta si la tendencia sigue.
 
@@ -1202,10 +1222,13 @@ activación de nuevos 86.2%), todo abierto por tramo de atraso, banda de avance 
 del vencimiento. Cubre agosto cerrado (−1.2% vs. la meta publicada, **+9.8% vs. el enfoque
 actual**), septiembre proyectado (S/20,477,271) con la misma cadena, y la caída de activación.
 
-**Siguen pendientes de republicar, sin escribir todavía:** **Capital asegurado** (d4140b13) y
-**Proyectado vs. Real** (f80d3761) — los dos citan la meta de agosto ya superada.
+~~**Siguen pendientes de republicar, sin escribir todavía:** **Capital asegurado** (d4140b13) y
+**Proyectado vs. Real** (f80d3761) — los dos citan la meta de agosto ya superada.~~ **Republicados el
+2026-09-02** (tabla de artifacts de `ESTADO.md`). Con la meta de octubre vuelven a quedar atrás: tarea 25,
+paso 7.
 
-**PENDIENTE MENSUAL, ahora que el ciclo está armado:** fijar la meta de octubre es correr las 9
+**~~PENDIENTE MENSUAL~~ REEMPLAZADO POR LA TAREA 25 (motor v2, 2026-09-13).** Lo que sigue era el ciclo
+con el motor v1 y ya no se usa: el de octubre en adelante está en la tarea 25. Texto original: fijar la meta de octubre es correr las 9
 queries `tarea19_*.sql` con las ventanas movidas un mes, `generar_curvas_septiembre.py` con
 `VENTANA_NUEVOS = ("202509","202608")`, y los dos `meta_septiembre_*.py`. Los archivos
 `tarea18*` quedan congelados como el registro de lo que produjo la meta de agosto; los
@@ -1228,6 +1251,10 @@ scripts (backtests por mes de la arquitectura con capa fantasma, `tarea18*` cong
 `historico/` para lo que quedó como referencia, pero **hacerlo rompe todas las rutas relativas
 hardcodeadas** en los scripts — no es un `git mv`, hay que tocar cada `DIR_*`. Conviene hacerlo
 justo después de fijar una meta, no antes.
+
+**2026-09-14:** la raíz ya tiene 196 archivos (109 `.sql`, 45 `.py`, 23 `.md`, 11 `.html`) y 28
+carpetas `datos_*`. Ya no queda nada sin commitear y los CSV no se versionan, así que el costo real es
+solo el de las rutas. El momento natural es justo después de fijar la meta de octubre (2-oct).
 
 ---
 
@@ -1359,6 +1386,11 @@ de Athena**, editando `tarea19_curva_cruda_nuevos.sql` con un `row_number()` sob
 (crédito, mes de entrada) y `rn=1`. La curva es una forma, así que el efecto esperado es de segundo
 orden, pero mientras no se mida **no se puede afirmar que sea chico**.
 
+**→ 2026-09-14, medido el peso en la base:** con v2, la base de la matriz de nuevos (cada entrada) y el
+numerador de la tasa (una cuota por crédito) coinciden a 0.00-0.04% por mes, salvo 202512 (+3.7%)
+(`tarea19_composicion_activacion.py`, sección 5). El doble conteo es despreciable en el nivel; la forma de
+la curva no se midió.
+
 
 ### Tarea 23 — Versión de proyección "lo que realmente entra a gestión" — pedido 2026-09-02, NO empezada
 
@@ -1452,7 +1484,7 @@ re-expresión de Mambu y del calendario.)
 |---|---:|---:|---|
 | Arrastre por DNI (solo nuestro) | 68 | S/85,999 | **Como la vista, con flag** |
 | Punto ciego de `dias_atraso_cuota` (solo vista) | 25 | S/63,456 | Documentar; el usuario valida con IDs |
-| Reenganches refinanciados después del corte (solo vista) | 13 | S/18,575 | **PENDIENTE** — medido abajo |
+| Reenganches refinanciados después del corte (solo vista) | 13 | S/18,575 | **Incluidos** (decidido el 13-sep a la noche, abajo) |
 | Sin asignación en sep (solo nuestro) | 18 | S/22,383 | Se quedan (pocos; decisión del 24-ago) |
 | Sin foto Mambu al cierre (solo vista) | 1 | S/814 | — |
 
@@ -1491,19 +1523,22 @@ y la calibración lo borra de ese mes. Peso en saldo, sobre las poblaciones v2:
   — esos, si se incluyeran, bajan el saldo a 0 y contarían como pago.
 - **El peso cae hacia el presente** porque los refinanciamientos futuros todavía no ocurrieron: la
   población de calibración está más "limpiada" en los meses viejos que en los recientes.
-- **Hipótesis, NO verificada:** si quienes después se refinancian activan menos, esto solo produce una
-  caída aparente de la activación en los meses recientes — conecta con los −0.46pp/mes de tarea 19.
-  Se prueba midiendo la activación de este grupo contra el resto, mes a mes.
-- **No bloquea la recalibración:** las matrices nuevas llevan el flag de reenganche como dimensión
-  (sin contar el cierre por refinanciamiento como pago), así la decisión se toma después sin volver a
-  Athena. Producción sigue excluyéndolos hasta que se decida.
+- **Hipótesis → medida (13-sep):** si quienes después tienen un reenganche activan distinto, excluirlos
+  produce una caída aparente de la activación en los meses recientes — conecta con los −0.46pp/mes de
+  tarea 19. Incluirlos explica ~1.5-2pp de los ~9pp de jun-jul, no toda la deriva (sensibilidades de la
+  recalibración, abajo).
+- **No bloqueó la recalibración:** las matrices nuevas llevan el flag de reenganche como dimensión
+  (sin contar el cierre por reenganche como pago). Desde el 13-sep a la noche producción los incluye
+  (`motor_v2.REENG = True`).
 
-**ABIERTO — una pregunta al usuario antes de recalibrar (hecha el 2026-09-13):** ¿los créditos con
+**~~ABIERTO~~ RESUELTO 2026-09-13 — la pregunta que se le hizo al usuario antes de recalibrar:** ¿los créditos con
 arrastre por DNI quedan **fuera de la meta de TEMPRANA con su real reportado aparte**
 (recomendado: son ~1.7% del stock y una curva propia saldría con muy poca muestra), o se quiere
 también una **proyección propia** para esa línea? Defaults anunciados si no dice otra cosa: el flag
 se aplica también a nuevos (medido el día de entrada); los dos enfoques; la meta de septiembre
 publicada no se toca; octubre es la primera meta v2; backtest de 8 meses con las dos métricas.
+**Respuesta:** fuera de la meta de TEMPRANA, como en la vista, y marcados con `flg_arrastre_dni` (ver
+«Decisiones del usuario» en la tarea 25). No se armó una proyección propia para esa línea.
 
 **Ojo de diseño para el stock v2:** la cohorte que entra el día 1 se comporta como nueva (activa
 fuerte el día 0) y su peso dentro del tramo 1-8 varía por mes — cuando el último día del mes
@@ -1518,6 +1553,7 @@ propio ("entra el día 1") dentro del stock y decidirlo con métricas diarias (`
 3. Los dos enfoques — comparten la definición de entrada.
 4. Backtest de 8 meses v1 vs. v2, con error de cierre y correlación diaria.
 5. Septiembre: la meta publicada no se toca; v2 en paralelo para comparar. Octubre: primera meta v2.
+   *(Cambiado el 14-sep: el usuario re-fijó septiembre con v2.)*
 
 **De paso:** (a) la asignación de sábado es solo para canales complementarios (ver tarea 23,
 `tarea24_sabados_asignacion.sql`); (b) la vista cambió — incluye RECOVERY en 202609 y columnas
@@ -1690,6 +1726,13 @@ Motor v2 adoptado (tarea 24) con las dos decisiones del 13-sep a la noche: **ree
    0.827, el nivel del backtest de siempre (3.74% / 0.828). Detalle en `BUGS.md` bug 28. **Tasa anclada
    de la ventana de octubre [202509, 202608]: 20.52%** (medida: 23.38%).
 
+**Septiembre, re-fijada con v2 el 14-sep** (decisión del usuario): meta S/17,504,932 / S/3,338,715
+(`datos_tarea24/meta_v2_202609.csv`). Cada día: `bash scripts/run_athena.sh tarea25_real_v2_septiembre.sql >
+datos_tarea25/real_v2_septiembre.csv` y `python seguimiento_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv
+datos_tarea25/real_v2_septiembre.csv <último día completo>`. El 16-17 sep, mirar si la brecha de nuevos se
+achica tras la quincena (tarea 19). Al cierre, la fila de septiembre en `SEGUIMIENTO.md` va contra la v2,
+con la v1 al lado.
+
 **Desde el 2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
 1. **Matriz de nuevos:** `bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv`
    (ya escrita: fotos hasta el 1-oct, entradas hasta el 30-sep; las de septiembre quedan truncadas y no
@@ -1712,7 +1755,14 @@ Motor v2 adoptado (tarea 24) con las dos decisiones del 13-sep a la noche: **ree
    datos_tarea25/real_v2_octubre.csv` y `python seguimiento_v2.py 202610 datos_tarea25/insumos_octubre.csv
    datos_tarea25/real_v2_octubre.csv <último día completo>`.
 7. **Artifacts:** `armar_asignado_a_asegurado.py` está armado sobre los insumos v1 de tarea 19; rehacerlo
-   sobre v2 antes de republicar 949ab3c2.
+   sobre v2 antes de republicar 949ab3c2. **2026-09-14, corrección intermedia (versión 7), a pedido del
+   usuario:** la meta de septiembre re-fijada (KPI + puente) y la última sección medida con v2. Se editó el
+   HTML a mano (el armador solo inyecta los datos): al rehacerlo, conservar esas dos piezas. Siguen con v1 y
+   se rehacen el 2-oct: las tablas y gráficos de septiembre, «Qué mueve cada corte» (tasa por banda con el
+   saldo al vencimiento; con el anclado cambia, tarea 20) y los ratios de agosto. d4140b13 y f80d3761 todavía
+   muestran la meta de septiembre v1. **El link compartido de 949ab3c2 muestra una versión anclada: la mueve
+   el usuario.** **El usuario dará su feedback de la versión 7 en otra sesión** (aplicarlo sobre el HTML y
+   republicar con `url=`).
 
 **Salvedad de lectura para el seguimiento de octubre:** la tasa anclada es plana y el ancla pesa menos al
 principio del mes (tasa anclada por tercio en la ventana de octubre: 21.2% / 21.5% / 19.1%), así que la
@@ -1722,7 +1772,8 @@ los mismos días para poder leerlo.
 
 **Decisiones del usuario (2026-09-13):**
 1. **v2 ADOPTADO** desde la meta de octubre, con S2 en los dos enfoques (`motor_v2.py`, `meta_v2.py`;
-   el ciclo está en la tarea 25). Septiembre queda con su meta publicada.
+   el ciclo está en la tarea 25). Septiembre quedaba con su meta publicada; **el 14-sep el usuario la
+   re-fijó con v2** (S/17,504,932 / S/3,338,715).
 2. **Arrastre por DNI FUERA** de TEMPRANA, como en la vista, porque se cobra en ESPECIALIZADA.
 3. **Reenganches: INCLUIDOS** (decisión de la noche, `motor_v2.REENG = True`; `DECISIONES.md`). Lo que
    sigue es el registro de cómo se llegó. El usuario aclaró que un reenganche es un

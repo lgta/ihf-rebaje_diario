@@ -1,35 +1,44 @@
 PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
-Escrito 2026-09-13 y actualizado al cierre de la noche del 13-sep: bug 28 corregido, reenganches
-incluidos, octubre listo para el 2-oct. Reemplaza a prompt_handoff_2026-09-11.txt.
+Escrito 2026-09-13; actualizado al cierre del 14-sep: septiembre RE-FIJADA con el motor v2 (decisión del
+usuario), tarea 19 medida (la "caída de activación" es sobre todo menos entradas, no menos conversión) y el
+artifact 949ab3c2 corregido (versión 7). Reemplaza a prompt_handoff_2026-09-11.txt.
 
 ====================================================================
 ORDEN DE LECTURA — y nada más
 ====================================================================
-1. CLAUDE.md          — reglas de datos y los 4 principios. Cambió el 13-sep: antiguo = en mora el día 1
-                        (motor v2 desde octubre), reenganches INCLUIDOS en la calibración, tasa ANCLADA
-                        al cierre del mes anterior, CSV fuera de git.
-2. ESTADO.md          — bloque "2026-09-13 (noche)" (el de arriba) + "La meta vigente".
-3. PENDIENTES.md      — TAREA 25 (ciclo de octubre, paso a paso y con los comandos). Después tareas 19,
-                        20, 21 y 23.
-4. Solo si hace falta: DECISIONES.md (las últimas tres entradas), BUGS.md 25 y 28, GLOSARIO.md
-   (calendario anclado/medido, tasa anclada, cohorte d1, S2, reenganche).
+1. CLAUDE.md          — reglas de datos y los 4 principios. Cambió el 13-sep: antiguo = en mora el día 1,
+                        reenganches INCLUIDOS en la calibración, tasa ANCLADA al cierre del mes anterior, CSV
+                        fuera de git. Y el 14-sep: septiembre también va con el motor v2.
+2. ESTADO.md          — bloque "2026-09-14" (el de arriba) + "La meta vigente".
+3. PENDIENTES.md      — TAREA 25 (seguimiento de septiembre v2, ciclo de octubre con los comandos, artifacts).
+                        Después tareas 19, 20, 21 y 23.
+4. Solo si hace falta: DECISIONES.md (las últimas cuatro entradas), BUGS.md 25 y 28, GLOSARIO.md
+   (calendario anclado/medido, tasa anclada, cohorte d1, S2, reenganche, arranque),
+   analisis_tarea19_activacion_decreciente.md (addendum del 14-sep).
 
 NO releer todo el historial. ESTADO.md + PENDIENTES.md alcanzan para operar.
 
 ====================================================================
-DÓNDE ESTÁ EL PROYECTO (13-sep, noche)
+DÓNDE ESTÁ EL PROYECTO (14-sep, cierre)
 ====================================================================
 Agosto CERRADO: capital asegurado -1.2% | recupero oficial -3.2%.
 
-Septiembre: metas publicadas el 1-sep con la definición VIEJA (v1). NO se tocan:
-    capital asegurado S/20,477,271 | recupero oficial S/3,928,776
-  Seguimiento al 12-sep (último día completo: a la noche del 13, el 13 seguía incompleto): alfa -17.4%
-  contra la trayectoria (corr. diaria 0.982), recupero -28.6%.
-  Referencia con el motor de OCTUBRE, como habría salido el 1-sep: S/17,504,932 | S/3,338,715.
-  Al 12-sep el real va en 0.927 de esa trayectoria: el volumen que entró en mora es el esperado (+0.6%)
-  y la brecha que queda es CONVERSIÓN (quien entra activa 11% menos que la curva; tarea 19).
+Septiembre: metas RE-FIJADAS el 14-sep con el motor v2 (decisión del usuario), como habrían salido el 1-sep:
+    capital asegurado S/17,504,932 | recupero oficial S/3,338,715       (datos_tarea24/meta_v2_202609.csv)
+  Puente desde la publicada: definición de antiguo -3.2%, reenganches -1.8%, tasa anclada -10.1%.
+  Las publicadas el 1-sep con v1 (S/20,477,271 | S/3,928,776) quedan como registro.
+  Al 13-sep (último día completo al 14): alfa en 0.922 de la trayectoria v2 (-7.8%; stock 0.972, nuevos
+  0.891, corr. diaria 0.984), recupero en 0.811. Entró el volumen esperado (+0.9%); la brecha de nuevos es de
+  ARRANQUE: por sol que entró, 0.632 asegurado al día 13 contra 0.715 (-11.7%).
 
-MOTOR v2 ADOPTADO, con las dos decisiones del 13-sep a la noche. Primera meta: OCTUBRE.
+Tarea 19 (caída de activación), medida el 14-sep con v2 (tarea19_composicion_activacion.py):
+  - asegurado/calendario cae 6.2% (ene-mar -> jun-ago) = tasa de entrada -5.0% + conversión -1.3%
+  - la mezcla (banda, día de semana, tercio del mes) no explica nada
+  - la conversión a 30 días no tiene tendencia en 19 meses (91-94%)
+  - ene-mar 2026 fue un PICO de velocidad (46% activa el día de la entrada, contra 35-43% en 2025)
+  -> la lectura "capacidad de gestión que no escala" no se sostiene como caída de conversión.
+
+MOTOR v2 ADOPTADO (decisiones del 13-sep a la noche). Rige septiembre (re-fijada) y octubre.
   - antiguo = mora 1-30 EL DÍA 1 del mes (la definición de la vista; cuadre de sep: +0.5%)
   - la cohorte que entra en mora el día 1 va con la curva de NUEVOS sobre su saldo real, sin tasa (S2)
   - nuevos = calendario desde el día 2, una cuota por crédito, saldo ANCLADO al cierre del mes anterior
@@ -41,39 +50,63 @@ MOTOR v2 ADOPTADO, con las dos decisiones del 13-sep a la noche. Primera meta: O
     +10.9% de sesgo todos los meses); recupero 4.58%
   - tasa anclada de octubre [202509, 202608]: 20.52% (la medida sería 23.38%)
 
-Git: lo de la noche del 13 NO está commiteado (el usuario decide cuándo). Los CSV NO se versionan.
+Artifact 949ab3c2 ("De asignado a asegurado"), versión 7 del 14-sep: meta de septiembre re-fijada (KPI +
+puente) y la última sección reescrita ("Qué está cayendo, y qué no"). Las tablas de septiembre siguen siendo
+las del 1-sep. OJO: el link compartido muestra una versión ANCLADA anterior; el usuario la mueve.
+
+Git: todo lo del 13 y 14-sep commiteado y pusheado a origin el 14-sep (a pedido del usuario). Los CSV NO se
+versionan.
 
 ====================================================================
 LO QUE SIGUE, EN ORDEN
 ====================================================================
-1. OCTUBRE, desde el 2-oct (PENDIENTES tarea 25). Todo está escrito y corrido de prueba con los datos
-   del 13-sep (la matriz reproduce la de tarea 24 a 0.9998-1.0000):
+1. FEEDBACK DEL ARTIFACT 949ab3c2 (versión 7): el usuario lo da en la próxima sesión. Aplicarlo sobre
+   asignado_a_asegurado.html (el HTML se editó a mano el 14-sep; armar_asignado_a_asegurado.py solo inyecta
+   los datos, y sigue sobre v1) y republicar con url=https://claude.ai/code/artifact/949ab3c2-52a3-447a-b3ce-52531e680fde.
+   Leerlo antes con action "read" (puede tener comentarios). Recordarle mover la versión compartida.
+2. 16-17 SEP, LA PRUEBA DE LA QUINCENA: bash scripts/run_athena.sh tarea25_real_v2_septiembre.sql >
+   datos_tarea25/real_v2_septiembre.csv y python seguimiento_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv
+   datos_tarea25/real_v2_septiembre.csv <último día completo>. Si la brecha de nuevos (0.891 al 13) se achica
+   después del 15, se confirma que es arranque; si no, es un quiebre de conversión (tarea 19). Anotarlo en
+   SEGUIMIENTO.md. Contra la publicada v1, como referencia: tarea19_real_septiembre.sql + seguimiento_septiembre.py.
+   Al cierre (1-2 oct): fila de septiembre en SEGUIMIENTO.md contra la v2, con la v1 al lado.
+3. OCTUBRE, desde el 2-oct (PENDIENTES tarea 25). Todo está escrito y corrido de prueba:
    a. bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv
       y en curvas_v2.py: MN = "datos_tarea25/v2_matriz_nuevos.csv", FOTOS_NUEVOS_HASTA = "20261001"
    b. bash scripts/run_athena.sh tarea25_insumos_octubre.sql > datos_tarea25/insumos_octubre.csv
    c. python meta_v2.py 202610 datos_tarea25/insumos_octubre.csv    (los dos enfoques)
    d. cada día: bash scripts/run_athena.sh tarea25_real_v2.sql > datos_tarea25/real_v2_octubre.csv
       y python seguimiento_v2.py 202610 datos_tarea25/insumos_octubre.csv datos_tarea25/real_v2_octubre.csv <día>
+   e. ARTIFACTS: 949ab3c2 completo sobre v2 (septiembre cerrado + octubre), conservando las dos piezas del
+      14-sep. d4140b13 y f80d3761 todavía muestran la meta de septiembre v1.
    El calendario/tasa (datos_tarea25/v2_calendario_tasa.csv) ya cubre la ventana de octubre.
-2. SEPTIEMBRE, seguimiento: tarea19_real_septiembre.sql + seguimiento_septiembre.py <día> (contra la
-   publicada). La lectura v2 en capas (backtest_septiembre_v2.py) corta en el 12 porque su calendario
-   medido sale de la matriz de calibración (202609 parcial): para ir más allá hay que re-correr
-   tarea25_calendario_tasa.sql, tarea24_v2_dimensionamiento_sep.sql y tarea24_v2_septiembre.sql con las
-   fechas corridas (el script avisa). Al cierre: fila de septiembre en SEGUIMIENTO.md.
-3. NOVIEMBRE: extender tarea25_calendario_tasa.sql un periodo (202609 completo; CALENDARIO_HASTA =
+4. NOVIEMBRE: extender tarea25_calendario_tasa.sql un periodo (202609 completo; CALENDARIO_HASTA =
    "202609") y la matriz de nuevos (fotos al 1-nov).
-4. CAÍDA DE ACTIVACIÓN (tarea 19): con la tasa anclada, la brecha de septiembre es conversión (nuevos
-   0.893): es la misma señal. Incluir reenganches explica ~1.5-2pp de jun-jul; el resto sigue sin explicar.
-5. TAREA 20 (tasa por banda): con el denominador anclado el corte por banda se achica y cambia de orden
+5. TAREA 19, lo abierto: qué pasó en ene-mar 2026 (activación más rápida en toda la cartera: pregunta para el
+   negocio) y por qué bajó la tasa de entrada en jun-jul (la anclada de julio, 19.15%, es la más baja de la
+   serie: cartera u originación, no cobranza).
+6. TAREA 20 (tasa por banda): con el denominador anclado el corte por banda se achica y cambia de orden
    (19.0/21.1/23.5/23.9% contra 29.4/19.9/22.2/22.4% con el medido). Re-evaluarla con la tasa anclada.
-6. TAREA 23 (lo que entra a gestión): 107 créditos (S/198K) entraron un DOMINGO y pagaron antes de la
+7. TAREA 23 (lo que entra a gestión): 107 créditos (S/198K) entraron un DOMINGO y pagaron antes de la
    asignación del lunes; el negocio nunca los gestiona.
-7. ARTIFACTS: armar_asignado_a_asegurado.py está sobre insumos v1; rehacerlo sobre v2 antes de
-   republicar 949ab3c2 (compartido: el equipo ve una versión anclada).
+8. Repo: tarea 12 (carpetas) justo después de fijar la meta de octubre; PENDIENTES.md pesa 130 KB y mezcla
+   historia con lo abierto (convendría mover lo cerrado a un histórico).
 
 ====================================================================
 TRAMPAS (las de esta sesión primero)
 ====================================================================
+- "ACTIVADO POR SOL QUE ENTRÓ" (seguimiento_v2.py) MIDE VELOCIDAD, NO CONVERSIÓN: entradas de los días 2..N,
+  activado hasta N. Varía S/0.60-0.77 al día 12 entre meses; la conversión a 30 días, en cambio, 91-94%.
+- ENE-MAR 2026 FUE UN PICO: toda comparación contra ese trimestre exagera cualquier caída. La curva de la meta
+  de septiembre y la de octubre lo incluyen en la ventana, así que esperan un arranque más rápido que el reciente.
+- PARTIR UN RATIO COMPUESTO ANTES DE LEERLO: asegurado/calendario = tasa de entrada x conversión. La "caída
+  de activación" de la tarea 19 era sobre todo tasa.
+- La dimensión "reenganche" en un shift-share NO es mezcla: su peso cae hacia el presente porque los reenganches
+  futuros todavía no ocurrieron (bug 25).
+- La matriz de nuevos de tarea 24 (fotos al 1-sep) da conversión a 30 días solo hasta 202607.
+- tarea25_real_v2_septiembre.sql es copia de tarea25_real_v2.sql con las fechas corridas solo en el cuerpo:
+  si se corrige una, replicar en la otra.
+- 949ab3c2: republicar no alcanza para que el equipo lo vea (versión compartida anclada).
 - TASA ANCLADA ≠ TASA MEDIDA: la anclada (~20.5%) divide por el saldo del cierre del mes anterior; la
   medida (~23.4%), por el del vencimiento. No compararlas sin convertir, y nunca aplicar la medida sobre el
   calendario anclado de la meta: es el bug 28 (+10.9%).
@@ -85,8 +118,6 @@ TRAMPAS (las de esta sesión primero)
   niega a calibrar más allá de CALENDARIO_HASTA = "202608"; no sacar ese guard.
 - REENG y TASA_ANCLADA son flags de motor_v2.py: en False reproducen el motor de la tarde del 13-sep (meta
   de septiembre al 1-sep S/19,814,433). Meta y seguimiento, siempre con los mismos flags.
-- El "10.5%" de ancla que se anotó a la tarde mezclaba poblaciones (insumos con reenganches contra el
-  bloque E sin ellos): con la misma población son 9.0% sin reenganches y 9.8% con ellos.
 - LOS CSV NO ESTÁN EN GIT (*.csv en .gitignore, pedido del usuario): un clon nuevo no trae datos_*/; se
   regeneran re-corriendo los .sql con scripts/run_athena.sh. No hacer git add -f de un CSV.
 - VENTANA DE LA META = [M-13, M-2] (motor_v2.ventana_meta); la del BACKTEST = [M-12, M-1]
@@ -112,19 +143,24 @@ tarea25_calendario_tasa.sql                              calendario y tasa con e
 backtest_tarea25_ancla.py                                bug 28: backtest de 8 meses (med/anc/fix/fixt/ctl)
 tarea25_matriz_nuevos.sql, tarea25_insumos_octubre.sql   octubre: correr el 2-oct
 tarea25_real_v2.sql + seguimiento_v2.py                  seguimiento de un mes contra su meta v2
+tarea25_real_v2_septiembre.sql                           la misma query con las fechas de septiembre (re-fijada)
 meta_septiembre_v2_dia1.py                               septiembre al 1-sep con el motor adoptado y cada
-                                                         decisión por separado
+                                                         decisión por separado (el puente)
 backtest_septiembre_v2.py                                septiembre en capas (meta / bug 28 / medido / real)
 tarea24_v2_{matriz_stock,matriz_nuevos}.sql              matrices de tarea 24 (vigentes: stock siempre,
                                                          nuevos hasta que corra la de octubre)
 backtest_tarea24_v1_v2.py (`sens v2s2`)                  backtest v1 vs v2, 8 meses, S0/S1/S2
-tarea19_real_septiembre.sql + seguimiento_septiembre.py  seguimiento contra la meta publicada
+tarea19_composicion_activacion.py                        tarea 19: composición, tasa x conversión y velocidad
+tarea19_real_septiembre.sql + seguimiento_septiembre.py  seguimiento contra la meta publicada v1 (referencia)
+asignado_a_asegurado.html                                artifact 949ab3c2 (versión 7, editado a mano el 14-sep)
 
 ====================================================================
 CONVENCIONES DE TRABAJO
 ====================================================================
 - El usuario controla commit y push: solo cuando lo pide. Se pushea a origin (rebaje_diario es viejo).
 - Las decisiones de adopción son suyas: medir y recomendar con el backtest corrido.
+- La meta del mes en curso puede re-fijarse si el usuario lo decide (septiembre, 14-sep; agosto no se tocó):
+  presentar los dos lados, no asumir la respuesta.
 - Prefiere FLAG antes que borrar (arrastre por DNI, reenganches).
 - Antes de presentar algo como hallazgo nuevo, buscarlo en BUGS.md y PENDIENTES.md.
 - Artifacts vigentes: 949ab3c2 (De asignado a asegurado), d4140b13 (Capital asegurado), f80d3761
