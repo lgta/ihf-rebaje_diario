@@ -8,8 +8,11 @@ META DEL MES CON EL MOTOR v2 (adoptado 2026-09-13), los dos enfoques.
 octubre; mismo formato que `tarea24_v2_septiembre_al_1.sql`). Las reglas viven en
 `motor_v2.py`; este script solo imprime la meta y guarda la serie diaria junto a los insumos.
 
-CONTROL: `python meta_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv` reproduce la meta v2
-de septiembre al 1-sep de `meta_septiembre_v2_dia1.py` (S/19,814,433 alfa, S/3,856,429 recupero).
+CONTROL: `python meta_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv` da la meta de septiembre
+al 1-sep con el motor adoptado (reenganches incluidos, tasa anclada): S/17,504,932 alfa y
+S/3,338,715 recupero, la fila de referencia de `meta_septiembre_v2_dia1.py`. Con REENG y
+TASA_ANCLADA en False da la de antes de esas dos decisiones (S/19,815,529 con la matriz de
+calendario de tarea 25; S/19,814,433 con la de tarea 24).
 """
 import csv
 import os
@@ -27,7 +30,8 @@ def main(periodo, insumos):
     salida = []
     print("=" * 96)
     print(f"META {periodo} -- MOTOR v2 (antiguo = en mora el dia 1; cohorte d1 con curva de nuevos;")
-    print(f"arrastre por DNI fuera; reenganches {'incluidos' if MV.REENG else 'fuera'} de la calibracion)")
+    print(f"arrastre por DNI fuera; reenganches {'incluidos' if MV.REENG else 'fuera'} de la calibracion;")
+    print(f"tasa de entrada {'ANCLADA al cierre del mes anterior (bug 28)' if MV.TASA_ANCLADA else 'sobre el saldo al vencimiento'})")
     print("=" * 96)
     print(f"Stock el dia 1: S/ {sum(stock.values()):,.0f}   (de eso, entro en mora el mismo dia 1: S/ {d1:,.0f})")
     print(f"Calendario desde el dia 2: S/ {sum(sum(v.values()) for v in cal.values()):,.0f}\n")

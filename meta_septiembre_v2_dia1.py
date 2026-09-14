@@ -16,9 +16,11 @@ Curvas y tasa: las de `meta_septiembre_v2.curvas` -- nuevos en [202508, 202607] 
 stock fijo 202504-202606, calibradas sobre historia completamente observada antes
 del 1-sep.
 
-Las decisiones pendientes (PENDIENTES tarea 24) van con su default -- v2 con la
-cohorte del dia 1 en modo S2, arrastre fuera, reenganches fuera de la calibracion -- y
-se muestran tambien las alternativas.
+La REFERENCIA es el motor adoptado (`motor_v2.meta`, decisiones del usuario del 2026-09-13):
+v2 con la cohorte del dia 1 en S2, arrastre fuera, reenganches INCLUIDOS en la calibracion
+(bug 25) y tasa ANCLADA al cierre del mes anterior (bug 28). Debajo, cada decision por
+separado, para ver cuanto mueve cada una; "sin reeng, tasa medida" es la referencia que se
+documento el 13-sep antes de las dos decisiones (S/19,814,433).
 
 Uso: python meta_septiembre_v2_dia1.py [ultimo dia completo del real, default 12]
 """
@@ -29,6 +31,7 @@ import sys
 
 import curvas_v2 as V
 import meta_septiembre_v2 as M2
+import motor_v2 as MV
 from motor_unificado import acumular_real
 
 INSUMOS = "datos_tarea24/v2_septiembre_al_1.csv"
@@ -85,26 +88,30 @@ if __name__ == "__main__":
     salida = []
     for medida, titulo, publicada in (("act", "CAPITAL ASEGURADO (Enfoque alfa)", M2.ALFA.filas),
                                       ("reb", "RECUPERO OFICIAL (rebaje)", M2.RECUPERO.filas)):
+        real_v2 = M2.real_v2(medida, "fuera", reeng=True)
         versiones = [
             ("v1 publicada 1-sep", publicada, M2.ALFA.TASAS[M2.ALFA.MODO_TASA], M2.real_v1(medida)),
             ("v1 rearmada al 1-sep", *meta_dia1("v1", medida, "S0", "dentro"), M2.real_v1(medida)),
-            ("v2 al 1-sep  <- META", *meta_dia1("v2", medida, "S2", "fuera"),
-             M2.real_v2(medida, "fuera", reeng=True)),
+            ("v2 motor adoptado <- REF.", *MV.meta(M2.PERIODO, medida, INSUMOS), real_v2),
+            ("  sin reeng, tasa medida", *MV.meta(M2.PERIODO, medida, INSUMOS, reeng=False, ancla=False),
+             real_v2),
+            ("  con reeng, tasa medida", *MV.meta(M2.PERIODO, medida, INSUMOS, reeng=True, ancla=False),
+             real_v2),
+            ("  sin reeng, tasa anclada", *MV.meta(M2.PERIODO, medida, INSUMOS, reeng=False, ancla=True),
+             real_v2),
             ("  alt: arrastre dentro", *meta_dia1("v2", medida, "S2", "dentro"),
              M2.real_v2(medida, "dentro", reeng=True)),
-            ("  alt: con reenganches", *meta_dia1("v2", medida, "S2", "fuera", reeng=True),
-             M2.real_v2(medida, "fuera", reeng=True)),
         ]
-        print("=" * 116)
+        print("=" * 119)
         print(f"{titulo} -- SEPTIEMBRE 2026, META COMO HABRIA SALIDO EL 1-SEP  |  real al {ULTIMO_DIA:02d}-sep")
-        print("=" * 116)
-        print(f"{'':<23} | {'meta del mes':>13} {'stock':>11} {'nuevos':>12} {'tasa':>7} | "
+        print("=" * 119)
+        print(f"{'':<26} | {'meta del mes':>13} {'stock':>11} {'nuevos':>12} {'tasa':>7} | "
               f"{'proy. al '+str(ULTIMO_DIA):>11} {'real al '+str(ULTIMO_DIA):>11} {'real/proy':>9} "
               f"{'corr':>6} | {'falta p/ meta':>13}")
         for nombre, filas, p, real in versiones:
             u = filas[-1]
             pt, rt, corr = al_dia(filas, real)
-            print(f"{nombre:<23} | {u['proy_total']:>13,.0f} {u['proy_stock']:>11,.0f} {u['proy_nuevos']:>12,.0f} "
+            print(f"{nombre:<26} | {u['proy_total']:>13,.0f} {u['proy_stock']:>11,.0f} {u['proy_nuevos']:>12,.0f} "
                   f"{100*p:>6.2f}% | {pt:>11,.0f} {rt:>11,.0f} {rt/pt:>9.3f} {corr:>6.3f} | "
                   f"{u['proy_total']-rt:>13,.0f}")
             for fila in filas:

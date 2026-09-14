@@ -14,13 +14,18 @@ Reglas de produccion (DECISIONES.md, 2026-09-13):
               semana del vencimiento, factor por dia del mes) sobre su saldo real, sin tasa --
               variante S2, la que gano en metricas diarias (backtest_tarea24_v1_v2.py).
   nuevos      calendario desde el dia 2, una cuota por credito (la primera con entrada desde el
-              dia 2), sin el stock del mes; tasa por SOLES sobre esa misma poblacion; curva por
-              banda x dia de semana con factor de quincena y fin de mes. Curva y tasa ruedan
-              [M-13, M-2]: 12 meses hasta el ultimo mes completamente observado el dia 1.
+              dia 2), sin el stock del mes, con el saldo de la ultima foto del mes anterior; tasa
+              por SOLES sobre esa misma poblacion y con ese mismo saldo ANCLADO como denominador
+              (TASA_ANCLADA, bug 28); curva por banda x dia de semana con factor de quincena y fin
+              de mes. Curva y tasa ruedan [M-13, M-2]: 12 meses hasta el ultimo mes completamente
+              observado el dia 1.
   arrastre    FUERA: el credito cuyo DNI tiene otro con mas de 30 dias se cobra en ESPECIALIZADA,
               como en la vista. Se marca (flg_arrastre_dni), no se borra.
-  reenganches REENG = si la calibracion incluye a los creditos que despues tuvieron un
-              reenganche (bug 25). Pendiente de decision al 2026-09-13.
+  reenganches INCLUIDOS en la calibracion (REENG, bug 25): los creditos que despues tuvieron un
+              reenganche son parte de la historia de cada mes; el salto de saldo del dia del
+              reenganche no cuenta como pago.
+REENG y TASA_ANCLADA son decisiones del usuario del 2026-09-13 (noche). En False reproducen el motor
+como se valido esa tarde (backtest_tarea24_v1_v2.py; meta de septiembre al 1-sep S/19,814,433).
 
 Los dos enfoques comparten todo menos la medida: 'act' (capital asegurado, activacion) o
 'reb' (recupero oficial, rebaje). Las curvas salen de las matrices de `curvas_v2.py`.
@@ -38,7 +43,8 @@ from motor_unificado import dow_venc, proyectar, segmentar_calendario
 FIJA_STOCK = ("202504", "202606")
 MODO_D1 = "S2"
 ARRASTRE = "fuera"
-REENG = False
+REENG = True           # decision del usuario 2026-09-13 (bug 25)
+TASA_ANCLADA = True    # decision del usuario 2026-09-13 (bug 28)
 
 _insumos = {}
 
@@ -68,9 +74,12 @@ def _exigir_seguimiento(ventana):
             f"nuevos con las fotos corridas y actualizar curvas_v2.MN / FOTOS_NUEVOS_HASTA.")
 
 
-def curvas(periodo, medida, definicion="v2", modo=MODO_D1, arrastre=ARRASTRE, reeng=REENG):
+def curvas(periodo, medida, definicion="v2", modo=MODO_D1, arrastre=ARRASTRE, reeng=REENG,
+           ancla=TASA_ANCLADA):
     """Curvas y tasa para la meta de `periodo`: nuevos (curva y tasa) en `ventana_meta`, stock en
-    FIJA_STOCK. En S2 la curva de stock se calibra sin la cohorte d1."""
+    FIJA_STOCK. En S2 la curva de stock se calibra sin la cohorte d1. Con `ancla` la tasa divide
+    por el saldo de la ultima foto del mes anterior -- el mismo con el que la meta arma el
+    calendario (bug 28) --; sin `ancla`, por el saldo al vencimiento."""
     ventana = ventana_meta(periodo)
     _exigir_seguimiento(ventana)
     base_s, acts_s = V.stock_matriz(definicion, medida, arrastre, reeng, seg_d1=(modo == "S1"),
@@ -79,7 +88,7 @@ def curvas(periodo, medida, definicion="v2", modo=MODO_D1, arrastre=ARRASTRE, re
     base_n, acts_n = V.nuevos_matriz(definicion, medida, arrastre, reeng)
     curva_n, f_n = CC.calibrar(base_n, acts_n, *ventana, con_dow=True, con_f=True,
                                granularidad="estructural")
-    p = V.tasa(V.tasa_mensual(definicion, arrastre, reeng), *ventana)
+    p = V.tasa(V.tasa_mensual(definicion, arrastre, reeng, ancla=ancla), *ventana)
     return curva_s, f_s, curva_n, f_n, p
 
 
@@ -136,9 +145,10 @@ def leer_insumos(path, definicion="v2", arrastre=ARRASTRE, reeng=REENG, seg_d1=F
     return dict(stock), {d: dict(v) for d, v in cal.items()}
 
 
-def meta(periodo, medida, insumos, definicion="v2", modo=MODO_D1, arrastre=ARRASTRE, reeng=REENG):
+def meta(periodo, medida, insumos, definicion="v2", modo=MODO_D1, arrastre=ARRASTRE, reeng=REENG,
+         ancla=TASA_ANCLADA):
     """(serie diaria, tasa) de la meta del mes."""
-    c = curvas(periodo, medida, definicion, modo, arrastre, reeng)
+    c = curvas(periodo, medida, definicion, modo, arrastre, reeng, ancla)
     stock, cal = leer_insumos(insumos, definicion, arrastre, reeng, seg_d1=(modo == "S1"),
                               solo_d1=(False if modo == "S2" else None))
     d1 = None

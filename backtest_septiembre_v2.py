@@ -1,35 +1,44 @@
 """
-TAREA 24 -- VALIDACION DEL FIX CON SEPTIEMBRE (al 12-sep): backtest de la logica con la que
-el motor v2 dimensiona stock y nuevos, contra lo que paso. Pedido del usuario 2026-09-13.
+TAREA 24 -- VALIDACION DEL FIX CON SEPTIEMBRE: backtest de la logica con la que el motor v2
+dimensiona stock y nuevos, contra lo que paso. Pedido del usuario 2026-09-13.
+
+REHECHO EL MISMO 13-SEP (tarea 25) CON EL MOTOR ADOPTADO: reenganches INCLUIDOS (bug 25) y la
+tasa ANCLADA (bug 28). `python backtest_septiembre_v2.py 12 reeng_fuera` corre con los
+reenganches fuera, como la validacion original.
 
 Insumos (locales):
-  datos_tarea24/v2_dimensionamiento_sep.csv  tarea24_v2_dimensionamiento_sep.sql
+  datos_tarea24/v2_dimensionamiento_sep.csv  tarea24_v2_dimensionamiento_sep.sql: bloques B
+                                             (universo) y D (entradas reales)
   datos_tarea24/v2_septiembre_al_1.csv       stock v2 del dia 1 y calendario anclado (la meta)
   datos_tarea24/v2_septiembre.csv            real v2 por dia (tarea24_v2_septiembre.sql)
+  curvas_v2.CT, periodo 202609 (parcial)     calendario MEDIDO y ANCLADO de los dias 2-12, con
+                                             o sin reenganches (tarea25_calendario_tasa.sql). Sin
+                                             reenganches, el medido reproduce al sol el bloque E
+                                             de la validacion original; con reenganches, el
+                                             anclado reproduce al sol el calendario de la meta.
 
 Cuatro preguntas:
   1. UNIVERSO DE NUEVOS: ¿nuestras entradas v2 son los nuevos que el negocio asigna a TEMPRANA?
      (el stock ya se cuadro contra la vista credito a credito: +0.5%)
-  2. VOLUMEN: ¿entro lo que calendario x tasa esperaba? Separa el ancla (saldo del 31-ago contra
-     saldo al vencimiento) de la tasa realizada, y compara la tasa de los dias 2-12 de septiembre
-     con la de los mismos dias de los meses anteriores.
-  3. BACKTEST EN TRES CAPAS al dia 12, con la misma curva y la misma tasa:
-       a. la meta al 1-sep (calendario anclado al 31-ago)
-       b. calendario MEDIDO (saldo al vencimiento)          -> saca el efecto del ancla
-       c. las entradas REALES, con la curva y sin tasa      -> saca el efecto de la tasa
-     Lo que queda en (c) es conversion: si la curva sigue bien a quien entra.
-  4. STOCK: la curva de stock contra el real del stock observado el dia 1 (igual en las 3 capas).
+  2. VOLUMEN: ¿entro lo que calendario x tasa esperaba? Separa el ancla de la tasa realizada y
+     compara los dias 2-N de septiembre con los mismos dias de los meses anteriores.
+  3. BACKTEST EN CAPAS al dia N, con la misma curva:
+       a.  la META al 1-sep: calendario anclado x tasa ANCLADA   (motor adoptado)
+       a0. calendario anclado x tasa medida                      -> la meta con el bug 28
+       b.  calendario MEDIDO x tasa medida                       -> sin el efecto del ancla
+       c.  las entradas REALES, con la curva y sin tasa           -> sin el efecto de la tasa
+     Lo que queda en (c) es conversion. Con el bug 28 corregido, (a) queda cerca de (b): las
+     separa cuanto se aparta el ancla de estos dias de septiembre de la de la ventana.
+  4. STOCK: la curva de stock contra el real del stock observado el dia 1 (igual en todas).
 
-Universo: v2, arrastre fuera. Reenganches como en la meta al 1-sep: fuera de la calibracion; en
-el stock entra quien tuvo su reenganche despues del 1-sep (era ultimo de su cadena ese dia).
-
-Uso: python backtest_septiembre_v2.py [ultimo dia completo, default 12]
+Uso: python backtest_septiembre_v2.py [ultimo dia completo, default 12] [reeng_fuera]
 """
 import collections
 import csv
 import statistics
 import sys
 
+import curvas_v2 as V
 import motor_v2 as MV
 from motor_unificado import acumular_real
 
@@ -38,9 +47,17 @@ DIM = "datos_tarea24/v2_dimensionamiento_sep.csv"
 AL_1 = "datos_tarea24/v2_septiembre_al_1.csv"
 REAL = "datos_tarea24/v2_septiembre.csv"
 ULTIMO_DIA = int(sys.argv[1]) if len(sys.argv) > 1 else 12
+REENG = False if (len(sys.argv) > 2 and sys.argv[2] == "reeng_fuera") else MV.REENG
+K3_D = ("0|0", "0|1") if REENG else ("0|0",)     # bloque D: 'arrastre|reeng'
 
 with open(DIM) as f:
     FILAS = list(csv.DictReader(f))
+
+_HASTA = max(V.calendario("v2", PERIODO, True))
+if ULTIMO_DIA > _HASTA:
+    raise SystemExit(f"{V.CT} trae septiembre hasta el dia {_HASTA}. Para cortar al {ULTIMO_DIA}, re-correr "
+                     "tarea25_calendario_tasa.sql, tarea24_v2_dimensionamiento_sep.sql y "
+                     "tarea24_v2_septiembre.sql con las fechas corridas hasta ese dia.")
 
 
 def bloque(nombre):
@@ -52,28 +69,34 @@ def num(x):
 
 
 def real_v2(medida):
-    """{componente: {dia: activado o rebajado}}, arrastre fuera. Stock con los reenganches
-    posteriores al 1-sep (universo de la meta); nuevos sin reenganches (como el bloque D)."""
+    """{componente: {dia: activado o rebajado}}, arrastre fuera. Stock: el universo de la meta
+    (con los reenganches posteriores al 1-sep). Nuevos: con o sin reenganches segun REENG."""
     col = "saldo" if medida == "act" else "rebaje"
     out = {"stock": collections.defaultdict(float), "nuevos": collections.defaultdict(float)}
     with open(REAL) as f:
         for r in csv.DictReader(f):
             if r["bloque"] != "real" or r["arrastre"] == "1":
                 continue
-            if r["componente"] == "nuevos" and r["reeng"] == "1":
+            if r["componente"] == "nuevos" and r["reeng"] == "1" and not REENG:
                 continue
             out[r["componente"]][int(r["dia"])] += num(r[col])
     return out
 
 
 def cal_desde(nombre, filtro=lambda r: True):
-    """{dia_entrada: {banda: saldo}} desde el bloque D o E, dias 2..ULTIMO_DIA."""
+    """{dia_entrada: {banda: saldo}} desde el bloque D, dias 2..ULTIMO_DIA."""
     cal = collections.defaultdict(lambda: collections.defaultdict(float))
     for r in bloque(nombre):
         d = int(r["k1"])
         if 2 <= d <= ULTIMO_DIA and filtro(r):
             cal[d][r["k2"]] += num(r["saldo_1"])
     return {d: dict(v) for d, v in cal.items()}
+
+
+def cal_ct(ancla):
+    """{dia_entrada: {banda: saldo}} de septiembre desde la matriz de calibracion, dias 2..N."""
+    return {d: v for d, v in V.calendario("v2", PERIODO, REENG, ancla=ancla).items()
+            if 2 <= d <= ULTIMO_DIA}
 
 
 def total(cal, hasta=None):
@@ -119,59 +142,74 @@ def universo_nuevos():
     print()
 
 
-def volumen(tasa):
-    cal_anc = MV.leer_insumos(AL_1)[1]
-    anc = sum(s for d, v in cal_anc.items() if 2 <= d <= ULTIMO_DIA for s in v.values())
-    med = total(cal_desde("E. calendario medido sep"))
-    ent_e = sum(num(r["saldo_2"]) for r in bloque("E. calendario medido sep") if 2 <= int(r["k1"]) <= ULTIMO_DIA)
-    real = total(cal_desde("D. entradas reales v2 sep", lambda r: r["k3"] == "0|0"))
+def volumen(p_med, p_anc):
+    n = ULTIMO_DIA
+    cal_meta = MV.leer_insumos(AL_1, reeng=REENG)[1]
+    anc = sum(s for d, v in cal_meta.items() if 2 <= d <= n for s in v.values())
+    anc_ct, med = total(cal_ct(True)), total(cal_ct(False))
+    real = total(cal_desde("D. entradas reales v2 sep", lambda r: r["k3"] in K3_D))
     print("=" * 100)
-    print(f"2. VOLUMEN DE ENTRADAS, dias 2-{ULTIMO_DIA} -- tasa calibrada {100*tasa:.2f}% (arrastre fuera)")
+    print(f"2. VOLUMEN DE ENTRADAS, dias 2-{n} -- tasa medida {100*p_med:.2f}%, anclada {100*p_anc:.2f}% "
+          f"(arrastre fuera)")
     print("=" * 100)
-    print(f"  calendario anclado al 31-ago (la meta)   S/ {anc:>12,.0f}  x tasa = esperado S/ {anc*tasa:>11,.0f}")
-    print(f"  calendario medido al vencimiento         S/ {med:>12,.0f}  x tasa = esperado S/ {med*tasa:>11,.0f}"
-          f"   (ancla: {100*(anc/med-1):+.1f}%)")
-    print(f"  entradas reales (sin arrastre)                                    real   S/ {real:>11,.0f}"
-          f"   ({100*(real/(med*tasa)-1):+.1f}% contra el medido)")
-    print(f"  tasa realizada de septiembre, dias 2-{ULTIMO_DIA}: {100*ent_e/med:.2f}% (con arrastre, misma definicion que el bloque C)")
-    print(f"  -- tasa de entrada de los dias 2-12 por mes (v2; con arrastre):")
-    for r in bloque("C. tasa realizada dias 2-12"):
-        t = num(r["saldo_2"]) / num(r["saldo_1"])
-        print(f"       {r['k1']}  elegibles S/ {num(r['saldo_1']):>12,.0f}   entran S/ {num(r['saldo_2']):>11,.0f}   {100*t:>6.2f}%")
+    print(f"  calendario anclado al 31-ago (la meta)   S/ {anc:>12,.0f}  x tasa anclada = esperado S/ {anc*p_anc:>11,.0f}"
+          f"   <- la meta")
+    print(f"  {'':<42}{'':>12}  x tasa medida  = esperado S/ {anc*p_med:>11,.0f}   (bug 28)")
+    print(f"  calendario medido al vencimiento         S/ {med:>12,.0f}  x tasa medida  = esperado S/ {med*p_med:>11,.0f}"
+          f"   (ancla {100*(anc/med-1):+.1f}%)")
+    print(f"  entradas reales (sin arrastre)           {'':>14}{'':>31}real S/ {real:>11,.0f}")
+    print(f"     {100*(real/(anc*p_anc)-1):+.1f}% contra la meta, {100*(real/(anc*p_med)-1):+.1f}% contra la meta con el bug,"
+          f" {100*(real/(med*p_med)-1):+.1f}% contra el medido")
+    print(f"  control: el calendario anclado desde la matriz de calibracion da S/ {anc_ct:,.0f} "
+          f"({100*(anc_ct/anc-1):+.2f}% contra los insumos de la meta)")
+    ventana = MV.ventana_meta(PERIODO)
+    tm_med = V.tasa_mensual("v2", MV.ARRASTRE, REENG, dias=(2, n))
+    tm_anc = V.tasa_mensual("v2", MV.ARRASTRE, REENG, ancla=True, dias=(2, n))
+    filas = [(p, *tm_med[p], *tm_anc[p]) for p in sorted(tm_med) if p >= "202601"]
+    filas.append((f"{ventana[0]}-{ventana[1][2:]}",
+                  *[sum(tm[p][i] for p in tm if ventana[0] <= p <= ventana[1])
+                    for tm in (tm_med, tm_anc) for i in (0, 1)]))
+    print(f"  -- los dias 2-{n} de cada mes (arrastre fuera, reenganches {'dentro' if REENG else 'fuera'}); "
+          f"la ultima fila es la ventana de la meta:")
+    print(f"       {'mes':<11} {'medido':>13} {'anclado':>13} {'anc/med':>8} {'tasa medida':>12} {'tasa anclada':>13}")
+    for p, e_m, n_m, e_a, n_a in filas:
+        print(f"       {p:<11} {e_m:>13,.0f} {e_a:>13,.0f} {e_a/e_m:>8.3f} {100*n_m/e_m:>11.2f}% {100*n_a/e_a:>12.2f}%")
     print()
 
 
-def tres_capas(medida, titulo):
+def tres_capas(medida, titulo, c, p_anc):
     n = ULTIMO_DIA
-    c = MV.curvas(PERIODO, medida)
-    stock, cal_anc = MV.leer_insumos(AL_1, solo_d1=False)
-    d1 = MV.por_banda(MV.leer_insumos(AL_1, solo_d1=True)[0])
-    cal_med = cal_desde("E. calendario medido sep")
-    cal_real = cal_desde("D. entradas reales v2 sep", lambda r: r["k3"] == "0|0")
-    capas = [("a. meta al 1-sep (calendario anclado)", MV.proyectar_mes(c, PERIODO, stock, cal_anc, d1)),
-             ("b. calendario medido al vencimiento", MV.proyectar_mes(c, PERIODO, stock, cal_med, d1)),
-             ("c. entradas reales, curva sin tasa", MV.proyectar_mes((*c[:4], 1.0), PERIODO, stock, cal_real, d1))]
+    stock, cal_anc = MV.leer_insumos(AL_1, reeng=REENG, solo_d1=False)
+    d1 = MV.por_banda(MV.leer_insumos(AL_1, reeng=REENG, solo_d1=True)[0])
+    cal_real = cal_desde("D. entradas reales v2 sep", lambda r: r["k3"] in K3_D)
+    capas = [("a.  META al 1-sep: anclado x tasa anclada", MV.proyectar_mes((*c[:4], p_anc), PERIODO, stock, cal_anc, d1)),
+             ("a0. anclado x tasa medida (bug 28)", MV.proyectar_mes(c, PERIODO, stock, cal_anc, d1)),
+             ("b.  calendario medido x tasa medida", MV.proyectar_mes(c, PERIODO, stock, cal_ct(False), d1)),
+             ("c.  entradas reales, curva sin tasa", MV.proyectar_mes((*c[:4], 1.0), PERIODO, stock, cal_real, d1))]
     real = real_v2(medida)
     rs, rn = acumular_real(real["stock"], n), acumular_real(real["nuevos"], n)
     rt = [a + b for a, b in zip(rs, rn)]
-    print("=" * 100)
-    print(f"3. BACKTEST EN TRES CAPAS AL {n:02d}-SEP -- {titulo} (tasa {100*c[4]:.2f}%)")
-    print("=" * 100)
-    print(f"  {'':<40} | {'proy nuevos':>12} {'real nuevos':>12} {'real/proy':>9} {'corr':>6} | "
+    print("=" * 110)
+    print(f"3. BACKTEST EN CAPAS AL {n:02d}-SEP -- {titulo} (tasa medida {100*c[4]:.2f}%, anclada {100*p_anc:.2f}%)")
+    print("=" * 110)
+    print(f"  {'':<42} | {'proy nuevos':>12} {'real nuevos':>12} {'real/proy':>9} {'corr':>6} | "
           f"{'proy total':>12} {'real total':>12} {'real/proy':>9}")
     for nombre, filas in capas:
         pn = [x["proy_nuevos"] for x in filas[:n]]
         pt = [x["proy_total"] for x in filas[:n]]
-        print(f"  {nombre:<40} | {pn[-1]:>12,.0f} {rn[-1]:>12,.0f} {rn[-1]/pn[-1]:>9.3f} "
+        print(f"  {nombre:<42} | {pn[-1]:>12,.0f} {rn[-1]:>12,.0f} {rn[-1]/pn[-1]:>9.3f} "
               f"{statistics.correlation(inc(pn), inc(rn)):>6.3f} | {pt[-1]:>12,.0f} {rt[-1]:>12,.0f} {rt[-1]/pt[-1]:>9.3f}")
     ps = [x["proy_stock"] for x in capas[0][1][:n]]
-    print(f"  4. STOCK (igual en las 3 capas): proyectado S/ {ps[-1]:,.0f}, real S/ {rs[-1]:,.0f} -> "
+    print(f"  4. STOCK (igual en todas las capas): proyectado S/ {ps[-1]:,.0f}, real S/ {rs[-1]:,.0f} -> "
           f"{rs[-1]/ps[-1]:.3f}, corr diaria {statistics.correlation(inc(ps), inc(rs)):.3f}")
     print()
 
 
 if __name__ == "__main__":
+    print(f"Motor v2, arrastre fuera, reenganches {'INCLUIDOS' if REENG else 'FUERA'}; real al {ULTIMO_DIA:02d}-sep\n")
     universo_nuevos()
-    volumen(MV.curvas(PERIODO, "act")[4])
-    tres_capas("act", "CAPITAL ASEGURADO")
-    tres_capas("reb", "RECUPERO OFICIAL")
+    c_act = MV.curvas(PERIODO, "act", reeng=REENG, ancla=False)
+    p_anc = V.tasa(V.tasa_mensual("v2", MV.ARRASTRE, REENG, ancla=True), *MV.ventana_meta(PERIODO))
+    volumen(c_act[4], p_anc)
+    tres_capas("act", "CAPITAL ASEGURADO", c_act, p_anc)
+    tres_capas("reb", "RECUPERO OFICIAL", MV.curvas(PERIODO, "reb", reeng=REENG, ancla=False), p_anc)
