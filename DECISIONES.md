@@ -317,6 +317,7 @@ y con la decisión pendiente del usuario. Tampoco se cambió de fuente por el pu
 `dias_atraso_cuota` (bug 26, 1.3%).
 
 **Cómo se aplica a las metas.** La de septiembre, ya publicada, no se toca: v2 se calcula en paralelo.
+*(Cambiado el 14-sep: el usuario re-fijó septiembre con v2; ver la última entrada.)*
 Octubre es la primera meta con la definición nueva. El criterio de siempre: se corrige el universo
 aunque el error suba, y se mide con el backtest.
 
@@ -342,7 +343,7 @@ metas desde **octubre 2026** se calculan con el motor v2 (`motor_v2.py` + `meta_
 universo — cuadra con la vista al +0.5% — y ese es el criterio de `CLAUDE.md`. En alfa el error baja
 (4.55% → 4.09%) con la misma correlación diaria.
 
-**Septiembre no se toca:** su meta se fijó el 1-sep con la definición anterior, y una meta no se
+**Septiembre no se toca** *(el 14-sep el usuario decidió re-fijarla con v2: ver la última entrada)*: su meta se fijó el 1-sep con la definición anterior, y una meta no se
 cambia a mitad de mes. La meta v2 que habría salido ese día (S/19,814,433 alfa, S/3,856,429 recupero;
 `meta_septiembre_v2_dia1.py`) queda como referencia, salvo que el usuario decida otra cosa.
 
@@ -382,6 +383,33 @@ diaria (0.827), el nivel del backtest de siempre (3.74%). En recupero, 12.58% �
 (1.09 contra 1.18 al final) y eso inclina la trayectoria, pero la variante por tercios no mejora las
 métricas diarias, que son las que deciden la forma. Queda como salvedad de lectura del seguimiento.
 
-**Septiembre no se toca.** Con las dos decisiones, la meta v2 que habría salido el 1-sep es
+**Septiembre no se toca** *(cambiado el 14-sep: entrada siguiente)*. Con las dos decisiones, la meta v2 que habría salido el 1-sep es
 **S/17,504,932** en alfa y **S/3,338,715** en recupero (`meta_septiembre_v2_dia1.py`), contra la
 publicada S/20,477,271. Es la referencia de cuánto se esperaba con el motor de octubre.
+
+### La meta de septiembre se re-fija con el motor v2 (2026-09-14 — decisión del usuario)
+
+**Decisión del usuario**, el 14-sep, con 13 días del mes a la vista. Las metas vigentes de septiembre pasan
+a ser las del motor v2 como habría salido el 1-sep: **S/17,504,932** en capital asegurado (stock
+S/3,529,832 + nuevos S/13,975,100, tasa anclada 20.61%) y **S/3,338,715** en recupero oficial (stock
+S/821,765 + nuevos S/2,516,950). Salen de `python meta_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv`;
+la serie diaria está en `datos_tarea24/meta_v2_202609.csv`. Las publicadas el 1-sep (S/20,477,271 y
+S/3,928,776, v1) quedan como registro.
+
+**Puente desde la publicada** (alfa, `meta_septiembre_v2_dia1.py`): definición de antiguo (en mora el día
+1) S/20,477,271 → S/19,815,529 (−3.2%; incluye +0.1% de reconstruir los insumos del 1-sep), reenganches
+dentro → S/19,467,964 (−1.8%), tasa anclada → S/17,504,932 (−10.1%).
+
+**Por qué no es un ajuste ex-post.** Lo que cambió es cómo se mide —la tasa se calibraba con un saldo
+distinto del que la meta multiplica (bug 28), el filtro de reenganches miraba hacia adelante (bug 25) y la
+definición de antiguo no era la de la vista—, no una constante elegida para acercarse al real. La meta v2 usa
+solo lo observable al 1-sep: insumos reconstruidos como se leían ese día (`tarea24_v2_septiembre_al_1.sql`,
+fiel a +0.09% en v1) y la ventana [202508, 202607]. **Salvedades, a la vista:** la decisión se tomó viendo el
+−17.4% de los primeros 12 días contra la publicada; las matrices se leyeron el 13-sep, así que traen la
+re-expresión de Mambu (−0.3% a −0.8%) y el flag de reenganche de hoy; y agosto, en la misma situación (motor
+migrado a mitad de mes), cerró con la meta vieja.
+
+**Cómo se sigue:** `tarea25_real_v2_septiembre.sql` + `python seguimiento_v2.py 202609
+datos_tarea24/v2_septiembre_al_1.csv datos_tarea25/real_v2_septiembre.csv <día>`. El seguimiento contra la
+publicada (`seguimiento_septiembre.py`) queda como referencia. El cierre se reporta contra la v2, con la
+v1 al lado.

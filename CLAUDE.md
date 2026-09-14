@@ -57,12 +57,13 @@ repetir un error ya encontrado) e `IDEAS.md` (para no re-probar algo ya descarta
 - **Antiguo = en mora 1-30 el DÍA 1 del mes** (decisión del usuario 2026-09-13, tarea 24): la
   definición de la vista oficial. Incluye a quien entra en mora el día 1 y excluye a quien pagó el
   último día del mes anterior. **ADOPTADA el 2026-09-13 (decisión del usuario): las metas desde
-  OCTUBRE usan el motor v2** (`motor_v2.py` + `meta_v2.py`; reglas en `DECISIONES.md`). La cohorte
+  OCTUBRE usan el motor v2** (`motor_v2.py` + `meta_v2.py`; reglas en `DECISIONES.md`), **y el 2026-09-14
+  el usuario re-fijó también la de SEPTIEMBRE con v2** (S/17,504,932 alfa, S/3,338,715 recupero). La cohorte
   que entra el día 1 (0-53% del stock según el mes) se proyecta con la curva de NUEVOS sobre su
   saldo real (variante S2), y el **arrastre por DNI queda fuera** de TEMPRANA, como en la vista (se
-  cobra en ESPECIALIZADA; se marca con `flg_arrastre_dni`, no se borra). La meta de septiembre,
-  fijada con la definición anterior, no se toca. No mezclar las dos definiciones en una misma
-  calibración.
+  cobra en ESPECIALIZADA; se marca con `flg_arrastre_dni`, no se borra). La de septiembre publicada
+  el 1-sep con la definición anterior (S/20,477,271) queda como registro. No mezclar las dos
+  definiciones en una misma calibración.
 - **`flg_last_loan_in_chain` mira hacia adelante** (bug 25): se lee con la foto de hoy y borra de
   cada mes histórico a los créditos que tuvieron un **reenganche** después (8-11% del saldo de
   nuevos). Reenganche = crédito ADICIONAL en la misma línea, como aumentar el monto desembolsado

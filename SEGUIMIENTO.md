@@ -168,7 +168,17 @@ rodante `[M-12,M-1]` sin leak (tasa y curva); stock ventana fija 202504-202606. 
 | Julio 2026 | S/16,816,807 | S/17,323,922 | **-2.9%** | -3.5% | -2.8% | 0.880 | El mes más parejo entre componentes. Su calendario de fin de mes no tiene ningún vencimiento de fin de semana, y por eso es el que más mejora con la curva por día de semana (-5.0% → -2.9%). | Idem. |
 | Agosto 2026 | S/17,117,628 | S/17,322,872 | **-1.2%** | -1.3% | -1.1% | — | El mes más ajustado de todo el proyecto, y el más parejo entre componentes (stock -1.3%, nuevos -1.1%). Rompe la racha: "nuevos" venía subestimando en los 7 meses anteriores entre -2.8% y -21.6%. | **CERRADA 2026-09-01.** Meta con motor v2 (W3), sin el factor de cierre de stock (v3) — deliberado, ver bloque 2026-08-26: stock S/3,795,022 + nuevos S/13,322,607. Curvas [202507-202606]. `meta_agosto_capital_asegurado.py` v8; real de `tarea19_real_agosto_cierre.sql`. **Caveat de honestidad:** las curvas nunca vieron agosto, pero la ADOPCIÓN de W3 se decidió el 26-ago con 25 días del mes ya visibles — no es un test prospectivo limpio como lo será septiembre. Los cortes publicados se movieron al re-medir (21-ago S/11,595,123→S/11,547,707, -0.4%; 25-ago S/13,484,959→S/13,398,433, -0.6%): `dts_mambu_loans_hist` se re-expresa para días pasados. |
 
-> **Septiembre 2026 — EN CURSO, seguimiento al 12-sep** (último día completo al 13-sep). Meta
+> **Septiembre 2026 — META RE-FIJADA el 14-sep con el motor v2 (decisión del usuario): S/17,504,932 en
+> capital asegurado y S/3,338,715 en recupero.** Seguimiento al 13-sep (último día completo al 14-sep;
+> `tarea25_real_v2_septiembre.sql` + `seguimiento_v2.py`; los días 1-12 dan idénticos al control del 13-sep):
+> real **S/7,285,458 contra S/7,902,126 de la trayectoria: 0.922 (−7.8%)**; stock 0.972, nuevos 0.891;
+> correlación de incrementos diarios 0.984. Recupero: S/1,120,210 contra S/1,382,009, **0.811 (−18.9%)**. La
+> brecha de nuevos sigue siendo de arranque: entró el volumen esperado (+0.9%) y el activado por sol que entró
+> va en 0.632 contra 0.715 (−11.7%). Si el patrón histórico se sostiene (tarea 19, 14-sep), debería achicarse
+> después de la quincena: mirarlo el 16-17 sep. Lo que sigue es el seguimiento contra la publicada v1, que queda
+> como referencia.
+>
+> **Septiembre 2026 — seguimiento contra la publicada v1, al 12-sep** (último día completo al 13-sep). Meta
 > S/20,477,271 (v1, fijada el 1-sep). Real acumulado **S/7,155,605 contra S/8,666,800 proyectado al
 > mismo día: −17.4%** (stock +4.0%, nuevos −21.6%). La forma se sigue muy bien: correlación de
 > incrementos diarios **0.982** (nuevos 0.971). **El caveat de ~10% se está materializando, y lo
