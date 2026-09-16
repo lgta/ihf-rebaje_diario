@@ -1,0 +1,355 @@
+<title>Riesgo de cobranza en las curvas</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F5F7F9; --surface:#FFFFFF; --sunk:#EDF1F5;
+  --ink:#141C24; --ink-2:#3D4A57; --muted:#5C6976; --faint:#8A96A2;
+  --hair:#DDE3E9; --hair-2:#C8D2DB;
+  --r1:#E0A080; --r2:#C0592B; --r3:#7A2A10; --todos:#8A96A2;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --col:min(68ch,100%); --wide:min(1080px,100%);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0F151B; --surface:#131A21; --sunk:#19222B;
+  --ink:#DFE6ED; --ink-2:#B7C2CD; --muted:#8B99A6; --faint:#6B7885;
+  --hair:#26313B; --hair-2:#33404C;
+  --r1:#9C4A28; --r2:#D0703F; --r3:#F2B08C; --todos:#7D8B98;
+}}
+:root[data-theme="dark"]{
+  --ground:#0F151B; --surface:#131A21; --sunk:#19222B;
+  --ink:#DFE6ED; --ink-2:#B7C2CD; --muted:#8B99A6; --faint:#6B7885;
+  --hair:#26313B; --hair-2:#33404C;
+  --r1:#9C4A28; --r2:#D0703F; --r3:#F2B08C; --todos:#7D8B98;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.page{display:grid;grid-template-columns:1fr var(--col) 1fr;padding:0 20px 96px}
+.page>*{grid-column:2;min-width:0}
+.bleed{grid-column:1/-1;width:var(--wide);justify-self:center}
+.ancha{grid-column:1/-1;width:min(900px,100%);justify-self:center}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;font-weight:600;line-height:1.18;margin:0}
+h2{font-size:1.72rem;margin:3.4rem 0 .2rem;letter-spacing:-.01em}
+p{margin:.85rem 0}
+strong{font-weight:600}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-weight:500;display:block;margin-bottom:.5rem}
+.lede{font-size:1.1rem;color:var(--ink-2)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{padding:4.2rem 0 .5rem}
+header h1{font-size:clamp(2.2rem,5.6vw,3.2rem);letter-spacing:-.025em}
+header .sub{font-size:1.12rem;color:var(--muted);margin-top:.9rem;max-width:58ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:1px;
+  background:var(--hair);border:1px solid var(--hair);border-radius:10px;overflow:hidden;margin:2.2rem 0 .4rem}
+.kpi{background:var(--surface);padding:1rem 1.1rem}
+.kpi .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.kpi .v{font-family:var(--mono);font-size:1.35rem;font-weight:600;margin-top:.3rem;letter-spacing:-.02em}
+.kpi .v span{color:var(--faint);font-weight:400;font-size:1rem}
+.kpi .n{font-size:.82rem;color:var(--muted);margin-top:.2rem;line-height:1.4}
+.note{background:var(--sunk);border-left:3px solid var(--hair-2);border-radius:0 8px 8px 0;
+  padding:.9rem 1.1rem;margin:1.3rem 0;font-size:.93rem;color:var(--ink-2)}
+.note b{color:var(--ink)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:1rem;margin:1.2rem 0}
+.mini{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:.9rem 1rem .5rem;margin:0}
+.mini .t{font-family:var(--serif);font-weight:600;font-size:1.04rem}
+.mini .s{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}
+.leyenda{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.84rem;color:var(--ink-2);margin:1rem 0 .2rem}
+.leyenda i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:.4rem;vertical-align:3px}
+.leyenda i.sq{width:11px;height:11px;border-radius:3px;vertical-align:-1px}
+svg{display:block;max-width:100%;overflow:visible}
+.tabla-wrap{overflow-x:auto;border:1px solid var(--hair);border-radius:12px;background:var(--surface);margin:1.3rem 0}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+caption{text-align:left;padding:1rem 1.1rem .3rem;font-family:var(--serif);font-size:1.04rem;font-weight:600}
+caption .cap-n{display:block;font-family:var(--sans);font-size:.84rem;font-weight:400;color:var(--muted);margin-top:.2rem}
+th,td{padding:.48rem .7rem;text-align:right;border-bottom:1px solid var(--hair);white-space:nowrap}
+th{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);
+  font-weight:600;border-bottom:1px solid var(--hair-2)}
+th.l,td.l{text-align:left}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.g{font-family:var(--mono);font-weight:600}
+td .w{color:var(--faint);font-size:.78rem;margin-left:.3rem}
+tr.grp td{background:var(--sunk);font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-2);font-weight:600}
+tbody tr:hover{background:var(--sunk)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--ground);font-family:var(--mono);
+  font-size:.76rem;padding:.45rem .6rem;border-radius:6px;opacity:0;transition:opacity .1s;z-index:50;
+  white-space:pre;line-height:1.5}
+.tip.on{opacity:1}
+ul.leer{padding-left:1.1rem} ul.leer li{margin:.6rem 0}
+footer{margin-top:4rem;padding-top:1.4rem;border-top:1px solid var(--hair);font-size:.84rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <span class="eyebrow">Cobranza temprana · evaluación · el modelo no cambia</span>
+  <h1>Riesgo de cobranza en las curvas</h1>
+  <p class="sub">¿El nivel de riesgo que el modelo de cobranza le asigna a cada cuota separa lo que
+  después se recupera? Curvas de rebaje y de activación por nivel de riesgo, con el mismo universo que
+  usa la meta desde octubre.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="k">Nuevos · rebaje a 30 días</div><div class="v" id="k-n">—</div>
+      <div class="n">riesgo bajo · riesgo alto, % del saldo que entró</div></div>
+    <div class="kpi"><div class="k">Antiguos · rebaje al cierre</div><div class="v" id="k-s">—</div>
+      <div class="n">riesgo bajo · riesgo alto, % del saldo del día 1</div></div>
+    <div class="kpi"><div class="k">Efecto en la meta, por mezcla</div><div class="v" id="k-e">—</div>
+      <div class="n">rango mensual en la expectativa de recupero de nuevos, ago-2025 a jul-2026</div></div>
+  </div>
+</header>
+
+<div class="note"><b>La variable.</b> <span class="mono">prediccion_riesgo_modelo_cobranza</span> (riesgo
+bajo, medio o alto) de la cuota que entra en mora, o de la cuota en mora el día 1 para los antiguos. Se
+guarda por cuota, existe también en cuotas pagadas a tiempo y aparece recién en las cuotas que vencen
+desde junio de 2025: se fue asignando en su momento, no se rellenó hacia atrás. <b>Es el puntaje
+crudo de un modelo, no el riesgo de gestión.</b> La asignación usa, según el crédito, uno de dos modelos
+(el de mora, por máximo de días de atraso, o el preventivo, por cliente nuevo o antiguo) y los convierte
+con una tabla fija en el <span class="mono">riesgo_mora_gestion</span>: por ejemplo, todo el segmento de 1
+a 4 días queda en riesgo bajo. Ese riesgo de gestión no está evaluado en esta página.</div>
+
+<h2>Las curvas, por nivel de riesgo</h2>
+<p class="lede">Doce meses de entradas, agosto 2025 a julio 2026. La línea gris es la curva de hoy, sin
+separar por riesgo: el promedio de las otras tres.</p>
+<div class="leyenda" id="lg-curvas"></div>
+<div class="bleed grid2">
+  <figure class="mini"><div class="t">Nuevos · rebaje</div>
+    <div class="s">% del saldo que entró en mora, acumulado por días desde la entrada</div><div id="c-n-reb"></div></figure>
+  <figure class="mini"><div class="t">Nuevos · activación</div>
+    <div class="s">% del saldo que ya hizo al menos un pago, por días desde la entrada</div><div id="c-n-act"></div></figure>
+  <figure class="mini"><div class="t">Antiguos · rebaje</div>
+    <div class="s">% del saldo del día 1, acumulado por día del mes</div><div id="c-s-reb"></div></figure>
+  <figure class="mini"><div class="t">Antiguos · activación</div>
+    <div class="s">% del saldo del día 1 que ya hizo al menos un pago, por día del mes</div><div id="c-s-act"></div></figure>
+</div>
+<p><strong>En nuevos, el riesgo corta más el rebaje que la activación.</strong> El día que entran en mora
+los tres niveles activan casi lo mismo, y a los 30 días casi todos hicieron algún pago; lo que cambia es
+cuánto pagan: el riesgo alto rebaja 42% menos soles que el bajo. <strong>En antiguos corta las dos
+cosas</strong>, y en rebaje separa más que el tramo de mora (13 puntos entre bajo y alto, contra 10 entre
+los tramos 1-8 y 16-30).</p>
+
+<h2>Dentro de lo que el modelo ya separa</h2>
+<p>El modelo ya distingue banda de avance (cuánto del crédito se pagó) y, en antiguos, tramo de mora. Si
+el riesgo solo repitiera esa información, dentro de cada banda o tramo dejaría de separar. No es así:</p>
+<div class="tabla-wrap ancha"><table id="t-dentro"></table></div>
+
+<h2>Todos los meses, el mismo orden</h2>
+<p>Rebaje de cada mes por nivel de riesgo. Bajo por encima de medio y medio por encima de alto, sin
+excepción, en los meses con puntaje completo.</p>
+<div class="bleed grid2">
+  <figure class="mini"><div class="t">Nuevos · rebaje a 30 días, por mes de entrada</div>
+    <div class="s">% del saldo que entró en mora</div><div id="c-m-n"></div></figure>
+  <figure class="mini"><div class="t">Antiguos · rebaje al cierre, por mes</div>
+    <div class="s">% del saldo del día 1</div><div id="c-m-s"></div></figure>
+</div>
+
+<h2>¿Y la meta?</h2>
+<p>Que el riesgo separe no alcanza para mover la meta: la curva de hoy ya promedia los tres niveles con el
+peso que tuvieron en la ventana. Lo que la movería es que <strong>la mezcla por riesgo cambie de un mes a
+otro</strong>. Y en nuevos viene cambiando: el saldo que entra con riesgo alto pasó de 22% a 31% en un año.</p>
+<div class="leyenda" id="lg-mix"></div>
+<div class="bleed grid2">
+  <figure class="mini"><div class="t">Nuevos · mezcla del saldo que entra</div>
+    <div class="s">% por nivel de riesgo, por mes de entrada</div><div id="c-x-n"></div></figure>
+  <figure class="mini"><div class="t">Antiguos · mezcla del saldo del día 1</div>
+    <div class="s">% por nivel de riesgo, por mes</div><div id="c-x-s"></div></figure>
+</div>
+<div class="tabla-wrap ancha"><table id="t-efecto"></table></div>
+<div class="note"><b>Cómo leer el efecto.</b> Es cuánto cambiaría lo esperado para cada mes si la curva
+separara por riesgo, con las tasas de la ventana (dentro de la muestra: mide si importa, no es una prueba
+del modelo). En recupero de nuevos va de +2.2% a −2.0% a lo largo del año, siguiendo la mezcla: para los
+meses recientes, una curva sin riesgo espera unos 2 puntos más de rebaje de nuevos de lo que su mezcla
+justifica. En capital asegurado, la meta principal, el efecto es de décimas.</div>
+
+<h2>Cómo leerlo</h2>
+<ul class="leer">
+  <li><strong>Sí, el riesgo de cobranza corta el rebaje</strong>, en nuevos y en antiguos, dentro de cada
+  banda y tramo, y todos los meses con el mismo signo.</li>
+  <li><strong>Para la meta, hasta ahora pesa poco</strong>: movió la expectativa de recupero ±2–3% por mes y
+  la de capital asegurado en décimas. Pero la entrada de riesgo alto viene creciendo, y eso no estaba
+  medido: es un dato para entender por qué bajó la velocidad de cobro este año.</li>
+  <li><strong>Incorporarlo sería un cambio de técnica, y no se hizo.</strong> Haría falta la prueba de
+  siempre para un segmentador nuevo (meses proyectados hacia adelante, con métricas diarias), y la curva de
+  antiguos tendría que dejar su ventana fija abril 2025–junio 2026, donde casi no hay puntaje.</li>
+</ul>
+
+<footer>
+  <p>Universo de las curvas del motor v2: nuevos sin la cohorte del día 1 ni el arrastre por DNI,
+  reenganches incluidos; antiguos en mora 1–30 el día 1, sin la cohorte que entra ese día. El saldo base
+  reproduce al céntimo las matrices vigentes hasta abril 2026 (≤0.07% después, re-expresión de Mambu).</p>
+  <p>Fuentes: <span class="mono">tarea26_riesgo_matriz_nuevos.sql</span>,
+  <span class="mono">tarea26_riesgo_matriz_stock.sql</span>, <span class="mono">tarea26_riesgo_evaluacion.py</span>.
+  Análisis: <span class="mono">analisis_tarea26_riesgo_cobranza.md</span>. Datos al 15 de septiembre de 2026.</p>
+</footer>
+</div>
+
+<div class="tip" id="tip"></div>
+<script>
+const DATOS = /*DATOS*/{"ventana":["202508","202607"],"nuevos":{"mezcla":{"202501":{"3. Riesgo Alto":0.00059,"sin puntaje":0.99941},"202502":{"3. Riesgo Alto":0.00188,"sin puntaje":0.99812},"202503":{"3. Riesgo Alto":0.00664,"sin puntaje":0.99336},"202504":{"2. Riesgo Medio":0.00023,"3. Riesgo Alto":0.0019,"sin puntaje":0.99787},"202505":{"1. Riesgo Bajo":4e-05,"2. Riesgo Medio":0.00057,"3. Riesgo Alto":0.00125,"sin puntaje":0.99813},"202506":{"1. Riesgo Bajo":0.0847,"2. Riesgo Medio":0.07061,"3. Riesgo Alto":0.0453,"sin puntaje":0.79939},"202507":{"1. Riesgo Bajo":0.45012,"2. Riesgo Medio":0.32643,"3. Riesgo Alto":0.22299,"sin puntaje":0.00046},"202508":{"1. Riesgo Bajo":0.44675,"2. Riesgo Medio":0.32324,"3. Riesgo Alto":0.2298,"sin puntaje":0.00022},"202509":{"1. Riesgo Bajo":0.44681,"2. Riesgo Medio":0.3155,"3. Riesgo Alto":0.2376,"sin puntaje":9e-05},"202510":{"1. Riesgo Bajo":0.38991,"2. Riesgo Medio":0.35676,"3. Riesgo Alto":0.25317,"sin puntaje":0.00016},"202511":{"1. Riesgo Bajo":0.3901,"2. Riesgo Medio":0.33619,"3. Riesgo Alto":0.27369,"sin puntaje":2e-05},"202512":{"1. Riesgo Bajo":0.39549,"2. Riesgo Medio":0.34739,"3. Riesgo Alto":0.25709,"sin puntaje":3e-05},"202601":{"1. Riesgo Bajo":0.39485,"2. Riesgo Medio":0.35412,"3. Riesgo Alto":0.25083,"sin puntaje":0.00021},"202602":{"1. Riesgo Bajo":0.38823,"2. Riesgo Medio":0.36533,"3. Riesgo Alto":0.24589,"sin puntaje":0.00055},"202603":{"1. Riesgo Bajo":0.39207,"2. Riesgo Medio":0.36263,"3. Riesgo Alto":0.24519,"sin puntaje":0.00012},"202604":{"1. Riesgo Bajo":0.37682,"2. Riesgo Medio":0.36236,"3. Riesgo Alto":0.26069,"sin puntaje":0.00013},"202605":{"1. Riesgo Bajo":0.38646,"2. Riesgo Medio":0.36031,"3. Riesgo Alto":0.25282,"sin puntaje":0.00041},"202606":{"1. Riesgo Bajo":0.36834,"2. Riesgo Medio":0.35078,"3. Riesgo Alto":0.28005,"sin puntaje":0.00083},"202607":{"1. Riesgo Bajo":0.34366,"2. Riesgo Medio":0.3479,"3. Riesgo Alto":0.30829,"sin puntaje":0.00015}},"reb":{"todos":[0.06296,0.09328,0.10994,0.12278,0.1297,0.13432,0.13871,0.1419,0.14529,0.14778,0.1501,0.15208,0.15356,0.15499,0.15642,0.15792,0.15934,0.16064,0.16206,0.16319,0.16453,0.16563,0.16709,0.16886,0.17145,0.17411,0.17757,0.18477,0.19406,0.20921,0.22948],"1. Riesgo Bajo":[0.07877,0.11722,0.13937,0.15754,0.16673,0.17258,0.17842,0.18274,0.18762,0.19075,0.19346,0.1953,0.19708,0.19855,0.20035,0.20209,0.20387,0.20582,0.20745,0.20868,0.2103,0.21159,0.21306,0.21502,0.21844,0.22161,0.22628,0.23541,0.24656,0.26512,0.28894],"2. Riesgo Medio":[0.05743,0.08544,0.09993,0.11052,0.11657,0.12068,0.12447,0.12697,0.12966,0.13189,0.13408,0.13624,0.13764,0.13901,0.14041,0.14187,0.14313,0.14407,0.14527,0.14675,0.14793,0.14897,0.15063,0.15234,0.15448,0.15706,0.1599,0.16643,0.17548,0.18905,0.20839],"3. Riesgo Alto":[0.04646,0.06767,0.079,0.08687,0.09151,0.09495,0.09799,0.10038,0.10248,0.10437,0.10625,0.10813,0.10923,0.1107,0.11165,0.1128,0.11389,0.11474,0.11611,0.11665,0.11775,0.11868,0.11979,0.12136,0.12334,0.12535,0.12781,0.13305,0.13987,0.15203,0.16825],"sin puntaje":[0.2978,0.38632,0.40312,0.4301,0.44635,0.46868,0.50517,0.51409,0.54098,0.54098,0.54098,0.59726,0.6283,0.6283,0.6283,0.6283,0.6283,0.6283,0.63399,0.63399,0.63399,0.64364,0.67939,0.67939,0.67939,0.67939,0.67939,0.67939,0.67939,0.67939,0.67939]},"reb_peso":{"1. Riesgo Bajo":59367678.67,"2. Riesgo Medio":53333053.57,"3. Riesgo Alto":39574407.76,"sin puntaje":39166.49},"reb_banda":{"a. avance <10%":{"todos":0.16018,"peso":{"1. Riesgo Bajo":0.35972,"2. Riesgo Medio":0.35797,"3. Riesgo Alto":0.28205,"sin puntaje":0.00027},"tasa":{"1. Riesgo Bajo":0.21368,"2. Riesgo Medio":0.14323,"3. Riesgo Alto":0.11317,"sin puntaje":0.48026},"brecha_pp":-10.05104},"b. avance 10-40%":{"todos":0.20488,"peso":{"1. Riesgo Bajo":0.38242,"2. Riesgo Medio":0.35152,"3. Riesgo Alto":0.26604,"sin puntaje":2e-05},"tasa":{"1. Riesgo Bajo":0.25042,"2. Riesgo Medio":0.19043,"3. Riesgo Alto":0.15852,"sin puntaje":0.0},"brecha_pp":-9.19041},"c. avance 40-70%":{"todos":0.41334,"peso":{"1. Riesgo Bajo":0.47265,"2. Riesgo Medio":0.3314,"3. Riesgo Alto":0.19544,"sin puntaje":0.00051},"tasa":{"1. Riesgo Bajo":0.45504,"2. Riesgo Medio":0.3836,"3. Riesgo Alto":0.36159,"sin puntaje":0.92791},"brecha_pp":-9.34538},"d. avance 70%+":{"todos":0.75095,"peso":{"1. Riesgo Bajo":0.53459,"2. Riesgo Medio":0.30453,"3. Riesgo Alto":0.15808,"sin puntaje":0.00279},"tasa":{"1. Riesgo Bajo":0.7664,"2. Riesgo Medio":0.74631,"3. Riesgo Alto":0.70622,"sin puntaje":0.83107},"brecha_pp":-6.01869}},"reb_por_mes":{"202505":{"tasa":{"1. Riesgo Bajo":0.0,"2. Riesgo Medio":0.18842,"3. Riesgo Alto":0.0},"brecha_pp":0.0},"202506":{"tasa":{"1. Riesgo Bajo":0.282,"2. Riesgo Medio":0.19746,"3. Riesgo Alto":0.16501},"brecha_pp":-11.69872},"202507":{"tasa":{"1. Riesgo Bajo":0.28839,"2. Riesgo Medio":0.21404,"3. Riesgo Alto":0.15267},"brecha_pp":-13.57216},"202508":{"tasa":{"1. Riesgo Bajo":0.29091,"2. Riesgo Medio":0.19819,"3. Riesgo Alto":0.14132},"brecha_pp":-14.9582},"202509":{"tasa":{"1. Riesgo Bajo":0.31212,"2. Riesgo Medio":0.21709,"3. Riesgo Alto":0.1644},"brecha_pp":-14.7725},"202510":{"tasa":{"1. Riesgo Bajo":0.27112,"2. Riesgo Medio":0.1823,"3. Riesgo Alto":0.14639},"brecha_pp":-12.47377},"202511":{"tasa":{"1. Riesgo Bajo":0.29107,"2. Riesgo Medio":0.2154,"3. Riesgo Alto":0.17488},"brecha_pp":-11.61871},"202512":{"tasa":{"1. Riesgo Bajo":0.27696,"2. Riesgo Medio":0.20437,"3. Riesgo Alto":0.15977},"brecha_pp":-11.71897},"202601":{"tasa":{"1. Riesgo Bajo":0.28545,"2. Riesgo Medio":0.21772,"3. Riesgo Alto":0.17085},"brecha_pp":-11.45963},"202602":{"tasa":{"1. Riesgo Bajo":0.33662,"2. Riesgo Medio":0.24126,"3. Riesgo Alto":0.20538},"brecha_pp":-13.12359},"202603":{"tasa":{"1. Riesgo Bajo":0.27106,"2. Riesgo Medio":0.20596,"3. Riesgo Alto":0.16595},"brecha_pp":-10.51124},"202604":{"tasa":{"1. Riesgo Bajo":0.30469,"2. Riesgo Medio":0.22093,"3. Riesgo Alto":0.18571},"brecha_pp":-11.89755},"202605":{"tasa":{"1. Riesgo Bajo":0.26605,"2. Riesgo Medio":0.19697,"3. Riesgo Alto":0.17066},"brecha_pp":-9.53858},"202606":{"tasa":{"1. Riesgo Bajo":0.30267,"2. Riesgo Medio":0.20426,"3. Riesgo Alto":0.16815},"brecha_pp":-13.45192},"202607":{"tasa":{"1. Riesgo Bajo":0.26517,"2. Riesgo Medio":0.19586,"3. Riesgo Alto":0.15677},"brecha_pp":-10.83951}},"reb_mezcla_efecto":{"202501":0.79763,"202502":0.65331,"202503":0.73093,"202504":0.62165,"202505":0.6348,"202506":0.42892,"202507":0.02355,"202508":0.02193,"202509":0.01968,"202510":0.00049,"202511":-0.00302,"202512":0.00123,"202601":0.00289,"202602":0.00187,"202603":0.00275,"202604":-0.00431,"202605":0.00051,"202606":-0.00849,"202607":-0.01956},"act":{"todos":[0.37406,0.54926,0.64547,0.71676,0.75437,0.77964,0.80142,0.81788,0.83569,0.8473,0.85759,0.86569,0.8719,0.87774,0.88412,0.88972,0.89354,0.89654,0.89938,0.90171,0.90444,0.90641,0.90835,0.91042,0.9132,0.91531,0.91707,0.91913,0.92112,0.92336,0.92549],"1. Riesgo Bajo":[0.38577,0.57245,0.67855,0.76172,0.80091,0.82733,0.85062,0.86832,0.88831,0.90176,0.91057,0.91793,0.92313,0.92792,0.93384,0.93862,0.94218,0.94535,0.94741,0.94915,0.95171,0.95273,0.95399,0.95545,0.9579,0.95919,0.9607,0.96205,0.96329,0.96492,0.96579],"2. Riesgo Medio":[0.36829,0.53791,0.62966,0.69314,0.72881,0.75248,0.7742,0.78998,0.80586,0.81619,0.82802,0.83716,0.84415,0.85139,0.85881,0.86598,0.87054,0.87342,0.87738,0.88021,0.88348,0.88611,0.8888,0.89127,0.89418,0.89705,0.89871,0.90087,0.90349,0.9067,0.90947],"3. Riesgo Alto":[0.36436,0.52971,0.61717,0.68119,0.7191,0.7448,0.76435,0.7799,0.79703,0.80763,0.81806,0.82579,0.83244,0.83797,0.84367,0.84836,0.85159,0.8545,0.857,0.85953,0.86179,0.8643,0.86628,0.86871,0.87181,0.87415,0.87641,0.87938,0.88168,0.8835,0.88666],"sin puntaje":[0.2978,0.61017,0.62697,0.65395,0.67019,0.69253,0.72902,0.73794,0.76483,0.76483,0.76483,0.82111,0.86524,0.86524,0.86524,0.86524,0.86524,0.86524,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093,0.87093]},"act_peso":{"1. Riesgo Bajo":59367678.67,"2. Riesgo Medio":53333053.57,"3. Riesgo Alto":39574407.76,"sin puntaje":39166.49},"act_banda":{"a. avance <10%":{"todos":0.89823,"peso":{"1. Riesgo Bajo":0.35972,"2. Riesgo Medio":0.35797,"3. Riesgo Alto":0.28205,"sin puntaje":0.00027},"tasa":{"1. Riesgo Bajo":0.95267,"2. Riesgo Medio":0.87753,"3. Riesgo Alto":0.85503,"sin puntaje":0.93161},"brecha_pp":-9.76414},"b. avance 10-40%":{"todos":0.9413,"peso":{"1. Riesgo Bajo":0.38242,"2. Riesgo Medio":0.35152,"3. Riesgo Alto":0.26604,"sin puntaje":2e-05},"tasa":{"1. Riesgo Bajo":0.97246,"2. Riesgo Medio":0.93029,"3. Riesgo Alto":0.91115,"sin puntaje":0.0},"brecha_pp":-6.13038},"c. avance 40-70%":{"todos":0.95177,"peso":{"1. Riesgo Bajo":0.47265,"2. Riesgo Medio":0.3314,"3. Riesgo Alto":0.19544,"sin puntaje":0.00051},"tasa":{"1. Riesgo Bajo":0.97608,"2. Riesgo Medio":0.9388,"3. Riesgo Alto":0.91503,"sin puntaje":0.92791},"brecha_pp":-6.1053},"d. avance 70%+":{"todos":0.9569,"peso":{"1. Riesgo Bajo":0.53459,"2. Riesgo Medio":0.30453,"3. Riesgo Alto":0.15808,"sin puntaje":0.00279},"tasa":{"1. Riesgo Bajo":0.97879,"2. Riesgo Medio":0.93883,"3. Riesgo Alto":0.9199,"sin puntaje":0.83107},"brecha_pp":-5.88892}},"act_por_mes":{"202505":{"tasa":{"1. Riesgo Bajo":0.0,"2. Riesgo Medio":0.18842,"3. Riesgo Alto":0.0},"brecha_pp":0.0},"202506":{"tasa":{"1. Riesgo Bajo":0.9864,"2. Riesgo Medio":0.93539,"3. Riesgo Alto":0.87363},"brecha_pp":-11.27708},"202507":{"tasa":{"1. Riesgo Bajo":0.97296,"2. Riesgo Medio":0.92532,"3. Riesgo Alto":0.88778},"brecha_pp":-8.51817},"202508":{"tasa":{"1. Riesgo Bajo":0.97811,"2. Riesgo Medio":0.8918,"3. Riesgo Alto":0.87358},"brecha_pp":-10.45334},"202509":{"tasa":{"1. Riesgo Bajo":0.96795,"2. Riesgo Medio":0.90653,"3. Riesgo Alto":0.86972},"brecha_pp":-9.82351},"202510":{"tasa":{"1. Riesgo Bajo":0.96902,"2. Riesgo Medio":0.88554,"3. Riesgo Alto":0.88691},"brecha_pp":-8.21091},"202511":{"tasa":{"1. Riesgo Bajo":0.9794,"2. Riesgo Medio":0.93218,"3. Riesgo Alto":0.90591},"brecha_pp":-7.3491},"202512":{"tasa":{"1. Riesgo Bajo":0.96969,"2. Riesgo Medio":0.92285,"3. Riesgo Alto":0.89728},"brecha_pp":-7.24089},"202601":{"tasa":{"1. Riesgo Bajo":0.97482,"2. Riesgo Medio":0.93466,"3. Riesgo Alto":0.88742},"brecha_pp":-8.74},"202602":{"tasa":{"1. Riesgo Bajo":0.97007,"2. Riesgo Medio":0.92054,"3. Riesgo Alto":0.8875},"brecha_pp":-8.25701},"202603":{"tasa":{"1. Riesgo Bajo":0.96107,"2. Riesgo Medio":0.89652,"3. Riesgo Alto":0.87216},"brecha_pp":-8.89029},"202604":{"tasa":{"1. Riesgo Bajo":0.96397,"2. Riesgo Medio":0.91435,"3. Riesgo Alto":0.89617},"brecha_pp":-6.77933},"202605":{"tasa":{"1. Riesgo Bajo":0.94391,"2. Riesgo Medio":0.89762,"3. Riesgo Alto":0.89723},"brecha_pp":-4.66799},"202606":{"tasa":{"1. Riesgo Bajo":0.96901,"2. Riesgo Medio":0.88433,"3. Riesgo Alto":0.87635},"brecha_pp":-9.2659},"202607":{"tasa":{"1. Riesgo Bajo":0.95551,"2. Riesgo Medio":0.92465,"3. Riesgo Alto":0.88529},"brecha_pp":-7.02275}},"act_mezcla_efecto":{"202501":-0.31425,"202502":-0.37756,"202503":-0.34262,"202504":-0.38262,"202505":-0.37686,"202506":-0.33423,"202507":0.00452,"202508":0.00438,"202509":0.00386,"202510":3e-05,"202511":-0.00047,"202512":0.00041,"202601":0.00068,"202602":0.00018,"202603":0.00067,"202604":-0.00097,"202605":7e-05,"202606":-0.00197,"202607":-0.0038}},"stock":{"mezcla":{"202501":{"3. Riesgo Alto":0.00031,"sin puntaje":0.99969},"202502":{"3. Riesgo Alto":0.00256,"sin puntaje":0.99744},"202503":{"3. Riesgo Alto":0.01007,"sin puntaje":0.98993},"202504":{"3. Riesgo Alto":0.0416,"sin puntaje":0.9584},"202505":{"2. Riesgo Medio":0.00119,"3. Riesgo Alto":0.01085,"sin puntaje":0.98795},"202506":{"1. Riesgo Bajo":0.00069,"2. Riesgo Medio":0.00289,"3. Riesgo Alto":0.00618,"sin puntaje":0.99024},"202507":{"1. Riesgo Bajo":0.15238,"2. Riesgo Medio":0.14822,"3. Riesgo Alto":0.11261,"sin puntaje":0.58679},"202508":{"1. Riesgo Bajo":0.36062,"2. Riesgo Medio":0.3692,"3. Riesgo Alto":0.26865,"sin puntaje":0.00152},"202509":{"1. Riesgo Bajo":0.29312,"2. Riesgo Medio":0.42678,"3. Riesgo Alto":0.27942,"sin puntaje":0.00068},"202510":{"1. Riesgo Bajo":0.2788,"2. Riesgo Medio":0.40782,"3. Riesgo Alto":0.31337},"202511":{"1. Riesgo Bajo":0.27916,"2. Riesgo Medio":0.46094,"3. Riesgo Alto":0.25976,"sin puntaje":0.00014},"202512":{"1. Riesgo Bajo":0.29163,"2. Riesgo Medio":0.4082,"3. Riesgo Alto":0.30017},"202601":{"1. Riesgo Bajo":0.32239,"2. Riesgo Medio":0.39598,"3. Riesgo Alto":0.28163},"202602":{"1. Riesgo Bajo":0.28086,"2. Riesgo Medio":0.42459,"3. Riesgo Alto":0.2938,"sin puntaje":0.00075},"202603":{"1. Riesgo Bajo":0.2637,"2. Riesgo Medio":0.41886,"3. Riesgo Alto":0.317,"sin puntaje":0.00044},"202604":{"1. Riesgo Bajo":0.29818,"2. Riesgo Medio":0.43556,"3. Riesgo Alto":0.2662,"sin puntaje":7e-05},"202605":{"1. Riesgo Bajo":0.27254,"2. Riesgo Medio":0.41974,"3. Riesgo Alto":0.30744,"sin puntaje":0.00029},"202606":{"1. Riesgo Bajo":0.3213,"2. Riesgo Medio":0.43889,"3. Riesgo Alto":0.23921,"sin puntaje":0.0006},"202607":{"1. Riesgo Bajo":0.24496,"2. Riesgo Medio":0.42195,"3. Riesgo Alto":0.33262,"sin puntaje":0.00048},"202608":{"1. Riesgo Bajo":0.26186,"2. Riesgo Medio":0.39782,"3. Riesgo Alto":0.3403,"sin puntaje":2e-05}},"reb":{"todos":[0.0,0.02086,0.03729,0.04759,0.05425,0.06071,0.06621,0.06999,0.07416,0.07781,0.0809,0.08403,0.08617,0.08911,0.09149,0.0945,0.09685,0.09938,0.10163,0.10403,0.10725,0.10936,0.11204,0.1144,0.11698,0.12,0.12349,0.12844,0.13309,0.13828,0.14434,0.14768],"1. Riesgo Bajo":[0.0,0.03526,0.06425,0.08259,0.09464,0.10516,0.11352,0.12026,0.12747,0.13264,0.13639,0.14047,0.14335,0.14766,0.15067,0.15391,0.15668,0.16041,0.16305,0.16598,0.17052,0.17331,0.17653,0.17946,0.18243,0.18683,0.19221,0.1996,0.20635,0.21372,0.22302,0.22796],"2. Riesgo Medio":[0.0,0.01608,0.02816,0.03594,0.04116,0.04692,0.05238,0.05477,0.05784,0.0614,0.06496,0.06776,0.06974,0.07284,0.07547,0.07933,0.08178,0.08402,0.08645,0.08924,0.09183,0.09371,0.09632,0.09856,0.1012,0.10364,0.1066,0.11118,0.11548,0.11885,0.12389,0.12681],"3. Riesgo Alto":[0.0,0.01272,0.02236,0.02815,0.03144,0.03477,0.03739,0.04019,0.04289,0.04514,0.04686,0.04948,0.05112,0.05241,0.05379,0.05532,0.0571,0.05882,0.06037,0.06168,0.06447,0.06623,0.06846,0.07042,0.07252,0.07498,0.07733,0.08031,0.08337,0.08899,0.09325,0.0956],"sin puntaje":[0.0,0.33112,0.55903,0.55903,0.55903,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.56868,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662,0.58662]},"reb_peso":{"1. Riesgo Bajo":8733364.69,"2. Riesgo Medio":12569390.24,"3. Riesgo Alto":8525526.17,"sin puntaje":12423.29},"reb_tramo":{"a. 1-8":{"todos":0.18299,"peso":{"1. Riesgo Bajo":0.35866,"2. Riesgo Medio":0.39949,"3. Riesgo Alto":0.24152,"sin puntaje":0.00032},"tasa":{"1. Riesgo Bajo":0.25519,"2. Riesgo Medio":0.15042,"3. Riesgo Alto":0.12888,"sin puntaje":0.75832},"brecha_pp":-12.631},"b. 9-15":{"todos":0.1349,"peso":{"1. Riesgo Bajo":0.26003,"2. Riesgo Medio":0.43382,"3. Riesgo Alto":0.30548,"sin puntaje":0.00066},"tasa":{"1. Riesgo Bajo":0.19785,"2. Riesgo Medio":0.12257,"3. Riesgo Alto":0.09698,"sin puntaje":1.0},"brecha_pp":-10.08701},"c. 16-30":{"todos":0.08364,"peso":{"1. Riesgo Bajo":0.17804,"2. Riesgo Medio":0.45786,"3. Riesgo Alto":0.36364,"sin puntaje":0.00046},"tasa":{"1. Riesgo Bajo":0.1425,"2. Riesgo Medio":0.08743,"3. Riesgo Alto":0.05016,"sin puntaje":0.0},"brecha_pp":-9.23341}},"reb_banda":{"a. avance <10%":{"todos":0.07345,"peso":{"1. Riesgo Bajo":0.23263,"2. Riesgo Medio":0.42799,"3. Riesgo Alto":0.33923,"sin puntaje":0.00016},"tasa":{"1. Riesgo Bajo":0.12334,"2. Riesgo Medio":0.06129,"3. Riesgo Alto":0.05458,"sin puntaje":0.08938},"brecha_pp":-6.87556},"b. avance 10-40%":{"todos":0.13313,"peso":{"1. Riesgo Bajo":0.29654,"2. Riesgo Medio":0.43034,"3. Riesgo Alto":0.27283,"sin puntaje":0.00029},"tasa":{"1. Riesgo Bajo":0.19329,"2. Riesgo Medio":0.11375,"3. Riesgo Alto":0.0977,"sin puntaje":0.70186},"brecha_pp":-9.55924},"c. avance 40-70%":{"todos":0.30194,"peso":{"1. Riesgo Bajo":0.40618,"2. Riesgo Medio":0.38708,"3. Riesgo Alto":0.20589,"sin puntaje":0.00085},"tasa":{"1. Riesgo Bajo":0.36758,"2. Riesgo Medio":0.27591,"3. Riesgo Alto":0.21927,"sin puntaje":0.81738},"brecha_pp":-14.83048},"d. avance 70%+":{"todos":0.61817,"peso":{"1. Riesgo Bajo":0.47093,"2. Riesgo Medio":0.36689,"3. Riesgo Alto":0.15821,"sin puntaje":0.00398},"tasa":{"1. Riesgo Bajo":0.67809,"2. Riesgo Medio":0.62639,"3. Riesgo Alto":0.42513,"sin puntaje":0.44447},"brecha_pp":-25.29621}},"reb_por_mes":{"202506":{"tasa":{"1. Riesgo Bajo":0.07285,"2. Riesgo Medio":0.46528,"3. Riesgo Alto":0.02594},"brecha_pp":-4.69149},"202507":{"tasa":{"1. Riesgo Bajo":0.27659,"2. Riesgo Medio":0.21492,"3. Riesgo Alto":0.11796},"brecha_pp":-15.86384},"202508":{"tasa":{"1. Riesgo Bajo":0.22009,"2. Riesgo Medio":0.14315,"3. Riesgo Alto":0.09681},"brecha_pp":-12.32841},"202509":{"tasa":{"1. Riesgo Bajo":0.26258,"2. Riesgo Medio":0.13015,"3. Riesgo Alto":0.09672},"brecha_pp":-16.58578},"202510":{"tasa":{"1. Riesgo Bajo":0.21857,"2. Riesgo Medio":0.12242,"3. Riesgo Alto":0.08082},"brecha_pp":-13.77516},"202511":{"tasa":{"1. Riesgo Bajo":0.23933,"2. Riesgo Medio":0.11151,"3. Riesgo Alto":0.12557},"brecha_pp":-11.37607},"202512":{"tasa":{"1. Riesgo Bajo":0.26351,"2. Riesgo Medio":0.14043,"3. Riesgo Alto":0.09951},"brecha_pp":-16.40043},"202601":{"tasa":{"1. Riesgo Bajo":0.24107,"2. Riesgo Medio":0.13211,"3. Riesgo Alto":0.1063},"brecha_pp":-13.47652},"202602":{"tasa":{"1. Riesgo Bajo":0.23092,"2. Riesgo Medio":0.14263,"3. Riesgo Alto":0.08344},"brecha_pp":-14.7483},"202603":{"tasa":{"1. Riesgo Bajo":0.24219,"2. Riesgo Medio":0.12556,"3. Riesgo Alto":0.09411},"brecha_pp":-14.8076},"202604":{"tasa":{"1. Riesgo Bajo":0.22004,"2. Riesgo Medio":0.12109,"3. Riesgo Alto":0.08544},"brecha_pp":-13.46049},"202605":{"tasa":{"1. Riesgo Bajo":0.22478,"2. Riesgo Medio":0.13408,"3. Riesgo Alto":0.09148},"brecha_pp":-13.32984},"202606":{"tasa":{"1. Riesgo Bajo":0.18815,"2. Riesgo Medio":0.10622,"3. Riesgo Alto":0.09279},"brecha_pp":-9.53566},"202607":{"tasa":{"1. Riesgo Bajo":0.23807,"2. Riesgo Medio":0.13358,"3. Riesgo Alto":0.10135},"brecha_pp":-13.67144},"202608":{"tasa":{"1. Riesgo Bajo":0.22917,"2. Riesgo Medio":0.13688,"3. Riesgo Alto":0.11119},"brecha_pp":-11.7972}},"reb_mezcla_efecto":{"202501":2.06441,"202502":1.69052,"202503":1.70754,"202504":1.46556,"202505":1.68901,"202506":1.77581,"202507":0.33084,"202508":0.03045,"202509":0.0081,"202510":0.01419,"202511":-0.01189,"202512":-0.00025,"202601":0.00528,"202602":-0.01435,"202603":-0.01053,"202604":-0.00101,"202605":-0.0033,"202606":0.00469,"202607":-0.01165,"202608":-0.03163},"act":{"todos":[0.0,0.12698,0.22132,0.2802,0.31712,0.35514,0.38491,0.40333,0.42511,0.44247,0.45774,0.47204,0.48436,0.49719,0.50978,0.52528,0.53826,0.5485,0.55633,0.56631,0.57647,0.5844,0.59173,0.59853,0.60457,0.60882,0.61511,0.62071,0.62585,0.63207,0.63694,0.64034],"1. Riesgo Bajo":[0.0,0.17069,0.30431,0.38643,0.44435,0.49339,0.53044,0.55494,0.58139,0.60294,0.62173,0.63842,0.65343,0.6643,0.67696,0.69475,0.70851,0.71913,0.72696,0.73604,0.74541,0.75345,0.75984,0.76589,0.77099,0.77437,0.77918,0.78644,0.78854,0.7937,0.79885,0.8012],"2. Riesgo Medio":[0.0,0.10697,0.18802,0.2398,0.26902,0.30539,0.33512,0.35062,0.37185,0.39012,0.40542,0.42038,0.43223,0.44866,0.4639,0.47959,0.49342,0.50281,0.51119,0.52447,0.53277,0.53975,0.54806,0.55467,0.56235,0.56799,0.57515,0.58118,0.58716,0.59347,0.59883,0.60179],"3. Riesgo Alto":[0.0,0.11135,0.18484,0.23048,0.25729,0.2865,0.30891,0.32544,0.34328,0.35501,0.36667,0.37757,0.38785,0.39738,0.406,0.41889,0.42987,0.44097,0.44799,0.45404,0.46777,0.47699,0.48384,0.49173,0.49631,0.49939,0.50593,0.50923,0.51621,0.52343,0.52728,0.53242],"sin puntaje":[0.0,0.37414,0.60204,0.60204,0.60204,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.61169,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963,0.62963]},"act_peso":{"1. Riesgo Bajo":8733364.69,"2. Riesgo Medio":12569390.24,"3. Riesgo Alto":8525526.17,"sin puntaje":12423.29},"act_tramo":{"a. 1-8":{"todos":0.79501,"peso":{"1. Riesgo Bajo":0.35866,"2. Riesgo Medio":0.39949,"3. Riesgo Alto":0.24152,"sin puntaje":0.00032},"tasa":{"1. Riesgo Bajo":0.89827,"2. Riesgo Medio":0.74834,"3. Riesgo Alto":0.71878,"sin puntaje":0.85695},"brecha_pp":-17.94882},"b. 9-15":{"todos":0.56169,"peso":{"1. Riesgo Bajo":0.26003,"2. Riesgo Medio":0.43382,"3. Riesgo Alto":0.30548,"sin puntaje":0.00066},"tasa":{"1. Riesgo Bajo":0.66688,"2. Riesgo Medio":0.53346,"3. Riesgo Alto":0.5113,"sin puntaje":1.0},"brecha_pp":-15.55767},"c. 16-30":{"todos":0.37297,"peso":{"1. Riesgo Bajo":0.17804,"2. Riesgo Medio":0.45786,"3. Riesgo Alto":0.36364,"sin puntaje":0.00046},"tasa":{"1. Riesgo Bajo":0.51951,"2. Riesgo Medio":0.38059,"3. Riesgo Alto":0.2921,"sin puntaje":0.0},"brecha_pp":-22.74029}},"act_banda":{"a. avance <10%":{"todos":0.51347,"peso":{"1. Riesgo Bajo":0.23263,"2. Riesgo Medio":0.42799,"3. Riesgo Alto":0.33923,"sin puntaje":0.00016},"tasa":{"1. Riesgo Bajo":0.67246,"2. Riesgo Medio":0.47626,"3. Riesgo Alto":0.45146,"sin puntaje":0.38055},"brecha_pp":-22.09996},"b. avance 10-40%":{"todos":0.70117,"peso":{"1. Riesgo Bajo":0.29654,"2. Riesgo Medio":0.43034,"3. Riesgo Alto":0.27283,"sin puntaje":0.00029},"tasa":{"1. Riesgo Bajo":0.84595,"2. Riesgo Medio":0.66345,"3. Riesgo Alto":0.60329,"sin puntaje":0.70186},"brecha_pp":-24.2665},"c. avance 40-70%":{"todos":0.76483,"peso":{"1. Riesgo Bajo":0.40618,"2. Riesgo Medio":0.38708,"3. Riesgo Alto":0.20589,"sin puntaje":0.00085},"tasa":{"1. Riesgo Bajo":0.87594,"2. Riesgo Medio":0.73265,"3. Riesgo Alto":0.60594,"sin puntaje":0.81738},"brecha_pp":-26.99977},"d. avance 70%+":{"todos":0.81596,"peso":{"1. Riesgo Bajo":0.47093,"2. Riesgo Medio":0.36689,"3. Riesgo Alto":0.15821,"sin puntaje":0.00398},"tasa":{"1. Riesgo Bajo":0.91655,"2. Riesgo Medio":0.80251,"3. Riesgo Alto":0.55706,"sin puntaje":0.44447},"brecha_pp":-35.94854}},"act_por_mes":{"202506":{"tasa":{"1. Riesgo Bajo":0.07285,"2. Riesgo Medio":0.46528,"3. Riesgo Alto":0.05564},"brecha_pp":-1.72182},"202507":{"tasa":{"1. Riesgo Bajo":0.93815,"2. Riesgo Medio":0.85051,"3. Riesgo Alto":0.73861},"brecha_pp":-19.95345},"202508":{"tasa":{"1. Riesgo Bajo":0.89018,"2. Riesgo Medio":0.6695,"3. Riesgo Alto":0.61348},"brecha_pp":-27.66955},"202509":{"tasa":{"1. Riesgo Bajo":0.83016,"2. Riesgo Medio":0.53638,"3. Riesgo Alto":0.51966},"brecha_pp":-31.05039},"202510":{"tasa":{"1. Riesgo Bajo":0.72451,"2. Riesgo Medio":0.54562,"3. Riesgo Alto":0.45267},"brecha_pp":-27.18405},"202511":{"tasa":{"1. Riesgo Bajo":0.85164,"2. Riesgo Medio":0.6387,"3. Riesgo Alto":0.64346},"brecha_pp":-20.81773},"202512":{"tasa":{"1. Riesgo Bajo":0.8769,"2. Riesgo Medio":0.68875,"3. Riesgo Alto":0.53157},"brecha_pp":-34.53312},"202601":{"tasa":{"1. Riesgo Bajo":0.86254,"2. Riesgo Medio":0.63717,"3. Riesgo Alto":0.56322},"brecha_pp":-29.93157},"202602":{"tasa":{"1. Riesgo Bajo":0.84524,"2. Riesgo Medio":0.68897,"3. Riesgo Alto":0.55847},"brecha_pp":-28.67745},"202603":{"tasa":{"1. Riesgo Bajo":0.75071,"2. Riesgo Medio":0.52374,"3. Riesgo Alto":0.45106},"brecha_pp":-29.96506},"202604":{"tasa":{"1. Riesgo Bajo":0.76803,"2. Riesgo Medio":0.55386,"3. Riesgo Alto":0.5295},"brecha_pp":-23.85346},"202605":{"tasa":{"1. Riesgo Bajo":0.75018,"2. Riesgo Medio":0.60636,"3. Riesgo Alto":0.48488},"brecha_pp":-26.52955},"202606":{"tasa":{"1. Riesgo Bajo":0.73133,"2. Riesgo Medio":0.57369,"3. Riesgo Alto":0.54457},"brecha_pp":-18.67641},"202607":{"tasa":{"1. Riesgo Bajo":0.78663,"2. Riesgo Medio":0.58569,"3. Riesgo Alto":0.51645},"brecha_pp":-27.01819},"202608":{"tasa":{"1. Riesgo Bajo":0.76958,"2. Riesgo Medio":0.69947,"3. Riesgo Alto":0.5874},"brecha_pp":-18.21725}},"act_mezcla_efecto":{"202501":0.03575,"202502":0.05839,"202503":-0.07372,"202504":-0.08811,"202505":-0.04477,"202506":-0.0099,"202507":-0.12757,"202508":0.01285,"202509":0.00298,"202510":0.00421,"202511":-0.00649,"202512":0.00219,"202601":0.00131,"202602":-0.0061,"202603":-0.0062,"202604":-0.0031,"202605":-0.00076,"202606":0.00342,"202607":-0.00159,"202608":-0.01263}}}/*/DATOS*/;
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const tip = $("tip");
+const P = (x, d = 1) => (100 * x).toFixed(d) + "%";
+const SG = x => (x >= 0 ? "+" : "−") + Math.abs(100 * x).toFixed(1) + "%";
+const PP = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(1) + " pp";
+const el = (t, a = {}) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const mes = p => MES[+p.slice(4) - 1] + " " + p.slice(2, 4);
+const mesL = p => MES[+p.slice(4) - 1] + " " + p.slice(0, 4);
+const R = ["1. Riesgo Bajo", "2. Riesgo Medio", "3. Riesgo Alto"];
+const NOM = ["Bajo", "Medio", "Alto"], COL = ["--r1", "--r2", "--r3"];
+const D = DATOS, NU = D.nuevos, ST = D.stock;
+const cubre = mz => Object.keys(mz).filter(m => (mz[m]["sin puntaje"] || 0) < .05).sort();
+const MN = cubre(NU.mezcla), MS = cubre(ST.mezcla);
+
+function hover(node, texto, salir) {
+  node.addEventListener("pointerenter", () => { tip.textContent = texto(); tip.classList.add("on"); });
+  node.addEventListener("pointermove", e => {
+    tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px";
+    tip.style.top = Math.max(8, e.clientY - tip.offsetHeight - 12) + "px";
+  });
+  node.addEventListener("pointerleave", () => { tip.classList.remove("on"); if (salir) salir(); });
+}
+
+/* un marco comun: escala y, grilla y etiquetas */
+function marco(o) {
+  const g = el("svg", { viewBox: `0 0 ${o.W} ${o.H}`, width: "100%", role: "img", "aria-label": o.alt });
+  const y = v => o.mt + (1 - v / o.yMax) * (o.H - o.mt - o.mb);
+  const txt = (s, a, st = "fill:var(--faint)") => {
+    const t = el("text", { "font-family": "IBM Plex Mono, monospace", "font-size": 10.5, style: st, ...a });
+    t.textContent = s; g.appendChild(t); return t;
+  };
+  for (let v = 0; v <= o.yMax + 1e-9; v += o.paso) {
+    g.appendChild(el("line", { x1: o.ml, x2: o.W - o.mr, y1: y(v), y2: y(v), style: `stroke:var(${v === 0 ? "--hair-2" : "--hair"})` }));
+    txt(Math.round(v * 100) + "%", { x: o.ml - 7, y: y(v) + 3.5, "text-anchor": "end" });
+  }
+  if (o.xlab) txt(o.xlab, { x: o.ml, y: o.H - 2, "font-family": "IBM Plex Sans, sans-serif" }, "fill:var(--muted)");
+  return { g, y, txt };
+}
+const escala = (top, pasoGrande = .45) => { const paso = top > pasoGrande ? .2 : .1; return { paso, yMax: Math.ceil(top / paso - 1e-9) * paso }; };
+
+function lineas(hostId, o) {
+  /* o.xs: posiciones (dias o meses); o.serie(i, r): valor; o.todos(i): referencia opcional */
+  const W = 520, H = 280, ml = 44, mr = 82, mt = 12, mb = 34;
+  const n = o.xs.length;
+  const tope = Math.max(...o.xs.flatMap((_, i) => R.map(r => o.serie(i, r))), ...(o.todos ? o.xs.map((_, i) => o.todos(i)) : [0]));
+  const { paso, yMax } = escala(tope);
+  const { g, y, txt } = marco({ W, H, ml, mr, mt, mb, yMax, paso, alt: o.alt, xlab: o.xlab });
+  const x = i => ml + i / (n - 1) * (W - ml - mr);
+  o.xs.forEach((v, i) => { if (o.tick(v, i)) txt(o.fmtX(v), { x: x(i), y: H - 16, "text-anchor": "middle" }); });
+  const linea = (f, color, w) => {
+    const d = o.xs.map((_, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(f(i)).toFixed(1)).join(" ");
+    g.appendChild(el("path", { d, style: `fill:none;stroke:var(${color});stroke-width:${w};stroke-linejoin:round;stroke-linecap:round` }));
+  };
+  if (o.todos) linea(o.todos, "--todos", 1.5);
+  const et = [];
+  R.forEach((r, k) => {
+    linea(i => o.serie(i, r), COL[k], 2);
+    const v = o.serie(n - 1, r);
+    g.appendChild(el("circle", { cx: x(n - 1), cy: y(v), r: 4, style: `fill:var(${COL[k]});stroke:var(--surface);stroke-width:2` }));
+    et.push({ y: y(v) + 4, t: `${NOM[k]} ${P(v)}` });
+  });
+  et.sort((a, b) => a.y - b.y).forEach((e, i, arr) => {
+    if (i && e.y - arr[i - 1].y < 13) e.y = arr[i - 1].y + 13;
+    txt(e.t, { x: x(n - 1) + 9, y: e.y, "font-size": 11, "font-weight": 600, "font-family": "IBM Plex Sans, sans-serif" }, "fill:var(--ink)");
+  });
+  const guia = el("line", { y1: mt, y2: H - mb, style: "stroke:var(--faint);opacity:0" });
+  g.appendChild(guia);
+  const ancho = (W - ml - mr) / (n - 1);
+  o.xs.forEach((v, i) => {
+    const rc = el("rect", { x: x(i) - ancho / 2, y: mt, width: ancho, height: H - mt - mb, fill: "transparent" });
+    hover(rc, () => {
+      guia.setAttribute("x1", x(i)); guia.setAttribute("x2", x(i)); guia.style.opacity = .6;
+      return o.tipX(v) + "\n" + R.map((r, k) => `${NOM[k].padEnd(6)} ${P(o.serie(i, r))}`).join("\n")
+        + (o.todos ? `\nhoy    ${P(o.todos(i))}` : "");
+    }, () => { guia.style.opacity = 0; });
+    g.appendChild(rc);
+  });
+  $(hostId).appendChild(g);
+}
+
+function curva(hostId, datos, x0, x1, xlab, tipX, alt) {
+  const xs = Array.from({ length: x1 - x0 + 1 }, (_, i) => x0 + i);
+  lineas(hostId, { xs, alt, xlab, serie: (i, r) => datos[r][xs[i]], todos: i => datos.todos[xs[i]],
+    tick: v => v === x0 || v === x1 || v % 5 === 0, fmtX: v => v, tipX });
+}
+
+function porMes(hostId, datos, meses, alt) {
+  lineas(hostId, { xs: meses, alt, serie: (i, r) => datos[meses[i]].tasa[r],
+    tick: (v, i) => i % 3 === 0 || i === meses.length - 1, fmtX: mes,
+    tipX: m => `${mesL(m)} · alto − bajo ${PP(datos[m].brecha_pp)}` });
+}
+
+function mezcla(hostId, datos, meses, alt) {
+  const W = 520, H = 250, ml = 44, mr = 16, mt = 20, mb = 30;
+  const { g, y, txt } = marco({ W, H, ml, mr, mt, mb, yMax: 1, paso: .25, alt });
+  const banda = (W - ml - mr) / meses.length, bw = Math.min(24, banda * .7);
+  const cx = i => ml + banda * (i + .5);
+  meses.forEach((m, i) => {
+    const tot = R.reduce((s, r) => s + (datos[m][r] || 0), 0);
+    let acum = 0;
+    R.forEach((r, k) => {
+      const v = (datos[m][r] || 0) / tot;
+      const top = y(acum + v), base = y(acum);
+      g.appendChild(el("rect", { x: cx(i) - bw / 2, y: top + 1, width: bw, height: Math.max(0, base - top - 2), style: `fill:var(${COL[k]})` }));
+      acum += v;
+    });
+    if (i === 0 || i === meses.length - 1) {
+      const alto = (datos[m][R[2]] || 0) / tot;
+      txt((i === 0 ? "alto " : "") + P(alto, 0), { x: cx(i), y: mt - 6, "text-anchor": i === 0 ? "start" : "middle", "font-weight": 600 }, "fill:var(--ink)");
+    }
+    if (i % 3 === 0 || i === meses.length - 1) txt(mes(m), { x: cx(i), y: H - 12, "text-anchor": "middle" });
+    const rc = el("rect", { x: cx(i) - banda / 2, y: mt, width: banda, height: H - mt - mb, fill: "transparent" });
+    hover(rc, () => mesL(m) + "\n" + R.map((r, k) => `${NOM[k].padEnd(6)} ${P((datos[m][r] || 0) / tot)}`).join("\n"));
+    g.appendChild(rc);
+  });
+  $(hostId).appendChild(g);
+}
+
+/* ---------------- KPIs y leyendas ---------------- */
+$("k-n").innerHTML = `${P(NU.reb[R[0]][30])} <span>·</span> ${P(NU.reb[R[2]][30])}`;
+$("k-s").innerHTML = `${P(ST.reb[R[0]][31])} <span>·</span> ${P(ST.reb[R[2]][31])}`;
+const efN = Object.entries(NU.reb_mezcla_efecto).filter(([m]) => m >= D.ventana[0] && m <= D.ventana[1]).map(([, v]) => v);
+$("k-e").innerHTML = `${SG(Math.min(...efN))} <span>a</span> ${SG(Math.max(...efN))}`;
+$("lg-curvas").innerHTML = R.map((r, k) => `<span><i style="background:var(${COL[k]})"></i>Riesgo ${NOM[k].toLowerCase()}</span>`).join("")
+  + `<span><i style="background:var(--todos)"></i>Curva de hoy, sin separar</span>`;
+$("lg-mix").innerHTML = R.map((r, k) => `<span><i class="sq" style="background:var(${COL[k]})"></i>Riesgo ${NOM[k].toLowerCase()}</span>`).join("");
+
+/* ---------------- graficos ---------------- */
+curva("c-n-reb", NU.reb, 0, 30, "días desde la entrada en mora", t => `día ${t} desde la entrada`, "Rebaje de nuevos por nivel de riesgo");
+curva("c-n-act", NU.act, 0, 30, "días desde la entrada en mora", t => `día ${t} desde la entrada`, "Activación de nuevos por nivel de riesgo");
+curva("c-s-reb", ST.reb, 1, 31, "día del mes", t => `día ${t} del mes`, "Rebaje de antiguos por nivel de riesgo");
+curva("c-s-act", ST.act, 1, 31, "día del mes", t => `día ${t} del mes`, "Activación de antiguos por nivel de riesgo");
+porMes("c-m-n", NU.reb_por_mes, MN.filter(m => NU.reb_por_mes[m]), "Rebaje de nuevos por mes y nivel de riesgo");
+porMes("c-m-s", ST.reb_por_mes, MS.filter(m => ST.reb_por_mes[m]), "Rebaje de antiguos por mes y nivel de riesgo");
+mezcla("c-x-n", NU.mezcla, MN, "Mezcla del saldo de nuevos por nivel de riesgo");
+mezcla("c-x-s", ST.mezcla, MS, "Mezcla del saldo de antiguos por nivel de riesgo");
+
+/* ---------------- tablas ---------------- */
+const limpio = s => s.replace(/^[a-d]\. /, "").replace(/^(\d+)-(\d+)$/, "$1–$2 días");
+function dentro(tabla, cap, grupos) {
+  const cel = (c, r) => `<td class="n">${P(c.tasa[r])}<span class="w">${Math.round(100 * c.peso[r])}%</span></td>`;
+  tabla.innerHTML = `<caption>${cap}</caption><thead><tr><th class="l"></th><th>Todos</th>${NOM.map(n => `<th>Riesgo ${n.toLowerCase()}</th>`).join("")}<th>Alto − bajo</th></tr></thead><tbody>`
+    + grupos.map(([titulo, datos]) => `<tr class="grp"><td class="l" colspan="6">${titulo}</td></tr>`
+      + Object.entries(datos).map(([f, c]) => `<tr><td class="l">${limpio(f)}</td><td class="n">${P(c.todos)}</td>${R.map(r => cel(c, r)).join("")}<td class="n g">${PP(c.brecha_pp)}</td></tr>`).join("")).join("")
+    + `</tbody>`;
+}
+dentro($("t-dentro"), `Rebaje por nivel de riesgo, dentro de cada banda y tramo<span class="cap-n">Nuevos a 30 días de la entrada; antiguos al cierre del mes. En gris, el peso de cada nivel en el saldo de la fila.</span>`,
+  [["Nuevos · por banda de avance", NU.reb_banda], ["Antiguos · por tramo de mora", ST.reb_tramo], ["Antiguos · por banda de avance", ST.reb_banda]]);
+const wrapAct = document.createElement("div");
+wrapAct.className = "tabla-wrap ancha";
+wrapAct.innerHTML = `<table id="t-dentro-act"></table>`;
+$("t-dentro").parentElement.after(wrapAct);
+dentro($("t-dentro-act"), `Lo mismo en activación (capital asegurado)<span class="cap-n">% del saldo que hizo al menos un pago. En nuevos el corte es menor: casi todos terminan pagando algo.</span>`,
+  [["Nuevos · por banda de avance", NU.act_banda], ["Antiguos · por tramo de mora", ST.act_tramo], ["Antiguos · por banda de avance", ST.act_banda]]);
+
+const mesesEf = [...new Set([...Object.keys(NU.reb_mezcla_efecto), ...Object.keys(ST.reb_mezcla_efecto)])]
+  .filter(m => MN.includes(m) || MS.includes(m)).filter(m => m >= D.ventana[0]).sort();
+const ef = (o, m) => (m in o && (o === NU.reb_mezcla_efecto || o === NU.act_mezcla_efecto ? MN : MS).includes(m)) ? SG(o[m]) : "—";
+$("t-efecto").innerHTML = `<caption>Cuánto movería la mezcla por riesgo lo esperado de cada mes<span class="cap-n">Con las tasas de la ventana (ago-2025 a jul-2026), separando por riesgo contra sin separar. Positivo: la mezcla del mes esperaba más.</span></caption>`
+  + `<thead><tr><th class="l">Mes</th><th>Nuevos · recupero</th><th>Antiguos · recupero</th><th>Nuevos · capital asegurado</th><th>Antiguos · capital asegurado</th></tr></thead><tbody>`
+  + mesesEf.map(m => `<tr><td class="l">${mesL(m)}</td><td class="n">${ef(NU.reb_mezcla_efecto, m)}</td><td class="n">${ef(ST.reb_mezcla_efecto, m)}</td><td class="n">${ef(NU.act_mezcla_efecto, m)}</td><td class="n">${ef(ST.act_mezcla_efecto, m)}</td></tr>`).join("")
+  + `</tbody>`;
+</script>

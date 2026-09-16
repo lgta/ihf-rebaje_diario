@@ -56,6 +56,7 @@ de vencimientos y para la validación en # de operaciones.
 | `dias_vencimiento_a_pago` | días entre vencimiento y pago real (a nivel cuota, no crédito) |
 | `flg_last_loan_in_chain` | 1 si es el último crédito de su cadena de reenganches. Constante por `id_ihfintech_loan` (verificado) — derivar a nivel crédito con `max(flg_last_loan_in_chain)` agrupado por `id_ihfintech_loan` y unir a `dts_mambu_loans_hist`/`dts_okaapi_loans` |
 | `installmentlastpaiddate` | fecha de pago de la cuota — **es la FECHA VALOR, no la de registro** (verificado 2026-09-13, bug 26): cuando un pago se regulariza con fecha valor retroactiva, este campo y el `dias_atraso_cuota` de `calendario_diario` se re-expresan hacia atrás. Si la fecha valor se cargó sin hora viene como `00:00:00`: no sirve para ubicar el pago dentro del día sin verificar. Ver `IDEAS.md` punto 4 |
+| `segmento_modelo_cobranza` / `prediccion_riesgo_modelo_cobranza` (y los pares `_mora` y `_preventivo`) | Modelos de riesgo de OKA, **por cuota** (el puntaje varía entre cuotas del mismo crédito en ~35%). Cobranza: segmento `MAX_DIASMORA 1-4 / 5-16 / +16` × `Riesgo Bajo / Medio / Alto`. Existe desde las cuotas que vencen en junio 2025 (0% antes, ~20% en junio, 100% desde julio) y también en cuotas pagadas a tiempo: se asigna alrededor del vencimiento, no se rellenó hacia atrás. Cobranza y mora coinciden (segmento y riesgo) en el 96% de las cuotas. El `riesgo_mora_gestion` de la asignación no es ninguno de estos en crudo: sale de una tabla fija sobre el par que trae la asignación (ver esa tabla abajo), y ese par coincide con el de la cuota vigente solo en 41-77% de los casos. Evaluación en tarea 26 |
 | `principalamountpaid` / `principalamountdue` | **ROTOS para capital** — sobre-atribuyen pagos anticipados a cuotas individuales (el acumulado supera 400%). Solo sirven para la curva de validación en # de operaciones, nunca para montos |
 
 Sin `flg_last_loan_in_chain=1`, la curva de # operaciones sale ~10 puntos más baja de lo
@@ -130,6 +131,7 @@ impacto en la calibración, y `PENDIENTES.md` tarea 23.
 | `dias_mora` / `max_dias_mora_dni` | mora del negocio a nivel cuota — puede diferir de `dayslate` (definición/timing distintos); no mezclar sin verificar. `max_dias_mora_dni > 30` ⇒ el crédito va a ESPECIALIZADA/RECOVERY por arrastre (100% de los casos de septiembre); reconstruible desde `calendario_diario.dni` al 99.9% (tarea 24) |
 | `monto_capital_pendiente` / `monto_capital_pendiente_asignado` | saldo según esta tabla — **no usarlo para capital**, seguir el patrón del proyecto de tomar el saldo desde `dts_mambu_loans_hist` (mismo principio que descartó `principalamountpaid`/`principalamountdue`, bug 5 en `BUGS.md`) |
 | `grupo_control` | confirmado 2026-08-19 (`reconciliacion_vw_seguimiento_temprana.md`): valores incluyen `'CONTROL'` (créditos deliberadamente NO gestionados, para medir "efecto de la gestión") y `NULL`/otros — explica la mayoría (82%) de los créditos en mora 1-30 propios que NO aparecen en la fase TEMPRANA oficial. Sigue sin explorarse a fondo su uso para medir el efecto causal de la gestión |
+| `segmento_modelo_mora` / `prediccion_riesgo_modelo_mora` / `riesgo_mora_gestion` | Pese al nombre, el par de modelo trae **uno de dos modelos** por crédito: el de mora (`MAX_DIASMORA 1-4/5-16/+16`, ~85% de TEMPRANA) o el preventivo (`Cliente Nuevo/Antiguo`, ~15%). `riesgo_mora_gestion` (Bajo/Medio/Alto) es una **tabla fija** de ese par × `tipo_mora`, sin excepciones en jul-sep 2026 (tabla en `analisis_tarea26_riesgo_cobranza.md`). Cambia dentro del mes en 10-25% de los créditos |
 | `fecha_de_vencimiento_cuota`, `hora_base`, `fecha_proceso`, `abtest_cob_wapp`, `segmento_piloto_cbr`, `grupo_control_fisica` | columnas nuevas vs. `dts_asignaciones_cobranza`, sin explotar todavía en este proyecto |
 
 **La asignación a Especializada/Recovery es a nivel CLIENTE, no crédito** — si un cliente
@@ -198,6 +200,10 @@ with loan_chain as (
 ```
 
 ## Ejecutar queries
+
+**`information_schema.columns` falla en esta base** (2026-09-15): una tabla Delta rota
+(`temp_ts_dias_atraso_test_inc`) hace fallar el listado del catálogo. Para ver las columnas de una tabla,
+`select * from <tabla> limit 1`: el encabezado del CSV las trae todas.
 
 `scripts/run_athena.sh <archivo.sql>` — envía la query, hace polling del estado, y baja el
 CSV de resultado desde S3 (stdout).
