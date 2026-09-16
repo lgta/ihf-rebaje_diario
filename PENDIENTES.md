@@ -1729,11 +1729,13 @@ Motor v2 adoptado (tarea 24) con las dos decisiones del 13-sep a la noche: **ree
 **Septiembre, re-fijada con v2 el 14-sep** (decisión del usuario): meta S/17,504,932 / S/3,338,715
 (`datos_tarea24/meta_v2_202609.csv`). Cada día: `bash scripts/run_athena.sh tarea25_real_v2_septiembre.sql >
 datos_tarea25/real_v2_septiembre.csv` y `python seguimiento_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv
-datos_tarea25/real_v2_septiembre.csv <último día completo>`. El 16-17 sep, mirar si la brecha de nuevos se
+datos_tarea25/real_v2_septiembre.csv <último día completo>`; después `python armar_meta_septiembre.py <día>` y
+republicar `meta_septiembre.html` (artifact 📍 Meta de septiembre, https://claude.ai/artifact/NsXqSFvWyeugGi9q95kvGU, desde el 15-sep). El 16-17 sep, mirar si la brecha de nuevos se
 achica tras la quincena (tarea 19). Al cierre, la fila de septiembre en `SEGUIMIENTO.md` va contra la v2,
 con la v1 al lado. Referencia contra la publicada v1: `bash scripts/run_athena.sh tarea19_real_septiembre.sql >
 datos_tarea19/real_septiembre.csv` y `python seguimiento_septiembre.py <último día completo>` (el día va como
-argumento; sin él corta en el 12). Al 13-sep, medido el 14: alfa 0.820 (−18.0%), recupero 0.713 (−28.7%).
+argumento; sin él corta en el 12). Al 14-sep, medido el 15: contra la v2, alfa 0.929 (−7.1%) y recupero 0.821; contra la v1, alfa 0.823
+(−17.7%) y recupero 0.720 (−28.0%).
 
 **Desde el 2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
 1. **Matriz de nuevos:** `bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv`
@@ -1805,3 +1807,40 @@ los mismos días para poder leerlo.
 (El plan de octubre que estaba acá —re-correr las 4 queries de tarea 24 y un `meta_octubre_v2.py`—
 quedó reemplazado por los pasos 0-7 de arriba: la meta sale de `meta_v2.py` y los insumos de
 `tarea25_insumos_octubre.sql`, con el patrón "como el día 1" en vez de `status = 'ACTIVE'`.)
+
+### Tarea 26 — ¿El riesgo de cobranza corta las curvas? — EVALUADA 2026-09-15, NO adoptada (pedido: solo evaluación)
+
+Pedido del usuario: incluir el riesgo de cobranza en las curvas para ver si también corta el rebaje, *"no
+modifiques técnicas, esto es solo una evaluación"*. **Respuesta: sí corta, y fuerte**, en nuevos y en antiguos,
+dentro de cada banda de avance y tramo, todos los meses con el mismo signo (rebaje de nuevos a 30 días 28.9 / 20.8 /
+16.8% para riesgo bajo / medio / alto; antiguos al cierre 22.8 / 12.7 / 9.6%). Para la meta pesó poco hasta ahora
+(la mezcla movió la expectativa ±2-3% en recupero, décimas en capital asegurado), pero la entrada de riesgo alto en
+nuevos subió de 22% a 31% del saldo en un año. Detalle en `analisis_tarea26_riesgo_cobranza.md`; artifact
+[🌡️ Riesgo de cobranza en las curvas](https://claude.ai/artifact/B2jGBzDFD5nb5vxTaFBKKt).
+
+Variable: `prediccion_riesgo_modelo_cobranza` (+ `segmento_modelo_cobranza`) de la cuota en mora, por
+`id_loan_nro_cuota`. Evidencia de que no mira hacia adelante (sin verificar contra una foto histórica): se guarda
+por cuota, existe también en cuotas pagadas a tiempo y aparece recién en las que vencen desde jun-2025.
+
+**Si el usuario quisiera adoptarlo (no pedido):**
+1. Walk-forward de 8 meses con métricas diarias, variante nuevos por banda × riesgo (CLAUDE.md: el cierre no
+   arbitra segmentadores). La matriz de tarea 26 está al grano MES de entrada; para el walk-forward hay que
+   re-correrla al grano `fecha_entrada` como las v2, y agregar el riesgo al calendario/tasa (la tasa de entrada
+   también podría cortar por riesgo: no se midió).
+2. Stock: la ventana fija 202504-202606 casi no tiene puntaje; habría que calibrar desde 202508, lo que cruza con
+   la tarea 18c (rodar la curva de stock empeoró las métricas).
+3. Alternativa a medir si el negocio piensa en la otra variable: `riesgo_mora_gestion` de la asignación (solo
+   jul-ago 2026 completos).
+
+**Para la tarea 19:** la deriva hacia más riesgo alto en nuevos es un dato nuevo para explicar la caída de la
+velocidad de cobro; en capital asegurado su efecto por mezcla es de décimas, en recupero hasta ~2 puntos.
+
+Archivos: `tarea26_riesgo_matriz_nuevos.sql`, `tarea26_riesgo_matriz_stock.sql`, `tarea26_riesgo_evaluacion.py`,
+`riesgo_cobranza.html`, `datos_tarea26/` (CSV y JSON no versionados; logs con el QID).
+
+**2026-09-15, a pregunta del usuario (*"hay dos, ¿recuerdas?"*):** la evaluación usó el puntaje crudo de
+cobranza (igual al de mora en el 96% de las cuotas) para todos los créditos. La gestión usa **uno de dos modelos**
+(mora o preventivo) y lo pasa por una **tabla fija** a `riesgo_mora_gestion` (tabla en el análisis). **Pendiente,
+decide el usuario:** qué riesgo evaluar. Opciones: el crudo (hecho); el de gestión directo desde la asignación
+(solo jul-ago 2026); o el de gestión reconstruido hacia atrás, que hoy no se puede, porque el par de la asignación
+coincide con el de la cuota vigente solo en 41-77% y no se sabe con qué regla elige mora o preventivo.

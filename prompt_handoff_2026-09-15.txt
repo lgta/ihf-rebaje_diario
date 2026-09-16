@@ -1,0 +1,140 @@
+PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
+Escrito 2026-09-15 (cierre de la sesión, ya pasada la medianoche del 16). Reemplaza a
+prompt_handoff_2026-09-13.txt. Novedades de esta sesión: control de septiembre al 14-sep, artifact nuevo
+«Meta de septiembre» (recalibración + meta + control, se refresca cada día), y TAREA 26: el riesgo de
+cobranza corta el rebaje — evaluación pedida por el usuario, sin tocar el motor, con una decisión pendiente.
+
+====================================================================
+ORDEN DE LECTURA — y nada más
+====================================================================
+1. CLAUDE.md          — reglas de datos y los 4 principios. Sin cambios desde el 13-sep.
+2. ESTADO.md          — los dos bloques "2026-09-15" + "La meta vigente".
+3. PENDIENTES.md      — TAREA 25 (seguimiento de septiembre día a día y ciclo de octubre, con los comandos),
+                        TAREA 26 (riesgo de cobranza: qué se evaluó y qué falta decidir). Después 19, 20, 21, 23.
+4. Solo si hace falta: analisis_tarea26_riesgo_cobranza.md, FUENTES_DATOS.md (modelos de riesgo y la tabla de
+   `riesgo_mora_gestion`), DECISIONES.md (últimas cuatro), BUGS.md 25 y 28, GLOSARIO.md.
+
+NO releer todo el historial. ESTADO.md + PENDIENTES.md alcanzan para operar.
+
+====================================================================
+DÓNDE ESTÁ EL PROYECTO (15-sep, cierre)
+====================================================================
+Agosto CERRADO: capital asegurado -1.2% | recupero oficial -3.2%.
+
+Septiembre: metas RE-FIJADAS el 14-sep con el motor v2 (decisión del usuario), como habrían salido el 1-sep:
+    capital asegurado S/17,504,932 | recupero oficial S/3,338,715       (datos_tarea24/meta_v2_202609.csv)
+  Las publicadas el 1-sep con v1 (S/20,477,271 | S/3,928,776) quedan como registro.
+  CONTROL AL 14-SEP (último día completo al 15): alfa 0.929 de la trayectoria (-7.1%; stock 0.966, nuevos
+  0.908, corr. diaria 0.979), recupero 0.821 (stock 0.761, nuevos 0.857). Contra la publicada v1: alfa 0.823.
+  La brecha de nuevos es de VELOCIDAD, no de volumen: entró +0.8% de lo esperado y el activado por sol que
+  entró va 0.692 contra 0.768 (-10.0%; al 13 era -11.7%). El cociente de nuevos sube de a poco: 0.84 el día 4,
+  0.89 el 12, 0.91 el 14.
+
+MOTOR v2 ADOPTADO (13-sep). Rige septiembre (re-fijada) y octubre. Reglas: antiguo = mora 1-30 el DÍA 1; la
+cohorte del día 1 con la curva de NUEVOS sobre su saldo real (S2); nuevos = calendario desde el día 2 con saldo
+ANCLADO al cierre del mes anterior; tasa por soles con ese mismo saldo de denominador (bug 28); reenganches
+INCLUIDOS (bug 25); arrastre por DNI fuera, marcado. Código: motor_v2.py + meta_v2.py + curvas_v2.py.
+Backtest de 8 meses armando la meta como el día 1: alfa 3.83% / corr. 0.827; recupero 4.58%.
+
+TAREA 26 — RIESGO DE COBRANZA (evaluación, NO adoptada; el usuario pidió explícitamente no cambiar técnicas):
+  - Sí corta, y fuerte. Rebaje de nuevos a 30 días 28.9 / 20.8 / 16.8% (riesgo bajo / medio / alto); antiguos
+    al cierre 22.8 / 12.7 / 9.6%. Separa DENTRO de cada banda de avance (-6 a -10pp) y tramo (-9 a -13pp), y
+    todos los meses con el mismo signo. En nuevos corta más el rebaje que la activación (96.6 / 90.9 / 88.7%).
+  - Para la meta pesa poco hasta ahora: la mezcla movió la expectativa ±2-3% en recupero y décimas en capital
+    asegurado. Pero el saldo de nuevos con riesgo alto pasó de 22% a 31% en un año: dato para la tarea 19.
+  - LO EVALUADO ES EL PUNTAJE CRUDO de un modelo (prediccion_riesgo_modelo_cobranza de la cuota en mora).
+    LA GESTIÓN USA DOS MODELOS: el de mora (segmentos MAX_DIASMORA, ~85% de TEMPRANA) y el PREVENTIVO
+    (Cliente Nuevo/Antiguo, ~15%), los dos en las columnas *_modelo_mora de la asignación; y
+    riesgo_mora_gestion sale de ese par con una TABLA FIJA por antiguo/nuevo (sin excepciones en 168,091
+    filas; la tabla está en analisis_tarea26_riesgo_cobranza.md y FUENTES_DATOS.md).
+  - DECISIÓN PENDIENTE DEL USUARIO: evaluar el riesgo de GESTIÓN (a) directo desde la asignación, que solo
+    tiene jul-ago 2026 completos, o (b) reconstruido hacia atrás, que hoy NO se puede: el par de la asignación
+    coincide con el de la cuota vigente solo en 41-77% y no se sabe con qué regla elige mora o preventivo.
+    Si el usuario da la regla, se reconstruye y se rehace la evaluación.
+
+Git: todo lo del 15-sep commiteado y pusheado a origin. Los CSV no se versionan.
+
+====================================================================
+LO QUE SIGUE, EN ORDEN
+====================================================================
+1. LA PRUEBA DE LA QUINCENA (16-17 sep), lo único con fecha:
+     bash scripts/run_athena.sh tarea25_real_v2_septiembre.sql > datos_tarea25/real_v2_septiembre.csv
+     python seguimiento_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv datos_tarea25/real_v2_septiembre.csv <día>
+     python armar_meta_septiembre.py <día>     y republicar meta_septiembre.html (mismo path o url=)
+   Si el cociente de nuevos (0.908 al 14) sube después del 15, la brecha era de arranque; si no, es un quiebre
+   de conversión y vuelve a la tarea 19. Anotarlo en SEGUIMIENTO.md.
+   Referencia contra la publicada v1: tarea19_real_septiembre.sql + seguimiento_septiembre.py <día>.
+2. LA DECISIÓN DE LA TAREA 26 (arriba). No hacer nada hasta que el usuario elija.
+3. FEEDBACK DEL ARTIFACT 949ab3c2 (versión 7): sigue pendiente desde el 14-sep. Aplicarlo sobre
+   asignado_a_asegurado.html (editado a mano; el armador sigue sobre v1) y republicar con url=.
+   Recordarle al usuario mover la versión compartida, que está anclada a una anterior.
+4. CIERRE DE SEPTIEMBRE (1-2 oct): fila en SEGUIMIENTO.md contra la v2, con la v1 al lado.
+5. OCTUBRE, desde el 2-oct (PENDIENTES tarea 25, pasos 1-7): matriz de nuevos (y actualizar curvas_v2.MN y
+   FOTOS_NUEVOS_HASTA = "20261001"), insumos, `python meta_v2.py 202610 datos_tarea25/insumos_octubre.csv`,
+   seguimiento diario, artifacts. El calendario/tasa ya cubre la ventana de octubre.
+6. NOVIEMBRE: extender tarea25_calendario_tasa.sql un periodo (CALENDARIO_HASTA = "202609") y la matriz de nuevos.
+7. TAREA 19 (lo abierto): qué pasó en ene-mar 2026 y por qué bajó la tasa de entrada en jun-jul. La deriva de
+   la mezcla por riesgo de la tarea 26 es un insumo nuevo para esto.
+8. TAREA 20 (tasa por banda con el denominador anclado) y TAREA 23 (lo que entra a gestión).
+9. Repo: tarea 12 (carpetas) después de fijar la meta de octubre; PENDIENTES.md pesa 140 KB.
+
+====================================================================
+TRAMPAS (las nuevas primero)
+====================================================================
+- EL RIESGO DE GESTIÓN NO SE RECONSTRUYE DESDE LA CUOTA (41-77% de coincidencia). Y en la tabla de cuotas,
+  "cobranza" y "mora" son el mismo modelo (96% idénticos): elegir entre esos dos no cambia nada.
+- EL PUNTAJE DE RIESGO EXISTE RECIÉN EN LAS CUOTAS QUE VENCEN DESDE JUN-2025 (0% antes). Sirve para una ventana
+  de 12 meses desde 202507, no para la ventana FIJA de stock (202504-202606), que casi no tiene puntaje.
+- LA MATRIZ DE TAREA 26 ESTÁ AL GRANO MES de entrada: no sirve para un walk-forward. Para eso hay que
+  re-correrla al grano fecha_entrada, como las v2.
+- information_schema.columns FALLA en esta base (tabla Delta rota temp_ts_dias_atraso_test_inc): para ver
+  columnas, `select * from <tabla> limit 1`.
+- "ACTIVADO POR SOL QUE ENTRÓ" MIDE VELOCIDAD, NO CONVERSIÓN: entradas de los días 2..N, activado hasta N.
+  Varía S/0.60-0.77 al día 12 entre meses; la conversión a 30 días, en cambio, 91-94%.
+- ENE-MAR 2026 FUE UN PICO: toda comparación contra ese trimestre exagera cualquier caída. Las curvas de las
+  metas de septiembre y octubre lo incluyen en la ventana.
+- LA TASA ANCLADA ES PLANA y la entrada pesa más en los primeros 20 días: la tasa histórica de los días 2-14 es
+  21.48% contra 20.61% del mes. El cociente de nuevos de la primera quincena corre algo favorecido y puede
+  bajar en la última semana sin que la gestión empeore.
+- TASA ANCLADA (~20.5%) ≠ TASA MEDIDA (~23.4%): no compararlas sin convertir, y nunca aplicar la medida sobre
+  el calendario anclado (bug 28, +10.9%).
+- VENTANA DE LA META = [M-13, M-2] (motor_v2.ventana_meta); la del BACKTEST = [M-12, M-1] (curvas_v2.ventana).
+- motor_v2.curvas se niega a calibrar si la matriz de nuevos no cubre la ventana; curvas_v2.tasa, si el
+  calendario no llega. Al extenderlas, actualizar MN / FOTOS_NUEVOS_HASTA y CT / CALENDARIO_HASTA.
+- La foto del día en curso está incompleta: último día completo = el penúltimo (tarea24_frescura.sql).
+- Re-leer el calendario prospectivo días después pierde a los COMPLETED: usar el patrón "como el día 1"
+  (tarea24_v2_septiembre_al_1.sql / tarea25_insumos_octubre.sql).
+- REFINANCED en Mambu = REENGANCHE, no refinanciamiento: ignorar las fotos desde f_cierre.
+- LOS CSV NO ESTÁN EN GIT (*.csv en .gitignore): un clon nuevo no trae datos_*/; se regeneran con los .sql.
+- Viejas que siguen: fecha valor (bug 26); la vista referenciada más de ~2 veces agota recursos (bug 27);
+  tipo_mora en minúscula (bug 24); WHERE antes del window (bug 4); ninguna cuota vence domingo y por eso nadie
+  entra en mora un lunes; Mambu se re-expresa -0.3% a -0.8% para días pasados.
+
+====================================================================
+ARCHIVOS CLAVE
+====================================================================
+motor_v2.py, meta_v2.py, curvas_v2.py                    motor adoptado, meta del mes, matrices
+tarea25_real_v2_septiembre.sql + seguimiento_v2.py       seguimiento diario de septiembre contra la meta v2
+armar_meta_septiembre.py + meta_septiembre.html          artifact «Meta de septiembre» (se refresca cada día)
+tarea25_matriz_nuevos.sql, tarea25_insumos_octubre.sql   octubre: correr el 2-oct
+tarea25_calendario_tasa.sql                              calendario y tasa con el saldo anclado
+backtest_tarea25_ancla.py                                backtest de 8 meses (med/anc/fix/fixt/ctl)
+tarea26_riesgo_matriz_{nuevos,stock}.sql                 matrices v2 + riesgo (evaluación, no producción)
+tarea26_riesgo_evaluacion.py + riesgo_cobranza.html      evaluación del riesgo y su artifact
+analisis_tarea26_riesgo_cobranza.md                      qué riesgo se evaluó, la tabla de gestión y los límites
+tarea19_real_septiembre.sql + seguimiento_septiembre.py  seguimiento contra la publicada v1 (referencia)
+asignado_a_asegurado.html                                artifact 949ab3c2 (versión 7, feedback pendiente)
+
+====================================================================
+CONVENCIONES DE TRABAJO
+====================================================================
+- El usuario controla commit y push: solo cuando lo pide. Se pushea a origin (rebaje_diario es viejo).
+- Las decisiones de adopción son suyas: medir y recomendar con el backtest corrido.
+- Cuando pide una evaluación, es una evaluación: no tocar el motor ni las metas.
+- Ante una variable del negocio, verificar con datos cómo la asigna la gestión antes de calibrar con ella.
+- Prefiere FLAG antes que borrar (arrastre por DNI, reenganches).
+- Antes de presentar algo como hallazgo nuevo, buscarlo en BUGS.md y PENDIENTES.md.
+- Artifacts vigentes: NsXqSFvWyeugGi9q95kvGU (📍 Meta de septiembre, se refresca cada día),
+  B2jGBzDFD5nb5vxTaFBKKt (🌡️ Riesgo de cobranza en las curvas), 949ab3c2 (De asignado a asegurado),
+  d4140b13 (Capital asegurado), f80d3761 (Proyectado vs. Real). Al publicar, copiar el .html al repo y
+  actualizar ESTADO.md y README.md; para actualizar uno existente, pasar url=.

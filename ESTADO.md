@@ -6,13 +6,49 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-14 (meta de septiembre re-fijada con v2 por decisión del usuario; tarea 19: la caída de activación es sobre todo menos entradas; 949ab3c2 corregido; a la tarde, seguimiento contra la publicada v1 llevado al 13-sep: −18.0%).
+Última actualización: 2026-09-15 (tarea 26: el riesgo de cobranza corta el rebaje, evaluado sin tocar el modelo; artifact nuevo «Meta de septiembre»: recalibración, meta y control al 14-sep, 0.929 de la trayectoria v2). Antes, 2026-09-14: meta de septiembre re-fijada con v2 por decisión del usuario; tarea 19: la caída de activación es sobre todo menos entradas; 949ab3c2 corregido.
 
 > **PARA ARRANCAR UNA SESIÓN NUEVA:** el prompt de handoff vigente es
-> [`prompt_handoff_2026-09-13.txt`](prompt_handoff_2026-09-13.txt), actualizado al cierre de la noche del
-> 13-sep — reemplaza al del 2026-09-11. Después: los dos bloques de abajo + "La meta vigente", y
-> `PENDIENTES.md` **tarea 25** (ciclo de octubre, la primera meta v2: lista, se corre desde el 2-oct),
-> **tarea 24** (v2 adoptado y validado, con sus dos decisiones tomadas) y **tareas 19, 20, 21 y 23**.
+> [`prompt_handoff_2026-09-15.txt`](prompt_handoff_2026-09-15.txt) — reemplaza al del 2026-09-13. Después:
+> los bloques de abajo + "La meta vigente", y `PENDIENTES.md` **tarea 25** (seguimiento de septiembre y ciclo
+> de octubre, la primera meta v2: lista, se corre desde el 2-oct), **tarea 26** (riesgo de cobranza: evaluado,
+> con una decisión pendiente), **tarea 24** (v2 adoptado y validado) y **tareas 19, 20, 21 y 23**.
+
+> **2026-09-15 (tarde) — TAREA 26: EL RIESGO DE COBRANZA CORTA EL REBAJE. Evaluación pedida por el usuario
+> ("no modifiques técnicas, esto es solo una evaluación"): no se tocó el motor, las curvas ni las metas.** Variable:
+> `prediccion_riesgo_modelo_cobranza` de la cuota en mora (`dts_cobranza_creditos_cuotas`; por cuota, existe desde
+> las cuotas que vencen en jun-2025 y no se rellenó hacia atrás). No es el `riesgo_mora_gestion` de las asignaciones
+> (no coincide con el modelo y existe solo desde jul-2026). Mismo universo de las curvas v2 (control: saldo base al
+> céntimo). Ventana [202508, 202607]: rebaje de nuevos a 30 días **28.9% bajo / 20.8% medio / 16.8% alto**; antiguos
+> al cierre **22.8 / 12.7 / 9.6%**. Separa dentro de cada banda de avance (−6 a −10pp) y tramo (−9 a −13pp), todos los
+> meses con el mismo signo. En nuevos corta más el rebaje que la activación (96.6 / 90.9 / 88.7%): cambia cuánto se
+> paga, no si se paga. **Para la meta pesa poco hasta ahora** (la mezcla movió la expectativa ±2-3% en recupero y
+> décimas en capital asegurado), pero el saldo de nuevos con riesgo alto pasó de 22% a 31% en un año: dato nuevo
+> para la tarea 19. Adoptarlo exigiría el walk-forward con métricas diarias y otra ventana para stock. Artifact
+> [🌡️ Riesgo de cobranza en las curvas](https://claude.ai/artifact/B2jGBzDFD5nb5vxTaFBKKt); detalle en `analisis_tarea26_riesgo_cobranza.md`; `PENDIENTES.md`
+> tarea 26.
+>
+> **LOS DOS RIESGOS, ACLARADOS A PREGUNTA DEL USUARIO ("hay dos, ¿recuerdas?").** Lo evaluado es el **puntaje
+> crudo** de un modelo. La gestión usa **dos**: el de mora (segmentos `MAX_DIASMORA`, ~85% de TEMPRANA) y el
+> **preventivo** (`Cliente Nuevo/Antiguo`, ~15%), los dos en las columnas `*_modelo_mora` de la asignación; y
+> `riesgo_mora_gestion` sale de ese par con una **tabla fija** por antiguo/nuevo, sin una excepción en 168,091
+> filas (tabla en el análisis y en `FUENTES_DATOS.md`). En la tabla de cuotas, cobranza y mora son el mismo
+> modelo (96% idénticos). **El riesgo de gestión no se puede reconstruir hacia atrás todavía:** el par de la
+> asignación coincide con el de la cuota vigente solo en 41-77%, y no se sabe con qué regla elige entre mora y
+> preventivo. **Decisión pendiente del usuario:** evaluar el de gestión directo (solo jul-ago 2026 completos) o
+> reconstruirlo si el negocio da la regla.
+
+> **2026-09-15 — ARTIFACT NUEVO [📍 Meta de septiembre](https://claude.ai/artifact/NsXqSFvWyeugGi9q95kvGU)
+> (pedido del usuario): la recalibración, la explicación de la meta de septiembre y el control a la fecha, en
+> un solo lugar.** Separado de 949ab3c2 a propósito: aquel explica el enfoque y tiene la versión compartida
+> anclada; este se actualiza cada día con `armar_meta_septiembre.py <día>` (inyecta los datos entre marcadores;
+> la nota de lectura del día se edita a mano) y se republica. Fuente `meta_septiembre.html`.
+> `seguimiento_v2.descomposicion` ahora además devuelve sus números (el armador los reusa; lo impreso no cambia).
+>
+> **Control al 14-sep** (último día completo al 15): capital asegurado **0.929 de la trayectoria v2 (−7.1%)**,
+> S/7,727,040 contra S/8,314,749; stock 0.966, nuevos 0.908; corr. diaria 0.979. Recupero **0.821**. Entró en
+> mora lo esperado (+0.8%); el activado por sol que entró va −10.0% (al 13, −11.7%). Contra la publicada v1,
+> 0.823 (−17.7%). La prueba de la quincena sigue para el 16-17 sep. Detalle en `SEGUIMIENTO.md`.
 
 > **2026-09-14 — SEPTIEMBRE SE RE-FIJA CON v2 (decisión del usuario), Y LA "CAÍDA DE ACTIVACIÓN" ES SOBRE
 > TODO MENOS ENTRADAS, NO MENOS CONVERSIÓN.**
@@ -915,8 +951,8 @@ oficial **S/3,338,715** (stock S/821,765 + nuevos S/2,516,950): lo que habría d
 1-sep, con insumos reconstruidos como se leían ese día (`meta_v2.py 202609
 datos_tarea24/v2_septiembre_al_1.csv`; serie en `datos_tarea24/meta_v2_202609.csv`). Puente desde la
 publicada: definición de antiguo −3.2%, reenganches −1.8%, tasa anclada −10.1%. Seguimiento:
-`tarea25_real_v2_septiembre.sql` + `seguimiento_v2.py`; al 13-sep, 0.922 de la trayectoria (−7.8%) y
-recupero 0.811 (`SEGUIMIENTO.md`). Lo que sigue es la meta publicada el 1-sep, que queda como registro.
+`tarea25_real_v2_septiembre.sql` + `seguimiento_v2.py`; al 14-sep, 0.929 de la trayectoria (−7.1%) y
+recupero 0.821 (`SEGUIMIENTO.md`; artifact 📍 Meta de septiembre). Lo que sigue es la meta publicada el 1-sep, que queda como registro.
 
 **Septiembre 2026 — Capital asegurado, la publicada el 1-sep (v1: motor unificado v3 + tasa por SOLES;
 REEMPLAZADA el 14-sep).** Meta proyectada
@@ -1008,6 +1044,8 @@ incluidos** en la calibración (bug 25). Arrastre por DNI fuera, como en la vist
 
 | Artifact | Estado | Contenido |
 |---|---|---|
+| [🌡️ Riesgo de cobranza en las curvas](https://claude.ai/artifact/B2jGBzDFD5nb5vxTaFBKKt) | ✓ vigente, **nuevo 2026-09-15**, evaluación (tarea 26) | Curvas de rebaje y activación de nuevos y antiguos separadas por el nivel de riesgo del modelo de cobranza, contra la curva de hoy; la separación dentro de banda y tramo, mes a mes, la mezcla por riesgo y cuánto movería la meta. No cambia el modelo. Fuente: `riesgo_cobranza.html` (datos inyectados por `tarea26_riesgo_evaluacion.py`). |
+| [📍 Meta de septiembre](https://claude.ai/artifact/NsXqSFvWyeugGi9q95kvGU) | ✓ vigente, **nuevo 2026-09-15**, se refresca cada día | La meta de septiembre re-fijada con v2 (S/17,504,932 / S/3,338,715): KPIs y control diario contra la trayectoria (acumulado, y real ÷ trayectoria por componente con el rango del backtest al día 12), la brecha de nuevos partida en volumen y velocidad, la cadena de la meta (antiguos y nuevos), el puente desde la publicada v1, las tres correcciones de la recalibración con su efecto, el backtest de 8 meses (tasa corregida contra la vieja) y recupero. Fuente: `meta_septiembre.html` + `armar_meta_septiembre.py <día>`. |
 | [Metodología ejecutiva](https://claude.ai/code/artifact/909de8df-443f-4440-b85a-e39af636c8e7) | ✓ vigente | Modelo conceptual, curvas, backtest de junio |
 | [Guía técnica](https://claude.ai/code/artifact/9df13c20-7758-4174-8346-ed6563d25c5d) | ✓ vigente | SQL replicable para Athena |
 | [Meta en vivo — julio](https://claude.ai/code/artifact/52d8badf-bb51-4b92-a3c1-f4f2017aaa27) | ⚠ desactualizado | No refleja el fix de aged-out ni la investigación de dayslate |

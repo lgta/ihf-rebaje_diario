@@ -9,3 +9,6 @@ __pycache__/
 # Datos (CSV de las corridas de Athena y derivados): viven solo en la copia local,
 # no se versionan -- pedido del usuario 2026-09-13. Se regeneran re-corriendo los .sql.
 *.csv
+
+# JSON derivado de las corridas (datos para los artifacts): mismo criterio que los CSV
+datos_*/*.json

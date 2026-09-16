@@ -74,6 +74,9 @@ LO QUE SIGUE, EN ORDEN
    después del 15, se confirma que es arranque; si no, es un quiebre de conversión (tarea 19). Anotarlo en
    SEGUIMIENTO.md. Contra la publicada v1, como referencia: tarea19_real_septiembre.sql + seguimiento_septiembre.py <día> (sin
    argumento corta en el 12).
+   Después de cada corrida: python armar_meta_septiembre.py <día> y republicar meta_septiembre.html con
+   url=https://claude.ai/artifact/NsXqSFvWyeugGi9q95kvGU (artifact del 15-sep: recalibración + meta + control).
+   Al 14-sep (medido el 15): v2 0.929 (stock 0.966, nuevos 0.908), recupero 0.821; v1 0.823.
    Al cierre (1-2 oct): fila de septiembre en SEGUIMIENTO.md contra la v2, con la v1 al lado.
 3. OCTUBRE, desde el 2-oct (PENDIENTES tarea 25). Todo está escrito y corrido de prueba:
    a. bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv
@@ -171,6 +174,7 @@ CONVENCIONES DE TRABAJO
   presentar los dos lados, no asumir la respuesta.
 - Prefiere FLAG antes que borrar (arrastre por DNI, reenganches).
 - Antes de presentar algo como hallazgo nuevo, buscarlo en BUGS.md y PENDIENTES.md.
-- Artifacts vigentes: 949ab3c2 (De asignado a asegurado), d4140b13 (Capital asegurado), f80d3761
+- Artifacts vigentes: https://claude.ai/artifact/NsXqSFvWyeugGi9q95kvGU (Meta de septiembre, control diario; armar_meta_septiembre.py <día>),
+  949ab3c2 (De asignado a asegurado), d4140b13 (Capital asegurado), f80d3761
   (Proyectado vs. Real). Al publicar, copiar el .html al repo y actualizar ESTADO.md y README.md;
   para actualizar uno existente, pasar url=.

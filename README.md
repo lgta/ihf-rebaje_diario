@@ -35,6 +35,8 @@ lo que falta sin releer todo el historial.
 
 | Documento | Público | Contenido |
 |---|---|---|
+| [🌡️ Riesgo de cobranza en las curvas](https://claude.ai/artifact/B2jGBzDFD5nb5vxTaFBKKt) — `riesgo_cobranza.html` | Equipo, evaluación | ¿El riesgo del modelo de cobranza corta el rebaje? Curvas por nivel de riesgo, dentro de banda y tramo, mes a mes, y su peso en la meta (tarea 26, no adoptada) |
+| [📍 Meta de septiembre](https://claude.ai/artifact/NsXqSFvWyeugGi9q95kvGU) — `meta_septiembre.html` | Equipo, se refresca cada día | Meta de septiembre re-fijada con el motor v2, la recalibración explicada (puente desde la v1, las tres correcciones, backtest de 8 meses) y el control diario contra la trayectoria. Datos: `armar_meta_septiembre.py <día>` |
 | [Metodología ejecutiva](https://claude.ai/code/artifact/909de8df-443f-4440-b85a-e39af636c8e7) — `metodologia_recupero.html` | Negocio | Modelo conceptual, curvas, backtest de junio |
 | [Guía técnica](https://claude.ai/code/artifact/9df13c20-7758-4174-8346-ed6563d25c5d) — `guia_tecnica_recupero.md` | Técnico | Mismo contenido + SQL copiable para Athena |
 | [Detalle con curvas interactivas](https://claude.ai/code/artifact/71e5d69d-7586-4ba1-aedc-de7397eea425) — `meta_recupero_detalle.html` | Equipo | El más completo: composición, calendario, curvas por avance, cohortes, trayectoria — todo interactivo |
