@@ -1,0 +1,525 @@
+<title>Meta de septiembre</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F5F7F9; --surface:#FFFFFF; --sunk:#EDF1F5;
+  --ink:#141C24; --ink-2:#3D4A57; --muted:#5C6976; --faint:#8A96A2;
+  --hair:#DDE3E9; --hair-2:#C8D2DB;
+  --antiguos:#1F5FA8; --nuevos:#C1751A; --asegurado:#00907F; --meta:#8A96A2;
+  --asegurado-soft:#DDF0ED; --alerta:#9A4A1E; --alerta-soft:#F7E9E1;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --col:min(68ch,100%); --wide:min(1080px,100%);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0F151B; --surface:#131A21; --sunk:#19222B;
+  --ink:#DFE6ED; --ink-2:#B7C2CD; --muted:#8B99A6; --faint:#6B7885;
+  --hair:#26313B; --hair-2:#33404C;
+  --antiguos:#4A86C8; --nuevos:#BC7F22; --asegurado:#12A895; --meta:#7D8B98;
+  --asegurado-soft:#12261F; --alerta:#D08A5E; --alerta-soft:#2A1D16;
+}}
+:root[data-theme="dark"]{
+  --ground:#0F151B; --surface:#131A21; --sunk:#19222B;
+  --ink:#DFE6ED; --ink-2:#B7C2CD; --muted:#8B99A6; --faint:#6B7885;
+  --hair:#26313B; --hair-2:#33404C;
+  --antiguos:#4A86C8; --nuevos:#BC7F22; --asegurado:#12A895; --meta:#7D8B98;
+  --asegurado-soft:#12261F; --alerta:#D08A5E; --alerta-soft:#2A1D16;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.page{display:grid;grid-template-columns:1fr var(--col) 1fr;padding:0 20px 96px}
+.page>*{grid-column:2;min-width:0}
+.bleed{grid-column:1/-1;width:var(--wide);justify-self:center}
+.ancha{grid-column:1/-1;width:min(900px,100%);justify-self:center}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;font-weight:600;line-height:1.18;margin:0}
+h2{font-size:1.72rem;margin:3.6rem 0 .2rem;letter-spacing:-.01em}
+h3{font-size:1.14rem;margin:0 0 .45rem}
+p{margin:.85rem 0}
+strong{font-weight:600}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);font-weight:500;display:block;margin-bottom:.5rem}
+.lede{font-size:1.1rem;color:var(--ink-2)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+header{padding:4.2rem 0 .5rem}
+header h1{font-size:clamp(2.3rem,6vw,3.4rem);letter-spacing:-.025em}
+header .sub{font-size:1.12rem;color:var(--muted);margin-top:.9rem;max-width:58ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:1px;
+  background:var(--hair);border:1px solid var(--hair);border-radius:10px;overflow:hidden;margin:2.2rem 0 .4rem}
+.kpi{background:var(--surface);padding:1rem 1.1rem}
+.kpi .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.kpi .v{font-family:var(--mono);font-size:1.5rem;font-weight:600;margin-top:.3rem;letter-spacing:-.02em}
+.kpi .n{font-size:.82rem;color:var(--muted);margin-top:.2rem;line-height:1.4}
+.kpi.warn .v{color:var(--alerta)}
+.corte{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+
+.panel{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:1.3rem 1.4rem;margin:1.4rem 0}
+.note{background:var(--sunk);border-left:3px solid var(--hair-2);border-radius:0 8px 8px 0;
+  padding:.9rem 1.1rem;margin:1.3rem 0;font-size:.93rem;color:var(--ink-2)}
+.note.alerta{background:var(--alerta-soft);border-left-color:var(--alerta)}
+.note b{color:var(--ink)}
+
+/* brecha de nuevos en dos pasos */
+.pasos{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;background:var(--hair);
+  border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin:1.4rem 0}
+.paso{background:var(--surface);padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.3rem}
+.paso .q{font-family:var(--serif);font-size:1.08rem;font-weight:600}
+.paso .dato{display:flex;justify-content:space-between;gap:1rem;font-size:.9rem;color:var(--ink-2)}
+.paso .dato b{font-family:var(--mono);font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+.paso .veredicto{font-family:var(--mono);font-size:1.25rem;font-weight:600;margin-top:.25rem}
+.paso .veredicto.ok{color:var(--asegurado)} .paso .veredicto.mal{color:var(--alerta)}
+.paso .n{font-size:.84rem;color:var(--muted);line-height:1.45}
+
+/* cadena de la meta */
+.cadenas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin:1.4rem 0}
+.cad{display:flex;flex-direction:column;gap:.35rem}
+.cad .who{font-family:var(--mono);font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;font-weight:600}
+.cad.a .who{color:var(--antiguos)} .cad.n .who{color:var(--nuevos)}
+.eslabon{border:1px solid var(--hair);border-radius:8px;background:var(--surface);padding:.65rem .85rem}
+.eslabon .row{display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
+.eslabon .lbl{font-size:.88rem;font-weight:500}
+.eslabon .amt{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.eslabon .sub{font-size:.78rem;color:var(--muted);margin-top:.1rem}
+.eslabon.fin{background:var(--asegurado-soft);border-color:transparent}
+.op{font-family:var(--mono);font-size:.78rem;color:var(--muted);padding-left:.85rem}
+
+/* cambios del motor */
+.cambios{display:grid;gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin:1.4rem 0}
+.cambio{background:var(--surface);padding:1.15rem 1.3rem;display:grid;grid-template-columns:1fr auto;gap:.3rem 1.4rem}
+.cambio h3{grid-column:1}
+.cambio .efecto{grid-column:2;grid-row:1/3;text-align:right;font-family:var(--mono)}
+.cambio .efecto b{display:block;font-size:1.15rem;font-weight:600}
+.cambio .efecto span{font-size:.76rem;color:var(--muted)}
+.cambio p{grid-column:1/-1;margin:.2rem 0 0;font-size:.93rem;color:var(--ink-2)}
+@media (max-width:560px){.cambio{grid-template-columns:1fr}.cambio .efecto{grid-column:1;grid-row:auto;text-align:left}}
+
+/* tablas */
+.tabla-wrap{overflow-x:auto;border:1px solid var(--hair);border-radius:12px;background:var(--surface);margin:1.3rem 0}
+table{border-collapse:collapse;width:100%;font-size:.87rem}
+caption{text-align:left;padding:1rem 1.1rem .3rem;font-family:var(--serif);font-size:1.04rem;font-weight:600}
+caption .cap-n{display:block;font-family:var(--sans);font-size:.84rem;font-weight:400;color:var(--muted);margin-top:.2rem}
+th,td{padding:.48rem .7rem;text-align:right;border-bottom:1px solid var(--hair);white-space:nowrap}
+th{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);
+  font-weight:600;border-bottom:1px solid var(--hair-2)}
+th.l,td.l{text-align:left}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody tr:hover{background:var(--sunk)}
+tfoot td{font-weight:600;border-bottom:none;border-top:1px solid var(--hair-2);background:var(--sunk)}
+tr.hoy td{background:var(--asegurado-soft)}
+details{margin:1.2rem 0}
+summary{cursor:pointer;font-size:.92rem;color:var(--ink-2);font-weight:500}
+summary:focus-visible{outline:2px solid var(--asegurado);outline-offset:3px;border-radius:4px}
+
+/* graficos */
+figure{margin:1.6rem 0}
+figcaption{font-size:.86rem;color:var(--muted);margin-top:.55rem;max-width:68ch}
+.leyenda{display:flex;gap:1.1rem;flex-wrap:wrap;font-size:.82rem;color:var(--ink-2);margin-bottom:.5rem}
+.leyenda i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:.4rem;vertical-align:3px}
+.fig-t{font-family:var(--serif);font-size:1.06rem;font-weight:600;margin-bottom:.35rem}
+.chart{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:1rem 1rem .6rem}
+svg{display:block;max-width:100%;overflow:visible}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--ground);font-family:var(--mono);
+  font-size:.76rem;padding:.45rem .6rem;border-radius:6px;opacity:0;transition:opacity .1s;z-index:50;
+  white-space:pre;line-height:1.5}
+.tip.on{opacity:1}
+ul.mirar{padding-left:1.1rem} ul.mirar li{margin:.55rem 0}
+footer{margin-top:4rem;padding-top:1.4rem;border-top:1px solid var(--hair);font-size:.84rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+
+<header>
+  <span class="eyebrow">Cobranza temprana · mora 1–30 días · OKA</span>
+  <h1>Meta de septiembre</h1>
+  <p class="sub">La meta vigente de capital asegurado, de dónde sale, por qué se recalibró el modelo
+  que la calcula y cómo va el mes contra ella.</p>
+  <div class="kpis">
+    <div class="kpi"><div class="k">Meta del mes</div><div class="v" id="k-meta">—</div>
+      <div class="n" id="k-meta-n">—</div></div>
+    <div class="kpi"><div class="k" id="k-real-k">Real a la fecha</div><div class="v" id="k-real">—</div>
+      <div class="n" id="k-real-n">—</div></div>
+    <div class="kpi warn"><div class="k">Real ÷ trayectoria</div><div class="v" id="k-coc">—</div>
+      <div class="n" id="k-coc-n">—</div></div>
+    <div class="kpi warn"><div class="k">Recupero oficial</div><div class="v" id="k-reb">—</div>
+      <div class="n" id="k-reb-n">—</div></div>
+  </div>
+  <p class="corte" id="corte">—</p>
+</header>
+
+<h2>Cómo va el mes</h2>
+<p class="lede">La meta no se recalcula día a día: se fijó con los datos del 1 de septiembre y trae su
+propia trayectoria, lo que debería llevarse acumulado cada día si el mes se comporta como los doce
+anteriores. El control compara el real contra esa trayectoria, no contra la meta del mes completo.</p>
+
+<div class="bleed"><figure>
+  <div class="fig-t">Capital asegurado acumulado, septiembre 2026</div>
+  <div class="leyenda" id="lg-tray"></div>
+  <div class="chart" id="ch-tray"></div>
+  <figcaption id="cap-tray">—</figcaption>
+</figure></div>
+
+<div class="bleed"><figure>
+  <div class="fig-t">Real ÷ trayectoria, día a día</div>
+  <div class="leyenda" id="lg-coc"></div>
+  <div class="chart" id="ch-coc"></div>
+  <figcaption>1.00 es ir exactamente en la trayectoria. El gris claro es el rango en que estuvo este
+  cociente al día 12 en los ocho meses del backtest (ene–ago 2026), armando la meta igual que ahora.
+  En esos meses el cierre terminó a menos de 4 puntos del cociente del día 12.</figcaption>
+</figure></div>
+
+<h3 style="margin-top:2.2rem">La brecha de nuevos, en dos pasos</h3>
+<p>Lo que se asegura de nuevos es el saldo que entra en mora por lo que se activa de ese saldo. Separar
+los dos pasos dice si falta volumen o falta cobranza.</p>
+<div class="pasos">
+  <div class="paso">
+    <div class="q">¿Entró en mora lo esperado?</div>
+    <div class="dato"><span>Real</span><b id="p-e-real">—</b></div>
+    <div class="dato"><span>Esperado por la meta</span><b id="p-e-esp">—</b></div>
+    <div class="veredicto ok" id="p-e-v">—</div>
+    <div class="n" id="p-e-n">—</div>
+  </div>
+  <div class="paso">
+    <div class="q">¿Se activa lo esperado de lo que entra?</div>
+    <div class="dato"><span>Asegurado por sol que entró, real</span><b id="p-a-real">—</b></div>
+    <div class="dato"><span>Lo que espera la curva</span><b id="p-a-esp">—</b></div>
+    <div class="veredicto mal" id="p-a-v">—</div>
+    <div class="n">Mide velocidad más que conversión: cuenta lo que ya pagó al corte, no lo que pagará
+    en sus 30 días.</div>
+  </div>
+</div>
+
+<div class="note alerta"><b>Lectura al 14 de septiembre.</b> Los antiguos van casi en línea (0.966)
+aunque vienen bajando desde el 1.08 del primer día. La brecha está en nuevos (0.908), y no es de
+volumen: entró en mora lo que la meta esperaba. Es de velocidad: por cada sol que entró entre el 2 y el 14
+van asegurados S/0.692, contra S/0.768 que espera la curva. Ese número varía mucho de un mes a otro
+(al día 12, entre S/0.60 y S/0.77 en el último año), y la curva incluye enero–marzo 2026, un trimestre
+excepcionalmente rápido, así que espera un arranque más veloz que el de los meses recientes. La
+activación a 30 días, en cambio, no tiene tendencia en 19 meses (91–94%). <b>Si se repite ese patrón,
+la brecha de nuevos se achica después de la quincena.</b> Si no se achica, es un quiebre de conversión
+y hay que mirarlo. Nuevos viene subiendo de a poco: 0.84 el día 4, 0.89 el 12, 0.91 el 14.</div>
+
+<details class="ancha">
+  <summary>Ver el detalle día por día</summary>
+  <div class="tabla-wrap"><table id="t-diaria"></table></div>
+</details>
+
+<div class="note" id="nota-v1">—</div>
+
+<h2>La meta y de dónde sale</h2>
+<p class="lede">Se fijó con los datos que existían el 1 de septiembre, sin mirar ni un día del mes.
+Suma dos poblaciones que se comportan distinto.</p>
+
+<div class="cadenas">
+  <div class="cad a" id="cad-a"></div>
+  <div class="cad n" id="cad-n"></div>
+</div>
+
+<p><strong>Antiguos</strong> son los créditos que el día 1 ya están en mora de 1 a 30 días; se asignan todos
+ese día y solo pueden achicarse. Incluye a los que entran en mora el mismo día 1, que se proyectan con
+la curva de nuevos porque recién empiezan. <strong>Nuevos</strong> son los que van entrando en mora a lo
+largo del mes, un día después de su vencimiento: el calendario dice cuánto saldo vence cada día, la
+tasa de entrada cuánto de eso no se paga a tiempo, y la curva cuánto de lo que entra termina haciendo
+al menos un pago antes del cierre. Las curvas se calibran con los doce meses completamente observados
+al 1-sep (agosto 2025 a julio 2026).</p>
+
+<div class="tabla-wrap ancha"><table id="t-puente"></table></div>
+
+<h2>Por qué se recalibró</h2>
+<p class="lede">La meta publicada el 1-sep era S/20.48M. El 13 de septiembre se adoptó un motor
+corregido y el 14 la meta se re-fijó con él, como habría salido el 1-sep. Fueron tres correcciones
+de medición, no un ajuste para acercarse al real.</p>
+
+<div class="cambios" id="cambios">
+  <div class="cambio">
+    <h3>Antiguo = en mora el día 1, como la vista de asignaciones</h3>
+    <div class="efecto"><b id="e-def">—</b><span>en la meta</span></div>
+    <p>El modelo contaba como antiguo lo que estaba en mora al cierre del mes anterior; la gestión, lo
+    que está en mora el día 1. Con la definición de la gestión, los antiguos de septiembre cuadran con
+    la vista oficial <span id="cuadre">—</span>. El arrastre por DNI queda fuera, como en la vista,
+    porque se cobra en ESPECIALIZADA: está marcado, no borrado, y pesa poco (<span id="e-arr">—</span>).</p>
+  </div>
+  <div class="cambio">
+    <h3>Reenganches dentro de la calibración</h3>
+    <div class="efecto"><b id="e-reeng">—</b><span>en la meta</span></div>
+    <p>Un reenganche es un crédito adicional en la misma línea, no un refinanciamiento: 99.8% de esos
+    cierres tienen un crédito sucesor y 98.6% estaban al día. El filtro que los sacaba miraba hacia
+    adelante: borraba de cada mes pasado a clientes que <em>después</em> recibieron un reenganche (8–11%
+    del saldo de nuevos), buenos pagadores que el día 1 no se distinguen de los demás.</p>
+  </div>
+  <div class="cambio">
+    <h3>La tasa de entrada, medida sobre el saldo que multiplica</h3>
+    <div class="efecto"><b id="e-tasa">—</b><span>en la meta</span></div>
+    <p>La tasa se calculaba dividiendo lo que entra en mora por el saldo de cada cuota el día que vence;
+    la meta la multiplica por el saldo al cierre del mes anterior, el único que se conoce el día 1, que
+    es 13–17% más grande porque todavía no descontó lo que el cliente amortiza en el medio. Dos saldos
+    distintos en la misma cuenta: la tasa pasa de <span id="e-tasa-de">—</span> a <span id="e-tasa-a">—</span>.</p>
+  </div>
+</div>
+
+<div class="tabla-wrap ancha"><table id="t-backtest"></table></div>
+
+<div class="note"><b>Lo que decide es la prueba, no el error de un mes.</b> Las tres correcciones cambian
+quién entra al universo o cómo se mide, así que se aplican aunque el error de algún mes suba. La
+prueba de ocho meses armando la meta igual que el 1-sep muestra qué pasaba antes: con la tasa vieja la
+meta salía <span id="bt-sesgo">—</span> más alta todos los meses. Con la misma prueba de siempre
+(calendario medido, no anclado), el motor anterior daba 4.55% de error medio y el corregido 3.74%, con
+la misma correlación diaria.</div>
+
+<h2>Recupero oficial</h2>
+<p>Se sigue en paralelo: soles efectivamente rebajados del capital, no el saldo completo de quien paga.
+Misma población, mismas correcciones y misma tasa; cambia la curva.</p>
+<div class="tabla-wrap ancha"><table id="t-reb"></table></div>
+<div class="note">Los antiguos de recupero van más atrás que los de capital asegurado (pagan, pero
+menos soles de lo esperado). Parte es conocida: con la ventana fija de calibración, la curva de
+antiguos de recupero ya sobreestimaba en el backtest reciente (+18.1% en junio, +11.4% en julio,
++10.9% en agosto).</div>
+
+<h2>Qué mirar en lo que queda del mes</h2>
+<ul class="mirar">
+  <li><strong>16–17 de septiembre, la prueba de la quincena.</strong> Si el cociente de nuevos sube
+  después del 15, la brecha era de arranque; si se queda, es de conversión.</li>
+  <li><strong>La tasa de la meta es plana, la entrada en mora no.</strong> Históricamente entra más
+  saldo en los primeros días del mes: <span id="m-tasa">—</span>. Por eso la trayectoria de nuevos corre algo
+  baja al principio y alta al final: el cociente de hoy está algo favorecido y puede bajar en la última
+  semana sin que la gestión haya empeorado.</li>
+  <li><strong>Enero–marzo 2026 fue un pico.</strong> La curva lo incluye; toda comparación contra ese
+  trimestre exagera cualquier caída.</li>
+</ul>
+
+<footer>
+  <p id="pie">—</p>
+  <p>Meta: <span class="mono">meta_v2.py 202609</span> sobre los insumos del 1-sep
+  (<span class="mono">tarea24_v2_septiembre_al_1.sql</span>). Real: <span class="mono">tarea25_real_v2_septiembre.sql</span>
+  + <span class="mono">seguimiento_v2.py</span>. Backtest: <span class="mono">backtest_tarea25_ancla.py</span>.
+  Puente: <span class="mono">meta_septiembre_v2_dia1.py</span>. Página: <span class="mono">armar_meta_septiembre.py</span>.</p>
+</footer>
+</div>
+
+<div class="tip" id="tip"></div>
+<script>
+const DATOS = /*DATOS*/{"corte":14,"generado":"2026-09-15","tasa":0.206063,"tasa_dias":0.214751,"insumos":{"stock":4864610,"stock_d1":1929285,"calendario":81039601},"meta":{"act":[[1090434,0],[1675872,389586],[1981352,822984],[2216089,1233519],[2377066,1530698],[2475138,1804902],[2573181,2294421],[2674015,2909491],[2765318,3461674],[2833450,3919394],[2900914,4427836],[2958035,4717851],[3002042,4900085],[3050714,5264035],[3108676,5827680],[3163429,6718351],[3201840,7318893],[3232817,7883567],[3265720,8222731],[3295829,8427245],[3326694,8833139],[3350141,9478963],[3377536,10063720],[3399613,10582031],[3423117,11096094],[3446015,11605702],[3462198,11885963],[3481470,12444010],[3506493,13182494],[3529832,13975100]],"reb":[[177998,0],[278435,66511],[331580,138888],[373782,207320],[404480,259711],[424646,307142],[444683,391328],[463452,495541],[481177,592714],[496686,673337],[511686,760425],[522435,815121],[533057,848952],[543060,915013],[555922,1016697],[567576,1174518],[578476,1279529],[587245,1377875],[596674,1442263],[608363,1480860],[617889,1556360],[627659,1671920],[638698,1778510],[650779,1873180],[666062,1968737],[682190,2068129],[699154,2121749],[724886,2229382],[761990,2372351],[821765,2516950]]},"real":{"act":[[1176869,0],[1720596,363508],[2009864,723976],[2272378,1037061],[2386055,1290192],[2413140,1574164],[2548027,1999097],[2642233,2599143],[2740980,3129076],[2823613,3535485],[2872890,3922324],[2902707,4211896],[2916601,4367279],[2947941,4779099]],"reb":[[155452,0],[224654,49730],[261682,106770],[299888,161315],[319744,203999],[326110,243239],[343122,305592],[362432,412129],[375746,496699],[386149,558793],[395017,630478],[401321,682152],[406304,713829],[413300,783888]]},"nuevos":{"dias":[2,14],"tasa":0.206063,"tasa_dias":0.214751,"calendario":33244382,"entro_real":6908523,"entro_esperado":6850432,"activado_real":4779099,"activado_proy":5264035},"v1":{"corte":14,"act":[[1195870,1189913],[2261043,2101049],[3085876,2759277],[3802891,3334877],[4319782,3699759],[4743409,4010816],[5432064,4569498],[6242961,5267101],[6990406,5902528],[7599949,6389039],[8258374,6830228],[8666800,7150301],[8935763,7320767],[9436908,7767604]],"reb":[[199842,157128],[383455,276893],[524835,372939],[648428,465691],[743240,527034],[820209,572757],[942377,652516],[1084626,778678],[1219236,876904],[1331531,949494],[1448967,1030300],[1526191,1088365],[1579556,1125207],[1671776,1203390]],"meta_mes":{"act":20477271,"reb":3928776}},"puente":{"act":[["Publicada el 1-sep (v1)",20477271,2241903,18235368,0.2491],["v1 rearmada con los datos del 1-sep",20497476,2227169,18270308,0.2494],["Antiguo = en mora el día 1, como la vista",19815529,3497231,16318298,0.2436],["Reenganches dentro de la calibración",19467964,3529832,15938132,0.235],["Tasa de entrada sobre el saldo que multiplica",17504932,3529832,13975100,0.2061]],"reb":[["Publicada el 1-sep (v1)",3928776,537381,3391395,0.2491],["v1 rearmada con los datos del 1-sep",3946246,535197,3411050,0.2494],["Antiguo = en mora el día 1, como la vista",3856633,827823,3028809,0.2436],["Reenganches dentro de la calibración",3692262,821765,2870496,0.235],["Tasa de entrada sobre el saldo que multiplica",3338715,821765,2516950,0.2061]]},"arrastre_dentro":{"act":19846681,"reb":3863937},"backtest":{"act":{"anc":[{"periodo":"202601","proy":13670688,"real":12390435,"err":10.33,"err_stock":-1.76,"err_nuevos":12.22,"corr":0.885,"r12":0.944},{"periodo":"202602","proy":12554799,"real":12624992,"err":-0.56,"err_stock":-3.83,"err_nuevos":0.06,"corr":0.723,"r12":1.0},{"periodo":"202603","proy":17263056,"real":15573933,"err":10.85,"err_stock":3.71,"err_nuevos":13.06,"corr":0.887,"r12":0.932},{"periodo":"202604","proy":15632754,"real":14501366,"err":7.8,"err_stock":5.17,"err_nuevos":8.22,"corr":0.812,"r12":0.947},{"periodo":"202605","proy":17575920,"real":15887938,"err":10.62,"err_stock":1.63,"err_nuevos":12.62,"corr":0.849,"r12":0.935},{"periodo":"202606","proy":16759692,"real":14189338,"err":18.11,"err_stock":6.1,"err_nuevos":20.54,"corr":0.85,"r12":0.854},{"periodo":"202607","proy":20583253,"real":17426995,"err":18.11,"err_stock":0.31,"err_nuevos":23.48,"corr":0.844,"r12":0.906},{"periodo":"202608","proy":18642980,"real":16706801,"err":11.59,"err_stock":0.46,"err_nuevos":13.87,"corr":0.756,"r12":0.891}],"fix":[{"periodo":"202601","proy":12109228,"real":12390435,"err":-2.27,"err_stock":-1.76,"err_nuevos":-2.35,"corr":0.885,"r12":1.042},{"periodo":"202602","proy":11188754,"real":12624992,"err":-11.38,"err_stock":-3.83,"err_nuevos":-12.79,"corr":0.723,"r12":1.101},{"periodo":"202603","proy":15562343,"real":15573933,"err":-0.07,"err_stock":3.71,"err_nuevos":-1.25,"corr":0.901,"r12":1.003},{"periodo":"202604","proy":13924458,"real":14501366,"err":-3.98,"err_stock":5.17,"err_nuevos":-5.43,"corr":0.811,"r12":1.043},{"periodo":"202605","proy":15744623,"real":15887938,"err":-0.9,"err_stock":1.63,"err_nuevos":-1.46,"corr":0.825,"r12":1.019},{"periodo":"202606","proy":14981825,"real":14189338,"err":5.59,"err_stock":6.1,"err_nuevos":5.48,"corr":0.865,"r12":0.939},{"periodo":"202607","proy":18538274,"real":17426995,"err":6.38,"err_stock":0.31,"err_nuevos":8.21,"corr":0.855,"r12":0.977},{"periodo":"202608","proy":16698745,"real":16706801,"err":-0.05,"err_stock":0.46,"err_nuevos":-0.15,"corr":0.753,"r12":0.975}]},"reb":{"anc":[{"periodo":"202601","proy":2636332,"real":2381979,"err":10.68,"err_stock":-0.74,"err_nuevos":12.93,"corr":0.875,"r12":0.93},{"periodo":"202602","proy":2380287,"real":2314951,"err":2.82,"err_stock":-1.25,"err_nuevos":3.73,"corr":0.745,"r12":0.914},{"periodo":"202603","proy":3457576,"real":3178713,"err":8.77,"err_stock":6.27,"err_nuevos":9.84,"corr":0.917,"r12":0.874},{"periodo":"202604","proy":2967225,"real":2720838,"err":9.06,"err_stock":9.84,"err_nuevos":8.9,"corr":0.817,"r12":0.918},{"periodo":"202605","proy":3388695,"real":3032458,"err":11.75,"err_stock":11.31,"err_nuevos":11.87,"corr":0.827,"r12":0.875},{"periodo":"202606","proy":3167273,"real":2609455,"err":21.38,"err_stock":18.07,"err_nuevos":22.16,"corr":0.816,"r12":0.814},{"periodo":"202607","proy":3997134,"real":3302077,"err":21.05,"err_stock":11.35,"err_nuevos":24.92,"corr":0.814,"r12":0.834},{"periodo":"202608","proy":3534425,"real":3068877,"err":15.17,"err_stock":10.88,"err_nuevos":16.29,"corr":0.724,"r12":0.845}],"fix":[{"periodo":"202601","proy":2344619,"real":2381979,"err":-1.57,"err_stock":-0.74,"err_nuevos":-1.73,"corr":0.871,"r12":1.028},{"periodo":"202602","proy":2128219,"real":2314951,"err":-8.07,"err_stock":-1.25,"err_nuevos":-9.59,"corr":0.744,"r12":1.006},{"periodo":"202603","proy":3148281,"real":3178713,"err":-0.96,"err_stock":6.27,"err_nuevos":-4.06,"corr":0.911,"r12":0.938},{"periodo":"202604","proy":2656158,"real":2720838,"err":-2.38,"err_stock":9.84,"err_nuevos":-4.84,"corr":0.815,"r12":1.008},{"periodo":"202605","proy":3056971,"real":3032458,"err":0.81,"err_stock":11.31,"err_nuevos":-2.12,"corr":0.786,"r12":0.951},{"periodo":"202606","proy":2845525,"real":2609455,"err":9.05,"err_stock":18.07,"err_nuevos":6.9,"corr":0.824,"r12":0.894},{"periodo":"202607","proy":3632514,"real":3302077,"err":10.01,"err_stock":11.35,"err_nuevos":9.47,"corr":0.816,"r12":0.896},{"periodo":"202608","proy":3186127,"real":3068877,"err":3.82,"err_stock":10.88,"err_nuevos":1.97,"corr":0.721,"r12":0.923}]}},"cuadre":{"antes_pct":-23.9,"v2":{"creditos":2837,"saldo":4930217},"vista":{"creditos":2790,"saldo":4904773},"identicos":[2749,2751]}}/*/DATOS*/;
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const tip = $("tip");
+const S = n => "S/" + Math.round(n).toLocaleString("es-PE");
+const M = n => "S/" + (n / 1e6).toFixed(2) + "M";
+const P = (n, d = 1) => n.toFixed(d) + "%";
+const SG = n => (n >= 0 ? "+" : "−") + Math.abs(n).toFixed(1) + "%";
+const SS = n => (n >= 0 ? "+" : "−") + S(Math.abs(n));
+const R = n => n.toFixed(3);
+const el = (t, a = {}) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const DOW = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+const dia = d => DOW[new Date(2026, 8, d).getDay()] + " " + d + "-sep";
+const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const periodo = p => MES[+p.slice(4) - 1] + " " + p.slice(0, 4);
+
+const D = DATOS, N = D.corte;
+const serie = m => ({
+  meta: D.meta[m].map(r => ({ ps: r[0], pn: r[1], pt: r[0] + r[1] })),
+  real: D.real[m].map(r => ({ rs: r[0], rn: r[1], rt: r[0] + r[1] })),
+});
+const A = serie("act"), B = serie("reb");
+const metaMes = s => s.meta[s.meta.length - 1].pt;
+const a = { m: A.meta[N - 1], r: A.real[N - 1] }, b = { m: B.meta[N - 1], r: B.real[N - 1] };
+const coc = a.r.rt / a.m.pt;
+
+/* ---------------- KPIs ---------------- */
+const gen = D.generado.split("-");
+$("k-meta").textContent = M(metaMes(A));
+$("k-meta-n").textContent = `capital asegurado · antiguos ${M(A.meta[29].ps)} + nuevos ${M(A.meta[29].pn)}`;
+$("k-real-k").textContent = `Real al ${N}-sep`;
+$("k-real").textContent = M(a.r.rt);
+$("k-real-n").textContent = `${P(100 * a.r.rt / metaMes(A))} de la meta; la trayectoria esperaba ${P(100 * a.m.pt / metaMes(A))} a esta fecha`;
+$("k-coc").textContent = R(coc);
+$("k-coc").parentElement.classList.toggle("warn", coc < 1);
+$("k-coc-n").textContent = `${SG(100 * (coc - 1))} · antiguos ${R(a.r.rs / a.m.ps)} · nuevos ${R(a.r.rn / a.m.pn)}`;
+$("k-reb").textContent = R(b.r.rt / b.m.pt);
+$("k-reb").parentElement.classList.toggle("warn", b.r.rt < b.m.pt);
+$("k-reb-n").textContent = `real ÷ trayectoria · ${M(b.r.rt)} de una meta de ${M(metaMes(B))}`;
+$("corte").textContent = `Datos al ${N} de septiembre de 2026, último día completo · actualizado el ${+gen[2]}-${MES[+gen[1] - 1]}`;
+
+/* ---------------- graficos ---------------- */
+function grafico(hostId, o) {
+  const W = 1000, H = o.H, ml = 58, mr = 124, mt = 16, mb = 30;
+  const x = d => ml + (d - 1) / 29 * (W - ml - mr);
+  const y = v => mt + (1 - (v - o.y0) / (o.y1 - o.y0)) * (H - mt - mb);
+  const g = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img", "aria-label": o.alt });
+  const txt = (s, at, st = "fill:var(--faint)") => {
+    const t = el("text", { "font-family": "IBM Plex Mono, monospace", "font-size": 11, style: st, ...at });
+    t.textContent = s; g.appendChild(t); return t;
+  };
+  g.appendChild(el("rect", { x: x(14.5), y: mt, width: x(16.5) - x(14.5), height: H - mt - mb, style: "fill:var(--sunk)" }));
+  txt("quincena", { x: (x(14.5) + x(16.5)) / 2, y: mt + 11, "text-anchor": "middle", "font-size": 10 });
+  o.ticks.forEach(v => {
+    const ref = o.ref !== undefined && Math.abs(v - o.ref) < 1e-9;
+    g.appendChild(el("line", { x1: ml, x2: W - mr, y1: y(v), y2: y(v),
+      style: `stroke:var(${ref ? "--hair-2" : "--hair"});stroke-width:${ref ? 1.5 : 1}` }));
+    txt(o.fmt(v), { x: ml - 8, y: y(v) + 4, "text-anchor": "end" });
+  });
+  [1, 5, 10, 15, 20, 25, 30].forEach(d => txt(d, { x: x(d), y: H - 9, "text-anchor": "middle" }));
+  if (o.rango) {
+    const { d, lo, hi, lbl } = o.rango;
+    g.appendChild(el("rect", { x: x(d) - 5, y: y(hi), width: 10, height: y(lo) - y(hi), rx: 5, style: "fill:var(--hair-2);opacity:.7" }));
+    txt(lbl, { x: x(d), y: y(hi) - 7, "text-anchor": "middle", "font-size": 10 });
+  }
+  const etiquetas = [];
+  o.series.forEach(s => {
+    const pts = s.pts.map((v, i) => ({ d: i + 1, v })).filter(p => p.v != null);
+    const linea = pts.map((p, i) => (i ? "L" : "M") + x(p.d).toFixed(1) + " " + y(p.v).toFixed(1)).join(" ");
+    if (s.area) g.appendChild(el("path", { d: linea + ` L${x(pts[pts.length - 1].d)} ${y(o.y0)} L${x(pts[0].d)} ${y(o.y0)} Z`,
+      style: `fill:var(${s.color});opacity:.1` }));
+    g.appendChild(el("path", { d: linea, style: `fill:none;stroke:var(${s.color});stroke-width:2;stroke-linejoin:round;stroke-linecap:round` }));
+    (s.marcas || []).forEach(d => g.appendChild(el("circle", { cx: x(d), cy: y(s.pts[d - 1]), r: 4,
+      style: `fill:var(--surface);stroke:var(${s.color});stroke-width:2` })));
+    const u = pts[pts.length - 1];
+    g.appendChild(el("circle", { cx: x(u.d), cy: y(u.v), r: 4.5, style: `fill:var(${s.color});stroke:var(--surface);stroke-width:2` }));
+    etiquetas.push({ x: x(u.d) + 10, y: y(u.v) + 4 + (s.dy || 0), t: s.lbl(u.v), c: s.color });
+  });
+  etiquetas.sort((p, q) => p.y - q.y).forEach((e, i, arr) => {
+    if (i && e.x === arr[i - 1].x && e.y - arr[i - 1].y < 14) e.y = arr[i - 1].y + 14;
+    txt(e.t, { x: e.x, y: e.y, "font-size": 11.5, "font-weight": 600, "font-family": "IBM Plex Sans, sans-serif" }, "fill:var(--ink)");
+  });
+  const guia = el("line", { y1: mt, y2: H - mb, style: "stroke:var(--faint);stroke-width:1;opacity:0" });
+  g.appendChild(guia);
+  const paso = x(2) - x(1);
+  for (let d = 1; d <= 30; d++) {
+    const r = el("rect", { x: x(d) - paso / 2, y: mt, width: paso, height: H - mt - mb, fill: "transparent" });
+    r.addEventListener("pointerenter", () => {
+      guia.setAttribute("x1", x(d)); guia.setAttribute("x2", x(d)); guia.style.opacity = .6;
+      tip.textContent = o.tip(d); tip.classList.add("on");
+    });
+    r.addEventListener("pointermove", e => {
+      tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px";
+      tip.style.top = Math.max(8, e.clientY - tip.offsetHeight - 12) + "px";
+    });
+    r.addEventListener("pointerleave", () => { guia.style.opacity = 0; tip.classList.remove("on"); });
+    g.appendChild(r);
+  }
+  $(hostId).appendChild(g);
+}
+const clave = (c, t) => `<span><i style="background:var(${c})"></i>${t}</span>`;
+
+const topeT = Math.ceil(metaMes(A) / 3e6) * 3e6;
+grafico("ch-tray", {
+  H: 320, y0: 0, y1: topeT, ticks: Array.from({ length: topeT / 3e6 + 1 }, (_, i) => i * 3e6),
+  fmt: v => v ? "S/" + v / 1e6 + "M" : "0", alt: "Trayectoria de la meta y real acumulado de capital asegurado",
+  series: [
+    { pts: A.meta.map(r => r.pt), color: "--meta", lbl: v => "Meta " + M(v), marcas: [N] },
+    { pts: A.real.map(r => r.rt), color: "--asegurado", area: true, dy: 16, lbl: v => "Real " + M(v) },
+  ],
+  tip: d => d <= N
+    ? `${dia(d)}\ntrayectoria  ${S(A.meta[d - 1].pt)}\nreal         ${S(A.real[d - 1].rt)}\nreal ÷ tray. ${R(A.real[d - 1].rt / A.meta[d - 1].pt)}`
+    : `${dia(d)}\ntrayectoria  ${S(A.meta[d - 1].pt)}`,
+});
+$("lg-tray").innerHTML = clave("--meta", "Trayectoria de la meta") + clave("--asegurado", "Real");
+let capT = `Al ${N}-sep el real lleva ${S(a.r.rt)} y la trayectoria esperaba ${S(a.m.pt)} (el círculo vacío).`;
+if (N >= 12) {
+  const c12 = A.real[11].rt / A.meta[11].pt;
+  capT += ` Referencia, no meta: en los ocho meses del backtest el cierre quedó a menos de 4 puntos del cociente del día 12; con el de septiembre (${R(c12)}), eso da un cierre entre ${M((c12 - .04) * metaMes(A))} y ${M((c12 + .04) * metaMes(A))}.`;
+}
+$("cap-tray").textContent = capT;
+
+const cocS = A.real.map((r, i) => r.rt / A.meta[i].pt);
+const cocA = A.real.map((r, i) => r.rs / A.meta[i].ps);
+const cocN = A.real.map((r, i) => A.meta[i].pn > 0 ? r.rn / A.meta[i].pn : null);
+const fix = D.backtest.act.fix, r12 = fix.map(f => f.r12);
+const todos = [...cocS, ...cocA, ...cocN.filter(v => v != null), ...r12];
+const y0 = Math.min(.85, Math.floor((Math.min(...todos) - .02) * 20) / 20);
+const y1 = Math.max(1.1, Math.ceil((Math.max(...todos) + .02) * 20) / 20);
+grafico("ch-coc", {
+  H: 280, y0, y1, ref: 1, ticks: Array.from({ length: Math.round((y1 - y0) * 20) + 1 }, (_, i) => y0 + i * .05),
+  fmt: v => v.toFixed(2), alt: "Real dividido por la trayectoria, total, antiguos y nuevos",
+  rango: { d: 12, lo: Math.min(...r12), hi: Math.max(...r12), lbl: "backtest, día 12" },
+  series: [
+    { pts: cocA, color: "--antiguos", lbl: v => "Antiguos " + R(v) },
+    { pts: cocN, color: "--nuevos", lbl: v => "Nuevos " + R(v) },
+    { pts: cocS, color: "--ink-2", lbl: v => "Total " + R(v) },
+  ],
+  tip: d => d <= N
+    ? `${dia(d)}\ntotal     ${R(cocS[d - 1])}\nantiguos  ${R(cocA[d - 1])}\nnuevos    ${cocN[d - 1] == null ? "—" : R(cocN[d - 1])}`
+    : `${dia(d)}\n(sin datos todavía)`,
+});
+$("lg-coc").innerHTML = clave("--ink-2", "Total") + clave("--antiguos", "Antiguos") + clave("--nuevos", "Nuevos");
+
+/* ---------------- brecha de nuevos ---------------- */
+const nv = D.nuevos;
+const ve = nv.entro_real / nv.entro_esperado - 1, tReal = nv.entro_real / nv.calendario;
+$("p-e-real").textContent = S(nv.entro_real);
+$("p-e-esp").textContent = S(nv.entro_esperado);
+$("p-e-v").textContent = SG(100 * ve);
+$("p-e-v").className = "veredicto " + (ve > -.02 ? "ok" : "mal");
+$("p-e-n").textContent = `Días ${nv.dias[0]} a ${nv.dias[1]}. Entró ${P(100 * tReal, 2)} del calendario; la meta usa una tasa plana de ${P(100 * nv.tasa, 2)}. Contra lo que suele entrar en estos mismos días del mes (${P(100 * nv.tasa_dias, 2)}), ${SG(100 * (tReal / nv.tasa_dias - 1))}.`;
+const ar = nv.activado_real / nv.entro_real, ap = nv.activado_proy / nv.entro_esperado, va = ar / ap - 1;
+$("p-a-real").textContent = "S/" + ar.toFixed(3);
+$("p-a-esp").textContent = "S/" + ap.toFixed(3);
+$("p-a-v").textContent = SG(100 * va);
+$("p-a-v").className = "veredicto " + (va > -.02 ? "ok" : "mal");
+$("m-tasa").textContent = `${P(100 * nv.tasa_dias, 2)} en los días ${nv.dias[0]} a ${nv.dias[1]}, contra ${P(100 * nv.tasa, 2)} del mes completo`;
+
+/* ---------------- tablas ---------------- */
+function tabla(id, cap, head, filas, pie) {
+  const fila = (c, cls) => `<tr${cls ? ` class="${cls}"` : ""}>${c.map((v, i) => `<td class="${i ? "n" : "l"}">${v}</td>`).join("")}</tr>`;
+  $(id).innerHTML = `<caption>${cap}</caption><thead><tr>${head.map((h, i) => `<th${i ? "" : ' class="l"'}>${h}</th>`).join("")}</tr></thead>`
+    + `<tbody>${filas.map(f => fila(f.c, f.cls)).join("")}</tbody>` + (pie ? `<tfoot>${fila(pie)}</tfoot>` : "");
+}
+tabla("t-diaria", `Capital asegurado, día por día<span class="cap-n">Acumulados contra la trayectoria de la meta. Los lunes casi no hay nuevos: nadie entra en mora un lunes, porque ninguna cuota vence domingo.</span>`,
+  ["Día", "Trayectoria", "Real", "Real ÷ tray.", "Esperado del día", "Real del día", "Antiguos", "Nuevos"],
+  A.real.map((r, i) => {
+    const m = A.meta[i], pm = i ? A.meta[i - 1].pt : 0, pr = i ? A.real[i - 1].rt : 0;
+    return { cls: i === N - 1 ? "hoy" : "", c: [dia(i + 1), S(m.pt), S(r.rt), R(r.rt / m.pt), S(m.pt - pm), S(r.rt - pr),
+      R(r.rs / m.ps), m.pn > 0 ? R(r.rn / m.pn) : "—"] };
+  }));
+
+const v = D.v1, k = v.corte - 1, [pv, rv] = v.act[k];
+$("nota-v1").innerHTML = `<b>Contra la meta publicada el 1-sep (referencia).</b> Al ${v.corte}-sep, el real medido con la definición anterior es ${S(rv)} contra ${S(pv)} de aquella trayectoria: ${R(rv / pv)} (${SG(100 * (rv / pv - 1))}). La diferencia con el control de arriba está en la meta (${M(pv)} contra ${M(A.meta[k].pt)} a esta fecha), no en el real (${M(rv)} con la definición anterior, ${M(A.real[k].rt)} con la vigente).`;
+
+const ins = D.insumos, entra = ins.calendario * D.tasa, fin = A.meta[29];
+const eslabon = (lbl, amt, sub, cls = "") => `<div class="eslabon ${cls}"><div class="row"><span class="lbl">${lbl}</span><span class="amt">${amt}</span></div>${sub ? `<div class="sub">${sub}</div>` : ""}</div>`;
+$("cad-a").innerHTML = `<div class="who">Antiguos</div>`
+  + eslabon("En mora el día 1", S(ins.stock), `de eso, ${S(ins.stock_d1)} entró en mora ese mismo día`)
+  + `<div class="op">× curva de antiguos (tramo × avance)</div>`
+  + eslabon("Asegurado proyectado", S(fin.ps), `${P(100 * fin.ps / ins.stock)} del saldo del día 1`, "fin");
+$("cad-n").innerHTML = `<div class="who">Nuevos</div>`
+  + eslabon("Calendario del mes", S(ins.calendario), "vence del 1 al 29 y entra del 2 al 30; saldo al cierre de agosto")
+  + `<div class="op">× tasa de entrada ${P(100 * D.tasa, 2)}</div>`
+  + eslabon("Entra en mora", S(entra), "lo que la meta espera")
+  + `<div class="op">× curva de nuevos (avance × día de semana)</div>`
+  + eslabon("Asegurado proyectado", S(fin.pn), `${P(100 * fin.pn / entra)} de lo que entra`, "fin");
+
+const pu = D.puente.act, pasos = [pu[0], ...pu.slice(2)];
+tabla("t-puente", `De la meta publicada a la vigente<span class="cap-n">Cada fila suma una corrección, en este orden; el cambio es contra la fila anterior. La primera incluye también +S/20,205 (+0.1%) de reconstruir los datos tal como se leían el 1-sep.</span>`,
+  ["Paso", "Meta", "Cambio", "Antiguos", "Nuevos", "Tasa de entrada"],
+  pasos.map((p, i) => ({ c: [p[0], S(p[1]), i ? `${SS(p[1] - pasos[i - 1][1])} (${SG(100 * (p[1] / pasos[i - 1][1] - 1))})` : "", S(p[2]), S(p[3]), P(100 * p[4], 2)] })),
+  ["Vigente", S(pu[4][1]), SG(100 * (pu[4][1] / pu[0][1] - 1)), S(pu[4][2]), S(pu[4][3]), P(100 * pu[4][4], 2)]);
+const efecto = (id, j) => { $(id).textContent = `${SS(pasos[j][1] - pasos[j - 1][1])} (${SG(100 * (pasos[j][1] / pasos[j - 1][1] - 1))})`; };
+efecto("e-def", 1); efecto("e-reeng", 2); efecto("e-tasa", 3);
+$("e-arr").textContent = `${S(D.arrastre_dentro.act - pu[2][1])} de la meta`;
+$("e-tasa-de").textContent = P(100 * pu[3][4], 2);
+$("e-tasa-a").textContent = P(100 * pu[4][4], 2);
+const cu = D.cuadre;
+$("cuadre").textContent = `al ${SG(100 * (cu.v2.saldo / cu.vista.saldo - 1))} en saldo (${cu.v2.creditos.toLocaleString("es-PE")} créditos contra ${cu.vista.creditos.toLocaleString("es-PE")} en la vista); antes quedaban en ${SG(cu.antes_pct)}. En ${cu.identicos[0].toLocaleString("es-PE")} de los ${cu.identicos[1].toLocaleString("es-PE")} créditos que están en los dos lados, el monto coincide al céntimo`;
+
+const anc = D.backtest.act.anc, media = (xs, f) => xs.reduce((s, r) => s + f(r), 0) / xs.length;
+tabla("t-backtest", `La prueba: ocho meses armando la meta como el 1-sep<span class="cap-n">Error = meta ÷ real − 1: positivo es una meta por encima de lo que pasó. La correlación diaria mide si el día a día proyectado sigue la forma del real; es la métrica que decide sobre la forma, porque el cierre de un solo mes es mucho más ruidoso.</span>`,
+  ["Mes", "Meta, motor corregido", "Real", "Error", "Correlación diaria", "Error con la tasa vieja"],
+  fix.map((f, i) => ({ c: [periodo(f.periodo), S(f.proy), S(f.real), SG(f.err), f.corr.toFixed(3), SG(anc[i].err)] })),
+  ["Promedio, en magnitud", "", "", P(media(fix, r => Math.abs(r.err)), 2), media(fix, r => r.corr).toFixed(3), P(media(anc, r => Math.abs(r.err)), 2)]);
+const alza = fix.map((f, i) => 100 * (anc[i].proy / f.proy - 1));
+$("bt-sesgo").textContent = `entre ${P(Math.min(...alza))} y ${P(Math.max(...alza))}`;
+
+const vr = D.v1.reb[k];
+tabla("t-reb", `Recupero oficial al ${N}-sep<span class="cap-n">Soles rebajados del capital, contra la trayectoria de la meta de recupero.</span>`,
+  ["", "Meta del mes", `Trayectoria al ${N}`, `Real al ${N}`, "Real ÷ tray."],
+  [
+    { c: ["Total", S(metaMes(B)), S(b.m.pt), S(b.r.rt), R(b.r.rt / b.m.pt)] },
+    { c: ["Antiguos", S(B.meta[29].ps), S(b.m.ps), S(b.r.rs), R(b.r.rs / b.m.ps)] },
+    { c: ["Nuevos", S(B.meta[29].pn), S(b.m.pn), S(b.r.rn), R(b.r.rn / b.m.pn)] },
+  ],
+  [`Referencia: publicada el 1-sep, al ${v.corte}`, S(v.meta_mes.reb), S(vr[0]), S(vr[1]), R(vr[1] / vr[0])]);
+
+$("pie").textContent = `Capital asegurado y recupero oficial, cartera de cobranza temprana (mora 1–30 días), OKA. Meta re-fijada el 14-sep con el motor corregido y los datos del 1-sep: ${S(metaMes(A))} y ${S(metaMes(B))}. Las publicadas el 1-sep con el motor anterior (${S(v.meta_mes.act)} y ${S(v.meta_mes.reb)}) quedan como registro. Real al ${N}-sep.`;
+</script>

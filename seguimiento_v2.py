@@ -125,6 +125,9 @@ def descomposicion(periodo, insumos, s_alfa, entradas, n):
           f"                        {a_proy/e_esp:>8.3f}      {100*((a_real/e_real)/(a_proy/e_esp)-1):+.1f}%")
     print("  (volumen x conversion = brecha de nuevos)")
     print()
+    return {"dias": [2, n], "tasa": p, "tasa_dias": p_dias, "calendario": cal_n,
+            "entro_real": e_real, "entro_esperado": e_esp,
+            "activado_real": a_real, "activado_proy": a_proy}
 
 
 def main(periodo, insumos, real_path, n):
