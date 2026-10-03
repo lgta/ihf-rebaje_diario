@@ -28,6 +28,14 @@ el 13-sep tenía 3 filas más que el 12, contra ~300-400 de crecimiento diario n
 completo es el PENÚLTIMO. Se mide con `tarea24_frescura.sql`. `vw_mambu_loans_hist` (la vista) NO sirve como
 sustituto: solo tiene ~33 fechas puntuales dispersas en 2+ años, no una foto diaria.
 
+**Lo incompleto de la foto del día NO afecta al stock del día 1** (2026-10-01, observación del usuario):
+el 1-oct la foto creció 44 filas en Mambu y 98 en el calendario (contra ~400), pero el stock v2 leído de
+la fila del 1-oct de `calendario_diario` cuadra con la asignación real del 1-oct (que se carga al inicio
+del día): 3,321 créditos en los dos lados, 18 solo nuestros (S/29k) y 15 solo de la asignación (S/8k)
+sobre 3,336 / S/5.91M de TEMPRANA antiguo; el saldo de los compartidos, a S/171
+(`tarea25_stock_octubre_vs_asignacion.sql`). Lo que falta ese día son altas y pagos del propio día, que
+no definen quién amanece en mora. **La meta del mes se puede fijar el día 1.**
+
 ## `dts_okaapi_loans`
 **Grano:** una fila por crédito (no histórico, estado actual). Se usa por `amountfinanced`
 (monto financiado, denominador del avance de amortización), `status`, y `term`.

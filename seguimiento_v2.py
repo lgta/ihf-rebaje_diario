@@ -109,12 +109,27 @@ def descomposicion(periodo, insumos, s_alfa, entradas, n):
     ventana = MV.ventana_meta(periodo)
     p = V.tasa(V.tasa_mensual("v2", MV.ARRASTRE, MV.REENG, ancla=MV.TASA_ANCLADA), *ventana)
     p_dias = V.tasa(V.tasa_mensual("v2", MV.ARRASTRE, MV.REENG, ancla=MV.TASA_ANCLADA, dias=(2, n)), *ventana)
-    cal_n = sum(sum(cal.get(d, {}).values()) for d in range(2, n + 1))
-    e_real, e_esp = sum(entradas.get(d, 0.0) for d in range(2, n + 1)), p * cal_n
     a_real, a_proy = s_alfa[-1]["real_nuevos"], s_alfa[-1]["proy_nuevos"]
     print("=" * 96)
     print(f"DESCOMPOSICION DE LA BRECHA DE NUEVOS (Enfoque alfa), dias 2-{n}")
     print("=" * 96)
+    # VOLUMEN AL DIA DE HOY (2026-10-01, observacion del usuario): quien entra en mora el dia n+1 ya
+    # se sabe al inicio de ese dia -- la fila de calendario_diario del dia en curso cuadra con la
+    # asignacion real (tarea25_stock_octubre_vs_asignacion.sql). Lo incompleto de la foto del dia son
+    # pagos y altas del propio dia, que afectan lo activado, no quien entro. Por eso el volumen se ve
+    # un dia antes que la conversion.
+    h = n + 1 if (n + 1) in entradas else n
+    if h >= 2:
+        cal_h = sum(sum(cal.get(d, {}).values()) for d in range(2, h + 1))
+        eh = sum(entradas.get(d, 0.0) for d in range(2, h + 1))
+        print(f"  VOLUMEN al dia {h} (hoy)      real S/ {eh:>12,.0f}   esperado (calendario x {100*p:.2f}%)"
+              f" S/ {p*cal_h:>12,.0f}   {100*(eh/(p*cal_h)-1):+.1f}%")
+    if n < 2:
+        print("  conversion: todavia no hay un dia completo de nuevos (empiezan el dia 2)")
+        print()
+        return {"dias": [2, n], "tasa": p, "volumen_hasta": h}
+    cal_n = sum(sum(cal.get(d, {}).values()) for d in range(2, n + 1))
+    e_real, e_esp = sum(entradas.get(d, 0.0) for d in range(2, n + 1)), p * cal_n
     print(f"  saldo que ENTRO en mora     real S/ {e_real:>12,.0f}   esperado (calendario x {100*p:.2f}%)"
           f" S/ {e_esp:>12,.0f}   {100*(e_real/e_esp-1):+.1f}%")
     print(f"  tasa realizada {100*e_real/cal_n:.2f}% sobre el calendario anclado; la tasa anclada historica de los"
@@ -127,7 +142,7 @@ def descomposicion(periodo, insumos, s_alfa, entradas, n):
     print()
     return {"dias": [2, n], "tasa": p, "tasa_dias": p_dias, "calendario": cal_n,
             "entro_real": e_real, "entro_esperado": e_esp,
-            "activado_real": a_real, "activado_proy": a_proy}
+            "activado_real": a_real, "activado_proy": a_proy, "volumen_hasta": h}
 
 
 def main(periodo, insumos, real_path, n):

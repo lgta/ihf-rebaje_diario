@@ -1713,6 +1713,34 @@ misma tasa:
   alfa) pero rebaja menos, o sea pagos más chicos que los de la curva (lectura, no verificada
   crédito a crédito).
 
+### Tarea 27 — Seguimiento de la BASE REAL (segundo tipo de seguimiento) — DEFINIDA 2026-10-01, sin construir
+
+Propuesta del usuario (1-oct): dos seguimientos en paralelo.
+1. **Contra la meta** (el que existe, `seguimiento_v2.py`): real contra la meta fijada el día 1, con nuevos =
+   calendario anclado × tasa anclada × curva. Responde: ¿llegamos a la meta?
+2. **De la base real:** el stock, igual (se fija el día 1); los nuevos, las **entradas reales** de cada día con su
+   saldo de entrada (el del día anterior) × las **mismas curvas históricas** (`motor_v2.curvas`), sin tasa.
+   Responde: ¿la gestión asegura lo que históricamente se asegura de lo que realmente le entró?
+
+```
+meta de nuevos --(VOLUMEN)--> esperado con la base real --(EFECTIVIDAD)--> real
+```
+Es más correcto que el "activado por sol que entró" agregado de la descomposición actual, que mezcla el
+momento de entrada (quien entra el día 28 tiene 3 días para activar). Respeta el principio de consistencia:
+la curva de nuevos se calibró sobre el saldo del día anterior a la entrada, el mismo que trae el real.
+
+Pasos:
+1. `tarea25_real_v2.sql`: agregar `avance_band` (misma regla que la matriz: saldo de entrada / amountfinanced)
+   al bloque `real_pob`. El día de semana del vencimiento sale del día de entrada (vencimiento = entrada − 1).
+2. `seguimiento_v2.py`: sección nueva que arme `{dia_entrada: {(banda, dow): saldo_real}}` y lo proyecte con
+   `motor_unificado.proyectar` y las curvas de `motor_v2.curvas(periodo, medida)` — los dos enfoques — hasta el
+   último día completo; el stock, el de la meta. Cuidar que no pise `seguimiento_v2_<periodo>.csv`.
+3. Validar con septiembre (mes completo): cuánto del +3.2% alfa / +13.3% recupero de nuevos fue volumen y cuánto
+   efectividad. Para septiembre, `tarea25_real_v2_septiembre.sql` necesita el mismo cambio.
+4. Sumarlo al artifact de octubre.
+
+**Al cierre de la sesión del 1-oct quedó propuesto sin confirmación del usuario:** confirmar antes de armarlo.
+
 ### Tarea 25 — Ciclo de octubre: la primera meta con el motor v2 — LISTA el 2026-09-13; lo que falta necesita datos de octubre
 
 Motor v2 adoptado (tarea 24) con las dos decisiones del 13-sep a la noche: **reenganches incluidos**
@@ -1737,7 +1765,19 @@ datos_tarea19/real_septiembre.csv` y `python seguimiento_septiembre.py <último 
 argumento; sin él corta en el 12). Al 14-sep, medido el 15: contra la v2, alfa 0.929 (−7.1%) y recupero 0.821; contra la v1, alfa 0.823
 (−17.7%) y recupero 0.720 (−28.0%).
 
-**Desde el 2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
+**HECHO 2026-10-01 (pasos 1, 4 y 5): META DE OCTUBRE FIJADA EL DÍA 1** — S/19,309,495 en capital asegurado
+(stock S/4,345,408 + nuevos S/14,964,087) y S/3,765,371 en recupero (S/1,077,159 + S/2,688,213); tasa anclada
+20.52%. Se pensaba esperar al 2-oct por la foto incompleta del día en curso; el usuario observó que la
+asignación del 1-oct ya está cargada al inicio del día, y el cruce (`tarea25_stock_octubre_vs_asignacion.sql`)
+mostró que el stock ya cuadra con ella (3,321 compartidos; 18 / 15 de diferencia, S/29k / S/8k). Matriz de
+nuevos en `datos_tarea25/v2_matriz_nuevos.csv`, `curvas_v2.MN` y `FOTOS_NUEVOS_HASTA = "20261001"`
+actualizados. **El seguimiento arranca el 2-oct** (observación del usuario): ese día el día 1 ya está completo
+(lo asegurado del stock) y la entrada en mora del día 2 ya se conoce. `seguimiento_v2.py` ahora imprime el
+VOLUMEN hasta el día en curso (n+1), un día antes que la conversión. El seguimiento re-lee el stock del día 1,
+así que hace de control de los insumos: no hace falta re-correr la matriz ni los insumos.
+Septiembre CERRADO: alfa +3.2% (real S/16,962,973), recupero +13.3% (real S/2,945,946); `SEGUIMIENTO.md`.
+
+Texto original del ciclo — **Desde el 2-oct** (la foto del día en curso está incompleta, y el stock v2 se lee de la fila del 1-oct):
 1. **Matriz de nuevos:** `bash scripts/run_athena.sh tarea25_matriz_nuevos.sql > datos_tarea25/v2_matriz_nuevos.csv`
    (ya escrita: fotos hasta el 1-oct, entradas hasta el 30-sep; las de septiembre quedan truncadas y no
    se calibra con ellas). Después, en `curvas_v2.py`: `MN = "datos_tarea25/v2_matriz_nuevos.csv"` y

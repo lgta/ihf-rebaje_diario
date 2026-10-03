@@ -33,8 +33,8 @@ import datetime as dt
 # nuevos, hasta que dia llegan sus fotos: una cohorte necesita 31 dias de seguimiento, y
 # `motor_v2.curvas` se niega a calibrar una ventana que la matriz no cubre.
 MS = "datos_tarea24/v2_matriz_stock.csv"
-MN = "datos_tarea24/v2_matriz_nuevos.csv"
-FOTOS_NUEVOS_HASTA = "20260901"
+MN = "datos_tarea25/v2_matriz_nuevos.csv"
+FOTOS_NUEVOS_HASTA = "20261001"
 # Calendario y tasa con el saldo anclado (tarea25_calendario_tasa.sql). Completa hasta
 # CALENDARIO_HASTA; trae ademas 202609 PARCIAL (entradas hasta el 12-sep) para validar
 # septiembre, y `tasa` se niega a calibrar con un periodo posterior a CALENDARIO_HASTA.

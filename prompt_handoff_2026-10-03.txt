@@ -1,0 +1,139 @@
+PROMPT DE HANDOFF — proyecto REBAJE_DIARIO (meta de recupero, cobranza temprana OKA)
+Escrito 2026-10-03, con lo trabajado en la sesión del 1-oct. Reemplaza a prompt_handoff_2026-09-15.txt.
+Novedades: SEPTIEMBRE CERRADO, META DE OCTUBRE FIJADA EL DÍA 1 (validada contra la asignación real), el
+seguimiento muestra el volumen del día en curso, y una idea nueva del usuario: TAREA 27, el seguimiento de la
+BASE REAL (segundo tipo de seguimiento), definida pero no construida.
+
+====================================================================
+ORDEN DE LECTURA — y nada más
+====================================================================
+1. CLAUDE.md          — reglas de datos y los 4 principios. Sin cambios.
+2. ESTADO.md          — el bloque "2026-10-01" + "La meta vigente" (octubre).
+3. PENDIENTES.md      — TAREA 27 (seguimiento de la base real: qué es y cómo armarlo), TAREA 25 (ciclo de
+                        octubre, con los comandos), TAREA 26 (decisión pendiente). Después 19, 20, 21, 23.
+4. Solo si hace falta: SEGUIMIENTO.md (cierre de septiembre), FUENTES_DATOS.md (la foto del día 1 y la
+   asignación), DECISIONES.md, BUGS.md 25-28, GLOSARIO.md.
+
+====================================================================
+DÓNDE ESTÁ EL PROYECTO
+====================================================================
+SEPTIEMBRE CERRADO (contra la meta v2 re-fijada el 14-sep; error = meta/real - 1):
+    capital asegurado  meta S/17,504,932  real S/16,962,973   +3.2%  (stock +4.9%, nuevos +2.8%, corr 0.952)
+    recupero oficial   meta S/3,338,715   real S/2,945,946   +13.3%  (stock +25.9%, nuevos +9.7%, corr 0.920)
+  Contra la publicada v1 (registro): +20.1% / +32.3%.
+  - La brecha de nuevos era de ARRANQUE: cociente 0.908 al 14 -> 0.973 al cierre; activado por sol que entró
+    -1.2% al cierre (-10% al 14). Entró 1.5% menos saldo de lo esperado.
+  - Lo que queda es el RECUPERO DEL STOCK: los antiguos activan casi lo esperado pero rebajan 20.6% menos.
+    Señal de negocio a explicar (no a ajustar).
+
+OCTUBRE — META FIJADA EL 1-OCT (motor v2), vigente:
+    capital asegurado  S/19,309,495  (stock S/4,345,408 + nuevos S/14,964,087)
+    recupero oficial   S/3,765,371   (stock S/1,077,159 + nuevos S/2,688,213)
+    tasa anclada 20.52%; stock día 1 S/5,933,437 (S/2,433,252 entró el mismo 1-oct: septiembre tiene 30 días);
+    calendario desde el día 2 S/90,384,400.        Serie: datos_tarea25/meta_v2_202610.csv
+  - Se fijó el DÍA 1 y no el 2 (observación del usuario): la asignación del 1-oct se carga al inicio del día y el
+    stock v2 cuadra con ella — 3,321 créditos compartidos (saldo a S/171), 18 solo nuestros (S/29k), 15 solo de
+    la asignación (S/8k), sobre 3,336 / S/5.91M de TEMPRANA antiguo (tarea25_stock_octubre_vs_asignacion.sql).
+    Lo incompleto de la foto del día son pagos y altas del día, no quién amanece en mora.
+  - curvas_v2.MN = datos_tarea25/v2_matriz_nuevos.csv, FOTOS_NUEVOS_HASTA = "20261001".
+
+SEGUIMIENTO DE OCTUBRE (tipo 1, contra la meta): arranca el 2-oct — ese día el día 1 está completo (asegurado
+del stock) y ya se sabe quién entró el día 2. seguimiento_v2.py ahora imprime el VOLUMEN hasta el día en curso
+(n+1), un día antes que la conversión. NO SE CORRIÓ TODAVÍA.
+
+TAREA 27 (idea del usuario, 1-oct) — SEGUIMIENTO DE LA BASE REAL: stock igual que en la meta; nuevos = las
+ENTRADAS REALES de cada día x las mismas curvas históricas (sin tasa). Parte la brecha de nuevos en VOLUMEN
+(meta vs esperado con la base real) y EFECTIVIDAD (esperado con la base real vs real). Más correcto que el
+"activado por sol que entró" agregado, que mezcla el momento de entrada. Falta construirlo (pasos en PENDIENTES).
+
+Git: lo del 1-oct NO está commiteado (el usuario no lo pidió todavía).
+
+====================================================================
+LO QUE SIGUE, EN ORDEN
+====================================================================
+1. SEGUIMIENTO DE OCTUBRE (tipo 1), al último día completo:
+     bash scripts/run_athena.sh tarea25_real_v2.sql > datos_tarea25/real_v2_octubre.csv
+     python seguimiento_v2.py 202610 datos_tarea25/insumos_octubre.csv datos_tarea25/real_v2_octubre.csv <día>
+   Mirar que el stock del día 1 que re-lee coincida con los insumos (hace de control).
+2. TAREA 27: agregar avance_band a real_pob en tarea25_real_v2.sql; sección nueva en seguimiento_v2.py que
+   proyecte las entradas reales con motor_v2.curvas + proyectar (los dos enfoques); validar con septiembre
+   (¿cuánto del +3.2% / +13.3% fue volumen y cuánto efectividad?). Quedó propuesto sin respuesta del
+   usuario: confirmar antes de armarlo.
+3. ARTIFACT «Meta de octubre» (como meta_septiembre.html + un armador), con los dos seguimientos si la tarea 27
+   está lista. Copiar el .html al repo y actualizar ESTADO.md/README.md.
+4. Commit cuando el usuario lo pida.
+5. Pendientes que siguen: decisión de la tarea 26 (riesgo de gestión); feedback de 949ab3c2 (versión 7) y
+   rehacerlo sobre v2; NOVIEMBRE: extender tarea25_calendario_tasa.sql (CALENDARIO_HASTA = "202609") y la matriz
+   de nuevos (fotos hasta el 1-nov) — se puede fijar el 1-nov; tarea 19 (+ el recupero de stock de septiembre);
+   tareas 20, 23, 12.
+
+====================================================================
+TRAMPAS (las nuevas primero)
+====================================================================
+- CORRER UN CONTROL PISA LAS SERIES OFICIALES: meta_v2.py escribe meta_v2_<periodo>.csv junto a los insumos y
+  seguimiento_v2.py escribe seguimiento_v2_<periodo>.csv. Correr `meta_v2.py 202609 ...` con la matriz nueva
+  da S/17,509,399 (+0.03%, fecha valor) y PISA la serie oficial de septiembre (S/17,504,932): si hace falta
+  el control, re-generarla después con la matriz de tarea 24. Mismo cuidado con seguimiento a otro día de corte.
+- La línea «saldo que entró» de seguimiento_septiembre.py (v1) lee entradas solo hasta el 12-sep: no sirve.
+- No usar `cat > archivo` sin entrada en el Bash tool: se queda esperando stdin hasta el timeout.
+- EL RIESGO DE GESTIÓN NO SE RECONSTRUYE DESDE LA CUOTA (41-77% de coincidencia). Y en la tabla de cuotas,
+  "cobranza" y "mora" son el mismo modelo (96% idénticos): elegir entre esos dos no cambia nada.
+- EL PUNTAJE DE RIESGO EXISTE RECIÉN EN LAS CUOTAS QUE VENCEN DESDE JUN-2025 (0% antes). Sirve para una ventana
+  de 12 meses desde 202507, no para la ventana FIJA de stock (202504-202606), que casi no tiene puntaje.
+- LA MATRIZ DE TAREA 26 ESTÁ AL GRANO MES de entrada: no sirve para un walk-forward. Para eso hay que
+  re-correrla al grano fecha_entrada, como las v2.
+- information_schema.columns FALLA en esta base (tabla Delta rota temp_ts_dias_atraso_test_inc): para ver
+  columnas, `select * from <tabla> limit 1`.
+- "ACTIVADO POR SOL QUE ENTRÓ" MIDE VELOCIDAD, NO CONVERSIÓN: entradas de los días 2..N, activado hasta N.
+  Varía S/0.60-0.77 al día 12 entre meses; la conversión a 30 días, en cambio, 91-94%.
+- ENE-MAR 2026 FUE UN PICO: toda comparación contra ese trimestre exagera cualquier caída. Las curvas de las
+  metas de septiembre y octubre lo incluyen en la ventana.
+- LA TASA ANCLADA ES PLANA y la entrada pesa más en los primeros 20 días: la tasa histórica de los días 2-14 es
+  21.48% contra 20.61% del mes. El cociente de nuevos de la primera quincena corre algo favorecido y puede
+  bajar en la última semana sin que la gestión empeore.
+- TASA ANCLADA (~20.5%) ≠ TASA MEDIDA (~23.4%): no compararlas sin convertir, y nunca aplicar la medida sobre
+  el calendario anclado (bug 28, +10.9%).
+- VENTANA DE LA META = [M-13, M-2] (motor_v2.ventana_meta); la del BACKTEST = [M-12, M-1] (curvas_v2.ventana).
+- motor_v2.curvas se niega a calibrar si la matriz de nuevos no cubre la ventana; curvas_v2.tasa, si el
+  calendario no llega. Al extenderlas, actualizar MN / FOTOS_NUEVOS_HASTA y CT / CALENDARIO_HASTA.
+- La foto del día en curso está incompleta: último día completo = el penúltimo (tarea24_frescura.sql). PERO
+  eso afecta pagos y altas del día, NO quién amanece en mora: el stock del día 1 y las entradas del día en
+  curso ya se leen bien (cuadrado contra la asignación del 1-oct). La meta se fija el día 1.
+- Re-leer el calendario prospectivo días después pierde a los COMPLETED: usar el patrón "como el día 1"
+  (tarea24_v2_septiembre_al_1.sql / tarea25_insumos_octubre.sql).
+- REFINANCED en Mambu = REENGANCHE, no refinanciamiento: ignorar las fotos desde f_cierre.
+- LOS CSV NO ESTÁN EN GIT (*.csv en .gitignore): un clon nuevo no trae datos_*/; se regeneran con los .sql.
+- Viejas que siguen: fecha valor (bug 26); la vista referenciada más de ~2 veces agota recursos (bug 27);
+  tipo_mora en minúscula (bug 24); WHERE antes del window (bug 4); ninguna cuota vence domingo y por eso nadie
+  entra en mora un lunes; Mambu se re-expresa -0.3% a -0.8% para días pasados.
+
+====================================================================
+ARCHIVOS CLAVE
+====================================================================
+motor_v2.py, meta_v2.py, curvas_v2.py                    motor adoptado, meta del mes, matrices
+tarea25_real_v2_septiembre.sql + seguimiento_v2.py       seguimiento diario de septiembre contra la meta v2
+armar_meta_septiembre.py + meta_septiembre.html          artifact «Meta de septiembre» (se refresca cada día)
+tarea25_matriz_nuevos.sql, tarea25_insumos_octubre.sql   octubre: CORRIDAS el 1-oct (meta fijada)
+tarea25_stock_octubre_vs_asignacion.sql                  stock v2 del día 1 contra la asignación real
+tarea25_real_v2.sql + seguimiento_v2.py 202610           seguimiento de octubre (tipo 1, contra la meta)
+tarea25_calendario_tasa.sql                              calendario y tasa con el saldo anclado
+backtest_tarea25_ancla.py                                backtest de 8 meses (med/anc/fix/fixt/ctl)
+tarea26_riesgo_matriz_{nuevos,stock}.sql                 matrices v2 + riesgo (evaluación, no producción)
+tarea26_riesgo_evaluacion.py + riesgo_cobranza.html      evaluación del riesgo y su artifact
+analisis_tarea26_riesgo_cobranza.md                      qué riesgo se evaluó, la tabla de gestión y los límites
+tarea19_real_septiembre.sql + seguimiento_septiembre.py  seguimiento contra la publicada v1 (referencia)
+asignado_a_asegurado.html                                artifact 949ab3c2 (versión 7, feedback pendiente)
+
+====================================================================
+CONVENCIONES DE TRABAJO
+====================================================================
+- El usuario controla commit y push: solo cuando lo pide. Se pushea a origin (rebaje_diario es viejo).
+- Las decisiones de adopción son suyas: medir y recomendar con el backtest corrido.
+- Cuando pide una evaluación, es una evaluación: no tocar el motor ni las metas.
+- Ante una variable del negocio, verificar con datos cómo la asigna la gestión antes de calibrar con ella.
+- Prefiere FLAG antes que borrar (arrastre por DNI, reenganches).
+- Antes de presentar algo como hallazgo nuevo, buscarlo en BUGS.md y PENDIENTES.md.
+- Artifacts vigentes: NsXqSFvWyeugGi9q95kvGU (📍 Meta de septiembre, se refresca cada día),
+  B2jGBzDFD5nb5vxTaFBKKt (🌡️ Riesgo de cobranza en las curvas), 949ab3c2 (De asignado a asegurado),
+  d4140b13 (Capital asegurado), f80d3761 (Proyectado vs. Real). Al publicar, copiar el .html al repo y
+  actualizar ESTADO.md y README.md; para actualizar uno existente, pasar url=.

@@ -12,7 +12,9 @@ CONTROL: `python meta_v2.py 202609 datos_tarea24/v2_septiembre_al_1.csv` da la m
 al 1-sep con el motor adoptado (reenganches incluidos, tasa anclada): S/17,504,932 alfa y
 S/3,338,715 recupero, la fila de referencia de `meta_septiembre_v2_dia1.py`. Con REENG y
 TASA_ANCLADA en False da la de antes de esas dos decisiones (S/19,815,529 con la matriz de
-calendario de tarea 25; S/19,814,433 con la de tarea 24).
+calendario de tarea 25; S/19,814,433 con la de tarea 24). Ese control vale con la matriz de nuevos de
+tarea 24 (fotos hasta el 1-sep); con la de tarea 25 (fotos hasta el 1-oct, vigente desde el 1-oct) da
+S/17,509,399 / S/3,341,199 (+0.03%): fotos de septiembre re-expresadas por fecha valor (bug 26).
 """
 import csv
 import os

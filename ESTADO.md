@@ -6,13 +6,34 @@
 > `DECISIONES.md`. **`plan_analisis.md` cubre solo hasta julio 2026** — desde agosto el
 > historial cronológico vive en los bloques fechados de este archivo, no allá.
 
-Última actualización: 2026-09-15 (tarea 26: el riesgo de cobranza corta el rebaje, evaluado sin tocar el modelo; artifact nuevo «Meta de septiembre»: recalibración, meta y control al 14-sep, 0.929 de la trayectoria v2). Antes, 2026-09-14: meta de septiembre re-fijada con v2 por decisión del usuario; tarea 19: la caída de activación es sobre todo menos entradas; 949ab3c2 corregido.
+Última actualización: 2026-10-03 (contexto de la sesión del 1-oct: cierre de septiembre, meta de octubre fijada el día 1, tarea 27 definida). Antes, 2026-09-15 (tarea 26: el riesgo de cobranza corta el rebaje, evaluado sin tocar el modelo; artifact nuevo «Meta de septiembre»: recalibración, meta y control al 14-sep, 0.929 de la trayectoria v2). Antes, 2026-09-14: meta de septiembre re-fijada con v2 por decisión del usuario; tarea 19: la caída de activación es sobre todo menos entradas; 949ab3c2 corregido.
 
 > **PARA ARRANCAR UNA SESIÓN NUEVA:** el prompt de handoff vigente es
-> [`prompt_handoff_2026-09-15.txt`](prompt_handoff_2026-09-15.txt) — reemplaza al del 2026-09-13. Después:
-> los bloques de abajo + "La meta vigente", y `PENDIENTES.md` **tarea 25** (seguimiento de septiembre y ciclo
-> de octubre, la primera meta v2: lista, se corre desde el 2-oct), **tarea 26** (riesgo de cobranza: evaluado,
-> con una decisión pendiente), **tarea 24** (v2 adoptado y validado) y **tareas 19, 20, 21 y 23**.
+> [`prompt_handoff_2026-10-03.txt`](prompt_handoff_2026-10-03.txt) — reemplaza al del 2026-09-15. Después:
+> el bloque "2026-10-01" + "La meta vigente", y `PENDIENTES.md` **tarea 27** (seguimiento de la base real,
+> definida y sin construir), **tarea 25** (ciclo de octubre: meta fijada, seguimiento diario desde el 2-oct),
+> **tarea 26** (decisión pendiente) y **tareas 19, 20, 21 y 23**.
+
+> **2026-10-01 — SEPTIEMBRE CERRADO Y META DE OCTUBRE FIJADA EL DÍA 1.**
+>
+> **Cierre de septiembre contra la meta v2:** capital asegurado real **S/16,962,973 contra S/17,504,932 (+3.2%**;
+> stock +4.9%, nuevos +2.8%, corr. diaria 0.952). Recupero real **S/2,945,946 contra S/3,338,715 (+13.3%**; stock
+> +25.9%, nuevos +9.7%). La brecha de nuevos era de ARRANQUE: el cociente pasó de 0.908 al 14 a 0.973 al cierre, y el
+> activado por sol que entró cerró −1.2% (−10% al 14). Lo que queda es el recupero del STOCK: los antiguos activan
+> casi lo esperado pero rebajan 20.6% menos. Contra la v1 publicada: +20.1% / +32.3% (registro). `SEGUIMIENTO.md`.
+>
+> **Meta de octubre (motor v2): S/19,309,495 en capital asegurado** (stock S/4,345,408 + nuevos S/14,964,087) **y
+> S/3,765,371 en recupero** (S/1,077,159 + S/2,688,213); tasa anclada 20.52%; stock el día 1 S/5,933,437 (S/2,433,252
+> entró el mismo 1-oct: septiembre tiene 30 días), calendario desde el día 2 S/90,384,400. Serie diaria en
+> `datos_tarea25/meta_v2_202610.csv`. **Se fijó el día 1, no el 2:** el usuario observó que la asignación del 1-oct
+> ya está cargada al inicio del día, y el stock cuadra con ella (3,321 créditos compartidos, 18 / 15 de diferencia;
+> `tarea25_stock_octubre_vs_asignacion.sql`, `FUENTES_DATOS.md`). Falta: seguimiento diario DESDE EL 2-OCT (día 1
+> completo + volumen que entró el día 2; `seguimiento_v2.py` muestra el volumen hasta el día en curso) y el
+> artifact de octubre (tarea 25). **Al 3-oct el seguimiento no se corrió todavía.**
+>
+> **TAREA 27 (idea del usuario): un SEGUNDO TIPO DE SEGUIMIENTO, el de la base real.** Stock igual que contra la
+> meta; nuevos = las entradas reales de cada día por las curvas históricas. Parte la brecha de nuevos en volumen
+> y efectividad (`PENDIENTES.md` tarea 27). Lo del 1-oct **no está commiteado**.
 
 > **2026-09-15 (tarde) — TAREA 26: EL RIESGO DE COBRANZA CORTA EL REBAJE. Evaluación pedida por el usuario
 > ("no modifiques técnicas, esto es solo una evaluación"): no se tocó el motor, las curvas ni las metas.** Variable:
@@ -945,7 +966,14 @@
 > error más alto medido hasta ahora en este enfoque, ver nota de cautela abajo). Fuente:
 > `cierre_julio.sql`.
 
-**Septiembre 2026 — META VIGENTE, motor v2 (re-fijada el 14-sep, decisión del usuario).** Capital
+**Octubre 2026 — META VIGENTE, motor v2 (fijada el 1-oct).** Capital asegurado **S/19,309,495** (stock
+S/4,345,408 + nuevos S/14,964,087; tasa anclada 20.52%) y recupero oficial **S/3,765,371** (stock S/1,077,159 +
+nuevos S/2,688,213). `python meta_v2.py 202610 datos_tarea25/insumos_octubre.csv`; serie en
+`datos_tarea25/meta_v2_202610.csv`. Stock validado contra la asignación real del 1-oct
+(`tarea25_stock_octubre_vs_asignacion.sql`). Seguimiento: `tarea25_real_v2.sql` + `seguimiento_v2.py 202610`.
+
+**Septiembre 2026 — CERRADA el 1-oct: alfa +3.2% (real S/16,962,973), recupero +13.3% (real S/2,945,946).
+Motor v2 (re-fijada el 14-sep, decisión del usuario).** Capital
 asegurado **S/17,504,932** (stock S/3,529,832 + nuevos S/13,975,100; tasa anclada 20.61%) y recupero
 oficial **S/3,338,715** (stock S/821,765 + nuevos S/2,516,950): lo que habría dado el motor de octubre el
 1-sep, con insumos reconstruidos como se leían ese día (`meta_v2.py 202609
